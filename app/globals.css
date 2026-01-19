@@ -1,26 +1,84 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-unixparts-black: #000000;
+  --color-unixparts-red: #E31E24;
+  --color-unixparts-gray-50: #F9FAFB;
+  --color-unixparts-gray-100: #F3F4F6;
+  --color-unixparts-gray-200: #E5E7EB;
+  --color-unixparts-gray-300: #D1D5DB;
+  --color-unixparts-gray-400: #9CA3AF;
+  --color-unixparts-gray-500: #6B7280;
+  --color-unixparts-gray-600: #4B5563;
+  --color-unixparts-gray-700: #374151;
+  --color-unixparts-gray-800: #1F2937;
+  --color-unixparts-gray-900: #111827;
+}
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 0, 0, 0;
+  --background-end-rgb: 0, 0, 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: rgb(var(--foreground-rgb));
+  background: white;
+  min-height: 100vh;
+}
+
+.dark body {
+  background: #000000;
+}
+
+/* Custom Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.card-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Transition for dark mode */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.1s ease;
+}
+
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.clip-gauge {
+  clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+}
+
+.clip-donut-75 {
+  clip-path: polygon(50% 50%, 100% 0, 100% 100%, 0 100%, 0 0, 50% 0);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

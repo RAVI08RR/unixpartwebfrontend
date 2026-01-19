@@ -1,65 +1,124 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { Check, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useState } from "react";
+import Image from "next/image";
+import { ThemeToggle } from "./dashboard/ThemeToggle";
+
+export default function LoginPage() {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
+    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-zinc-950 transition-colors duration-300">
+      {/* Left Panel - Branding */}
+      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
+        <div className="max-w-md mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1">
+             <img 
+                src="/logo.png" 
+                alt="Unixparts Logo" 
+                className="w-full h-full object-contain"
+             />
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Welcome to Unixparts
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          
+          <p className="text-gray-400 text-lg leading-relaxed">
+            Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows across all branches—securely and efficiently.
+          </p>
+
+          <div className="space-y-6 pt-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Inventory, containers, and warehouse operations</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Sales, invoicing, and customer accounts</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Supplier settlements and expense tracking</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Subtle background glow */}
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex flex-col justify-center relative transition-colors duration-300">
+        <div className="max-w-md w-full mx-auto space-y-10">
+          <div className="flex justify-between items-center mb-12">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
+              <p className="text-gray-500 dark:text-gray-400">Sign in to your account to continue</p>
+            </div>
+            <ThemeToggle className="p-3 rounded-2xl! bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
+          </div>
+
+          <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+              <div className="relative group">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                <input 
+                  type="email" 
+                  placeholder="Enter Enter Address"
+                  className="w-full pl-11 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <div className="relative group">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Enter Password"
+                  className="w-full pl-11 pr-12 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
+              </label>
+              <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              Sign In
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            Don't have an account? <a href="#" className="text-black dark:text-white font-bold hover:underline">Sign up</a>
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
