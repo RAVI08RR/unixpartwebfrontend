@@ -56,37 +56,37 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex flex-col justify-center relative transition-colors duration-300">
-        <div className="max-w-xl w-full mx-auto space-y-10 ">
-          <div className="flex justify-between items-center mb-12">
+      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
+        <div className="max-w-xl w-full mx-auto space-y-8">
+          <div className="flex justify-between items-start">
             <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
-              <p className="text-gray-500 dark:text-gray-400">Sign in to your account to continue</p>
+              <h2 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
+              <p className="text-base text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
             </div>
-            <ThemeToggle className="p-3 rounded-2xl! bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
+            <ThemeToggle className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
+          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+              <label className="text-base font-bold text-gray-700 dark:text-gray-300">Email Address</label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type="email" 
                   placeholder="Enter Enter Address"
-                  className="w-full pl-11 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-base"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <label className="text-base font-bold text-gray-700 dark:text-gray-300">Password</label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password"
-                  className="w-full pl-11 pr-12 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white"
+                  className="w-full pl-11 pr-12 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-base"
                 />
                 <button 
                   type="button"
@@ -101,20 +101,20 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
+                <span className="text-base text-gray-600 dark:text-gray-400">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
+              <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
             </div>
 
             <button 
               type="submit"
-              className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="w-full bg-black dark:bg-white dark:text-black text-white font-black py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-base"
             >
               Sign In
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-center text-base text-gray-500 dark:text-gray-400">
             Don't have an account? <a href="#" className="text-black dark:text-white font-bold hover:underline">Sign up</a>
           </p>
         </div>
