@@ -84,3 +84,7 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.font-black {
+   font-weight: 700  !important;
+}
