@@ -51,7 +51,7 @@ export default function AddUserPage() {
   };
 
   return (
-    <div className="space-y-8 pb-20 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
