@@ -73,11 +73,11 @@ function LayoutContent({ children }) {
       <Sidebar />
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[320px]' : 'lg:ml-[88px]'}`}>
+      <main className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[320px]' : 'lg:ml-[88px]'} overflow-x-hidden`}>
         <Topbar />
 
         {/* Page Content */}
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+        <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full">
           {children}
         </div>
       </main>

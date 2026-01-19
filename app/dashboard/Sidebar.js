@@ -55,9 +55,11 @@ export function Sidebar() {
       icon: Users,
       label: "People",
       items: [
+        { label: "User Management", href: "/dashboard/users", icon: Users },
         { label: "Customers", href: "/dashboard/customers", icon: Users },
         { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
       ]
+
     },
     {
       id: "Settings",

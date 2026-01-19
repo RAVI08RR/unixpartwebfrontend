@@ -1,0 +1,362 @@
+"use client";
+
+import React, { useState, useMemo } from "react";
+import Link from "next/link";
+import { 
+  Users, Mail, Phone, MoreVertical, Search, 
+  Filter, Download, Plus, ChevronLeft, ChevronRight,
+  ShieldCheck, UserCheck, UserCog, Package, ShieldAlert,
+  Info
+} from "lucide-react";
+
+// Initial user data
+const initialUsers = [
+  {
+    id: 1,
+    name: "Ahmed Al-Mansoori",
+    role: "Administrator",
+    roleColor: "text-purple-600 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400 border-purple-100 dark:border-purple-500/20",
+    roleIcon: ShieldCheck,
+    email: "ahmed.mansoori@unixparts.com",
+    phone: "+971 50 123 4567",
+    branch: "Main Warehouse - Dubai",
+    status: "Active",
+    lastActive: "2 minutes ago",
+    avatar: "https://ui-avatars.com/api/?name=Ahmed+Al-Mansoori&background=0D8ABC&color=fff"
+  },
+  {
+    id: 2,
+    name: "Sarah Johnson",
+    role: "Manager",
+    roleColor: "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-100 dark:border-blue-500/20",
+    roleIcon: UserCog,
+    email: "sarah.johnson@unixparts.com",
+    phone: "+971 52 234 5678",
+    branch: "Branch 1 - Abu Dhabi",
+    status: "Active",
+    lastActive: "1 hour ago",
+    avatar: "https://ui-avatars.com/api/?name=Sarah+Johnson&background=F3F4F6&color=333"
+  },
+  {
+    id: 3,
+    name: "Mohammed Hassan",
+    role: "Warehouse Staff",
+    roleColor: "text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 border-orange-100 dark:border-orange-500/20",
+    roleIcon: Package,
+    email: "mohammed.hassan@unixparts.com",
+    phone: "+971 55 345 6789",
+    branch: "Branch 2 - Sharjah",
+    status: "Active",
+    lastActive: "3 hours ago",
+    avatar: "https://ui-avatars.com/api/?name=Mohammed+Hassan&background=333&color=fff"
+  },
+  {
+    id: 4,
+    name: "Lisa Chen",
+    role: "Sales Representative",
+    roleColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20",
+    roleIcon: UserCheck,
+    email: "lisa.chen@unixparts.com",
+    phone: "+971 56 456 7890",
+    branch: "Main Warehouse - Dubai",
+    status: "Active",
+    lastActive: "5 hours ago",
+    avatar: "https://ui-avatars.com/api/?name=Lisa+Chen&background=0D8ABC&color=fff"
+  },
+  {
+    id: 5,
+    name: "Omar Khalid",
+    role: "Accountant",
+    roleColor: "text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20",
+    roleIcon: ShieldAlert,
+    email: "omar.khalid@unixparts.com",
+    phone: "+971 50 567 8901",
+    branch: "Branch 1 - Abu Dhabi",
+    status: "Active",
+    lastActive: "Yesterday",
+    avatar: "https://ui-avatars.com/api/?name=Omar+Khalid&background=333&color=fff"
+  },
+  {
+    id: 6,
+    name: "Emma Wilson",
+    role: "Warehouse Staff",
+    roleColor: "text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 border-orange-100 dark:border-orange-500/20",
+    roleIcon: Package,
+    email: "emma.wilson@unixparts.com",
+    phone: "+971 52 678 9012",
+    branch: "Branch 3 - Ajman",
+    status: "Inactive",
+    lastActive: "2 days ago",
+    avatar: "https://ui-avatars.com/api/?name=Emma+Wilson&background=0D8ABC&color=fff"
+  },
+  {
+    id: 7,
+    name: "Ali Rahman",
+    role: "Viewer",
+    roleColor: "text-slate-600 bg-slate-50 dark:bg-slate-500/10 dark:text-slate-400 border-slate-100 dark:border-slate-500/20",
+    roleIcon: Users,
+    email: "ali.rahman@unixparts.com",
+    phone: "+971 55 789 0123",
+    branch: "Branch 4 - Ras Al Khaimah",
+    status: "Active",
+    lastActive: "1 week ago",
+    avatar: "https://ui-avatars.com/api/?name=Ali+Rahman&background=0D8ABC&color=fff"
+  },
+  {
+    id: 8,
+    name: "Fatima Al-Said",
+    role: "Manager",
+    roleColor: "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-100 dark:border-blue-500/20",
+    roleIcon: UserCog,
+    email: "fatima.said@unixparts.com",
+    phone: "+971 56 890 1234",
+    branch: "Branch 2 - Sharjah",
+    status: "Suspended",
+    lastActive: "2 weeks ago",
+    avatar: "https://ui-avatars.com/api/?name=Fatima+Al-Said&background=0D8ABC&color=fff"
+  }
+];
+
+export default function UserManagementPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const itemsPerPage = 8;
+
+  // Filter and search logic
+  const filteredUsers = useMemo(() => {
+    return initialUsers.filter(user => {
+      const matchesSearch = 
+        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.phone.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "All" || user.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchQuery, statusFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  };
+
+  return (
+    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      {/* Header Section - Exactly as in reference image */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+        <div className="shrink-0">
+          <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
+          <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">Manage your user management</p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
+          {/* Search Bar - Matches width in image */}
+          <div className="relative w-full lg:max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search by name, email, or phone..."
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+            <div className="relative flex-1 sm:flex-none">
+              <button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+              </button>
+              
+              {isFilterOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {["All", "Active", "Inactive", "Suspended"].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setStatusFilter(status);
+                        setIsFilterOpen(false);
+                        setCurrentPage(1);
+                      }}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                        statusFilter === status 
+                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      {status === "All" ? "All Status" : status}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+            <Link href="/dashboard/users/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+              <Plus className="w-4 h-4" />
+              <span className="whitespace-nowrap font-black">Add User</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Table Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto w-full scrollbar-hide">
+          <table className="w-full min-w-[800px]">
+            <thead>
+              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
+                <th className="px-8 py-6 text-left bg-gray-50/10"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              {paginatedUsers.length > 0 ? (
+                paginatedUsers.map((user) => (
+                  <tr key={user.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <img 
+                          src={user.avatar} 
+                          alt={user.name} 
+                          className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                        />
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
+                          <p className="text-[11px] text-gray-400 mt-1 font-bold uppercase tracking-wide">Senior Manager</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-6">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item cursor-pointer">
+                          <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                          <span className="text-xs font-bold group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span className="text-xs font-bold">{user.phone}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-6">
+                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${user.roleColor}`}>
+                        <user.roleIcon className="w-3.5 h-3.5" />
+                        {user.role}
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-6">
+                      <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{user.branch}</span>
+                    </td>
+
+                    <td className="px-8 py-6">
+                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black ${
+                        user.status === 'Active' 
+                          ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                          : user.status === 'Suspended'
+                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-zinc-800'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ring-2 ring-current ring-offset-2 ring-offset-transparent ${
+                          user.status === 'Active' ? 'bg-green-600' : user.status === 'Suspended' ? 'bg-red-600' : 'bg-gray-400'
+                        }`}></div>
+                        {user.status}
+                      </div>
+                    </td>
+
+                    <td className="px-8 py-6">
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{user.lastActive}</span>
+                    </td>
+
+                    <td className="px-8 py-6 text-right">
+                      <button className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No users found</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredUsers.length}</span> entries
+          </p>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </button>
+            <div className="hidden sm:flex items-center gap-1.5">
+              {[...Array(totalPages)].map((_, i) => (
+                <button 
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                    currentPage === i + 1 
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
+                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+            >
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

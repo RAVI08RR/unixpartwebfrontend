@@ -9,8 +9,55 @@ import {
   Users, DollarSign, TrendingUp, CreditCard, 
   ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Clock, CheckCircle2, MoreHorizontal,
-  Box, FileText
+  Box, FileText, Info
 } from "lucide-react";
+import { useState } from "react";
+
+const ChartTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-gray-100 dark:border-zinc-800 p-3 rounded-xl shadow-xl transition-all animate-in fade-in zoom-in duration-200">
+        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">{label}</p>
+        {payload.map((entry, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
+            <p className="text-sm font-bold dark:text-white">
+              {entry.name}: <span className="text-red-600">{typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value}</span>
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const HoverTooltip = ({ children, content, className = "relative flex items-center justify-center" }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  
+  return (
+    <div 
+      className={className}
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      {children}
+      {isVisible && (
+        <div className="absolute bottom-full mb-3 z-[100] transition-all animate-in fade-in slide-in-from-bottom-1 duration-200">
+          <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-gray-100 dark:border-zinc-800 px-3 py-1.5 rounded-lg shadow-xl whitespace-nowrap">
+            <p className="text-xs font-bold dark:text-white flex items-center gap-2">
+              <Info className="w-3 h-3 text-red-600" />
+              {content}
+            </p>
+          </div>
+          <div className="w-2 h-2 bg-white dark:bg-zinc-900 border-r border-b border-gray-100 dark:border-zinc-800 transform rotate-45 absolute left-1/2 -ml-1 -bottom-1"></div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 const overallBalanceData = [
   { name: "Jan", value: 200 },
@@ -42,93 +89,111 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 uppercase tracking-wider">Overall Balance</p>
-              <h3 className="text-4xl font-bold dark:text-white flex items-center gap-3">
-                $2,538,942
-                <span className="text-green-500 text-sm font-bold flex items-center bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg">
-                  <ArrowUpRight className="w-4 h-4" /> 16.2%
+              <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Overall Balance</p>
+              <div className="flex items-center gap-3">
+                <h3 className="text-4xl font-black dark:text-white">$2,538,942</h3>
+                <span className="text-green-500 text-xs font-bold flex items-center bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-500/20">
+                  <ArrowUpRight className="w-3 h-3 mr-0.5" /> 16.2%
                 </span>
-              </h3>
+              </div>
             </div>
-            <div className="flex gap-4">
-              <button className="text-red-600 font-bold border-b-2 border-red-600 pb-1">Orders</button>
-              <button className="text-gray-400 font-medium">Expenses</button>
+            <div className="flex gap-4 border-b border-gray-100 dark:border-zinc-800 pb-1">
+              <button className="text-red-600 font-bold border-b-2 border-red-600 pb-1 -mb-[5px] transition-all">Orders</button>
+              <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium transition-all">Expenses</button>
             </div>
           </div>
-          <div className="h-[250px] w-full mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={overallBalanceData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#000000" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#000000" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" hide />
-                <Tooltip />
-                <Area type="monotone" dataKey="value" stroke="#000000" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="flex justify-between items-center mt-6">
-            <div className="grid grid-cols-3 gap-4 w-full">
-              <div className="bg-red-600 p-4 rounded-2xl text-white flex items-center gap-4">
-                 <div className="bg-white/20 p-2 rounded-lg">
-                    <ShoppingBag className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <p className="text-xs opacity-80">Total Orders</p>
-                    <p className="font-bold">$4,291</p>
+          
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-1">
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={overallBalanceData} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#000000" stopOpacity={0.05}/>
+                        <stop offset="95%" stopColor="#000000" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(0, 0, 0, 0.1)', strokeWidth: 1 }} />
+                    <Area type="monotone" dataKey="value" name="Balance" stroke="#000000" strokeWidth={1.5} fillOpacity={1} fill="url(#colorValue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="lg:w-48 space-y-4 pt-4">
+              <div className="bg-red-600 p-4 rounded-2xl text-white shadow-lg shadow-red-600/20 group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-3">
+                   <div className="bg-white/20 p-2 rounded-xl">
+                      <ShoppingBag className="w-5 h-5" />
+                   </div>
+                   <div>
+                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Total Orders</p>
+                      <p className="text-lg font-black">$4,291</p>
+                   </div>
                  </div>
               </div>
-              <div className="bg-black p-4 rounded-2xl text-white flex items-center gap-4">
-                 <div className="bg-white/20 p-2 rounded-lg">
-                    <Users className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <p className="text-xs opacity-80">Customers</p>
-                    <p className="font-bold">44%</p>
+              <div className="bg-black p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-3">
+                   <div className="bg-white/20 p-2 rounded-xl">
+                      <Users className="w-5 h-5" />
+                   </div>
+                   <div>
+                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Customers</p>
+                      <p className="text-lg font-black">44%</p>
+                   </div>
                  </div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-2xl text-white flex items-center gap-4">
-                 <div className="bg-white/20 p-2 rounded-lg">
-                    <CreditCard className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <p className="text-xs opacity-80">Total Income</p>
-                    <p className="font-bold">$4,679</p>
+              <div className="bg-gray-700 p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-3">
+                   <div className="bg-white/20 p-2 rounded-xl">
+                      <CreditCard className="w-5 h-5" />
+                   </div>
+                   <div>
+                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Total Income</p>
+                      <p className="text-lg font-black">$4,679</p>
+                   </div>
                  </div>
               </div>
             </div>
           </div>
         </div>
 
+
         {/* ROI */}
         <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
           <div className="flex justify-between mb-8">
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1 uppercase tracking-wider">Return on Investment</p>
-              <h3 className="text-4xl font-bold dark:text-white flex items-center gap-3">
-                283%
-                <span className="text-green-500 text-sm font-bold flex items-center bg-green-50 dark:bg-green-500/10 px-2 py-1 rounded-lg">
-                  <ArrowUpRight className="w-4 h-4" /> 2.4%
+              <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Return on Investment</p>
+              <div className="flex items-center gap-3">
+                <h3 className="text-4xl font-black dark:text-white">283%</h3>
+                <span className="text-gray-400 dark:text-gray-500 text-xs font-bold flex items-center bg-gray-100/50 dark:bg-zinc-800/50 px-2 py-0.5 rounded-full border border-gray-100 dark:border-zinc-800">
+                  <ArrowUpRight className="w-3 h-3 mr-0.5 opacity-50" /> +24%
                 </span>
-              </h3>
-              <p className="text-gray-400 text-sm mt-2">monthly</p>
+              </div>
+              <p className="text-gray-400 text-xs mt-2 font-medium">monthly</p>
             </div>
+
             <MoreVertical className="text-gray-400 w-5 h-5 cursor-pointer" />
           </div>
           <div className="h-[250px] w-full flex items-end gap-3 mt-4">
             {roiData.map((d, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
-                 <div 
-                    className="w-full bg-black rounded-lg transition-all transform origin-bottom hover:scale-x-105" 
-                    style={{ height: `${d.value}%` }}
-                 ></div>
-                 <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">{d.name}</span>
-              </div>
+              <HoverTooltip key={i} content={`${d.name}: ${d.value}%`} className="flex-1 h-full relative flex flex-col justify-end">
+                <div className="flex flex-col items-center gap-2 group w-full cursor-pointer">
+                   <div 
+                      className="w-full bg-black dark:bg-zinc-800 rounded-lg transition-all transform origin-bottom hover:scale-x-105 hover:bg-red-600 dark:hover:bg-red-600 shadow-lg" 
+                      style={{ height: `${d.value}%` }}
+                   ></div>
+                   <span className="text-xs text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity whitespace-nowrap">{d.name}</span>
+                </div>
+              </HoverTooltip>
             ))}
           </div>
+
+
         </div>
       </div>
 
@@ -144,24 +209,32 @@ export default function DashboardPage() {
            <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">TOTAL USERS</p>
            <h4 className="text-3xl font-bold dark:text-white mb-2">4,562</h4>
            <p className="text-green-500 text-sm font-bold">+22% last month</p>
-           <div className="mt-8 flex gap-1 h-12">
+           <div className="mt-8 flex gap-1.5 h-12">
               {[4,7,5,8,4,9,6,7,9,5].map((v, i) => (
-                <div key={i} className="flex-1 bg-red-600 rounded-sm" style={{ height: `${v * 10}%`, marginTop: 'auto' }}></div>
+                <HoverTooltip key={i} content={`Week ${i+1}: ${v * 10}% Growth`}>
+                   <div className="w-4 bg-red-600/20 dark:bg-red-600/10 rounded-sm relative overflow-hidden group/bar cursor-pointer" style={{ height: '100%' }}>
+                     <div 
+                       className="absolute bottom-0 left-0 right-0 bg-red-600 rounded-sm transition-all duration-500 group-hover/bar:bg-black dark:group-hover/bar:bg-white" 
+                       style={{ height: `${v * 10}%` }}
+                     ></div>
+                   </div>
+                </HoverTooltip>
               ))}
            </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden">
+
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
            <div className="flex justify-between items-start mb-6">
-              <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black">
+              <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black shadow-lg">
                  <TrendingUp className="w-6 h-6" />
               </div>
               <MoreVertical className="text-gray-400 w-5 h-5" />
            </div>
-           <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">TOTAL INCOME</p>
-           <h4 className="text-3xl font-bold dark:text-white mb-2">$6,280</h4>
-           <p className="text-green-500 text-sm font-bold">+18% last month</p>
-           <div className="mt-8 h-12 w-full">
+           <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">TOTAL INCOME</p>
+           <h4 className="text-3xl font-black dark:text-white mb-2">$6,280</h4>
+           <p className="text-green-500 text-xs font-bold font-medium">+18% last month</p>
+           <div className="absolute bottom-0 left-0 right-0 h-16 w-full opacity-50 group-hover:opacity-100 transition-opacity">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={overallBalanceData}>
                 <Line type="monotone" dataKey="value" stroke="#E31E24" strokeWidth={2} dot={false} />
@@ -170,18 +243,30 @@ export default function DashboardPage() {
            </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
            <div className="flex justify-between items-start mb-6">
-              <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black">
+              <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black shadow-lg">
                  <CreditCard className="w-6 h-6" />
               </div>
               <MoreVertical className="text-gray-400 w-5 h-5" />
            </div>
-           <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">CURRENT BALANCE</p>
-           <h4 className="text-3xl font-bold dark:text-white mb-2">$2,529</h4>
-           <p className="text-green-500 text-sm font-bold">+62% last month</p>
-           <div className="absolute right-8 bottom-8 w-16 h-16 border-8 border-red-600 border-t-transparent rounded-full animate-spin-slow"></div>
+           <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">CURRENT BALANCE</p>
+           <h4 className="text-3xl font-black dark:text-white mb-2">$2,529</h4>
+           <p className="text-green-500 text-xs font-bold font-medium">+62% last month</p>
+           
+           <HoverTooltip content="Current Balance: $2,529.00 (Healthy)">
+             <div className="absolute right-8 bottom-8 w-16 h-16 flex items-center justify-center group/balance cursor-pointer transition-transform hover:scale-110">
+               <div className="relative w-full h-full">
+                 <svg className="w-full h-full transform -rotate-90">
+                   <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-gray-100 dark:text-zinc-800" strokeDasharray="10 4" />
+                   <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-red-600 group-hover:text-black dark:group-hover:text-white transition-colors" strokeDasharray="10 4" strokeDashoffset="42" />
+                 </svg>
+               </div>
+             </div>
+           </HoverTooltip>
+
         </div>
+
       </div>
 
       {/* Row 3: Marketing and Payment */}
@@ -194,31 +279,35 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-6 mb-12">
             {[
-              { label: "Page View Volume", value: "+2.9k", color: "bg-red-500" },
+              { label: "Page View Volume", value: "+2.9k", color: "bg-red-600" },
               { label: "Return Ratio", value: "1.22", color: "bg-black" },
               { label: "ARPU on search", value: "0.63", color: "bg-gray-400" },
               { label: "Churn Ratio", value: "41.2", color: "bg-blue-400" },
             ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between border-b border-gray-50 dark:border-zinc-800 pb-4 last:border-0">
+              <div key={i} className="flex items-center justify-between border-b border-gray-50 dark:border-zinc-800 pb-4 last:border-0 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 px-2 py-1 rounded-xl transition-colors">
                 <div className="flex items-center gap-4">
-                   <div className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center text-white`}>
+                   <div className={`w-10 h-10 rounded-full ${item.color} flex items-center justify-center text-white shadow-sm`}>
                       <ArrowUpRight className="w-5 h-5" />
                    </div>
-                   <span className="text-gray-600 dark:text-gray-400 font-medium">{item.label}</span>
+                   <span className="text-gray-600 dark:text-gray-400 font-bold text-sm">{item.label}</span>
                 </div>
-                <span className="font-bold dark:text-white">{item.value}</span>
+                <span className="font-black dark:text-white">{item.value}</span>
               </div>
             ))}
+
           </div>
-          <div className="relative flex justify-center">
-             <div className="w-48 h-24 overflow-hidden relative">
-                <div className="w-48 h-48 border-[20px] border-gray-100 dark:border-zinc-800 rounded-full"></div>
-                <div className="w-48 h-48 border-[20px] border-red-600 rounded-full absolute top-0 left-0 clip-gauge transform rotate-45"></div>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                    <p className="text-4xl font-bold dark:text-white">275</p>
+          <div className="relative flex justify-center group/gauge cursor-pointer">
+             <HoverTooltip content="Market Performance: 275/500 (55%)">
+                <div className="w-48 h-24 overflow-hidden relative">
+                    <div className="w-48 h-48 border-[20px] border-gray-100 dark:border-zinc-800 rounded-full"></div>
+                    <div className="w-48 h-48 border-[20px] border-red-600 rounded-full absolute top-0 left-0 clip-gauge transform rotate-45 transition-transform duration-1000 group-hover/gauge:scale-105"></div>
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+                        <p className="text-4xl font-bold dark:text-white">275</p>
+                    </div>
                 </div>
-             </div>
+             </HoverTooltip>
           </div>
+
           <p className="text-center text-xs text-gray-400 mt-4">Learn more how to manage all aspects of your startup</p>
           <div className="bg-orange-50 dark:bg-orange-500/5 p-4 rounded-2xl mt-8 flex items-center gap-4 border border-orange-100 dark:border-orange-500/10">
              <div className="p-2 bg-red-600 rounded-lg text-white">
@@ -234,53 +323,57 @@ export default function DashboardPage() {
             <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm">Payment Methods</h5>
             <MoreVertical className="text-gray-400 w-5 h-5" />
           </div>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="bg-black text-white p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform">
-               <div className="flex justify-between items-start mb-8">
-                  <span className="text-xs opacity-60">**** 8942</span>
-                  <span className="text-xs font-bold">VISA</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div className="bg-black text-white p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer shadow-xl">
+               <div className="flex justify-between items-start mb-10">
+                  <span className="text-xs font-medium opacity-60">**** 8942</span>
+                  <span className="text-xs font-black tracking-widest italic">VISA</span>
                </div>
-               <p className="text-[10px] opacity-60 mb-1 uppercase tracking-widest">Balance</p>
-               <p className="text-xl font-bold">$25,561.50</p>
+               <p className="text-[10px] opacity-60 mb-1 uppercase tracking-widest font-bold">Balance</p>
+               <p className="text-2xl font-black">$25,561.50</p>
+               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
             </div>
-            <div className="bg-orange-100 p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform">
-               <div className="flex justify-between items-start mb-8 text-orange-900">
-                  <span className="text-xs opacity-60">**** 8942</span>
-                  <CreditCard className="w-4 h-4" />
+            <div className="bg-[#FFF0E5] p-6 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer shadow-lg">
+               <div className="flex justify-between items-start mb-10 text-orange-950">
+                  <span className="text-xs font-medium opacity-60">**** 8942</span>
+                  <CreditCard className="w-5 h-5 opacity-40" />
                </div>
-               <p className="text-[10px] text-orange-800 opacity-60 mb-1 uppercase tracking-widest">Balance</p>
-               <p className="text-xl font-bold text-orange-950">$28,561.50</p>
+               <p className="text-[10px] text-orange-800 opacity-60 mb-1 uppercase tracking-widest font-bold">Balance</p>
+               <p className="text-2xl font-black text-orange-950">$28,561.50</p>
+               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-orange-200/20 rounded-full blur-2xl"></div>
             </div>
           </div>
+
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <span className="text-sm font-bold dark:text-white">Transactions</span>
               <button className="text-sm text-gray-400">See All</button>
             </div>
             {[
-              { label: "Subscription", date: "Dec 12, 2024", amount: "- $4.58", status: "Approved", color: "text-green-500" },
-              { label: "Renewal", date: "Dec 10, 2024", amount: "- $15.60", status: "Pending", color: "text-orange-500" },
-              { label: "Subscription", date: "Dec 12, 2024", amount: "- $4.58", status: "Approved", color: "text-green-500" },
-              { label: "Renewal", date: "Dec 10, 2024", amount: "- $15.60", status: "Pending", color: "text-orange-500" },
+              { label: "Subscription", date: "Dec 12, 2024", amount: "- $4.58", status: "Approved" },
+              { label: "Renewal", date: "Dec 10, 2024", amount: "+ $15.60", status: "Pending" },
+              { label: "Subscription", date: "Dec 12, 2024", amount: "- $4.58", status: "Approved" },
+              { label: "Renewal", date: "Dec 10, 2024", amount: "+ $15.60", status: "Pending" },
             ].map((t, i) => (
-              <div key={i} className="flex items-center justify-between">
+              <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 p-2 rounded-xl transition-colors">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-zinc-800 flex items-center justify-center text-gray-400">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 dark:bg-zinc-800 flex items-center justify-center text-gray-400 group-hover:bg-white dark:group-hover:bg-zinc-700 transition-colors shadow-sm">
                     <CreditCard className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold dark:text-white">{t.label}</p>
-                    <p className="text-xs text-gray-400">{t.date}</p>
+                    <p className="text-sm font-black dark:text-white">{t.label}</p>
+                    <p className="text-[10px] font-bold text-gray-400 group-hover:text-gray-500">{t.date}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold dark:text-white">{t.amount}</p>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${t.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <p className={`text-sm font-black ${t.amount.startsWith('-') ? 'dark:text-white' : 'text-red-600'}`}>{t.amount}</p>
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${t.status === 'Approved' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400'}`}>
                     {t.status}
                   </span>
                 </div>
               </div>
             ))}
+
           </div>
         </div>
       </div>
@@ -358,13 +451,16 @@ export default function DashboardPage() {
             <MoreVertical className="text-gray-400 w-5 h-5" />
           </div>
           <div className="relative h-64 flex flex-col items-center justify-center">
-             <div className="w-48 h-48 rounded-full border-[20px] border-gray-100 dark:border-zinc-800 relative">
-               <div className="absolute inset-0 border-[20px] border-red-600 rounded-full clip-donut-75 rotate-45"></div>
-               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-3xl font-bold dark:text-white">2.4k</p>
-                  <p className="text-xs text-gray-400">Total</p>
-               </div>
-             </div>
+             <HoverTooltip content="Total Logistics Volume: 2,400 Units">
+                <div className="w-48 h-48 rounded-full border-[20px] border-gray-100 dark:border-zinc-800 relative group/donut cursor-pointer transition-transform duration-300 hover:scale-105">
+                <div className="absolute inset-0 border-[20px] border-red-600 rounded-full clip-donut-75 rotate-45"></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <p className="text-3xl font-bold dark:text-white">2.4k</p>
+                    <p className="text-xs text-gray-400">Total</p>
+                </div>
+                </div>
+             </HoverTooltip>
+
              <div className="flex gap-4 mt-8">
                 <div className="flex items-center gap-2">
                    <div className="w-2 h-2 rounded-full bg-orange-400"></div>
@@ -430,9 +526,11 @@ export default function DashboardPage() {
                   { name: "Jul", sales: 3490, profit: 4300 },
                 ]}>
                   <XAxis dataKey="name" hide />
-                  <Bar dataKey="profit" fill="#000000" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="sales" fill="#E31E24" radius={[4, 4, 0, 0]} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+                  <Bar dataKey="profit" name="Profit" fill="#000000" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="sales" name="Sales" fill="#E31E24" radius={[4, 4, 0, 0]} />
                 </BarChart>
+
              </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
