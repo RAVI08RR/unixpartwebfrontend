@@ -53,36 +53,39 @@ export default function AddUserPage() {
   return (
     <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
              <Link href="/dashboard/users" className="text-gray-400 hover:text-red-600 transition-colors">
                 <ChevronLeft className="w-5 h-5" />
              </Link>
              <h1 className="text-2xl font-black dark:text-white tracking-tight">Add User</h1>
           </div>
-          <p className="text-gray-500 text-sm font-medium">Create a new user account and assign permissions</p>
+          <p className="text-gray-500 text-sm font-medium ml-7">Create a new user account and assign permissions</p>
         </div>
 
-        <div className="flex items-center gap-3">
-           <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full">
+           <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Search by name, email, or phone..."
-                className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-600 w-64 lg:w-80 shadow-sm transition-all"
+                placeholder="Search..."
+                className="pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-600 w-full shadow-sm transition-all"
               />
            </div>
-           <button className="p-2.5 bg-black dark:bg-zinc-800 text-white rounded-xl shadow-lg shadow-black/10">
-              <Filter className="w-5 h-5" />
-           </button>
-           <button className="p-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 rounded-xl shadow-sm">
-              <Download className="w-5 h-5" />
-           </button>
-           <Link href="/dashboard/users" className="flex items-center gap-2 px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-all">
-              <Plus className="w-4 h-4" />
-              <span>List User</span>
-           </Link>
+           
+           <div className="flex items-center gap-2">
+             <button className="flex-1 sm:flex-none p-2.5 bg-black dark:bg-zinc-800 text-white rounded-xl shadow-lg shadow-black/10 justify-center flex">
+                <Filter className="w-5 h-5" />
+             </button>
+             <button className="flex-1 sm:flex-none p-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 rounded-xl shadow-sm justify-center flex">
+                <Download className="w-5 h-5" />
+             </button>
+             <Link href="/dashboard/users" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 transition-all whitespace-nowrap">
+                <Plus className="w-4 h-4" />
+                <span>List User</span>
+             </Link>
+           </div>
         </div>
       </div>
 
@@ -250,12 +253,12 @@ export default function AddUserPage() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-4 pt-12">
-        <button className="px-10 py-3.5 bg-black dark:bg-zinc-800 text-white text-sm font-black rounded-2xl flex items-center gap-2 shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-12">
+        <button className="px-10 py-3.5 bg-black dark:bg-zinc-800 text-white text-sm font-black rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-black/10 hover:scale-105 active:scale-95 transition-all">
           <Check className="w-5 h-5 text-green-500" />
           <span>Create User</span>
         </button>
-        <Link href="/dashboard/users" className="px-10 py-3.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-black rounded-2xl hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all">
+        <Link href="/dashboard/users" className="px-10 py-3.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-black rounded-2xl hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
           Cancel
         </Link>
       </div>
