@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-zinc-950 transition-colors duration-300">
       {/* Left Panel - Branding */}
       <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
-        <div className="max-w-md mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
+        <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
           <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1">
              <img 
                 src="/logo.png" 
@@ -57,7 +57,7 @@ export default function LoginPage() {
 
       {/* Right Panel - Login Form */}
       <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex flex-col justify-center relative transition-colors duration-300">
-        <div className="max-w-md w-full mx-auto space-y-10">
+        <div className="max-w-xl w-full mx-auto space-y-10 ">
           <div className="flex justify-between items-center mb-12">
             <div className="space-y-2">
               <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
