@@ -2,6 +2,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
+  --font-weight-bold: 600;
   --color-unixparts-black: #000000;
   --color-unixparts-red: #E31E24;
   --color-unixparts-gray-50: #F9FAFB;

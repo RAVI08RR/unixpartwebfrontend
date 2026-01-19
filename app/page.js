@@ -60,33 +60,33 @@ export default function LoginPage() {
         <div className="max-w-xl w-full mx-auto space-y-8">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
-              <h2 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
-              <p className="text-base text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
+              <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
+              <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
             </div>
             <ThemeToggle className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
           </div>
 
           <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
             <div className="space-y-2">
-              <label className="text-base font-bold text-gray-700 dark:text-gray-300">Email Address</label>
+              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Email Address</label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type="email" 
                   placeholder="Enter Enter Address"
-                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-base"
+                  className="w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-base font-bold text-gray-700 dark:text-gray-300">Password</label>
+              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Password</label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password"
-                  className="w-full pl-11 pr-12 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-base"
+                  className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
                 />
                 <button 
                   type="button"
@@ -108,7 +108,7 @@ export default function LoginPage() {
 
             <button 
               type="submit"
-              className="w-full bg-black dark:bg-white dark:text-black text-white font-black py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-base"
+              className="w-full bg-black dark:bg-white dark:text-black text-white font-medium py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg"
             >
               Sign In
             </button>
