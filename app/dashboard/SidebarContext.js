@@ -34,6 +34,7 @@ export function SidebarProvider({ children }) {
   const changeCategory = (category) => {
     setActiveCategory(category);
     setIsSecondaryOpen(true);
+    setIsSidebarOpen(true);
     localStorage.setItem("sidebar_active_category", category);
   };
 
