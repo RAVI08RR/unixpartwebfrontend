@@ -9,7 +9,7 @@ import {
   Users, DollarSign, TrendingUp, CreditCard, 
   ArrowUpRight, ArrowDownRight, MoreVertical, 
   ShoppingBag, Clock, CheckCircle2, MoreHorizontal,
-  Box, FileText, Info
+  Box, FileText, Info, Wallet
 } from "lucide-react";
 import { useState } from "react";
 
@@ -167,33 +167,30 @@ export default function DashboardPage() {
         <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
           <div className="flex justify-between mb-8">
             <div>
-              <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Return on Investment</p>
-              <div className="flex items-center gap-3">
-                <h3 className="text-4xl font-black dark:text-white">283%</h3>
-                <span className="text-gray-400 dark:text-gray-500 text-xs font-bold flex items-center bg-gray-100/50 dark:bg-zinc-800/50 px-2 py-0.5 rounded-full border border-gray-100 dark:border-zinc-800">
-                  <ArrowUpRight className="w-3 h-3 mr-0.5 opacity-50" /> +24%
-                </span>
+              <p className="text-gray-900 dark:text-white text-sm font-bold mb-2 uppercase tracking-wide">RETURN ON INVESTMENT</p>
+              <div className="flex items-center gap-4">
+                <h3 className="text-5xl font-black dark:text-white">283%</h3>
+                <div className="flex items-center gap-1 text-gray-900 dark:text-white font-bold">
+                   <ArrowUpRight className="w-4 h-4" /> 
+                   <span>+24%</span>
+                </div>
               </div>
-              <p className="text-gray-400 text-xs mt-2 font-medium">monthly</p>
+              <p className="text-gray-400 text-sm mt-3 font-medium">monthly</p>
             </div>
 
-            <MoreVertical className="text-gray-400 w-5 h-5 cursor-pointer" />
+            <MoreVertical className="text-gray-300 w-5 h-5 cursor-pointer" />
           </div>
-          <div className="h-[250px] w-full flex items-end gap-3 mt-4">
-            {roiData.map((d, i) => (
-              <HoverTooltip key={i} content={`${d.name}: ${d.value}%`} className="flex-1 h-full relative flex flex-col justify-end">
-                <div className="flex flex-col items-center gap-2 group w-full cursor-pointer">
-                   <div 
-                      className="w-full bg-black dark:bg-zinc-800 rounded-lg transition-all transform origin-bottom hover:scale-x-105 hover:bg-red-600 dark:hover:bg-red-600 shadow-lg" 
-                      style={{ height: `${d.value}%` }}
-                   ></div>
-                   <span className="text-xs text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity whitespace-nowrap">{d.name}</span>
-                </div>
-              </HoverTooltip>
+          
+          <div className="h-[200px] w-full flex items-end gap-6 mt-4 justify-between px-2">
+            {[60, 80, 70, 95, 85, 100].map((val, i) => (
+               <div key={i} className="flex-1 h-full flex items-end justify-center group cursor-pointer">
+                  <div 
+                     className="w-full max-w-[40px] bg-black dark:bg-white rounded-xl transition-all duration-500 hover:opacity-80" 
+                     style={{ height: `${val}%` }}
+                  ></div>
+               </div>
             ))}
           </div>
-
-
         </div>
       </div>
 
@@ -245,26 +242,28 @@ export default function DashboardPage() {
 
         <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
            <div className="flex justify-between items-start mb-6">
-              <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black shadow-lg">
-                 <CreditCard className="w-6 h-6" />
+              <div className="bg-black dark:bg-white p-3 rounded-full text-white dark:text-black shadow-lg">
+                 <Wallet className="w-6 h-6" />
               </div>
               <MoreVertical className="text-gray-400 w-5 h-5" />
            </div>
-           <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">CURRENT BALANCE</p>
-           <h4 className="text-3xl font-black dark:text-white mb-2">$2,529</h4>
-           <p className="text-green-500 text-xs font-bold font-medium">+62% last month</p>
+           <p className="text-gray-900 dark:text-white text-sm font-bold mb-1 uppercase tracking-wider">CURRENT BALANCE</p>
+           <h4 className="text-4xl font-black dark:text-white mb-2">$2,529</h4>
+           <p className="text-gray-500 text-sm font-bold">+62% last month</p>
            
-           <HoverTooltip content="Current Balance: $2,529.00 (Healthy)">
-             <div className="absolute right-8 bottom-8 w-16 h-16 flex items-center justify-center group/balance cursor-pointer transition-transform hover:scale-110">
-               <div className="relative w-full h-full">
-                 <svg className="w-full h-full transform -rotate-90">
-                   <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-gray-100 dark:text-zinc-800" strokeDasharray="10 4" />
-                   <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-red-600 group-hover:text-black dark:group-hover:text-white transition-colors" strokeDasharray="10 4" strokeDashoffset="42" />
-                 </svg>
-               </div>
+           <div className="absolute right-6 bottom-6 w-20 h-20 flex items-center justify-center">
+             <div className="relative w-full h-full animate-[spin_10s_linear_infinite]">
+                {[...Array(8)].map((_, i) => (
+                  <div 
+                    key={i}
+                    className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-2"
+                    style={{ transform: `rotate(${i * 45}deg)` }}
+                  >
+                    <div className="w-2 h-4 bg-red-600 rounded-full mx-auto"></div>
+                  </div>
+                ))}
              </div>
-           </HoverTooltip>
-
+           </div>
         </div>
 
       </div>

@@ -4,7 +4,7 @@ import React from "react";
 import { 
   BarChart3, LayoutDashboard, Box, Users, ShoppingCart, 
   FileText, Settings, LogOut, Layers, Package, Truck, 
-  DollarSign, X
+  DollarSign, X, Shield
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +56,7 @@ export function Sidebar() {
       label: "People",
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users },
+        { label: "Role Management", href: "/dashboard/roles", icon: Shield },
         { label: "Customers", href: "/dashboard/customers", icon: Users },
         { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
       ]
@@ -106,7 +107,7 @@ export function Sidebar() {
                 ${isActive ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}
               `}
             >
-              <group.icon className="w-6 h-6" />
+              <group.icon className="w-5 h-5" />
               
               {/* Tooltip for desktop */}
               <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
@@ -128,7 +129,7 @@ export function Sidebar() {
       {/* Logout */}
       <div className="mt-auto px-3 w-full">
         <button className="w-full aspect-square rounded-2xl flex items-center justify-center text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all">
-          <LogOut className="w-6 h-6 shrink-0" />
+          <LogOut className="w-5 h-5 shrink-0" />
         </button>
       </div>
     </div>
