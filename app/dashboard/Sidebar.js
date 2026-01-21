@@ -125,7 +125,7 @@ export function Sidebar() {
   };
 
   const RailContent = () => (
-    <div className="w-[88px] flex flex-col h-full bg-black dark:bg-zinc-950 border-r border-white/5 items-center py-6 shrink-0 z-20">
+    <div className="w-[74px] flex flex-col h-full bg-black dark:bg-zinc-950 border-r border-white/5 items-center py-6 shrink-0 z-20">
       {/* Brand Logo */}
       <div className="mb-10">
         <div className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden p-1">
@@ -161,7 +161,7 @@ export function Sidebar() {
               )}
               
               {/* Tooltip for desktop */}
-              <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
+              <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/10">
                 {group.label}
               </div>
 
@@ -223,7 +223,7 @@ export function Sidebar() {
         initial={false}
         animate={isSidebarOpen ? "expanded" : "collapsed"}
         variants={sidebarVariants}
-        className="fixed left-0 top-0 h-full z-50 hidden lg:flex overflow-hidden"
+        className="fixed left-0 top-0 h-full z-50 hidden lg:flex"
         transition={{ type: "spring", stiffness: 300, damping: 35 }}
       >
         <RailContent />

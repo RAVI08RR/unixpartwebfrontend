@@ -13,7 +13,12 @@ function Topbar() {
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300">
+    <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300"
+    style={{
+      display: "flex",
+      padding: "20px 60px"
+    }}
+    >
       <div className="flex items-center gap-4 flex-1">
         {/* Desktop Toggle */}
         <button 
@@ -77,7 +82,7 @@ function LayoutContent({ children }) {
         <Topbar />
 
         {/* Page Content */}
-        <div className="p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+        <div className="p-4 md:p-8 max-w-[94%] mx-auto w-full">
           {children}
         </div>
       </main>

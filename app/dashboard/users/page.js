@@ -6,7 +6,7 @@ import {
   Users, Mail, Phone, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   ShieldCheck, UserCheck, UserCog, Package, ShieldAlert,
-  Info, Pencil, Trash2, Check, X
+  Info, Pencil, Trash2, Check, X, Eye, Ban
 } from "lucide-react";
 
 // Initial user data
@@ -127,6 +127,7 @@ export default function UserManagementPage() {
   // Inline Editing State
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [menuOpenId, setMenuOpenId] = useState(null);
 
   const itemsPerPage = 8;
 
@@ -161,6 +162,11 @@ export default function UserManagementPage() {
   const handleEdit = (user) => {
     setEditingId(user.id);
     setEditForm({ ...user });
+    setMenuOpenId(null); // Close menu when editing starts
+  };
+
+  const toggleMenu = (id) => {
+    setMenuOpenId(prev => prev === id ? null : id);
   };
 
   const handleCancel = () => {
@@ -256,24 +262,24 @@ export default function UserManagementPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
-                <th className="px-8 py-6 text-left bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
+                <th className="px-6 py-6 text-left bg-gray-50/10 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => {
+                paginatedUsers.map((user, index) => {
                   const isEditing = editingId === user.id;
                   
                   return (
                     <tr key={user.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}>
                       {/* Name / User */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <img 
                             src={user.avatar} 
@@ -298,7 +304,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Contact */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                         <div className="space-y-1.5 min-w-[180px]">
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
                             <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
@@ -332,7 +338,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Role */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                         {isEditing ? (
                            <select
                               name="role"
@@ -356,7 +362,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Branch */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                          {isEditing ? (
                               <input 
                                 type="text"
@@ -371,7 +377,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                         {isEditing ? (
                            <select
                               name="status"
@@ -400,12 +406,13 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Last Active */}
-                      <td className="px-8 py-6">
+                      <td className="px-6 py-6">
                         <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{user.lastActive}</span>
                       </td>
 
+
                       {/* Actions */}
-                      <td className="px-8 py-6 text-right">
+                      <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
                            {isEditing ? (
                               <>
@@ -417,14 +424,45 @@ export default function UserManagementPage() {
                                 </button>
                               </>
                            ) : (
-                              <>
-                                <button onClick={() => handleEdit(user)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all" title="Edit User">
-                                  <Pencil className="w-5 h-5" />
+                              <div className="relative">
+                                <button 
+                                  onClick={() => toggleMenu(user.id)}
+                                  className={`p-2 rounded-xl transition-all ${
+                                    menuOpenId === user.id 
+                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                  }`}
+                                >
+                                  <MoreVertical className="w-5 h-5" />
                                 </button>
-                                <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all" title="Delete User">
-                                  <Trash2 className="w-5 h-5" />
-                                </button>
-                              </>
+                                
+                                {menuOpenId === user.id && (
+                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                    index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                  }`}>
+                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                                      <Eye className="w-4 h-4" />
+                                      View Details
+                                    </button>
+                                    <button 
+                                      onClick={() => handleEdit(user)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit User
+                                    </button>
+                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 rounded-xl transition-colors">
+                                      <Ban className="w-4 h-4" />
+                                      Deactivate
+                                    </button>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete User
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
                            )}
                         </div>
                       </td>
