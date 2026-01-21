@@ -6,14 +6,14 @@ import {
   Users, Mail, Phone, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   ShieldCheck, UserCheck, UserCog, Package, ShieldAlert,
-  Info
+  Info, Pencil, Trash2, Check, X
 } from "lucide-react";
 
 // Initial user data
 const initialUsers = [
   {
     id: 1,
-    name: "Ahmed Al-Mansoori",
+    name: "Ahmed",
     role: "Administrator",
     roleColor: "text-purple-600 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400 border-purple-100 dark:border-purple-500/20",
     roleIcon: ShieldCheck,
@@ -118,15 +118,21 @@ const initialUsers = [
 ];
 
 export default function UserManagementPage() {
+  const [users, setUsers] = useState(initialUsers); // Use state for users
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Inline Editing State
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
   const itemsPerPage = 8;
 
   // Filter and search logic
   const filteredUsers = useMemo(() => {
-    return initialUsers.filter(user => {
+    return users.filter(user => {
       const matchesSearch = 
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -136,7 +142,7 @@ export default function UserManagementPage() {
       
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, users]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
@@ -149,6 +155,28 @@ export default function UserManagementPage() {
 
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  };
+
+  // Inline Editing Handlers
+  const handleEdit = (user) => {
+    setEditingId(user.id);
+    setEditForm({ ...user });
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleSave = () => {
+    setUsers(prev => prev.map(u => u.id === editingId ? { ...u, ...editForm } : u));
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -197,7 +225,7 @@ export default function UserManagementPage() {
                         setIsFilterOpen(false);
                         setCurrentPage(1);
                       }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                         statusFilter === status 
                           ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
@@ -228,83 +256,181 @@ export default function UserManagementPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-8 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
                 <th className="px-8 py-6 text-left bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedUsers.length > 0 ? (
-                paginatedUsers.map((user) => (
-                  <tr key={user.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <img 
-                          src={user.avatar} 
-                          alt={user.name} 
-                          className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
-                        />
-                        <div>
-                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
-                          <p className="text-[11px] text-gray-400 mt-1 font-bold uppercase tracking-wide">Senior Manager</p>
+                paginatedUsers.map((user) => {
+                  const isEditing = editingId === user.id;
+                  
+                  return (
+                    <tr key={user.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}>
+                      {/* Name / User */}
+                      <td className="px-8 py-6">
+                        <div className="flex items-center gap-4">
+                          <img 
+                            src={user.avatar} 
+                            alt={user.name} 
+                            className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                          />
+                          <div>
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                name="name"
+                                value={editForm.name}
+                                onChange={handleChange}
+                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                              />
+                            ) : (
+                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
+                            )}
+                            <p className="text-sm text-gray-400 mt-1 font-bold uppercase tracking-wide">Senior Manager</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-8 py-6">
-                      <div className="space-y-1.5">
-                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item cursor-pointer">
-                          <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                          <span className="text-xs font-bold group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                      {/* Contact */}
+                      <td className="px-8 py-6">
+                        <div className="space-y-1.5 min-w-[180px]">
+                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
+                            <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                            {isEditing ? (
+                              <input 
+                                type="email"
+                                name="email"
+                                value={editForm.email}
+                                onChange={handleChange}
+                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                              />
+                            ) : (
+                              <span className="text-lg font-[600] group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
+                            <Phone className="w-3.5 h-3.5" />
+                            {isEditing ? (
+                              <input 
+                                type="text"
+                                name="phone"
+                                value={editForm.phone}
+                                onChange={handleChange}
+                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                              />
+                            ) : (
+                               <span className="text-sm font-bold">{user.phone}</span>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
-                          <Phone className="w-3.5 h-3.5" />
-                          <span className="text-xs font-bold">{user.phone}</span>
+                      </td>
+
+                      {/* Role */}
+                      <td className="px-8 py-6">
+                        {isEditing ? (
+                           <select
+                              name="role"
+                              value={editForm.role}
+                              onChange={handleChange}
+                              className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500"
+                           >
+                             <option>Administrator</option>
+                             <option>Manager</option>
+                             <option>Warehouse Staff</option>
+                             <option>Sales Representative</option>
+                             <option>Accountant</option>
+                             <option>Viewer</option>
+                           </select>
+                        ) : (
+                            <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-sm font-black tracking-tight ${user.roleColor}`}>
+                              <user.roleIcon className="w-3.5 h-3.5" />
+                              {user.role}
+                            </div>
+                        )}
+                      </td>
+
+                      {/* Branch */}
+                      <td className="px-8 py-6">
+                         {isEditing ? (
+                              <input 
+                                type="text"
+                                name="branch"
+                                value={editForm.branch}
+                                onChange={handleChange}
+                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                              />
+                         ) : (
+                             <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{user.branch}</span>
+                         )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-8 py-6">
+                        {isEditing ? (
+                           <select
+                              name="status"
+                              value={editForm.status}
+                              onChange={handleChange}
+                              className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500"
+                           >
+                             <option>Active</option>
+                             <option>Inactive</option>
+                             <option>Suspended</option>
+                           </select>
+                        ) : (
+                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
+                            user.status === 'Active' 
+                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                              : user.status === 'Suspended'
+                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                              : 'bg-gray-100 text-gray-600 dark:bg-zinc-800'
+                          }`}>
+                            <div className={`w-1.5 h-1.5 rounded-full ring-2 ring-current ring-offset-2 ring-offset-transparent ${
+                              user.status === 'Active' ? 'bg-green-600' : user.status === 'Suspended' ? 'bg-red-600' : 'bg-gray-400'
+                            }`}></div>
+                            {user.status}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Last Active */}
+                      <td className="px-8 py-6">
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">{user.lastActive}</span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-8 py-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                           {isEditing ? (
+                              <>
+                                <button onClick={handleSave} className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20" title="Save">
+                                  <Check className="w-5 h-5" />
+                                </button>
+                                <button onClick={handleCancel} className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20" title="Cancel">
+                                  <X className="w-5 h-5" />
+                                </button>
+                              </>
+                           ) : (
+                              <>
+                                <button onClick={() => handleEdit(user)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-xl transition-all" title="Edit User">
+                                  <Pencil className="w-5 h-5" />
+                                </button>
+                                <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-all" title="Delete User">
+                                  <Trash2 className="w-5 h-5" />
+                                </button>
+                              </>
+                           )}
                         </div>
-                      </div>
-                    </td>
-
-                    <td className="px-8 py-6">
-                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${user.roleColor}`}>
-                        <user.roleIcon className="w-3.5 h-3.5" />
-                        {user.role}
-                      </div>
-                    </td>
-
-                    <td className="px-8 py-6">
-                      <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{user.branch}</span>
-                    </td>
-
-                    <td className="px-8 py-6">
-                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black ${
-                        user.status === 'Active' 
-                          ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                          : user.status === 'Suspended'
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          : 'bg-gray-100 text-gray-600 dark:bg-zinc-800'
-                      }`}>
-                        <div className={`w-1.5 h-1.5 rounded-full ring-2 ring-current ring-offset-2 ring-offset-transparent ${
-                          user.status === 'Active' ? 'bg-green-600' : user.status === 'Suspended' ? 'bg-red-600' : 'bg-gray-400'
-                        }`}></div>
-                        {user.status}
-                      </div>
-                    </td>
-
-                    <td className="px-8 py-6">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-bold">{user.lastActive}</span>
-                    </td>
-
-                    <td className="px-8 py-6 text-right">
-                      <button className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="7" className="py-24 text-center">
@@ -318,7 +444,7 @@ export default function UserManagementPage() {
 
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredUsers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredUsers.length}</span> entries
           </p>
           
@@ -336,7 +462,7 @@ export default function UserManagementPage() {
                 <button 
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
                     currentPage === i + 1 
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
                     : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'

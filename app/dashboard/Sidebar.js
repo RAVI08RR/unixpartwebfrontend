@@ -23,6 +23,7 @@ export function Sidebar() {
     {
       id: "Dashboard",
       icon: LayoutDashboard,
+      customIcon: "/icons/Button.svg",
       label: "Dashboards",
       items: [
         { label: "CRM", href: "/dashboard", icon: BarChart3 },
@@ -33,6 +34,7 @@ export function Sidebar() {
     {
       id: "Inventory",
       icon: Box,
+      customIcon: "/icons/Button-2.svg",
       label: "Inventory Mgt",
       items: [
         { label: "Stock List", href: "/dashboard/inventory/stock", icon: Package },
@@ -43,6 +45,7 @@ export function Sidebar() {
     {
       id: "Sales",
       icon: ShoppingCart,
+      customIcon: "/icons/Button-4.svg",
       label: "Sales & Finance",
       items: [
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
@@ -53,6 +56,7 @@ export function Sidebar() {
     {
       id: "People",
       icon: Users,
+      customIcon: "/icons/Button-5.svg",
       label: "People",
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users },
@@ -65,6 +69,7 @@ export function Sidebar() {
     {
       id: "Settings",
       icon: Settings,
+      customIcon: "/icons/Button-10.svg",
       label: "Control Center",
       items: [
         { label: "General Settings", href: "/dashboard/settings", icon: Settings },
