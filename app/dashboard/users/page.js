@@ -292,7 +292,7 @@ export default function UserManagementPage() {
                             ) : (
                               <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
                             )}
-                            <p className="text-sm text-gray-400 mt-1 font-bold uppercase tracking-wide">Senior Manager</p>
+                            <p className="text-sm text-gray-400 mt-1 font-[300] tracking-wide">Senior Manager</p>
                           </div>
                         </div>
                       </td>
@@ -311,7 +311,7 @@ export default function UserManagementPage() {
                                 className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
                               />
                             ) : (
-                              <span className="text-lg font-[600] group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                              <span className="text-[14px] font-[600] group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">

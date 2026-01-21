@@ -88,3 +88,9 @@ body {
 .font-black {
    font-weight: 700  !important;
 }
+
+
+th.px-8.py-6.text-left.text-sm.font-black.text-gray-400.dark\:text-gray-500.uppercase.tracking-\[0\.2em\].bg-gray-50\/10 {
+    font-size: 11px !important;
+    font-weight: 600;
+}
