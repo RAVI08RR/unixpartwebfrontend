@@ -178,7 +178,7 @@ const initialRoles = [
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Updated</th>
-                <th className="px-6 py-6 text-right bg-gray-50/10">Action</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -224,8 +224,8 @@ const initialRoles = [
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{role.lastUpdated}</span>
                     </td>
 
-                    <td className="px-6 py-6 text-right relative">
-                      <div className="flex items-center justify-end gap-2">
+                    <td className="px-6 py-6 text-center relative">
+                      <div className="flex items-center justify-start gap-2">
                         {editingId === role.id ? (
                           <>
                             <button 

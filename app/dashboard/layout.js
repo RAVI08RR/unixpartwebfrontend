@@ -16,7 +16,8 @@ function Topbar() {
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300"
     style={{
       display: "flex",
-      padding: "20px 60px"
+      padding: "20px 60px",
+      backgroundColor: "#F8FAFC"
     }}
     >
       <div className="flex items-center gap-4 flex-1">
@@ -41,7 +42,7 @@ function Topbar() {
           <input 
             type="text" 
             placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-zinc-900 border-none rounded-xl focus:ring-2 focus:ring-red-500/20 transition-all dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-[#FFFFFF] dark:bg-zinc-900 border border-gray-100 rounded-[12px] focus:ring-2 focus:ring-red-500/20 transition-all dark:text-white"
           />
         </div>
       </div>
