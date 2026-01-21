@@ -39,8 +39,6 @@ export function Sidebar() {
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users },
         { label: "Role Management", href: "/dashboard/roles", icon: Shield },
-        { label: "Customers", href: "/dashboard/customers", icon: Users },
-        { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
       ]
     },
 
