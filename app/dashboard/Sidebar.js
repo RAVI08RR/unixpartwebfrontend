@@ -32,10 +32,20 @@ export function Sidebar() {
       ]
     },
     {
+      id: "Shipments",
+      icon: Truck,
+      customIcon: "/icons/Button-1.svg",
+      label: "Shipments",
+      items: [
+        { label: "Track", href: "/dashboard/shipments/track", icon: Truck },
+        { label: "Fleet", href: "/dashboard/shipments/fleet", icon: Layers },
+      ]
+    },
+    {
       id: "Inventory",
       icon: Box,
       customIcon: "/icons/Button-2.svg",
-      label: "Inventory Mgt",
+      label: "Inventory",
       items: [
         { label: "Stock List", href: "/dashboard/inventory/stock", icon: Package },
         { label: "Containers", href: "/dashboard/containers", icon: Layers },
@@ -43,38 +53,104 @@ export function Sidebar() {
       ]
     },
     {
+      id: "Team",
+      icon: Users,
+      customIcon: "/icons/Button-3.svg",
+      label: "Team",
+      items: [
+        { label: "Employees", href: "/dashboard/team/employees", icon: Users },
+        { label: "Roles", href: "/dashboard/roles", icon: Shield },
+      ]
+    },
+    {
       id: "Sales",
       icon: ShoppingCart,
       customIcon: "/icons/Button-4.svg",
-      label: "Sales & Finance",
+      label: "Sales",
       items: [
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
         { label: "Invoices", href: "/dashboard/invoices", icon: FileText },
-        { label: "Settlements", href: "/dashboard/settlements", icon: DollarSign },
+      ]
+    },
+    {
+      id: "Approvals",
+      icon: Shield,
+      customIcon: "/icons/Button-5.svg",
+      label: "Approvals",
+      items: [
+        { label: "Pending", href: "/dashboard/approvals/pending", icon: FileText },
+        { label: "History", href: "/dashboard/approvals/history", icon: Layers },
+      ]
+    },
+    {
+      id: "Documents",
+      icon: FileText,
+      customIcon: "/icons/Button-6.svg",
+      label: "Documents",
+      items: [
+        { label: "Files", href: "/dashboard/documents/files", icon: FileText },
+        { label: "Archives", href: "/dashboard/documents/archives", icon: Layers },
+      ]
+    },
+    {
+      id: "Reports",
+      icon: BarChart3,
+      customIcon: "/icons/Button-7.svg",
+      label: "Reports",
+      items: [
+        { label: "Daily", href: "/dashboard/reports/daily", icon: BarChart3 },
+        { label: "Monthly", href: "/dashboard/reports/monthly", icon: Layers },
+      ]
+    },
+    {
+      id: "Finance",
+      icon: DollarSign,
+      customIcon: "/icons/Button-8.svg",
+      label: "Finance",
+      items: [
+        { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign },
+        { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers },
+      ]
+    },
+    {
+      id: "Security",
+      icon: Shield,
+      customIcon: "/icons/Button-9.svg",
+      label: "Security",
+      items: [
+        { label: "Alerts", href: "/dashboard/security/alerts", icon: Shield },
+        { label: "Logs", href: "/dashboard/security/logs", icon: Layers },
       ]
     },
     {
       id: "People",
       icon: Users,
       customIcon: "/icons/Button-5.svg",
-      label: "People",
+      label: "Management",
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users },
         { label: "Role Management", href: "/dashboard/roles", icon: Shield },
         { label: "Customers", href: "/dashboard/customers", icon: Users },
         { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
       ]
-
     },
     {
       id: "Settings",
       icon: Settings,
       customIcon: "/icons/Button-10.svg",
-      label: "Control Center",
+      label: "Settings",
       items: [
-        { label: "General Settings", href: "/dashboard/settings", icon: Settings },
+        { label: "General", href: "/dashboard/settings", icon: Settings },
         { label: "Profile", href: "/dashboard/settings/profile", icon: Users },
-        { label: "Security", href: "/dashboard/settings/security", icon: Layers },
+      ]
+    },
+    {
+      id: "Extra",
+      icon: Layers,
+      customIcon: "/icons/Icon.svg",
+      label: "More",
+      items: [
+        { label: "Features", href: "/dashboard/extra", icon: Layers },
       ]
     }
   ];
@@ -90,7 +166,7 @@ export function Sidebar() {
     <div className="w-[88px] flex flex-col h-full bg-black dark:bg-zinc-950 border-r border-white/5 items-center py-6 shrink-0 z-20">
       {/* Brand Logo */}
       <div className="mb-10">
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden p-1">
+        <div className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden p-1">
           <img 
             src="/logo.png" 
             alt="Unixparts Logo" 
@@ -108,24 +184,26 @@ export function Sidebar() {
               key={group.id}
               onClick={() => changeCategory(group.id)}
               className={`
-                relative w-full aspect-square rounded-2xl flex items-center justify-center transition-all duration-300 group
-                ${isActive ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}
+                relative w-[49px] h-[49px] rounded-full flex items-center justify-center transition-all duration-300 group
+                ${isActive ? 'bg-white shadow-lg' : 'hover:bg-white/10'}
               `}
             >
-              <group.icon className="w-5 h-5" />
+              {group.customIcon ? (
+                <img 
+                  src={group.customIcon} 
+                  alt={group.label} 
+                  className={`w-[45px] h-[45px] transition-all duration-300 ${isActive ? 'brightness-0' : 'opacity-70 group-hover:opacity-100'}`}
+                />
+              ) : (
+                <group.icon className={`w-[45px] h-[45px] ${isActive ? 'text-black' : 'text-gray-400 group-hover:text-white'}`} />
+              )}
               
               {/* Tooltip for desktop */}
               <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
                 {group.label}
               </div>
 
-              {/* Active Dot indicator */}
-              {isActive && (
-                <motion.div 
-                  layoutId="activeRailDot"
-                  className="absolute -right-1 w-1.5 h-6 bg-red-500 rounded-l-full"
-                />
-              )}
+              {/* Active Dot indicator - Removed as per new design (circle bg replaces it) */}
             </button>
           );
         })}
