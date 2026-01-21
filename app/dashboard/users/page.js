@@ -262,13 +262,17 @@ export default function UserManagementPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-sm font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Active</th>
-                <th className="px-6 py-6 text-left bg-gray-50/10 text-right">Action</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"
+                style={{
+    width: '10rem'
+}}
+                >Last Active</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -298,7 +302,7 @@ export default function UserManagementPage() {
                             ) : (
                               <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
                             )}
-                            <p className="text-sm text-gray-400 mt-1 font-[300] tracking-wide">Senior Manager</p>
+                            <p className="text-sm text-gray-400 mt-1 font-[500] tracking-wide">Senior Manager</p>
                           </div>
                         </div>
                       </td>
@@ -317,7 +321,7 @@ export default function UserManagementPage() {
                                 className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
                               />
                             ) : (
-                              <span className="text-[14px] font-[600] group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                              <span className="text-[14px] font-[400] group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-gray-400 dark:text-gray-500">
