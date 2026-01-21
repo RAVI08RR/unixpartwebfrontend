@@ -185,7 +185,7 @@ export default function UserManagementPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">Manage your user management</p>
+          <p className="text-gray-400 dark:text-gray-500 text-sm font-[400]">Manage your user management</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
