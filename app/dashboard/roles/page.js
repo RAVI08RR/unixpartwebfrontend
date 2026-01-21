@@ -4,8 +4,11 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { 
   Shield, Filter, Download, Plus, ChevronLeft, ChevronRight,
-  MoreVertical, Search, ShieldCheck, UserCog, Package, UserCheck
+  MoreVertical, Search, ShieldCheck, UserCog, Package, UserCheck,
+  Pencil, Trash2, Check, X
 } from "lucide-react";
+
+export default function RolesPage() {
 
 // Mock Data for Roles
 const initialRoles = [
@@ -47,17 +50,57 @@ const initialRoles = [
   }
 ];
 
-export default function RoleManagementPage() {
+  const [roles, setRoles] = useState(initialRoles);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Edit Handlers
+  const handleEdit = (role) => {
+    setEditingId(role.id);
+    setEditForm({
+      name: role.name,
+      assignedUsersBadge: role.assignedUsersBadge,
+    });
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSave = () => {
+    setRoles(prevRoles => 
+      prevRoles.map(role => 
+        role.id === editingId ? { ...role, ...editForm } : role
+      )
+    );
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this role?")) {
+      setRoles(prevRoles => prevRoles.filter(role => role.id !== id));
+    }
+  };
+
   // Filter and search logic
   const filteredRoles = useMemo(() => {
-    return initialRoles.filter(role => {
+    return roles.filter(role => {
       return role.name.toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }, [searchQuery]);
+  }, [searchQuery, roles]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredRoles.length / itemsPerPage) || 1;
@@ -137,14 +180,34 @@ export default function RoleManagementPage() {
                 paginatedRoles.map((role) => (
                   <tr key={role.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all">
                     <td className="px-8 py-6">
-                      <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
+                      {editingId === role.id ? (
+                        <input
+                          type="text"
+                          name="name"
+                          value={editForm.name}
+                          onChange={handleChange}
+                          className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      ) : (
+                        <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
+                      )}
                     </td>
 
                     <td className="px-8 py-6">
-                       <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${role.badgeColor}`}>
-                        <role.icon className="w-3.5 h-3.5" />
-                        {role.assignedUsersBadge}
-                      </div>
+                      {editingId === role.id ? (
+                        <input
+                          type="text"
+                          name="assignedUsersBadge"
+                          value={editForm.assignedUsersBadge}
+                          onChange={handleChange}
+                          className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-[11px] font-black focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      ) : (
+                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${role.badgeColor}`}>
+                          <role.icon className="w-3.5 h-3.5" />
+                          {role.assignedUsersBadge}
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-8 py-6">
@@ -156,9 +219,43 @@ export default function RoleManagementPage() {
                     </td>
 
                     <td className="px-8 py-6 text-left">
-                      <button className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {editingId === role.id ? (
+                          <>
+                            <button 
+                              onClick={handleSave}
+                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              title="Save"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={handleCancel}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button 
+                              onClick={() => handleEdit(role)}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(role.id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

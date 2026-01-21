@@ -32,36 +32,18 @@ export function Sidebar() {
       ]
     },
     {
-      id: "Shipments",
-      icon: Truck,
-      customIcon: "/icons/Button-1.svg",
-      label: "Shipments",
-      items: [
-        { label: "Track", href: "/dashboard/shipments/track", icon: Truck },
-        { label: "Fleet", href: "/dashboard/shipments/fleet", icon: Layers },
-      ]
-    },
-    {
-      id: "Inventory",
-      icon: Box,
-      customIcon: "/icons/Button-2.svg",
-      label: "Inventory",
-      items: [
-        { label: "Stock List", href: "/dashboard/inventory/stock", icon: Package },
-        { label: "Containers", href: "/dashboard/containers", icon: Layers },
-        { label: "Warehouse", href: "/dashboard/warehouse", icon: Package },
-      ]
-    },
-    {
-      id: "Team",
+      id: "People",
       icon: Users,
-      customIcon: "/icons/Button-3.svg",
-      label: "Team",
+      customIcon: "/icons/Button-5.svg",
+      label: "Management",
       items: [
-        { label: "Employees", href: "/dashboard/team/employees", icon: Users },
-        { label: "Roles", href: "/dashboard/roles", icon: Shield },
+        { label: "User Management", href: "/dashboard/users", icon: Users },
+        { label: "Role Management", href: "/dashboard/roles", icon: Shield },
+        { label: "Customers", href: "/dashboard/customers", icon: Users },
+        { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
       ]
     },
+
     {
       id: "Sales",
       icon: ShoppingCart,
@@ -123,18 +105,6 @@ export function Sidebar() {
       ]
     },
     {
-      id: "People",
-      icon: Users,
-      customIcon: "/icons/Button-5.svg",
-      label: "Management",
-      items: [
-        { label: "User Management", href: "/dashboard/users", icon: Users },
-        { label: "Role Management", href: "/dashboard/roles", icon: Shield },
-        { label: "Customers", href: "/dashboard/customers", icon: Users },
-        { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
-      ]
-    },
-    {
       id: "Settings",
       icon: Settings,
       customIcon: "/icons/Button-10.svg",
@@ -144,15 +114,7 @@ export function Sidebar() {
         { label: "Profile", href: "/dashboard/settings/profile", icon: Users },
       ]
     },
-    {
-      id: "Extra",
-      icon: Layers,
-      customIcon: "/icons/Icon.svg",
-      label: "More",
-      items: [
-        { label: "Features", href: "/dashboard/extra", icon: Layers },
-      ]
-    }
+ 
   ];
 
   const activeGroup = menuGroups.find(g => g.id === activeCategory) || menuGroups[0];
