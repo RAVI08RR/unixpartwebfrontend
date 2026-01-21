@@ -23,7 +23,7 @@ export function Sidebar() {
     {
       id: "Dashboard",
       icon: LayoutDashboard,
-      customIcon: "/icons/Button.svg",
+      customIcon: "/icons/dashboard-icon.svg",
       label: "Dashboards",
       items: [
         { label: "CRM", href: "/dashboard", icon: BarChart3 },
