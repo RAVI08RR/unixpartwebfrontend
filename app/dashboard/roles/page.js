@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   Shield, Filter, Download, Plus, ChevronLeft, ChevronRight,
   MoreVertical, Search, ShieldCheck, UserCog, Package, UserCheck,
-  Pencil, Trash2, Check, X
+  Pencil, Trash2, Check, X, Eye, Ban
 } from "lucide-react";
 
 export default function RolesPage() {
@@ -53,6 +53,7 @@ const initialRoles = [
   const [roles, setRoles] = useState(initialRoles);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const [menuOpenId, setMenuOpenId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -64,6 +65,11 @@ const initialRoles = [
       name: role.name,
       assignedUsersBadge: role.assignedUsersBadge,
     });
+    setMenuOpenId(null);
+  };
+
+  const toggleMenu = (id) => {
+    setMenuOpenId(prev => prev === id ? null : id);
   };
 
   const handleCancel = () => {
@@ -168,18 +174,18 @@ const initialRoles = [
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
-                <th className="px-8 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Updated</th>
-                <th className="px-8 py-6 text-left bg-gray-50/10">Actions</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Last Updated</th>
+                <th className="px-6 py-6 text-right bg-gray-50/10">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedRoles.length > 0 ? (
-                paginatedRoles.map((role) => (
+                paginatedRoles.map((role, index) => (
                   <tr key={role.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all">
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       {editingId === role.id ? (
                         <input
                           type="text"
@@ -193,7 +199,7 @@ const initialRoles = [
                       )}
                     </td>
 
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       {editingId === role.id ? (
                         <input
                           type="text"
@@ -210,50 +216,76 @@ const initialRoles = [
                       )}
                     </td>
 
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{role.accessLevel}</span>
                     </td>
 
-                    <td className="px-8 py-6">
+                    <td className="px-6 py-6">
                       <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{role.lastUpdated}</span>
                     </td>
 
-                    <td className="px-8 py-6 text-left">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-6 text-right relative">
+                      <div className="flex items-center justify-end gap-2">
                         {editingId === role.id ? (
                           <>
                             <button 
                               onClick={handleSave}
-                              className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                              className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20"
                               title="Save"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="w-5 h-5" />
                             </button>
                             <button 
                               onClick={handleCancel}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20"
                               title="Cancel"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-5 h-5" />
                             </button>
                           </>
                         ) : (
-                          <>
+                          <div className="relative">
                             <button 
-                              onClick={() => handleEdit(role)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                              title="Edit"
+                              onClick={() => toggleMenu(role.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === role.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
                             >
-                              <Pencil className="w-4 h-4" />
+                              <MoreVertical className="w-5 h-5" />
                             </button>
-                            <button 
-                              onClick={() => handleDelete(role.id)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
+                            
+                            {menuOpenId === role.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
+                                <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                                  <Eye className="w-4 h-4" />
+                                  View Access
+                                </button>
+                                <button 
+                                  onClick={() => handleEdit(role)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Role
+                                </button>
+                                <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 rounded-xl transition-colors">
+                                  <Ban className="w-4 h-4" />
+                                  Deactivate
+                                </button>
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                <button 
+                                  onClick={() => handleDelete(role.id)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Role
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
