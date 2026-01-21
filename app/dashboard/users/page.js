@@ -286,7 +286,7 @@ export default function UserManagementPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <img 
-                            src={user.avatar} 
+                            src="/pr-ux.png" 
                             alt={user.name} 
                             className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
                           />
