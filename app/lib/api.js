@@ -1,4 +1,7 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://3d3a2b4e7863.ngrok-free.app";
+const IS_SERVER = typeof window === 'undefined';
+export const API_BASE_URL = IS_SERVER 
+  ? (process.env.NEXT_PUBLIC_API_URL || "https://3d3a2b4e7863.ngrok-free.app")
+  : "/backend-api";
 
 export async function fetchApi(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
