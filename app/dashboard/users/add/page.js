@@ -67,22 +67,39 @@ export default function AddUserPage() {
               email: formData.email,
               password: formData.password,
               user_code: formData.user_code,
-              role_id: parseInt(formData.role_id), // Ensure it's a number
+              role_id: parseInt(formData.role_id),
               status: true,
               branch_ids: formData.branch ? [parseInt(formData.branch)] : [],
               supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : [],
-              permission_ids: [] // Added to match backend schema requirements
+              permission_ids: [] 
           };
 
-          console.log("Creating User with Auth Token Presence:", !!token);
-          console.log("Payload:", payload);
+          // Final check for valid numeric IDs
+          if (isNaN(payload.role_id)) {
+            alert("Error: The selected Role has an invalid ID. Please try selecting it again.");
+            setLoading(false);
+            return;
+          }
+
+          console.log("🚀 SUBMITTING NEW USER:", {
+            token: !!token,
+            apiUrl: "/backend-api/api/users",
+            payload
+          });
 
           await userService.create(payload);
-          alert("User created successfully!");
+          alert("✅ User created successfully!");
           router.push("/dashboard/users");
       } catch (error) {
-          console.error("User Creation Error:", error);
-          alert(`Failed to create user: ${error.message}`);
+          console.error("❌ CREATE USER FAILED:", error);
+          
+          // Try to show the most helpful error message
+          let detailedMsg = error.message;
+          if (detailedMsg.includes("422")) {
+            detailedMsg = "Validation Error: The server rejected one of the fields. Please check if the User Code or Email is already taken.";
+          }
+          
+          alert(`Failed to create user: ${detailedMsg}`);
       } finally {
           setLoading(false);
       }
