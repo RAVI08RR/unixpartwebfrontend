@@ -20,7 +20,7 @@ export const roleService = {
   },
 
   create: async (roleData) => {
-    return fetchApi('/api/roles/', {
+    return fetchApi('/api/roles', {
       method: 'POST',
       body: JSON.stringify(roleData),
     });

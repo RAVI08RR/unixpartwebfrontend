@@ -129,11 +129,15 @@ export default function UserManagementPage() {
   // Data Fetching
   const itemsPerPage = 8;
   const { users: apiUsers, isLoading, isError, mutate } = useUsers(0, 100);
-  const [roles, setRoles] = useState([]);
+  const [roles, setRoles] = useState([
+    { id: 1, name: "Administrator" },
+    { id: 2, name: "Manager" },
+    { id: 3, name: "Staff" }
+  ]);
 
   useEffect(() => {
     roleService.getAll().then(data => {
-      setRoles(Array.isArray(data) ? data : []);
+      if (data && data.length > 0) setRoles(data);
     }).catch(err => console.error("Failed to fetch roles", err));
   }, []);
   

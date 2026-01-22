@@ -16,8 +16,15 @@ import { useEffect } from "react";
 export default function AddUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [roles, setRoles] = useState([]);
-  const [branches, setBranches] = useState([]);
+  const [roles, setRoles] = useState([
+    { id: 1, name: "Administrator" },
+    { id: 2, name: "Manager" },
+    { id: 3, name: "Staff" }
+  ]);
+  const [branches, setBranches] = useState([
+    { id: 1, branch_name: "Main Warehouse - Dubai" },
+    { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
+  ]);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -36,8 +43,9 @@ export default function AddUserPage() {
                 roleService.getAll(),
                 branchService.getAll()
             ]);
-            setRoles(Array.isArray(rolesData) ? rolesData : []);
-            setBranches(Array.isArray(branchesData) ? branchesData : []);
+            // If we got real data from the API, use it. The services handle fallbacks already.
+            if (rolesData && rolesData.length > 0) setRoles(rolesData);
+            if (branchesData && branchesData.length > 0) setBranches(branchesData);
         } catch (error) {
             console.error("Failed to fetch roles or branches", error);
         }
@@ -201,13 +209,6 @@ export default function AddUserPage() {
               {roles.map(role => (
                 <option key={role.id} value={role.id}>{role.name}</option>
               ))}
-              {roles.length === 0 && (
-                <>
-                  <option value="1">Administrator</option>
-                  <option value="2">Manager</option>
-                  <option value="3">Staff</option>
-                </>
-              )}
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -229,12 +230,6 @@ export default function AddUserPage() {
               {branches.map(branch => (
                 <option key={branch.id} value={branch.id}>{branch.branch_name}</option>
               ))}
-              {branches.length === 0 && (
-                <>
-                  <option value="1">Main Warehouse - Dubai</option>
-                  <option value="2">Branch 1 - Abu Dhabi</option>
-                </>
-              )}
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
