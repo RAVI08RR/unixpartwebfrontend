@@ -26,13 +26,13 @@ export async function fetchApi(endpoint, options = {}) {
       config.headers['Authorization'] = `Bearer ${token}`;
       if (process.env.NODE_ENV === 'development') {
         if (token.startsWith('mock_')) {
-          console.warn(`🛡️ [fetchApi] Using MOCK token for ${cleanEndpoint}. Request WILL FAIL with 401 if backend is real!`);
+          console.warn(`🛡️ [fetchApi] Using MOCK token for ${endpoint}. Request WILL FAIL with 401 if backend is real!`);
         } else {
           console.log("🔑 Injected Authorization header");
         }
       }
     } else {
-      console.warn(`⚠️ No access_token found for ${cleanEndpoint} - expecting 401`);
+      console.warn(`⚠️ No access_token found for ${endpoint} - expecting 401`);
     }
   }
 
