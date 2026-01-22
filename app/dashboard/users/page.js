@@ -146,7 +146,7 @@ export default function UserManagementPage() {
     if (typeof window === 'undefined') return [];
 
     const token = localStorage.getItem('access_token');
-    const isMockToken = token?.startsWith('mock_token_');
+    const isMockToken = token?.startsWith('mock_token_') || token?.startsWith('mock_OFFLINE_');
     const hasRealToken = token && !isMockToken;
     
     // Log the data state for debugging

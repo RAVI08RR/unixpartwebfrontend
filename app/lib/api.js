@@ -1,12 +1,10 @@
-const IS_SERVER = typeof window === 'undefined';
-export const API_BASE_URL = IS_SERVER 
-  ? (process.env.NEXT_PUBLIC_API_URL || "https://3d3a2b4e7863.ngrok-free.app")
-  : "/backend-api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://3d3a2b4e7863.ngrok-free.app";
 
 export async function fetchApi(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const defaultHeaders = {
+    "Accept": "application/json",
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
   };
@@ -28,7 +26,9 @@ export async function fetchApi(endpoint, options = {}) {
         if (token.startsWith('mock_')) {
           console.warn(`🛡️ [fetchApi] Using MOCK token for ${endpoint}. Request WILL FAIL with 401 if backend is real!`);
         } else {
-          console.log("🔑 Injected Authorization header");
+          // Log truncated token for safe debugging
+          const displayToken = `${token.substring(0, 5)}...${token.substring(token.length - 5)}`;
+          console.log(`🔑 Injected Auth Header (Token: ${displayToken}, Length: ${token.length})`);
         }
       }
     } else {
@@ -46,6 +46,11 @@ export async function fetchApi(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, config);
+    
+    // Log 401 details
+    if (response.status === 401) {
+       console.error(`🔒 AUTH FAILURE (401) on ${url}. Checking token validity...`);
+    }
     
     // Handle 204 No Content
     if (response.status === 204) {
@@ -69,9 +74,10 @@ export async function fetchApi(endpoint, options = {}) {
       if (typeof errorData.detail === 'object' && !Array.isArray(errorData.detail)) {
         errorMessage = JSON.stringify(errorData.detail);
       } else if (Array.isArray(errorData.detail)) {
-        errorMessage = errorData.detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+        errorMessage = errorData.detail.map(d => typeof d === 'object' ? `${d.loc?.join('.') || 'error'}: ${d.msg || 'unknown'}` : d).join(', ');
       }
       
+      console.error(`❌ API Error Body (Status ${response.status}):`, errorData);
       throw new Error(errorMessage);
     }
 
