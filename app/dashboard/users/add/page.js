@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   User, Mail, Phone, Shield, Building2, Store, 
-  Search, Filter, Download, Plus, ChevronLeft,
+  Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
   Check, X, Lock, Hash
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
@@ -166,7 +166,7 @@ export default function AddUserPage() {
           <div className="relative">
             <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-500"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
               value={formData.role_id}
               onChange={(e) => setFormData({...formData, role_id: e.target.value})}
             >
@@ -174,7 +174,15 @@ export default function AddUserPage() {
               {roles.map(role => (
                 <option key={role.id} value={role.id}>{role.name}</option>
               ))}
+              {roles.length === 0 && (
+                <>
+                  <option value="1">Administrator</option>
+                  <option value="2">Manager</option>
+                  <option value="3">Staff</option>
+                </>
+              )}
             </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
@@ -186,7 +194,7 @@ export default function AddUserPage() {
           <div className="relative">
             <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-500"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
               value={formData.branch}
               onChange={(e) => setFormData({...formData, branch: e.target.value})}
             >
@@ -194,7 +202,14 @@ export default function AddUserPage() {
               {branches.map(branch => (
                 <option key={branch.id} value={branch.id}>{branch.branch_name}</option>
               ))}
+              {branches.length === 0 && (
+                <>
+                  <option value="1">Main Warehouse - Dubai</option>
+                  <option value="2">Branch 1 - Abu Dhabi</option>
+                </>
+              )}
             </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
@@ -206,7 +221,7 @@ export default function AddUserPage() {
           <div className="relative">
             <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-500"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
               value={formData.supplier}
               onChange={(e) => setFormData({...formData, supplier: e.target.value})}
             >
@@ -214,6 +229,7 @@ export default function AddUserPage() {
               <option value="1">Supplier A</option>
               <option value="2">Supplier B</option>
             </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
       </div>
