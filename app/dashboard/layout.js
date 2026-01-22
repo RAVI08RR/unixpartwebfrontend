@@ -19,7 +19,7 @@ function Topbar() {
         {/* Desktop Toggle */}
         <button 
           onClick={toggleSidebar} 
-          className="hidden lg:flex p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-colors text-gray-500"
+          className="hidden lg:flex p-2 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-xl transition-colors text-gray-500 lg:ml-[35px]"
         >
           <Menu className="w-5 h-5" />
         </button>
