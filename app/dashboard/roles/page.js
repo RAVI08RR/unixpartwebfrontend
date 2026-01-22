@@ -188,7 +188,11 @@ const initialRoles = [
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedRoles.length > 0 ? (
                 paginatedRoles.map((role, index) => (
-                  <tr key={role.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all">
+                  <tr key={role.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
+                  style={{
+                    borderBottom:'1px solid  #E2E8F0'
+                  }}
+                  >
                     <td className="px-6 py-6">
                       {editingId === role.id ? (
                         <input

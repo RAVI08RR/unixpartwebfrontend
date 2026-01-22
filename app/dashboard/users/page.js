@@ -281,7 +281,12 @@ export default function UserManagementPage() {
                   const isEditing = editingId === user.id;
                   
                   return (
-                    <tr key={user.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}>
+                    <tr key={user.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}
+                    
+                    style= {{boderBottom :"0.9px solid #E2E8F0"
+                       
+                    }}
+                    >
                       {/* Name / User */}
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">

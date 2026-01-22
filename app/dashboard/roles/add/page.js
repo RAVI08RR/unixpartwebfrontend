@@ -33,15 +33,15 @@ export default function AddRolePage() {
            </div>
            
            <div className="flex items-center gap-3">
-             <button className="flex items-center gap-2 px-4 py-2.5 bg-black dark:bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 transition-colors">
+             <button className="flex items-center gap-2 px-4 py-2.5 bg-black dark:bg-zinc-800 text-white rounded-lg text-sm font-medium hover:bg-gray-900 dark:hover:bg-zinc-700 transition-colors">
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
              </button>
-             <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+             <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
                 <Download className="w-4 h-4" />
                 <span>Export</span>
              </button>
-             <Link href="/dashboard/roles" className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-900 dark:text-white rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
+             <Link href="/dashboard/roles" className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
                 <Plus className="w-4 h-4" />
                 <span>List User</span>
              </Link>
