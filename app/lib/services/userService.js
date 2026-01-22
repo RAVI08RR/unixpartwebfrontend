@@ -13,7 +13,8 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
-    return fetchApi('/api/users/', {
+    console.log("userService.create: POST /api/users", userData);
+    return fetchApi('/api/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });

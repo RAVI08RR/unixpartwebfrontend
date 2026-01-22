@@ -48,7 +48,14 @@ export default function AddUserPage() {
   const handleSubmit = async () => {
       // Basic validation
       if(!formData.name || !formData.email || !formData.password || !formData.user_code || !formData.role_id) {
-          alert("Please fill in all required fields");
+          alert("Please fill in all required fields (Name, Email, Password, User Code, and Role)");
+          return;
+      }
+
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+          alert("Your session has expired or you are not logged in. Please log in again.");
+          router.push("/");
           return;
       }
 
@@ -60,19 +67,22 @@ export default function AddUserPage() {
               email: formData.email,
               password: formData.password,
               user_code: formData.user_code,
-              role_id: parseInt(formData.role_id), // Ensure integer
+              role_id: parseInt(formData.role_id), // Ensure it's a number
               status: true,
               branch_ids: formData.branch ? [parseInt(formData.branch)] : [],
-              supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : []
+              supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : [],
+              permission_ids: [] // Added to match backend schema requirements
           };
 
-          console.log("Creating user with payload:", payload);
+          console.log("Creating User with Auth Token Presence:", !!token);
+          console.log("Payload:", payload);
 
           await userService.create(payload);
+          alert("User created successfully!");
           router.push("/dashboard/users");
       } catch (error) {
-          console.error("Failed to create user", error);
-          alert(error.message || "Failed to create user");
+          console.error("User Creation Error:", error);
+          alert(`Failed to create user: ${error.message}`);
       } finally {
           setLoading(false);
       }
