@@ -36,11 +36,10 @@ export default function LoginPage() {
     } catch (err) {
         console.error("Login error", err);
         
-        // DEVELOPMENT FALLBACK: Use mock login when API is unavailable
-        if (err.message.includes('Unable to connect to server')) {
-            console.warn("API unavailable, using mock authentication for development");
-            // Mock successful login
-            const mockToken = "mock_token_" + Date.now();
+        // DEVELOPMENT FALLBACK: Only use mock login if the server is physically unreachable
+        if (err.message.includes('Network error') || err.message.includes('Failed to fetch')) {
+            console.warn("API unreachable, using 'OFFLINE_MODE' for development");
+            const mockToken = "mock_OFFLINE_USER_" + Date.now();
             localStorage.setItem("access_token", mockToken);
             localStorage.setItem("current_user", JSON.stringify({
                 id: 1,

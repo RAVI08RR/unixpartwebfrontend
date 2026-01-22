@@ -4,7 +4,9 @@ export const API_BASE_URL = IS_SERVER
   : "/backend-api";
 
 export async function fetchApi(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Global URL cleaner: Removes trailing slash before query params or at the end
+  const cleanEndpoint = endpoint.replace(/\/(\?|$)/, '$1');
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
   
   const defaultHeaders = {
     "Content-Type": "application/json",
@@ -24,6 +26,15 @@ export async function fetchApi(endpoint, options = {}) {
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
+      if (process.env.NODE_ENV === 'development') {
+        if (token.startsWith('mock_')) {
+          console.warn(`🛡️ [fetchApi] Using MOCK token for ${cleanEndpoint}. Request WILL FAIL with 401 if backend is real!`);
+        } else {
+          console.log("🔑 Injected Authorization header");
+        }
+      }
+    } else {
+      console.warn(`⚠️ No access_token found for ${cleanEndpoint} - expecting 401`);
     }
   }
 
