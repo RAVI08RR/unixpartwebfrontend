@@ -1,58 +1,54 @@
 "use client";
 
-import { Check, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Check, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ThemeToggle } from "./dashboard/ThemeToggle";
-import { authService } from "./lib/services/authService";
+import { ThemeToggle } from "../dashboard/ThemeToggle";
+import { authService } from "../lib/services/authService";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [roleId, setRoleId] = useState("1");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     
+    if (!name || !email || !password) {
+      setError("Please fill in all required fields");
+      setLoading(false);
+      return;
+    }
+
     try {
-        const response = await authService.login(email, password);
+        const response = await authService.register({
+          name,
+          email,
+          password,
+          role_id: parseInt(roleId)
+        });
+        
         if (response && response.access_token) {
             localStorage.setItem("access_token", response.access_token);
-            // Also store user info if available
-            if (response.user) {
-                localStorage.setItem("current_user", JSON.stringify(response.user));
-            }
+            // Store user info if available, or create a basic object from state
+            const userInfo = response.user || { name, email, role: { name: "User" } };
+            localStorage.setItem("current_user", JSON.stringify(userInfo));
             router.push("/dashboard");
         } else {
-            setError("Login failed. No token received.");
+            setError("Signup successful! Please login.");
+            setTimeout(() => router.push("/"), 2000);
         }
     } catch (err) {
-        console.error("Login error", err);
-        
-        // DEVELOPMENT FALLBACK: Use mock login when API is unavailable
-        if (err.message.includes('Unable to connect to server')) {
-            console.warn("API unavailable, using mock authentication for development");
-            // Mock successful login
-            const mockToken = "mock_token_" + Date.now();
-            localStorage.setItem("access_token", mockToken);
-            localStorage.setItem("current_user", JSON.stringify({
-                id: 1,
-                name: "Demo User",
-                email: "demo@unixparts.com",
-                role: { name: "Administrator" }
-            }));
-            router.push("/dashboard");
-            return;
-        }
-        
-        setError(err.message || "Login failed. Please check your credentials.");
+        console.error("Signup error", err);
+        setError(err.message || "Signup failed. Please try again.");
     } finally {
         setLoading(false);
     }
@@ -72,11 +68,11 @@ export default function LoginPage() {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Welcome to Unixparts
+            Join Unixparts
           </h1>
           
           <p className="text-gray-400 text-lg leading-relaxed">
-            Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows across all branches—securely and efficiently.
+            Create your account to access the internal Unixparts system and manage inventory, sales, warehouse operations, suppliers, and financial workflows.
           </p>
 
           <div className="space-y-6 pt-6">
@@ -84,19 +80,19 @@ export default function LoginPage() {
               <div className="bg-white/10 p-2 rounded-lg">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Inventory, containers, and warehouse operations</span>
+              <span className="text-gray-300">Secure access to all modules</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-white/10 p-2 rounded-lg">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Sales, invoicing, and customer accounts</span>
+              <span className="text-gray-300">Real-time data synchronization</span>
             </div>
             <div className="flex items-center gap-4">
               <div className="bg-white/10 p-2 rounded-lg">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Supplier settlements and expense tracking</span>
+              <span className="text-gray-300">Multi-branch support</span>
             </div>
           </div>
         </div>
@@ -105,18 +101,33 @@ export default function LoginPage() {
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* Right Panel - Login Form */}
+      {/* Right Panel - Signup Form */}
       <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
         <div className="max-w-xl w-full mx-auto space-y-8">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
-              <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
-              <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
+              <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Create Account</h2>
+              <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Sign up to get started</p>
             </div>
             <ThemeToggle className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
           </div>
 
-          <form className="space-y-5" onSubmit={handleLogin}>
+          <form className="space-y-5" onSubmit={handleSignup}>
+            <div className="space-y-2">
+              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Full Name</label>
+              <div className="relative group">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                <input 
+                  type="text" 
+                  placeholder="Enter your full name"
+                  className="w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Email Address</label>
               <div className="relative group">
@@ -154,14 +165,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
-                <span className="text-base text-gray-600 dark:text-gray-400">Remember me</span>
-              </label>
-              <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
-            </div>
-
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
             <button 
@@ -169,12 +172,12 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-black dark:bg-white dark:text-black text-white font-medium py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? "Creating Account..." : "Sign Up"}
             </button>
           </form>
 
           <p className="text-center text-base text-gray-500 dark:text-gray-400">
-            Don't have an account? <Link href="/signup" className="text-black dark:text-white font-bold hover:underline">Sign up</Link>
+            Already have an account? <Link href="/" className="text-black dark:text-white font-bold hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

@@ -5,12 +5,36 @@ import {
   MoreVertical, Menu
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "./Sidebar";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
 import { ThemeToggle } from "./ThemeToggle";
+import { useCurrentUser } from "../lib/hooks/useCurrentUser";
+import { authService } from "../lib/services/authService";
+import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 
 function Topbar() {
+  const router = useRouter();
   const { toggleSidebar, toggleMobileSidebar } = useSidebar();
+  const { user } = useCurrentUser();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await authService.logout();
+    localStorage.removeItem('current_user');
+    router.push("/");
+  };
+
+  // Get user initials
+  const getInitials = (name) => {
+    if (!name) return "AU";
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300"
@@ -52,14 +76,82 @@ function Topbar() {
           <Bell className="w-5 h-5 text-gray-500" />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-zinc-950"></span>
         </button>
-        <div className="flex items-center gap-3 pl-3 md:pl-6 border-l border-gray-100 dark:border-zinc-900">
-           <div className="hidden md:block text-right">
-              <p className="text-sm font-bold dark:text-white leading-tight">Admin User</p>
-              <p className="text-xs text-gray-500">Super Admin</p>
-           </div>
-           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center font-bold text-gray-700 dark:text-gray-300 shadow-inner">
-              AU
-           </div>
+        <div className="relative">
+          <button 
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="flex items-center gap-3 pl-3 md:pl-6 border-l border-gray-100 dark:border-zinc-900 group hover:opacity-80 transition-all"
+          >
+             <div className="hidden md:block text-right">
+                <p className="text-sm font-bold dark:text-white leading-tight">
+                  {user?.name || "Loading..."}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {user?.role?.name || "User"}
+                </p>
+             </div>
+             <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center font-bold text-gray-700 dark:text-gray-300 shadow-inner group-hover:scale-95 transition-transform">
+                {getInitials(user?.name)}
+             </div>
+          </button>
+
+          {isProfileOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsProfileOpen(false)}
+              />
+              <div className="absolute right-0 mt-4 w-72 bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-2xl z-20 py-3 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-4 mb-2 border-b border-gray-50 dark:border-zinc-800">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black font-black text-xl">
+                      {getInitials(user?.name)}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[15px] font-black dark:text-white truncate leading-tight">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <button 
+                    onClick={() => {
+                        setIsProfileOpen(false);
+                        router.push("/dashboard/settings/profile");
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                  >
+                    <UserIcon className="w-4 h-4" />
+                    <span>View Profile</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                        setIsProfileOpen(false);
+                        router.push("/dashboard/settings");
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                  >
+                    <SettingsIcon className="w-4 h-4" />
+                    <span>Account Settings</span>
+                  </button>
+                  
+                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-2 mx-2" />
+                  
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </header>

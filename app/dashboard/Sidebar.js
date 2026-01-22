@@ -8,16 +8,24 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { NavItem } from "./NavItem";
+import { authService } from "../lib/services/authService";
 
 export function Sidebar() {
+  const router = useRouter();
   const { 
     isSidebarOpen, isMobileOpen, setIsMobileOpen, 
     activeCategory, changeCategory, isSecondaryOpen 
   } = useSidebar();
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await authService.logout();
+    localStorage.removeItem('current_user');
+    router.push("/");
+  };
 
   const menuGroups = [
     {
@@ -159,7 +167,7 @@ export function Sidebar() {
               )}
               
               {/* Tooltip for desktop */}
-              <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[100] shadow-xl border border-white/10">
+              <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
                 {group.label}
               </div>
 
@@ -171,7 +179,10 @@ export function Sidebar() {
 
       {/* Logout */}
       <div className="mt-auto px-3 w-full">
-        <button className="w-full aspect-square rounded-2xl flex items-center justify-center text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all">
+        <button 
+          onClick={handleLogout}
+          className="w-full aspect-square rounded-2xl flex items-center justify-center text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-all font-black"
+        >
           <LogOut className="w-5 h-5 shrink-0" />
         </button>
       </div>
