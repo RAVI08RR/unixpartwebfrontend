@@ -3,7 +3,7 @@ import { fetchApi } from '../api';
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
-    return fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
+    return fetchApi(`/api/users/?skip=${skip}&limit=${limit}`);
   },
 
   // Get single user by ID
@@ -13,8 +13,8 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
-    console.log("userService.create: POST /api/users", userData);
-    return fetchApi('/api/users', {
+    console.log("userService.create: POST /api/users/", userData);
+    return fetchApi('/api/users/', {
       method: 'POST',
       body: JSON.stringify(userData),
     });

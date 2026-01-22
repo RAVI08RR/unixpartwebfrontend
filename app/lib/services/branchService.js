@@ -3,7 +3,7 @@ import { fetchApi } from '../api';
 export const branchService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
-      const data = await fetchApi(`/api/branches?skip=${skip}&limit=${limit}`);
+      const data = await fetchApi(`/api/branches/?skip=${skip}&limit=${limit}`);
       return Array.isArray(data) ? data : (data?.branches || []);
     } catch (error) {
        console.warn("Branches API failed, using fallbacks:", error.message);

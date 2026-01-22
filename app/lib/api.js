@@ -4,9 +4,7 @@ export const API_BASE_URL = IS_SERVER
   : "/backend-api";
 
 export async function fetchApi(endpoint, options = {}) {
-  // Global URL cleaner: Removes trailing slash before query params or at the end
-  const cleanEndpoint = endpoint.replace(/\/(\?|$)/, '$1');
-  const url = `${API_BASE_URL}${cleanEndpoint}`;
+  const url = `${API_BASE_URL}${endpoint}`;
   
   const defaultHeaders = {
     "Content-Type": "application/json",
