@@ -240,7 +240,7 @@ export default function AddUserPage() {
                     >
                       {permissions[module.id][type] && <Check className="w-2.5 h-2.5" />}
                     </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400 capitalize select-none">{type}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 capitalize select-none">{type}</span>
                   </label>
                 ))}
               </div>

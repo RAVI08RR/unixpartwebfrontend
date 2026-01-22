@@ -401,7 +401,7 @@ export default function UserManagementPage() {
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
                               : 'bg-gray-100 text-gray-600 dark:bg-zinc-800'
                           }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ring-2 ring-current ring-offset-2 ring-offset-transparent ${
+                            <div className={`w-1.5 h-1.5 rounded-full ${
                               user.status === 'Active' ? 'bg-green-600' : user.status === 'Suspended' ? 'bg-red-600' : 'bg-gray-400'
                             }`}></div>
                             {user.status}
