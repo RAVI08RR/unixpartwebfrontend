@@ -462,9 +462,16 @@ export default function UserManagementPage() {
 
                       {/* Branch */}
                       <td className="px-6 py-6">
-                             <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                                {user.branches && user.branches.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Main Warehouse"}
-                             </span>
+                              <div className="flex flex-col gap-1">
+                                <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                                   {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
+                                </span>
+                                {user.suppliers?.length > 0 && (
+                                  <span className="text-xs font-medium text-blue-500">
+                                    {user.suppliers.map(s => s.name || s.supplier_code).join(", ")}
+                                  </span>
+                                )}
+                              </div>
                       </td>
 
                       {/* Status */}
