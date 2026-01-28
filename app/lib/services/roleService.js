@@ -3,7 +3,7 @@ import { fetchApi } from '../api';
 export const roleService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
-      return await fetchApi(`/api/roles/?skip=${skip}&limit=${limit}`);
+      return await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
     } catch (error) {
       console.warn("Roles API failed or not found, using fallback roles:", error.message);
       return [

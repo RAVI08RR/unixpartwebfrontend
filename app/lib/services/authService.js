@@ -1,4 +1,4 @@
-import { fetchApi, clearAuthToken } from '../api';
+import { fetchApi } from '../api';
 
 export const authService = {
   login: async (email, password) => {

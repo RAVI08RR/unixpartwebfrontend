@@ -52,7 +52,6 @@ export async function fetchApi(endpoint, options = {}) {
 
   const config = {
     ...options,
-    mode: 'cors',
     headers,
   };
 
