@@ -46,8 +46,9 @@ export async function fetchApi(endpoint, options = {}) {
     ...options.headers,
   };
 
-  // Always attach token if available, even for mock/auth bypass requests
-  if (token) {
+  // Always attach token if available, UNLESS it's an auth endpoint (login/register)
+  const isAuthEndpoint = endpoint.includes('auth/login') || endpoint.includes('auth/register');
+  if (token && !isAuthEndpoint) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
