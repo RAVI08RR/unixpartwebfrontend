@@ -37,14 +37,7 @@ export async function fetchApi(endpoint, options = {}) {
   const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}/${safeEndpoint}`;
   
   const token = getAuthToken();
-  const isMockToken = token && (token.startsWith('mock_') || token.includes('OFFLINE'));
-
-  // 2. Prevent real network calls if using a mock/offline token, UNLESS logging in
-  const isAuthRequest = endpoint.includes('login') || endpoint.includes('register');
-  if (isMockToken && !isAuthRequest) {
-    console.warn(`🔒 Skipping Network Request (Mock Mode): ${url}`);
-    return null;
-  }
+  // Mock mode check removed as requested - all requests will attempt network call
   
   const headers = {
     "Accept": "application/json",
