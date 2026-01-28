@@ -71,7 +71,10 @@ export async function fetchApi(endpoint, options = {}) {
     if (config.headers['Authorization']) {
        console.log(`🔑 Header sent: ${config.headers['Authorization'].substring(0, 15)}...`);
     } else {
-       console.warn(`⚠️ No Authorization header present for ${url}`);
+       const isAuth = url.includes('login') || url.includes('register');
+       if (!isAuth) {
+         console.warn(`⚠️ No Authorization header present for ${url}`);
+       }
     }
   }
 
