@@ -8,10 +8,12 @@
  * - Works in both browser and Vercel edge runtime
  */
 export const getApiBaseUrl = () => {
-  // if (typeof window !== 'undefined') {
-  //   return "/backend-api";
-  // }
-  // https://ccb7878ed7f8.ngrok-free.app
+  // Use environment variable if available
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Fallback for local development
   return "https://ccb7878ed7f8.ngrok-free.app";
 };
 

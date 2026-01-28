@@ -43,7 +43,7 @@ export default function LoginPage() {
         // DEVELOPMENT FALLBACK: Only use mock login if the server is physically unreachable
         if (err.message.includes('Network error') || err.message.includes('Failed to fetch')) {
             console.warn("API unreachable, using 'OFFLINE_MODE' for development");
-            // const mockToken = "mock_OFFLINE_USER_" + Date.now();
+            const mockToken = "mock_OFFLINE_USER_" + Date.now();
             setAuthToken(mockToken);
             localStorage.setItem("current_user", JSON.stringify({
                 id: 1,
@@ -127,6 +127,7 @@ export default function LoginPage() {
                 <input 
                   type="email" 
                   placeholder="Enter Email Address"
+                  autoComplete="email"
                   className="w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -142,6 +143,7 @@ export default function LoginPage() {
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password"
+                  autoComplete="current-password"
                   className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
