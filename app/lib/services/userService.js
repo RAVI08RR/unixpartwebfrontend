@@ -3,38 +3,39 @@ import { fetchApi, API_BASE_URL } from '../api';
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
-    return fetchApi(`${API_BASE_URL}/api/users/?skip=${skip}&limit=${limit}`);
+    return fetchApi(`/api/users/?skip=${skip}&limit=${limit}`);
   },
 
   // Get single user by ID
   getById: async (id) => {
-    return fetchApi(`${API_BASE_URL}/api/users/${id}/`);
+    return fetchApi(`/api/users/${id}`);
+  },
+
+  // Debug method to check available users
+  debugListUsers: async () => {
+    try {
+      console.log('🔍 Fetching users list for debugging...');
+      const users = await userService.getAll(0, 10);
+      console.log('📋 Available users:', users);
+      if (Array.isArray(users) && users.length > 0) {
+        console.log('🆔 Available user IDs:', users.map(u => u.id));
+      } else {
+        console.log('⚠️ No users found or unexpected response format');
+      }
+      return users;
+    } catch (error) {
+      console.error('❌ Failed to fetch users for debugging:', error);
+      return [];
+    }
   },
 
   // Create new user
   create: async (userData) => {
     console.log("userService.create: POST /api/users/", userData);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/users/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify(userData)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to create user');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
-    }
+    return fetchApi('/api/users/', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
   },
 
 // Update existing user
@@ -45,15 +46,8 @@ update: async (id, userData) => {
   });
 
   try {
-    // First, let's verify the user exists by trying to fetch it
-    console.log('🔍 Verifying user exists...');
-    try {
-      const existingUser = await userService.getById(id);
-      console.log('✅ User exists:', existingUser);
-    } catch (fetchError) {
-      console.error('❌ User fetch failed:', fetchError.message);
-      throw new Error(`User with ID ${id} not found or not accessible`);
-    }
+    // First, let's see what users are available
+    await userService.debugListUsers();
 
     // Clean the data - remove undefined/null values
     const cleanData = Object.fromEntries(
@@ -61,13 +55,31 @@ update: async (id, userData) => {
     );
     console.log('🧹 Cleaned data:', cleanData);
 
-    // Use fetchApi helper like other services, with PUT method
-    // Try without trailing slash first
-    console.log('🔄 Attempting PUT request...');
-    return await fetchApi(`/api/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(cleanData),
-    });
+    // Try different endpoint formats to see which one works
+    const endpointsToTry = [
+      `/api/users/${id}`,      // Without trailing slash
+      `/api/users/${id}/`,     // With trailing slash
+      `/users/${id}`,          // Without /api prefix
+      `/users/${id}/`          // Without /api prefix, with trailing slash
+    ];
+
+    let lastError;
+    for (const endpoint of endpointsToTry) {
+      try {
+        console.log(`🔄 Trying endpoint: ${endpoint}`);
+        return await fetchApi(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify(cleanData),
+        });
+      } catch (error) {
+        console.warn(`❌ Endpoint ${endpoint} failed:`, error.message);
+        lastError = error;
+        continue;
+      }
+    }
+
+    // If all endpoints failed, throw the last error
+    throw lastError;
   } catch (error) {
     console.error('❌ Error in update:', {
       error: error.message,
@@ -80,24 +92,9 @@ update: async (id, userData) => {
 
   // Delete user
   delete: async (id) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-          'ngrok-skip-browser-warning': 'true'
-        }
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to delete user');
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      throw error;
-    }
+    console.log('🗑️ Deleting user:', id);
+    return fetchApi(`/api/users/${id}`, {
+      method: 'DELETE',
+    });
   },
 };
