@@ -1,9 +1,7 @@
 // Fallback API URL (absolute)
 // Base URL logic: Use proxy on client, environment variable or fallback on server
 export const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return "/backend-api";
-  }
+  // Direct access to backend as user requested, bypassing local proxy
   return process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app";
 };
 
