@@ -40,7 +40,7 @@ export default function LoginPage() {
         // DEVELOPMENT FALLBACK: Only use mock login if the server is physically unreachable
         if (err.message.includes('Network error') || err.message.includes('Failed to fetch')) {
             console.warn("API unreachable, using 'OFFLINE_MODE' for development");
-            const mockToken = "mock_OFFLINE_USER_" + Date.now();
+            // const mockToken = "mock_OFFLINE_USER_" + Date.now();
             setAuthToken(mockToken);
             localStorage.setItem("current_user", JSON.stringify({
                 id: 1,

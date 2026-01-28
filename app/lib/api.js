@@ -1,10 +1,11 @@
 // Fallback API URL (absolute)
 // Base URL logic: Use proxy on client, environment variable or fallback on server
 export const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    return "/backend-api";
-  }
-  return process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app";
+  // if (typeof window !== 'undefined') {
+  //   return "/backend-api";
+  // }
+  // https://ccb7878ed7f8.ngrok-free.app
+  return "https://ccb7878ed7f8.ngrok-free.app";
 };
 
 export const API_BASE_URL = getApiBaseUrl(); // Keep for legacy if needed, but use internal logic for fetch
@@ -41,6 +42,7 @@ export async function fetchApi(endpoint, options = {}) {
     "Accept": "application/json",
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
+    // "Access to fetch at 'https://ccb7878ed7f8.ngrok-free.app/api/users/?skip=0&limit=100' from origin 'http://localhost:3000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource."
     ...options.headers,
   };
 
@@ -55,9 +57,7 @@ export async function fetchApi(endpoint, options = {}) {
 
   // Debug logging for developers
   if (process.env.NODE_ENV === 'development') {
-    const realTarget = url.startsWith('/backend-api') 
-        ? url.replace('/backend-api', process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app")
-        : url;
+    const realTarget = "https://ccb7878ed7f8.ngrok-free.app";
         
     console.log(`🚀 Proxied Request: ${config.method || 'GET'} ${url}`);
     console.log(`👉 Real Target: ${realTarget}`);
