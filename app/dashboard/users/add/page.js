@@ -11,6 +11,7 @@ import {
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
 import { branchService } from "@/app/lib/services/branchService";
+import { usePermissions } from "@/app/lib/hooks/usePermissions";
 
 // Custom hook to fetch branches
 const useBranches = () => {
@@ -76,6 +77,7 @@ const useBranches = () => {
 export default function AddUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
   const [roles, setRoles] = useState([
     { id: 1, name: "Administrator" },
     { id: 2, name: "Manager" },
@@ -97,8 +99,45 @@ export default function AddUserPage() {
     user_code: "",
     role_id: "",
     branch: "",
-    supplier: ""
+    supplier: "",
+    permission_ids: []
   });
+
+  // Permission selection handlers
+  const handlePermissionToggle = (permissionId) => {
+    setFormData(prev => ({
+      ...prev,
+      permission_ids: prev.permission_ids.includes(permissionId)
+        ? prev.permission_ids.filter(id => id !== permissionId)
+        : [...prev.permission_ids, permissionId]
+    }));
+  };
+
+  const handleModuleToggle = (modulePermissions) => {
+    const moduleIds = modulePermissions.map(p => p.id);
+    const allSelected = moduleIds.every(id => formData.permission_ids.includes(id));
+    
+    setFormData(prev => ({
+      ...prev,
+      permission_ids: allSelected
+        ? prev.permission_ids.filter(id => !moduleIds.includes(id))
+        : [...new Set([...prev.permission_ids, ...moduleIds])]
+    }));
+  };
+
+  const selectAllPermissions = () => {
+    setFormData(prev => ({
+      ...prev,
+      permission_ids: permissions.map(p => p.id)
+    }));
+  };
+
+  const clearAllPermissions = () => {
+    setFormData(prev => ({
+      ...prev,
+      permission_ids: []
+    }));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -145,7 +184,7 @@ export default function AddUserPage() {
               status: true,
               branch_ids: formData.branch ? [parseInt(formData.branch)] : [],
               supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : [],
-              permission_ids: [] 
+              permission_ids: formData.permission_ids
           };
 
           // Final check for valid numeric IDs
@@ -158,7 +197,8 @@ export default function AddUserPage() {
           console.log("🚀 SUBMITTING NEW USER:", {
             token: !!token,
             apiUrl: "/backend-api/api/users",
-            payload
+            payload,
+            selectedPermissions: formData.permission_ids.length
           });
 
           await userService.create(payload);
@@ -340,6 +380,140 @@ export default function AddUserPage() {
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
+      </div>
+
+      {/* Permissions Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Select the permissions for this user</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={selectAllPermissions}
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            >
+              Select All
+            </button>
+            <button
+              type="button"
+              onClick={clearAllPermissions}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        </div>
+
+        {permissionsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">Loading permissions...</div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6">
+            <div className="space-y-6">
+              {Object.entries(groupedPermissions).map(([module, modulePermissions]) => {
+                const allSelected = modulePermissions.every(p => formData.permission_ids.includes(p.id));
+                const someSelected = modulePermissions.some(p => formData.permission_ids.includes(p.id));
+                
+                return (
+                  <div key={module} className="space-y-3">
+                    {/* Module Header */}
+                    <div className="flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => handleModuleToggle(modulePermissions)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          allSelected
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                            : someSelected
+                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-500'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                          allSelected
+                            ? 'bg-blue-600 border-blue-600'
+                            : someSelected
+                            ? 'bg-blue-100 border-blue-400'
+                            : 'border-gray-300 dark:border-zinc-600'
+                        }`}>
+                          {allSelected && <Check className="w-3 h-3 text-white" />}
+                          {someSelected && !allSelected && <div className="w-2 h-2 bg-blue-600 rounded-sm" />}
+                        </div>
+                        <span className="font-semibold">{module}</span>
+                        <span className="text-xs opacity-75">
+                          ({modulePermissions.filter(p => formData.permission_ids.includes(p.id)).length}/{modulePermissions.length})
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Module Permissions */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {modulePermissions.map((permission) => {
+                        const isSelected = formData.permission_ids.includes(permission.id);
+                        return (
+                          <label
+                            key={permission.id}
+                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                              isSelected
+                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700'
+                            }`}
+                          >
+                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center mt-0.5 ${
+                              isSelected
+                                ? 'bg-blue-600 border-blue-600'
+                                : 'border-gray-300 dark:border-zinc-600'
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 text-white" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                {permission.name}
+                              </div>
+                              {permission.description && (
+                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {permission.description}
+                                </div>
+                              )}
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handlePermissionToggle(permission.id)}
+                              className="sr-only"
+                            />
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Selected Permissions Summary */}
+            {formData.permission_ids.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Selected Permissions: {formData.permission_ids.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearAllPermissions}
+                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}

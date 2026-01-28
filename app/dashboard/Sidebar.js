@@ -22,9 +22,19 @@ export function Sidebar() {
   const pathname = usePathname();
 
   const handleLogout = async () => {
-    await authService.logout();
-    localStorage.removeItem('current_user');
-    router.push("/");
+    console.log("🔄 Sidebar logout initiated...");
+    try {
+      await authService.logout();
+      console.log("✅ Sidebar logout successful, redirecting to login page...");
+      // Redirect to login page
+      router.push("/");
+    } catch (error) {
+      console.error("❌ Sidebar logout failed:", error);
+      // Even if logout API fails, clear local data and redirect
+      await authService.logout();
+      console.log("🔄 Sidebar forced logout, redirecting to login page...");
+      router.push("/");
+    }
   };
 
   const menuGroups = [

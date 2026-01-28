@@ -20,9 +20,19 @@ function Topbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleLogout = async () => {
-    await authService.logout();
-    localStorage.removeItem('current_user');
-    router.push("/");
+    console.log("🔄 Logout initiated...");
+    try {
+      await authService.logout();
+      console.log("✅ Logout successful, redirecting to login page...");
+      // Redirect to login page
+      router.push("/");
+    } catch (error) {
+      console.error("❌ Logout failed:", error);
+      // Even if logout API fails, clear local data and redirect
+      await authService.logout();
+      console.log("🔄 Forced logout, redirecting to login page...");
+      router.push("/");
+    }
   };
 
   // Get user initials
