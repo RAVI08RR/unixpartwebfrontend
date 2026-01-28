@@ -3,10 +3,9 @@ import { fetchApi } from '../api';
 export const roleService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
-      return await fetchApi(`/api/roles/?skip=${skip}&limit=${limit}`);
+      return await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
     } catch (error) {
       console.warn("Roles API failed or not found, using fallback roles:", error.message);
-      // Fallback roles based on common system patterns
       return [
         { id: 1, name: "Administrator" },
         { id: 2, name: "Manager" },
@@ -16,25 +15,25 @@ export const roleService = {
   },
 
   getById: async (id) => {
-    return fetchApi(`/api/roles/${id}/`);
+    return fetchApi(`/api/roles/${id}`);
   },
 
   create: async (roleData) => {
-    return fetchApi('/api/roles/', {
+    return fetchApi('/api/roles', {
       method: 'POST',
       body: JSON.stringify(roleData),
     });
   },
 
   update: async (id, roleData) => {
-    return fetchApi(`/api/roles/${id}/`, {
+    return fetchApi(`/api/roles/${id}`, {
       method: 'PUT',
       body: JSON.stringify(roleData),
     });
   },
 
   delete: async (id) => {
-    return fetchApi(`/api/roles/${id}/`, {
+    return fetchApi(`/api/roles/${id}`, {
       method: 'DELETE',
     });
   },
