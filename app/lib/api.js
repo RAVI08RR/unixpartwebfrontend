@@ -59,6 +59,11 @@ export async function fetchApi(endpoint, options = {}) {
   // Debug logging for developers
   if (process.env.NODE_ENV === 'development') {
     console.log(`🚀 API Request: ${config.method || 'GET'} ${url}`);
+    if (config.headers['Authorization']) {
+       console.log(`🔑 Header sent: ${config.headers['Authorization'].substring(0, 15)}...`);
+    } else {
+       console.warn(`⚠️ No Authorization header present for ${url}`);
+    }
   }
 
   try {
