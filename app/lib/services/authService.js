@@ -2,14 +2,14 @@ import { fetchApi } from '../api';
 
 export const authService = {
   login: async (email, password) => {
-    return fetchApi('/api/auth/login', {
+    return fetchApi('/api/auth/login/', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   },
 
   register: async (userData) => {
-    return fetchApi('/api/auth/register', {
+    return fetchApi('/api/auth/register/', {
         method: 'POST',
         body: JSON.stringify(userData),
     });
@@ -17,7 +17,7 @@ export const authService = {
 
   logout: async () => {
     try {
-        await fetchApi('/api/auth/logout', { method: 'POST' });
+        await fetchApi('/api/auth/logout/', { method: 'POST' });
     } catch (e) {
         console.error("Logout API failed", e);
     }
@@ -25,6 +25,6 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-      return fetchApi('/api/auth/me');
+      return fetchApi('/api/auth/me/');
   }
 };
