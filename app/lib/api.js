@@ -1,12 +1,10 @@
 // Fallback API URL (absolute)
-const FALLBACK_URL = "https://ccb7878ed7f8.ngrok-free.app";
-
 // Base URL logic: Use proxy on client, environment variable or fallback on server
 export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     return "/backend-api";
   }
-  return process.env.NEXT_PUBLIC_API_URL || FALLBACK_URL;
+  return process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app";
 };
 
 export const API_BASE_URL = getApiBaseUrl(); // Keep for legacy if needed, but use internal logic for fetch
