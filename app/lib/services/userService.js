@@ -1,12 +1,10 @@
-import { fetchApi, API_BASE_URL } from '../api';
+import { fetchApi } from '../api';
 
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
     return fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
   },
-
-  
 
   // Get single user by ID
   getById: async (id) => {
