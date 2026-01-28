@@ -1,4 +1,15 @@
-export const API_BASE_URL = typeof window !== 'undefined' ? "/backend-api" : (process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app");
+// Fallback API URL (absolute)
+const FALLBACK_URL = "https://ccb7878ed7f8.ngrok-free.app";
+
+// Base URL logic: Use proxy on client, environment variable or fallback on server
+export const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return "/backend-api";
+  }
+  return process.env.NEXT_PUBLIC_API_URL || FALLBACK_URL;
+};
+
+export const API_BASE_URL = getApiBaseUrl(); // Keep for legacy if needed, but use internal logic for fetch
 
 // Token Storage Management
 const TOKEN_KEY = 'access_token';
@@ -23,7 +34,8 @@ export const clearAuthToken = () => {
 };
 
 export async function fetchApi(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const baseUrl = getApiBaseUrl();
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
   
   const token = getAuthToken();
   
