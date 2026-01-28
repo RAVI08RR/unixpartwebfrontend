@@ -53,6 +53,7 @@ export async function fetchApi(endpoint, options = {}) {
     ...options.headers,
   };
 
+  // Always attach token if available, even for mock/auth bypass requests
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
