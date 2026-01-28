@@ -113,18 +113,6 @@ export default function AddUserPage() {
     }));
   };
 
-  const handleModuleToggle = (modulePermissions) => {
-    const moduleIds = modulePermissions.map(p => p.id);
-    const allSelected = moduleIds.every(id => formData.permission_ids.includes(id));
-    
-    setFormData(prev => ({
-      ...prev,
-      permission_ids: allSelected
-        ? prev.permission_ids.filter(id => !moduleIds.includes(id))
-        : [...new Set([...prev.permission_ids, ...moduleIds])]
-    }));
-  };
-
   const selectAllPermissions = () => {
     setFormData(prev => ({
       ...prev,
@@ -383,7 +371,7 @@ export default function AddUserPage() {
       </div>
 
       {/* Permissions Section */}
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
@@ -412,108 +400,61 @@ export default function AddUserPage() {
             <div className="text-gray-500">Loading permissions...</div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-6">
-            <div className="space-y-6">
-              {Object.entries(groupedPermissions).map(([module, modulePermissions]) => {
-                const allSelected = modulePermissions.every(p => formData.permission_ids.includes(p.id));
-                const someSelected = modulePermissions.some(p => formData.permission_ids.includes(p.id));
-                
-                return (
-                  <div key={module} className="space-y-3">
-                    {/* Module Header */}
-                    <div className="flex items-center gap-3 pb-2 border-b border-gray-100 dark:border-zinc-800">
-                      <button
-                        type="button"
-                        onClick={() => handleModuleToggle(modulePermissions)}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                          allSelected
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                            : someSelected
-                            ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-500'
-                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700'
-                        }`}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
+              <div key={module} className="space-y-3">
+                {/* Module Header */}
+                <div className="pb-2 border-b border-gray-200 dark:border-zinc-700">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{module}</h4>
+                </div>
+
+                {/* Module Permissions */}
+                <div className="space-y-2">
+                  {modulePermissions.map((permission) => {
+                    const isSelected = formData.permission_ids.includes(permission.id);
+                    return (
+                      <label
+                        key={permission.id}
+                        className="flex items-center gap-2 cursor-pointer group"
                       >
-                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                          allSelected
-                            ? 'bg-blue-600 border-blue-600'
-                            : someSelected
-                            ? 'bg-blue-100 border-blue-400'
-                            : 'border-gray-300 dark:border-zinc-600'
-                        }`}>
-                          {allSelected && <Check className="w-3 h-3 text-white" />}
-                          {someSelected && !allSelected && <div className="w-2 h-2 bg-blue-600 rounded-sm" />}
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handlePermissionToggle(permission.id)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {permission.name}
+                          </div>
                         </div>
-                        <span className="font-semibold">{module}</span>
-                        <span className="text-xs opacity-75">
-                          ({modulePermissions.filter(p => formData.permission_ids.includes(p.id)).length}/{modulePermissions.length})
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* Module Permissions */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {modulePermissions.map((permission) => {
-                        const isSelected = formData.permission_ids.includes(permission.id);
-                        return (
-                          <label
-                            key={permission.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                              isSelected
-                                ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
-                                : 'bg-gray-50 border-gray-200 hover:bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700 dark:hover:bg-zinc-700'
-                            }`}
-                          >
-                            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center mt-0.5 ${
-                              isSelected
-                                ? 'bg-blue-600 border-blue-600'
-                                : 'border-gray-300 dark:border-zinc-600'
-                            }`}>
-                              {isSelected && <Check className="w-3 h-3 text-white" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                {permission.name}
-                              </div>
-                              {permission.description && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {permission.description}
-                                </div>
-                              )}
-                            </div>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handlePermissionToggle(permission.id)}
-                              className="sr-only"
-                            />
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Selected Permissions Summary */}
-            {formData.permission_ids.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Selected Permissions: {formData.permission_ids.length}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={clearAllPermissions}
-                    className="text-xs text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Clear All
-                  </button>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
-            )}
+            ))}
           </div>
         )}
+
+        {/* Selected Permissions Summary */}
+        {formData.permission_ids.length > 0 && (
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Selected Permissions: {formData.permission_ids.length}
+              </span>
+              <button
+                type="button"
+                onClick={clearAllPermissions}
+                className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
       </div>
 
       {/* Action Buttons */}
