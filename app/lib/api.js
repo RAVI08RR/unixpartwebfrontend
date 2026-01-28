@@ -13,7 +13,23 @@ const USER_KEY = 'current_user';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  let token = localStorage.getItem(TOKEN_KEY);
+  
+  if (!token) return null;
+
+  // Cleanup: Remove quotes if stored as JSON string
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1);
+  }
+
+  // Force-kill mock tokens to prevent them from being sent to real API
+  if (token.startsWith('mock_') || token.includes('OFFLINE')) {
+    console.warn("⚠️ Detected stale Mock Token. Clearing session to force real authentication.");
+    clearAuthToken(); 
+    return null;
+  }
+
+  return token;
 };
 
 export const setAuthToken = (token) => {
@@ -46,9 +62,11 @@ export async function fetchApi(endpoint, options = {}) {
     ...options.headers,
   };
 
-  // Always attach token if available, UNLESS it's an auth endpoint (login/register)
+  // Always attach token if available, UNLESS it's an auth endpoint or a mock token
   const isAuthEndpoint = endpoint.includes('auth/login') || endpoint.includes('auth/register');
-  if (token && !isAuthEndpoint) {
+  const isMockToken = token && (token.startsWith('mock_') || token.includes('OFFLINE'));
+  
+  if (token && !isAuthEndpoint && !isMockToken) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
