@@ -2,16 +2,53 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
-  Shield, Filter, Download, Plus, Check, Search
+  Shield, Filter, Download, Plus, Check, Search, Loader2
 } from "lucide-react";
+import { useRoles } from "../../lib/hooks/useRoles";
 
 export default function AddRolePage() {
+  const router = useRouter();
+  const { createRole } = useRoles();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    roleName: "",
-    roleType: "",
+    name: "",
     description: ""
   });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      alert('Role name is required');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await createRole({
+        name: formData.name.trim(),
+        description: formData.description.trim()
+      });
+      
+      // Success - redirect to roles list
+      router.push('/dashboard/roles');
+    } catch (error) {
+      console.error('Error creating role:', error);
+      alert(`Failed to create role: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   return (
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
@@ -50,7 +87,7 @@ export default function AddRolePage() {
       </div>
 
       {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
         {/* Role Name */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -59,29 +96,28 @@ export default function AddRolePage() {
           <div className="relative">
             <input 
               type="text"
+              name="name"
               placeholder="Enter Role name"
               className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.roleName}
-              onChange={(e) => setFormData({...formData, roleName: e.target.value})}
+              value={formData.name}
+              onChange={handleChange}
+              required
             />
           </div>
         </div>
 
-        {/* Role Type */}
+        {/* Placeholder for future fields */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Role Type <span className="text-red-500">*</span>
+            Status
           </label>
           <div className="relative">
             <select 
               className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-500"
-              value={formData.roleType}
-              onChange={(e) => setFormData({...formData, roleType: e.target.value})}
+              defaultValue="active"
             >
-              <option value="">Select Role Type</option>
-              <option value="admin">Admin</option>
-              <option value="user">User</option>
-              <option value="guest">Guest</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
               <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -94,30 +130,44 @@ export default function AddRolePage() {
         {/* Role Description - Spans full width */}
         <div className="space-y-1.5 lg:col-span-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Role Description <span className="text-red-500">*</span>
+            Role Description
           </label>
           <div className="relative">
             <textarea 
+              name="description"
               placeholder="Enter Role Description"
               rows={6}
               className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={handleChange}
             />
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4">
-        <button className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all">
-          <Check className="w-4 h-4" />
-          <span>Create Role</span>
-        </button>
-        <Link href="/dashboard/roles" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
-          Cancel
-        </Link>
-      </div>
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 lg:col-span-2">
+          <button 
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Creating...</span>
+              </>
+            ) : (
+              <>
+                <Check className="w-4 h-4" />
+                <span>Create Role</span>
+              </>
+            )}
+          </button>
+          <Link href="/dashboard/roles" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
+            Cancel
+          </Link>
+        </div>
+      </form>
     </div>
   );
 }
