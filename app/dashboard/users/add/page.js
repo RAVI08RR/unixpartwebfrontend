@@ -455,7 +455,6 @@ export default function AddUserPage() {
           </div>
         )}
       </div>
-      </div>
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
