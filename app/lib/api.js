@@ -92,10 +92,8 @@ export async function fetchApi(endpoint, options = {}) {
   };
 
   // Attach authorization token if available
-  // IMPORTANT: Don't send token for login/register endpoints
-  const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/register');
-  
-  if (token && !isAuthEndpoint) {
+  // NOTE: This backend requires token even for login/register endpoints
+  if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
