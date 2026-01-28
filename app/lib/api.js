@@ -22,13 +22,6 @@ export const getAuthToken = () => {
     token = token.slice(1, -1);
   }
 
-  // Force-kill mock tokens to prevent them from being sent to real API
-  if (token.startsWith('mock_') || token.includes('OFFLINE')) {
-    console.warn("⚠️ Detected stale Mock Token. Clearing session to force real authentication.");
-    clearAuthToken(); 
-    return null;
-  }
-
   return token;
 };
 
