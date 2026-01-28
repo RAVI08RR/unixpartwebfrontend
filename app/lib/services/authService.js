@@ -32,7 +32,7 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    // Try different possible endpoint formats
+    // Try different possible endpoint formats with optional flag
     const endpointsToTry = [
       '/api/auth/me/',      // Current format
       '/api/auth/me',       // Without trailing slash
@@ -45,14 +45,17 @@ export const authService = {
     for (const endpoint of endpointsToTry) {
       try {
         console.log(`🔍 Trying getCurrentUser endpoint: ${endpoint}`);
-        return await fetchApi(endpoint);
+        const result = await fetchApi(endpoint, { optional: true });
+        if (result !== null) {
+          return result;
+        }
       } catch (error) {
         console.warn(`❌ Endpoint ${endpoint} failed:`, error.message);
         continue;
       }
     }
 
-    // If all endpoints failed, throw a user-friendly error
+    // If all endpoints failed or returned null, throw a user-friendly error
     console.error('❌ All getCurrentUser endpoints failed - API may not support user profile endpoints');
     throw new Error('User profile API endpoints not available');
   }

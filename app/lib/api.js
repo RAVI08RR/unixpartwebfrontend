@@ -71,6 +71,9 @@ export async function fetchApi(endpoint, options = {}) {
   // Get auth token (client-side only, returns null on server)
   const token = getAuthToken();
   
+  // Check if this is an optional request (won't throw on 404)
+  const isOptional = options.optional || false;
+  
   // Build headers
   const headers = {
     "Accept": "application/json",
@@ -90,6 +93,9 @@ export async function fetchApi(endpoint, options = {}) {
     ...options,
     headers,
   };
+
+  // Remove the optional flag from config to avoid sending it to fetch
+  delete config.optional;
 
   // Development-only logging (verbose)
   if (process.env.NODE_ENV === 'development') {
@@ -147,6 +153,12 @@ export async function fetchApi(endpoint, options = {}) {
       } else {
         const textError = await response.text();
         errorData = { message: `Server error: ${response.status} ${response.statusText}`, details: textError };
+      }
+      
+      // For optional requests, return null on 404 instead of throwing
+      if (isOptional && response.status === 404) {
+        console.warn(`⚠️ Optional endpoint not found (404): ${url}`);
+        return null;
       }
       
       // Extract error message (FastAPI format)
