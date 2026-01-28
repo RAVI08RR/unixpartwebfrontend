@@ -30,10 +30,20 @@ export const clearAuthToken = () => {
 };
 
 export async function fetchApi(endpoint, options = {}) {
-  const baseUrl = getApiBaseUrl();
-  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+  const baseUrl = getApiBaseUrl().replace(/\/+$/, ""); // Remove trailing slash
+  const safeEndpoint = endpoint.replace(/^\/+/, ""); // Remove leading slash
+  
+  // 1. Normalize URL to prevent double slashes
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}/${safeEndpoint}`;
   
   const token = getAuthToken();
+  const isMockToken = token && (token.startsWith('mock_') || token.includes('OFFLINE'));
+
+  // 2. Prevent real network calls if using a mock/offline token
+  if (isMockToken) {
+    console.warn(`🔒 Skipping Network Request (Mock Mode): ${url}`);
+    return null;
+  }
   
   const headers = {
     "Accept": "application/json",
@@ -53,16 +63,7 @@ export async function fetchApi(endpoint, options = {}) {
 
   // Debug logging for developers
   if (process.env.NODE_ENV === 'development') {
-    const realTarget = url.startsWith('/backend-api') 
-        ? url.replace('/backend-api', process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app")
-        : url;
-        
-    console.log(`🚀 Proxied Request: ${config.method || 'GET'} ${url}`);
-    console.log(`👉 Real Target: ${realTarget}`);
-    
-    if (token) {
-      console.log(`🔑 Auth: Bearer ${token.substring(0, 10)}...`);
-    }
+    console.log(`🚀 API Request: ${config.method || 'GET'} ${url}`);
   }
 
   try {
@@ -70,16 +71,8 @@ export async function fetchApi(endpoint, options = {}) {
     
     // Handle 401 Unauthorized
     if (response.status === 401) {
-       const currentToken = getAuthToken();
-       const isMockToken = currentToken && (currentToken.startsWith('mock_') || currentToken.includes('OFFLINE'));
-       
-       if (isMockToken) {
-           console.warn(`🔒 Mock Session 401 (Ignored): ${url}`);
-           return null; 
-       }
-
        console.error(`🔒 AUTH FAILURE (401) on ${url}. Token is invalid or expired.`);
-       if (typeof window !== 'undefined' && currentToken) {
+       if (typeof window !== 'undefined' && token) {
          console.warn("Clearing invalid session.");
          clearAuthToken();
        }
@@ -95,6 +88,7 @@ export async function fetchApi(endpoint, options = {}) {
     let errorData = {};
     
     if (!response.ok) {
+      // 3. Improve error handling for JSON and text responses
       if (contentType && contentType.includes("application/json")) {
         errorData = await response.json();
       } else {
@@ -117,7 +111,7 @@ export async function fetchApi(endpoint, options = {}) {
 
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
-      console.log(`✅ API Success: ${url}`, data);
+      // console.log(`✅ API Success: ${url}`, data); // Reduced noise
       return data;
     } else {
       console.warn("Expected JSON but received:", contentType);
@@ -125,9 +119,9 @@ export async function fetchApi(endpoint, options = {}) {
     }
   } catch (error) {
     console.error(`❌ API Failed: ${url}`, error);
-    // Provide more helpful error messages
-    if (error.message === 'Failed to fetch') {
-      throw new Error('Network error: Unable to connect to the API. This could be a CORS issue or the server is down.');
+    // 3. Improve network error messages
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      throw new Error('Network error: Unable to connect to the API. Please check your internet connection or server status.');
     }
     throw error;
   }
