@@ -6,6 +6,8 @@ export const userService = {
     return fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
   },
 
+  
+
   // Get single user by ID
   getById: async (id) => {
     return fetchApi(`/api/users/${id}`);
