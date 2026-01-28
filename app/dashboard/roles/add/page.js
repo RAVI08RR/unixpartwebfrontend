@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { 
   Shield, Filter, Download, Plus, Check, Search, Loader2
 } from "lucide-react";
-import { useRoles } from "../../lib/hooks/useRoles";
+import { useRoles } from "@/app/lib/hooks/useRoles";
 
 export default function AddRolePage() {
   const router = useRouter();
