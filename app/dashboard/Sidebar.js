@@ -26,13 +26,12 @@ export function Sidebar() {
     try {
       await authService.logout();
       console.log("✅ Sidebar logout successful, redirecting to login page...");
-      // Redirect to login page
-      router.push("/");
     } catch (error) {
-      console.error("❌ Sidebar logout failed:", error);
-      // Even if logout API fails, clear local data and redirect
-      await authService.logout();
-      console.log("🔄 Sidebar forced logout, redirecting to login page...");
+      // This should rarely happen now since authService.logout doesn't throw
+      console.error("❌ Unexpected sidebar logout error:", error);
+    } finally {
+      // Always redirect regardless of any errors
+      console.log("🔄 Sidebar redirecting to login page...");
       router.push("/");
     }
   };

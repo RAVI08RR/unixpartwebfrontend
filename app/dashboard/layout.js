@@ -24,13 +24,12 @@ function Topbar() {
     try {
       await authService.logout();
       console.log("✅ Logout successful, redirecting to login page...");
-      // Redirect to login page
-      router.push("/");
     } catch (error) {
-      console.error("❌ Logout failed:", error);
-      // Even if logout API fails, clear local data and redirect
-      await authService.logout();
-      console.log("🔄 Forced logout, redirecting to login page...");
+      // This should rarely happen now since authService.logout doesn't throw
+      console.error("❌ Unexpected logout error:", error);
+    } finally {
+      // Always redirect regardless of any errors
+      console.log("🔄 Redirecting to login page...");
       router.push("/");
     }
   };

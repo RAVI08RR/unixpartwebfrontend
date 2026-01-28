@@ -1,4 +1,4 @@
-import { fetchApi } from '../api';
+import { fetchApi, clearAuthToken } from '../api';
 
 export const authService = {
   login: async (email, password) => {
@@ -17,11 +17,18 @@ export const authService = {
 
   logout: async () => {
     try {
+        // Try to call the logout API endpoint
         await fetchApi('/api/auth/logout/', { method: 'POST' });
+        console.log('✅ Logout API call successful');
     } catch (e) {
-        console.error("Logout API failed", e);
+        // If the API call fails (404, network error, etc.), log it but continue
+        console.warn("⚠️ Logout API failed (this is not critical):", e.message);
+        // Don't throw the error - we still want to clear local data
     }
+    
+    // Always clear local authentication data regardless of API response
     clearAuthToken();
+    console.log('🔄 Local authentication data cleared');
   },
 
   getCurrentUser: async () => {
