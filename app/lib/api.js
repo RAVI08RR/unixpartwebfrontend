@@ -67,15 +67,22 @@ export async function fetchApi(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
     
-    // Log 401 details and clear invalid token (if not a mock token)
+    // Log 401 details and clear invalid token (only if not a mock token)
     if (response.status === 401) {
        console.error(`🔒 AUTH FAILURE (401) on ${url}. The token is invalid or expired.`);
+       
        if (typeof window !== 'undefined') {
          const currentToken = getAuthToken();
-         if (currentToken && !currentToken.startsWith('mock_')) {
+         const isMockToken = currentToken && (currentToken.startsWith('mock_') || currentToken.includes('OFFLINE'));
+         
+         if (isMockToken) {
+             console.warn("Ignoring 401 in Mock Mode - keeping session active.");
+             return null; 
+         }
+
+         if (currentToken) {
            console.warn("Real token invalidated by server. Clearing session and redirecting to login.");
            clearAuthToken(); 
-           // Redirect to login page if we are in the browser
            window.location.href = "/";
          }
        }
