@@ -58,7 +58,13 @@ export async function fetchApi(endpoint, options = {}) {
 
   // Debug logging for developers
   if (process.env.NODE_ENV === 'development') {
-    console.log(`🚀 API Request: ${config.method || 'GET'} ${url}`);
+    const realTarget = url.startsWith('/backend-api') 
+        ? url.replace('/backend-api', process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app")
+        : url;
+        
+    console.log(`🚀 Proxied Request: ${config.method || 'GET'} ${url}`);
+    console.log(`👉 Real Target: ${realTarget}`);
+    
     if (token) {
       console.log(`🔑 Auth: Bearer ${token.substring(0, 10)}...`);
     }
