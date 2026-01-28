@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "./dashboard/ThemeToggle";
 import { authService } from "./lib/services/authService";
+import { setAuthToken } from "./lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function LoginPage() {
     try {
         const response = await authService.login(email, password);
         if (response && response.access_token) {
-            localStorage.setItem("access_token", response.access_token);
+            setAuthToken(response.access_token);
             // Also store user info if available
             if (response.user) {
                 localStorage.setItem("current_user", JSON.stringify(response.user));
@@ -40,7 +41,7 @@ export default function LoginPage() {
         if (err.message.includes('Network error') || err.message.includes('Failed to fetch')) {
             console.warn("API unreachable, using 'OFFLINE_MODE' for development");
             const mockToken = "mock_OFFLINE_USER_" + Date.now();
-            localStorage.setItem("access_token", mockToken);
+            setAuthToken(mockToken);
             localStorage.setItem("current_user", JSON.stringify({
                 id: 1,
                 name: "Demo User",

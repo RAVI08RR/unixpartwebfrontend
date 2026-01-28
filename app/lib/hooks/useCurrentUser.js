@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { getAuthToken } from '../api';
 
 export function useCurrentUser() {
   const [user, setUser] = useState(null);
@@ -21,7 +22,7 @@ export function useCurrentUser() {
           }
         }
         
-        const token = localStorage.getItem('access_token');
+        const token = getAuthToken();
         if (!token) {
           setLoading(false);
           return;

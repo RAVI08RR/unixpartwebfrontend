@@ -1,4 +1,4 @@
-import { fetchApi } from '../api';
+import { fetchApi, clearAuthToken } from '../api';
 
 export const authService = {
   login: async (email, password) => {
@@ -21,9 +21,7 @@ export const authService = {
     } catch (e) {
         console.error("Logout API failed", e);
     }
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-    }
+    clearAuthToken();
   },
 
   getCurrentUser: async () => {

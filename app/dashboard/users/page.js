@@ -11,6 +11,9 @@ import {
 import { useUsers } from "@/app/lib/hooks/useUsers";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
+import { branchService } from "@/app/lib/services/branchService"; // Added branchService import
+import { authService } from "@/app/lib/services/authService"; // Added authService import
+import { getAuthToken } from "@/app/lib/api";
 
 // Initial user data
 const initialUsers = [
@@ -145,7 +148,10 @@ export default function UserManagementPage() {
   const users = useMemo(() => {
     if (typeof window === 'undefined') return [];
 
-    const token = localStorage.getItem('access_token');
+    const token = getAuthToken();
+    if (!token) { // If no token, return initialUsers (mock data)
+      return initialUsers;
+    }
     const isMockToken = token?.startsWith('mock_token_') || token?.startsWith('mock_OFFLINE_');
     const hasRealToken = token && !isMockToken;
     

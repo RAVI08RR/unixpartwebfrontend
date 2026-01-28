@@ -1,55 +1,72 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://3d3a2b4e7863.ngrok-free.app";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app";
+
+// Token Storage Management
+const TOKEN_KEY = 'access_token';
+const USER_KEY = 'current_user';
+
+export const getAuthToken = () => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(TOKEN_KEY);
+};
+
+export const setAuthToken = (token) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+};
+
+export const clearAuthToken = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+};
 
 export async function fetchApi(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
   
-  const defaultHeaders = {
+  const token = getAuthToken();
+  
+  const headers = {
     "Accept": "application/json",
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
+    ...options.headers,
   };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   const config = {
     ...options,
     mode: 'cors',
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
+    headers,
   };
-
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-      if (process.env.NODE_ENV === 'development') {
-        if (token.startsWith('mock_')) {
-          console.warn(`🛡️ [fetchApi] Using MOCK token for ${endpoint}. Request WILL FAIL with 401 if backend is real!`);
-        } else {
-          // Log truncated token for safe debugging
-          const displayToken = `${token.substring(0, 5)}...${token.substring(token.length - 5)}`;
-          console.log(`🔑 Injected Auth Header (Token: ${displayToken}, Length: ${token.length})`);
-        }
-      }
-    } else {
-      console.warn(`⚠️ No access_token found for ${endpoint} - expecting 401`);
-    }
-  }
 
   // Debug logging for developers
   if (process.env.NODE_ENV === 'development') {
-    console.log(`🚀 API Request: ${config.method || 'GET'} ${url}`, {
-      headers: config.headers,
-      body: config.body ? JSON.parse(config.body) : null
-    });
+    console.log(`🚀 API Request: ${config.method || 'GET'} ${url}`);
+    if (token) {
+      console.log(`🔑 Auth: Bearer ${token.substring(0, 10)}...`);
+    }
   }
 
   try {
     const response = await fetch(url, config);
     
-    // Log 401 details
+    // Log 401 details and clear invalid token (if not a mock token)
     if (response.status === 401) {
-       console.error(`🔒 AUTH FAILURE (401) on ${url}. Checking token validity...`);
+       console.error(`🔒 AUTH FAILURE (401) on ${url}. The token is invalid or expired.`);
+       if (typeof window !== 'undefined') {
+         const currentToken = getAuthToken();
+         if (currentToken && !currentToken.startsWith('mock_')) {
+           console.warn("Real token invalidated by server. Clearing session and redirecting to login.");
+           clearAuthToken(); 
+           // Redirect to login page if we are in the browser
+           window.location.href = "/";
+         }
+       }
     }
     
     // Handle 204 No Content
