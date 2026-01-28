@@ -144,8 +144,9 @@ export default function UserManagementPage() {
     }).catch(err => console.error("Failed to fetch roles", err));
   }, []);
   
-  // Handle Data Selection (API vs Mock)
+  // Handle Data Selection (API vs Mock) - Fixed for hydration
   const users = useMemo(() => {
+    // During SSR, always return empty array to prevent hydration mismatch
     if (typeof window === 'undefined') return [];
 
     const token = getAuthToken();
@@ -178,6 +179,13 @@ export default function UserManagementPage() {
     // 3. If no token at all, fallback to initialUsers (for demo/landing)
     return initialUsers;
   }, [apiUsers, isError, isLoading]);
+
+  // Add client-side mounting state to prevent hydration mismatch
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Reset to first page when users list changes
   useEffect(() => {
@@ -301,7 +309,22 @@ export default function UserManagementPage() {
     setEditForm(prev => ({ ...prev, [name]: value }));
   };
 
-  if (isLoading && (!users || users.length === 0)) return <div className="p-10 text-center">Loading users...</div>;
+  // Show loading state only after component is mounted to prevent hydration mismatch
+  if (!isMounted || (isLoading && (!users || users.length === 0))) {
+    return (
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+          <div className="shrink-0">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
+            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your user management</p>
+          </div>
+        </div>
+        <div className="p-10 text-center">
+          <div className="text-gray-500">Loading users...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
