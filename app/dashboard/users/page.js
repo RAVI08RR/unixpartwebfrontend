@@ -242,6 +242,7 @@ export default function UserManagementPage() {
             email: editForm.email || undefined,
             role_id: editForm.role_id ? parseInt(editForm.role_id) : undefined,
             status: typeof editForm.status === 'boolean' ? editForm.status : (editForm.status === "true"),
+            user_code: editForm.user_code || undefined,
         };
 
         // Handle Branch IDs
