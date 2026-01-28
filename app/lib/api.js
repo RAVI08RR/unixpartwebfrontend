@@ -87,9 +87,9 @@ export async function fetchApi(endpoint, options = {}) {
          }
 
          if (currentToken) {
-           console.warn("Real token invalidated by server. Clearing session and redirecting to login.");
+           console.warn("Real token invalidated by server. Clearing session.");
            clearAuthToken(); 
-           window.location.href = "/";
+           // window.location.href = "/"; // Disabled automatic redirect to avoid constant logout loops
          }
        }
     }
