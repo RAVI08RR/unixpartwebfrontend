@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app";
+export const API_BASE_URL = typeof window !== 'undefined' ? "/backend-api" : (process.env.NEXT_PUBLIC_API_URL || "https://ccb7878ed7f8.ngrok-free.app");
 
 // Token Storage Management
 const TOKEN_KEY = 'access_token';

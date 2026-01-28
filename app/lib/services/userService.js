@@ -8,13 +8,13 @@ export const userService = {
 
   // Get single user by ID
   getById: async (id) => {
-    return fetchApi(`/api/users/${id}/`);
+    return fetchApi(`/api/users/${id}`);
   },
 
   // Create new user
   create: async (userData) => {
-    console.log("userService.create: POST /api/users/", userData);
-    return fetchApi('/api/users/', {
+    console.log("userService.create: POST /api/users", userData);
+    return fetchApi('/api/users', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
@@ -23,8 +23,8 @@ export const userService = {
   // Update existing user
   update: async (id, userData) => {
     const userId = parseInt(id);
-    console.log(`userService.update: Calling PUT /api/users/${userId}/`, userData);
-    return fetchApi(`/api/users/${userId}/`, {
+    console.log(`userService.update: Calling PUT /api/users/${userId}`, userData);
+    return fetchApi(`/api/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
     });
@@ -32,7 +32,7 @@ export const userService = {
 
   // Delete user
   delete: async (id) => {
-    return fetchApi(`/api/users/${id}/`, {
+    return fetchApi(`/api/users/${id}`, {
       method: 'DELETE',
     });
   },
