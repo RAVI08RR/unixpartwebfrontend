@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ThemeToggle } from "./dashboard/ThemeToggle";
 import { authService } from "./lib/services/authService";
-import { setAuthToken } from "./lib/api";
+import { setAuthToken, clearAuthToken } from "./lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +21,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    
+    // Clear any existing tokens (including mock tokens) before login attempt
+    clearAuthToken();
     
     try {
         const response = await authService.login(email, password);

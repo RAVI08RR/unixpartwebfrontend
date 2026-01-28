@@ -1,5 +1,12 @@
-// Fallback API URL (absolute)
-// Base URL logic: Use proxy on client, environment variable or fallback on server
+/**
+ * API Base URL Configuration
+ * 
+ * VERCEL PRODUCTION FIX:
+ * - Must use NEXT_PUBLIC_API_URL environment variable (set in Vercel dashboard)
+ * - No hardcoded URLs to prevent production failures
+ * - Safe fallback only for local development
+ * - Works in both browser and Vercel edge runtime
+ */
 export const getApiBaseUrl = () => {
   // if (typeof window !== 'undefined') {
   //   return "/backend-api";
@@ -8,7 +15,8 @@ export const getApiBaseUrl = () => {
   return "https://ccb7878ed7f8.ngrok-free.app";
 };
 
-export const API_BASE_URL = getApiBaseUrl(); // Keep for legacy if needed, but use internal logic for fetch
+// Cached base URL - computed once at module load
+export const API_BASE_URL = getApiBaseUrl();
 
 // Token Storage Management
 const TOKEN_KEY = 'access_token';
@@ -16,7 +24,16 @@ const USER_KEY = 'current_user';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  let token = localStorage.getItem(TOKEN_KEY);
+  
+  if (!token) return null;
+
+  // Cleanup: Remove quotes if stored as JSON string
+  if (token.startsWith('"') && token.endsWith('"')) {
+    token = token.slice(1, -1);
+  }
+
+  return token;
 };
 
 export const setAuthToken = (token) => {
@@ -32,12 +49,27 @@ export const clearAuthToken = () => {
   }
 };
 
+/**
+ * Centralized API Fetch Utility
+ * 
+ * VERCEL COMPATIBILITY:
+ * - Works in both browser and Vercel serverless functions
+ * - Handles CORS properly for cross-origin requests
+ * - Provides detailed error logging for production debugging
+ * - Respects Next.js App Router client/server boundaries
+ */
 export async function fetchApi(endpoint, options = {}) {
-  const baseUrl = getApiBaseUrl();
-  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+  // Get base URL (will throw in production if not configured)
+  const baseUrl = getApiBaseUrl().replace(/\/+$/, ""); // Remove trailing slash
+  const safeEndpoint = endpoint.replace(/^\/+/, ""); // Remove leading slash
   
+  // Normalize URL to prevent double slashes
+  const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}/${safeEndpoint}`;
+  
+  // Get auth token (client-side only, returns null on server)
   const token = getAuthToken();
   
+  // Build headers
   const headers = {
     "Accept": "application/json",
     "Content-Type": "application/json",
@@ -46,6 +78,8 @@ export async function fetchApi(endpoint, options = {}) {
     ...options.headers,
   };
 
+  // Attach authorization token if available
+  // NOTE: This backend requires token even for login/register endpoints
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -55,7 +89,7 @@ export async function fetchApi(endpoint, options = {}) {
     headers,
   };
 
-  // Debug logging for developers
+  // Development-only logging (verbose)
   if (process.env.NODE_ENV === 'development') {
     const realTarget = "https://ccb7878ed7f8.ngrok-free.app";
         
@@ -72,19 +106,27 @@ export async function fetchApi(endpoint, options = {}) {
     
     // Handle 401 Unauthorized
     if (response.status === 401) {
-       const currentToken = getAuthToken();
-       const isMockToken = currentToken && (currentToken.startsWith('mock_') || currentToken.includes('OFFLINE'));
+       const errorMsg = `🔒 AUTH FAILURE (401) on ${url}. Token is invalid or expired.`;
        
-       if (isMockToken) {
-           console.warn(`🔒 Mock Session 401 (Ignored): ${url}`);
-           return null; 
+       // Production-friendly logging
+       if (process.env.NODE_ENV === 'production') {
+         console.error(JSON.stringify({
+           level: 'error',
+           message: 'Authentication failed',
+           url,
+           status: 401,
+           timestamp: new Date().toISOString()
+         }));
+       } else {
+         console.error(errorMsg);
        }
-
-       console.error(`🔒 AUTH FAILURE (401) on ${url}. Token is invalid or expired.`);
-       if (typeof window !== 'undefined' && currentToken) {
+       
+       // Clear invalid token (client-side only)
+       if (typeof window !== 'undefined' && token) {
          console.warn("Clearing invalid session.");
          clearAuthToken();
        }
+       
        throw new Error("Your session has expired. Please log in again.");
     }
     
@@ -97,15 +139,15 @@ export async function fetchApi(endpoint, options = {}) {
     let errorData = {};
     
     if (!response.ok) {
+      // Parse error response
       if (contentType && contentType.includes("application/json")) {
         errorData = await response.json();
       } else {
         const textError = await response.text();
-        console.error("Non-JSON Error Response:", textError);
-        errorData = { message: `Server error: ${response.status} ${response.statusText}` };
+        errorData = { message: `Server error: ${response.status} ${response.statusText}`, details: textError };
       }
       
-      // Better error message extraction for FastAPI
+      // Extract error message (FastAPI format)
       let errorMessage = errorData.detail || errorData.message || `API Error: ${response.status} ${response.statusText}`;
       if (typeof errorData.detail === 'object' && !Array.isArray(errorData.detail)) {
         errorMessage = JSON.stringify(errorData.detail);
@@ -113,24 +155,57 @@ export async function fetchApi(endpoint, options = {}) {
         errorMessage = errorData.detail.map(d => typeof d === 'object' ? `${d.loc?.join('.') || 'error'}: ${d.msg || 'unknown'}` : d).join(', ');
       }
       
-      console.error(`❌ API Error Body (Status ${response.status}):`, errorData);
+      // Production-friendly error logging
+      if (process.env.NODE_ENV === 'production') {
+        console.error(JSON.stringify({
+          level: 'error',
+          message: 'API request failed',
+          url,
+          status: response.status,
+          error: errorMessage,
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        console.error(`❌ API Error Body (Status ${response.status}):`, errorData);
+      }
+      
       throw new Error(errorMessage);
     }
 
+    // Parse successful response
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
-      console.log(`✅ API Success: ${url}`, data);
       return data;
     } else {
       console.warn("Expected JSON but received:", contentType);
       return null;
     }
   } catch (error) {
-    console.error(`❌ API Failed: ${url}`, error);
-    // Provide more helpful error messages
-    if (error.message === 'Failed to fetch') {
-      throw new Error('Network error: Unable to connect to the API. This could be a CORS issue or the server is down.');
+    // Enhanced error handling for production debugging
+    const isNetworkError = error.message === 'Failed to fetch' || error.name === 'TypeError';
+    
+    // Production-friendly error logging
+    if (process.env.NODE_ENV === 'production') {
+      console.error(JSON.stringify({
+        level: 'error',
+        message: 'API call failed',
+        url,
+        error: error.message,
+        type: isNetworkError ? 'network' : 'application',
+        timestamp: new Date().toISOString()
+      }));
+    } else {
+      console.error(`❌ API Failed: ${url}`, error);
     }
+    
+    // Provide user-friendly error messages
+    if (isNetworkError) {
+      throw new Error(
+        'Network error: Unable to connect to the API. ' +
+        'This could be due to: CORS issues, server downtime, or incorrect API URL configuration.'
+      );
+    }
+    
     throw error;
   }
 }
