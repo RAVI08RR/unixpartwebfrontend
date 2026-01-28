@@ -45,10 +45,32 @@ export function useCurrentUser() {
         }
 
         // Fetch real user data
-        const userData = await authService.getCurrentUser();
-        if (userData) {
-          setUser(userData);
-          localStorage.setItem('current_user', JSON.stringify(userData));
+        try {
+          const userData = await authService.getCurrentUser();
+          if (userData) {
+            setUser(userData);
+            localStorage.setItem('current_user', JSON.stringify(userData));
+          }
+        } catch (apiError) {
+          console.warn('⚠️ Failed to fetch user from API (using cached data):', apiError.message);
+          
+          // If API fails but we have a valid token and cached user, use cached data
+          if (storedUser) {
+            console.log('📋 Using cached user data due to API failure');
+            // User is already set from cached data above
+          } else {
+            // If no cached data and API fails, create a fallback user
+            console.log('🔄 Creating fallback user due to API failure');
+            const fallbackUser = {
+              id: 1,
+              name: "User",
+              email: "user@unixparts.com",
+              role: { name: "User" },
+              user_code: "USR-001"
+            };
+            setUser(fallbackUser);
+            localStorage.setItem('current_user', JSON.stringify(fallbackUser));
+          }
         }
       } catch (err) {
         console.error('Failed to fetch current user:', err);

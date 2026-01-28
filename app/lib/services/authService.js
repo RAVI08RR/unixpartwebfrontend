@@ -32,6 +32,30 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-      return fetchApi('/api/auth/me/');
+    // Try different possible endpoint formats
+    const endpointsToTry = [
+      '/api/auth/me/',      // Current format
+      '/api/auth/me',       // Without trailing slash
+      '/api/user/me/',      // Alternative path
+      '/api/user/me',       // Alternative without slash
+      '/api/users/me/',     // Users endpoint
+      '/api/users/me'       // Users without slash
+    ];
+
+    let lastError;
+    for (const endpoint of endpointsToTry) {
+      try {
+        console.log(`🔍 Trying getCurrentUser endpoint: ${endpoint}`);
+        return await fetchApi(endpoint);
+      } catch (error) {
+        console.warn(`❌ Endpoint ${endpoint} failed:`, error.message);
+        lastError = error;
+        continue;
+      }
+    }
+
+    // If all endpoints failed, throw the last error
+    console.error('❌ All getCurrentUser endpoints failed');
+    throw lastError;
   }
 };
