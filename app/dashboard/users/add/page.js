@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -11,7 +11,67 @@ import {
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
 import { branchService } from "@/app/lib/services/branchService";
-import { useEffect } from "react";
+
+// Custom hook to fetch branches
+const useBranches = () => {
+  const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        // Use the API service to handle the request
+        const response = await fetch('https://ccb7878ed7f8.ngrok-free.app/branches?skip=0&limit=100', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true' // Add this to bypass ngrok warning
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          throw new Error(`Failed to fetch branches: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Branches API Response:', data); // Debug log
+        
+        // Handle different response formats
+        const branchesData = Array.isArray(data) ? data : (data?.data || data?.branches || []);
+        
+        if (!branchesData.length) {
+          console.warn('No branches found in the response');
+          // Fallback to default branches if no data
+          throw new Error('No branches data available');
+        }
+        
+        setBranches(branchesData);
+      } catch (err) {
+        console.error("Failed to fetch branches:", err);
+        setError(err.message);
+        // Fallback to default branches if API fails
+        setBranches([
+          { id: 1, branch_name: "Main Warehouse - Dubai" },
+          { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
+  return { branches, loading, error };
+};
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -21,10 +81,14 @@ export default function AddUserPage() {
     { id: 2, name: "Manager" },
     { id: 3, name: "Staff" }
   ]);
+  
+  // Define branches state
   const [branches, setBranches] = useState([
     { id: 1, branch_name: "Main Warehouse - Dubai" },
     { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
   ]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchesError, setBranchesError] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -38,18 +102,20 @@ export default function AddUserPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const [rolesData, branchesData] = await Promise.all([
-                roleService.getAll(),
-                branchService.getAll()
-            ]);
-            // If we got real data from the API, use it. The services handle fallbacks already.
-            if (rolesData && rolesData.length > 0) setRoles(rolesData);
-            if (branchesData && branchesData.length > 0) setBranches(branchesData);
-        } catch (error) {
-            console.error("Failed to fetch roles or branches", error);
+      setBranchesLoading(true);
+      try {
+        // Only fetch roles here, branches are handled by the useBranches hook
+        const rolesData = await roleService.getAll();
+        if (rolesData && rolesData.length > 0) {
+          setRoles(rolesData);
         }
+      } catch (error) {
+        console.error("Failed to fetch roles:", error);
+      } finally {
+        setBranchesLoading(false);
+      }
     };
+    
     fetchData();
   }, []);
 
@@ -221,18 +287,38 @@ export default function AddUserPage() {
           </label>
           <div className="relative">
             <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
-              value={formData.branch}
-              onChange={(e) => setFormData({...formData, branch: e.target.value})}
-            >
-              <option value="">Select Assigned Branch</option>
-              {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>{branch.branch_name}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            {branchesLoading ? (
+              <div className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
+                Loading branches...
+              </div>
+            ) : branchesError ? (
+              <div className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
+                Error loading branches
+              </div>
+            ) : (
+              <>
+                <select 
+                  className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+                  value={formData.branch}
+                  onChange={(e) => setFormData({...formData, branch: e.target.value})}
+                  disabled={branchesLoading || branchesError}
+                >
+                  <option value="">Select Assigned Branch</option>
+                  {branches.map(branch => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.branch_name || `Branch ${branch.id}`}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </>
+            )}
           </div>
+          {branchesError && (
+            <p className="text-xs text-red-500 mt-1">
+              Using default branches due to an error. {branchesError}
+            </p>
+          )}
         </div>
 
         {/* Associated Supplier */}
