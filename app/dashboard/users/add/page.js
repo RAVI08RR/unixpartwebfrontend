@@ -22,27 +22,8 @@ const useBranches = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        // Use the API service to handle the request
-        const response = await fetch('https://a36498aba6e6.ngrok-free.app/branches?skip=0&limit=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'ngrok-skip-browser-warning': 'true' // Add this to bypass ngrok warning
-          }
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error Response:', errorText);
-          throw new Error(`Failed to fetch branches: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
+        // Use the branch service to handle the request
+        const data = await branchService.getAll();
         console.log('Branches API Response:', data); // Debug log
         
         // Handle different response formats
