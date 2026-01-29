@@ -11,49 +11,8 @@ import {
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
 import { branchService } from "@/app/lib/services/branchService";
+import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
-
-// Custom hook to fetch branches
-const useBranches = () => {
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        // Use the branch service to handle the request
-        const data = await branchService.getAll();
-        console.log('Branches API Response:', data); // Debug log
-        
-        // Handle different response formats
-        const branchesData = Array.isArray(data) ? data : (data?.data || data?.branches || []);
-        
-        if (!branchesData.length) {
-          console.warn('No branches found in the response');
-          // Fallback to default branches if no data
-          throw new Error('No branches data available');
-        }
-        
-        setBranches(branchesData);
-      } catch (err) {
-        console.error("Failed to fetch branches:", err);
-        setError(err.message);
-        // Fallback to default branches if API fails
-        setBranches([
-          { id: 1, branch_name: "Main Warehouse - Dubai" },
-          { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBranches();
-  }, []);
-
-  return { branches, loading, error };
-};
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -67,13 +26,14 @@ export default function AddUserPage() {
     { id: 3, name: "Staff" }
   ]);
   
-  // Define branches state
-  const [branches, setBranches] = useState([
-    { id: 1, branch_name: "Main Warehouse - Dubai" },
-    { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
-  ]);
+  // Define branches and suppliers state
+  const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState(null);
+  
+  const [suppliers, setSuppliers] = useState([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
+  const [suppliersError, setSuppliersError] = useState(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -81,8 +41,8 @@ export default function AddUserPage() {
     password: "",
     user_code: "",
     role_id: "",
-    branch: "",
-    supplier: "",
+    branch_ids: [], // Changed to array for multi-selection
+    supplier_ids: [], // Changed to array for multi-selection
     permission_ids: []
   });
 
@@ -93,6 +53,26 @@ export default function AddUserPage() {
       permission_ids: prev.permission_ids.includes(permissionId)
         ? prev.permission_ids.filter(id => id !== permissionId)
         : [...prev.permission_ids, permissionId]
+    }));
+  };
+
+  // Branch selection handlers
+  const handleBranchToggle = (branchId) => {
+    setFormData(prev => ({
+      ...prev,
+      branch_ids: prev.branch_ids.includes(branchId)
+        ? prev.branch_ids.filter(id => id !== branchId)
+        : [...prev.branch_ids, branchId]
+    }));
+  };
+
+  // Supplier selection handlers
+  const handleSupplierToggle = (supplierId) => {
+    setFormData(prev => ({
+      ...prev,
+      supplier_ids: prev.supplier_ids.includes(supplierId)
+        ? prev.supplier_ids.filter(id => id !== supplierId)
+        : [...prev.supplier_ids, supplierId]
     }));
   };
 
@@ -113,16 +93,35 @@ export default function AddUserPage() {
   useEffect(() => {
     const fetchData = async () => {
       setBranchesLoading(true);
+      setSuppliersLoading(true);
+      
       try {
-        // Only fetch roles here, branches are handled by the useBranches hook
-        const rolesData = await roleService.getAll();
+        // Fetch roles, branches, and suppliers in parallel
+        const [rolesData, branchesData, suppliersData] = await Promise.all([
+          roleService.getAll(),
+          branchService.getAll(),
+          supplierService.getAll()
+        ]);
+        
         if (rolesData && rolesData.length > 0) {
           setRoles(rolesData);
         }
+        
+        if (branchesData && branchesData.length > 0) {
+          setBranches(branchesData);
+        }
+        
+        if (suppliersData && suppliersData.length > 0) {
+          setSuppliers(suppliersData);
+        }
+        
       } catch (error) {
-        console.error("Failed to fetch roles:", error);
+        console.error("Failed to fetch data:", error);
+        setBranchesError(error.message);
+        setSuppliersError(error.message);
       } finally {
         setBranchesLoading(false);
+        setSuppliersLoading(false);
       }
     };
     
@@ -187,8 +186,8 @@ export default function AddUserPage() {
               user_code: formData.user_code.trim(),
               role_id: parseInt(formData.role_id),
               status: true,
-              branch_ids: formData.branch ? [parseInt(formData.branch)] : [],
-              supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : [],
+              branch_ids: formData.branch_ids || [],
+              supplier_ids: formData.supplier_ids || [],
               permission_ids: formData.permission_ids || []
           };
 
@@ -339,65 +338,95 @@ export default function AddUserPage() {
           </div>
         </div>
 
-        {/* Assigned Branch */}
+        {/* Assigned Branches */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Assigned Branch
+            Assigned Branches <span className="text-gray-400 font-normal">(Multi-select)</span>
           </label>
-          <div className="relative">
-            <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            {branchesLoading ? (
-              <div className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
-                Loading branches...
-              </div>
-            ) : branchesError ? (
-              <div className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
-                Error loading branches
-              </div>
-            ) : (
-              <>
-                <select 
-                  className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
-                  value={formData.branch}
-                  onChange={(e) => setFormData({...formData, branch: e.target.value})}
-                  disabled={branchesLoading || branchesError}
+          {branchesLoading ? (
+            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
+              Loading branches...
+            </div>
+          ) : branchesError ? (
+            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
+              Error loading branches: {branchesError}
+            </div>
+          ) : (
+            <div className="max-h-32 overflow-y-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-3 space-y-2">
+              {branches.length > 0 ? branches.map(branch => (
+                <label
+                  key={branch.id}
+                  className="flex items-center gap-2 cursor-pointer group"
                 >
-                  <option value="">Select Assigned Branch</option>
-                  {branches.map(branch => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.branch_name || `Branch ${branch.id}`}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </>
-            )}
-          </div>
-          {branchesError && (
-            <p className="text-xs text-red-500 mt-1">
-              Using default branches due to an error. {branchesError}
-            </p>
+                  <input
+                    type="checkbox"
+                    checked={formData.branch_ids.includes(branch.id)}
+                    onChange={() => handleBranchToggle(branch.id)}
+                    className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-black dark:text-white">
+                      {branch.branch_name} ({branch.branch_code})
+                    </div>
+                  </div>
+                </label>
+              )) : (
+                <div className="text-sm text-gray-500">No branches available</div>
+              )}
+            </div>
+          )}
+          {formData.branch_ids.length > 0 && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Selected: {formData.branch_ids.length} branch{formData.branch_ids.length !== 1 ? 'es' : ''}
+            </div>
           )}
         </div>
 
-        {/* Associated Supplier */}
+        {/* Associated Suppliers */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Associated Supplier <span className="text-gray-400 font-normal">(Optional)</span>
+            Associated Suppliers <span className="text-gray-400 font-normal">(Multi-select, Optional)</span>
           </label>
-          <div className="relative">
-            <Store className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
-              value={formData.supplier}
-              onChange={(e) => setFormData({...formData, supplier: e.target.value})}
-            >
-              <option value="">Select Assigned Supplier</option>
-              <option value="1">Supplier A</option>
-              <option value="2">Supplier B</option>
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
+          {suppliersLoading ? (
+            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
+              Loading suppliers...
+            </div>
+          ) : suppliersError ? (
+            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
+              Error loading suppliers: {suppliersError}
+            </div>
+          ) : (
+            <div className="max-h-32 overflow-y-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-3 space-y-2">
+              {suppliers.length > 0 ? suppliers.map(supplier => (
+                <label
+                  key={supplier.id}
+                  className="flex items-center gap-2 cursor-pointer group"
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.supplier_ids.includes(supplier.id)}
+                    onChange={() => handleSupplierToggle(supplier.id)}
+                    className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-black dark:text-white">
+                      {supplier.name} ({supplier.supplier_code})
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {supplier.type} - {supplier.contact_person}
+                    </div>
+                  </div>
+                </label>
+              )) : (
+                <div className="text-sm text-gray-500">No suppliers available</div>
+              )}
+            </div>
+          )}
+          {formData.supplier_ids.length > 0 && (
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Selected: {formData.supplier_ids.length} supplier{formData.supplier_ids.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       </div>
 
