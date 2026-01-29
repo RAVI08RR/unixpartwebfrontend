@@ -13,6 +13,7 @@ import { roleService } from "@/app/lib/services/roleService";
 import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
+import DropdownSearch from "@/app/components/DropdownSearch";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -53,26 +54,6 @@ export default function AddUserPage() {
       permission_ids: prev.permission_ids.includes(permissionId)
         ? prev.permission_ids.filter(id => id !== permissionId)
         : [...prev.permission_ids, permissionId]
-    }));
-  };
-
-  // Branch selection handlers
-  const handleBranchToggle = (branchId) => {
-    setFormData(prev => ({
-      ...prev,
-      branch_ids: prev.branch_ids.includes(branchId)
-        ? prev.branch_ids.filter(id => id !== branchId)
-        : [...prev.branch_ids, branchId]
-    }));
-  };
-
-  // Supplier selection handlers
-  const handleSupplierToggle = (supplierId) => {
-    setFormData(prev => ({
-      ...prev,
-      supplier_ids: prev.supplier_ids.includes(supplierId)
-        ? prev.supplier_ids.filter(id => id !== supplierId)
-        : [...prev.supplier_ids, supplierId]
     }));
   };
 
@@ -375,38 +356,19 @@ export default function AddUserPage() {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Assigned Branches <span className="text-gray-400 font-normal">(Multi-select)</span>
           </label>
-          {branchesLoading ? (
-            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
-              Loading branches...
-            </div>
-          ) : branchesError ? (
-            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
-              Error loading branches: {branchesError}
-            </div>
-          ) : (
-            <div className="max-h-32 overflow-y-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-3 space-y-2">
-              {branches.length > 0 ? branches.map(branch => (
-                <label
-                  key={branch.id}
-                  className="flex items-center gap-2 cursor-pointer group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.branch_ids.includes(branch.id)}
-                    onChange={() => handleBranchToggle(branch.id)}
-                    className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-black dark:text-white">
-                      {branch.branch_name} ({branch.branch_code})
-                    </div>
-                  </div>
-                </label>
-              )) : (
-                <div className="text-sm text-gray-500">No branches available</div>
-              )}
-            </div>
-          )}
+          <DropdownSearch
+            items={branches}
+            selectedItems={formData.branch_ids}
+            onSelectionChange={(selectedIds) => setFormData(prev => ({ ...prev, branch_ids: selectedIds }))}
+            buttonText="Select Branches"
+            searchPlaceholder="Search branches..."
+            emptyMessage="No branches available"
+            displayField="branch_name"
+            valueField="id"
+            secondaryField="branch_code"
+            loading={branchesLoading}
+            error={branchesError}
+          />
           {formData.branch_ids.length > 0 && (
             <div className="text-xs text-gray-600 dark:text-gray-400">
               Selected: {formData.branch_ids.length} branch{formData.branch_ids.length !== 1 ? 'es' : ''}
@@ -419,41 +381,19 @@ export default function AddUserPage() {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Associated Suppliers <span className="text-gray-400 font-normal">(Multi-select, Optional)</span>
           </label>
-          {suppliersLoading ? (
-            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-gray-500">
-              Loading suppliers...
-            </div>
-          ) : suppliersError ? (
-            <div className="w-full p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm text-red-500">
-              Error loading suppliers: {suppliersError}
-            </div>
-          ) : (
-            <div className="max-h-32 overflow-y-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg p-3 space-y-2">
-              {suppliers.length > 0 ? suppliers.map(supplier => (
-                <label
-                  key={supplier.id}
-                  className="flex items-center gap-2 cursor-pointer group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.supplier_ids.includes(supplier.id)}
-                    onChange={() => handleSupplierToggle(supplier.id)}
-                    className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-black dark:text-white">
-                      {supplier.name} ({supplier.supplier_code})
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {supplier.type} - {supplier.contact_person}
-                    </div>
-                  </div>
-                </label>
-              )) : (
-                <div className="text-sm text-gray-500">No suppliers available</div>
-              )}
-            </div>
-          )}
+          <DropdownSearch
+            items={suppliers}
+            selectedItems={formData.supplier_ids}
+            onSelectionChange={(selectedIds) => setFormData(prev => ({ ...prev, supplier_ids: selectedIds }))}
+            buttonText="Select Suppliers"
+            searchPlaceholder="Search suppliers..."
+            emptyMessage="No suppliers available"
+            displayField="name"
+            valueField="id"
+            secondaryField="supplier_code"
+            loading={suppliersLoading}
+            error={suppliersError}
+          />
           {formData.supplier_ids.length > 0 && (
             <div className="text-xs text-gray-600 dark:text-gray-400">
               Selected: {formData.supplier_ids.length} supplier{formData.supplier_ids.length !== 1 ? 's' : ''}
