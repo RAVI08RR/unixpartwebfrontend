@@ -99,7 +99,7 @@ export async function fetchApi(endpoint, options = {}) {
 
   // Development-only logging (verbose)
   if (process.env.NODE_ENV === 'development') {
-    const realTarget = "https://ccb7878ed7f8.ngrok-free.app";
+    const realTarget = "https://a36498aba6e6.ngrok-free.app/";
         
     console.log(`🚀 Proxied Request: ${config.method || 'GET'} ${url}`);
     console.log(`👉 Real Target: ${realTarget}`);
