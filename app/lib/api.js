@@ -2,13 +2,18 @@
  * API Base URL Configuration
  * 
  * VERCEL PRODUCTION FIX:
- * - Must use NEXT_PUBLIC_API_URL environment variable (set in Vercel dashboard)
- * - No hardcoded URLs to prevent production failures
+ * - Uses Next.js API proxy in production to avoid CORS issues
+ * - Direct API calls in development for easier debugging
  * - Safe fallback only for local development
  * - Works in both browser and Vercel edge runtime
  */
 export const getApiBaseUrl = () => {
-  // Use environment variable if available
+  // In production, use the Next.js API proxy to avoid CORS issues
+  if (process.env.NODE_ENV === 'production') {
+    return '/api/proxy';
+  }
+  
+  // Use environment variable if available (development)
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
