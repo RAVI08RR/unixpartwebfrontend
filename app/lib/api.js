@@ -8,8 +8,13 @@
  * - Works in both browser and Vercel edge runtime
  */
 export const getApiBaseUrl = () => {
-  // In production, use the Next.js API proxy to avoid CORS issues
-  if (process.env.NODE_ENV === 'production') {
+  // Check if we're running on Vercel (production)
+  const isVercel = typeof window !== 'undefined' && 
+    (window.location.hostname.includes('vercel.app') || 
+     window.location.hostname.includes('unixpartwebfrontend.vercel.app'));
+  
+  // In production (Vercel), use the Next.js API proxy to avoid CORS issues
+  if (process.env.NODE_ENV === 'production' || isVercel) {
     return '/api/proxy';
   }
   
