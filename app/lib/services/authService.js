@@ -1,49 +1,51 @@
-import { fetchApi, clearAuthToken } from '../api';
+import { apiClient, tokenManager } from '../api';
 
 export const authService = {
   login: async (email, password) => {
-    return fetchApi('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
+    // Login endpoint should not include auth token
+    return apiClient.post('api/auth/login', { email, password }, { skipAuth: true });
   },
 
   register: async (userData) => {
-    return fetchApi('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData),
-    });
+    // Register endpoint should not include auth token
+    return apiClient.post('api/auth/register', userData, { skipAuth: true });
   },
 
   logout: async () => {
     try {
-        // Try to call the logout API endpoint
-        await fetchApi('/api/auth/logout', { method: 'POST' });
-        console.log('✅ Logout API call successful');
+      // Try to call the logout API endpoint
+      await apiClient.post('api/auth/logout');
+      console.log('✅ Logout API call successful');
     } catch (e) {
-        // If the API call fails (404, network error, etc.), log it but continue
-        console.warn("⚠️ Logout API failed (this is not critical):", e.message);
-        // Don't throw the error - we still want to clear local data
+      // If the API call fails (404, network error, etc.), log it but continue
+      console.warn("⚠️ Logout API failed (this is not critical):", e.message);
+      // Don't throw the error - we still want to clear local data
     }
     
     // Always clear local authentication data regardless of API response
-    clearAuthToken();
+    tokenManager.clear();
     console.log('🔄 Local authentication data cleared');
   },
 
   getCurrentUser: async () => {
-    // Try different possible endpoint formats with optional flag
+    // Try different possible endpoint formats
     const endpointsToTry = [
-      '/api/auth/me',        // Standard format
-      '/api/auth/me/',       // With trailing slash
-      '/api/user/me',        // Alternative path
-      '/api/users/me'        // Users endpoint
+      'api/auth/me',        // Standard format
+      'api/auth/me/',       // With trailing slash
+      'api/user/me',        // Alternative path
+      'api/users/me'        // Users endpoint
     ];
 
     for (const endpoint of endpointsToTry) {
       try {
         console.log(`🔍 Trying getCurrentUser endpoint: ${endpoint}`);
-        const result = await fetchApi(endpoint, { optional: true });
+        const result = await apiClient.get(endpoint).catch(error => {
+          if (error.message.includes('404')) {
+            return null;
+          }
+          throw error;
+        });
+        
         if (result !== null) {
           return result;
         }

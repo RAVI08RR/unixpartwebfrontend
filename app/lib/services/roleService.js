@@ -1,9 +1,9 @@
-import { fetchApi } from '../api';
+import { apiClient } from '../api';
 
 export const roleService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
-      const response = await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
+      const response = await apiClient.get('api/roles', { skip, limit });
       console.log('✅ Roles fetched successfully:', response);
       return response;
     } catch (error) {
@@ -17,29 +17,21 @@ export const roleService = {
   },
 
   getById: async (id) => {
-    return fetchApi(`/api/roles/${id}`);
+    return apiClient.get(`api/roles/${id}`);
   },
 
   create: async (roleData) => {
     console.log('🔄 Creating role:', roleData);
-    return fetchApi('/api/roles', {
-      method: 'POST',
-      body: JSON.stringify(roleData),
-    });
+    return apiClient.post('api/roles', roleData);
   },
 
   update: async (id, roleData) => {
     console.log('🔄 Updating role:', { id, data: roleData });
-    return fetchApi(`/api/roles/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(roleData),
-    });
+    return apiClient.put(`api/roles/${id}`, roleData);
   },
 
   delete: async (id) => {
     console.log('🗑️ Deleting role:', id);
-    return fetchApi(`/api/roles/${id}`, {
-      method: 'DELETE',
-    });
+    return apiClient.delete(`api/roles/${id}`);
   },
 };
