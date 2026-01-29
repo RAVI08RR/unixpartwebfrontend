@@ -95,3 +95,23 @@ th.px-8.py-6.text-left.text-sm.font-black.text-gray-400.dark\:text-gray-500.uppe
     font-weight: 600;
 }
 
+/* Custom checkbox styling for black checkmarks */
+.checkbox-black {
+  accent-color: black;
+}
+
+.dark .checkbox-black {
+  accent-color: white;
+}
+
+/* Alternative approach for better browser support */
+.checkbox-black:checked {
+  background-color: black;
+  border-color: black;
+}
+
+.dark .checkbox-black:checked {
+  background-color: white;
+  border-color: white;
+}
+

@@ -453,7 +453,7 @@ export default function AddUserPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handlePermissionToggle(permission.id)}
-                          className="w-4 h-4 text-black bg-gray-100 border-gray-300 rounded focus:ring-black dark:focus:ring-black dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
                         />
                         <div className="flex-1 min-w-0">
                           <div className={`text-sm font-medium transition-colors ${
