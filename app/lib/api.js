@@ -83,10 +83,27 @@ export const fetchApi = async (endpoint, options = {}) => {
     headers,
   };
 
-  console.log(`🚀 API Request: ${config.method} ${url}`);
+  // Enhanced logging for production debugging
+  console.log('🚀 API Request Details:', {
+    method: config.method,
+    url: url,
+    headers: headers,
+    body: config.body,
+    origin: typeof window !== 'undefined' ? window.location.origin : 'server',
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
+    timestamp: new Date().toISOString()
+  });
 
   try {
     const response = await fetch(url, config);
+    
+    // Log response details
+    console.log('📥 API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries()),
+      url: response.url
+    });
     
     // Handle 401 - clear token and throw error
     if (response.status === 401) {
@@ -128,7 +145,13 @@ export const fetchApi = async (endpoint, options = {}) => {
     
     return await response.text();
   } catch (error) {
-    console.error(`❌ API Error: ${url}`, error);
+    console.error('❌ API Error Details:', {
+      url: url,
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    });
     
     if (error.message === 'Failed to fetch') {
       throw new Error('Network error: Unable to connect to the API. Please check your connection.');
