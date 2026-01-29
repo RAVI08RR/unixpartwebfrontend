@@ -1,12 +1,12 @@
 import useSWR from 'swr';
-import { apiClient } from '../api';
+import { userService } from '../services/userService';
 
 const EMPTY_ARRAY = [];
 
 export function useUsers(skip = 0, limit = 100) {
   const { data, error, isLoading, mutate } = useSWR(
     `users-${skip}-${limit}`,
-    () => apiClient.get('api/users/', { skip, limit })
+    () => userService.getAll(skip, limit)
   );
 
   return {
@@ -20,7 +20,7 @@ export function useUsers(skip = 0, limit = 100) {
 export function useUser(id) {
   const { data, error, isLoading, mutate } = useSWR(
     id ? `user-${id}` : null,
-    () => apiClient.get(`api/users/${id}`)
+    () => userService.getById(id)
   );
 
   return {

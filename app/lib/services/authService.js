@@ -29,8 +29,8 @@ export const authService = {
 
   getCurrentUser: async () => {
     try {
-      // Direct API call for current user
-      return await fetchApi('api/auth/me');
+      // Use Next.js proxy route for current user to bypass CORS issues
+      return await fetchApi('/api/auth/me');
     } catch (error) {
       throw new Error('User profile not available');
     }
