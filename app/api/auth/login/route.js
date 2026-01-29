@@ -3,15 +3,22 @@
  * All other API calls remain direct to backend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app';
-
 export async function POST(request) {
   try {
     // Get the login data from the request
     const loginData = await request.json();
     
+    // Get API base URL and clean it
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
+    
+    console.log('Login proxy - API Base URL:', apiBaseUrl);
+    console.log('Login proxy - Request data:', loginData);
+    
     // Make the request to your FastAPI backend
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const backendUrl = `${apiBaseUrl}/api/auth/login`;
+    console.log('Login proxy - Backend URL:', backendUrl);
+    
+    const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -20,8 +27,11 @@ export async function POST(request) {
       body: JSON.stringify(loginData),
     });
     
+    console.log('Login proxy - Backend response status:', response.status);
+    
     // Get response data
     const data = await response.text();
+    console.log('Login proxy - Backend response data:', data);
     
     // Forward the response with CORS headers
     return new Response(data, {
@@ -39,8 +49,9 @@ export async function POST(request) {
     console.error('Login proxy error:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Login failed', 
-        details: error.message 
+        error: 'Login proxy failed', 
+        details: error.message,
+        stack: error.stack
       }),
       {
         status: 500,
