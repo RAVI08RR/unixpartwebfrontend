@@ -115,3 +115,11 @@ th.px-8.py-6.text-left.text-sm.font-black.text-gray-400.dark\:text-gray-500.uppe
   border-color: white;
 }
 
+
+.checkbox-black {
+  accent-color: black !important;
+}
+
+.dark .checkbox-black {
+  accent-color: white !important;
+}
