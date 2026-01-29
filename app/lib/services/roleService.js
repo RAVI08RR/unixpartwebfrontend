@@ -2,21 +2,16 @@ import { fetchApi } from '../api';
 
 export const roleService = {
   getAll: async (skip = 0, limit = 100) => {
-    try {
-      // Use Next.js proxy route to bypass CORS issues
-      return await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
-    } catch (error) {
-      console.warn("Roles API failed, using fallback roles:", error.message);
-      return [
-        { id: 1, name: "Administrator" },
-        { id: 2, name: "Manager" },
-        { id: 3, name: "Staff" }
-      ];
-    }
+    // Use Next.js proxy route to bypass CORS issues
+    return await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
   },
 
   getById: async (id) => {
     return fetchApi(`/api/roles/${id}`);
+  },
+
+  getBySlug: async (slug) => {
+    return fetchApi(`/api/roles/slug/${slug}`);
   },
 
   create: async (roleData) => {
@@ -35,6 +30,38 @@ export const roleService = {
 
   delete: async (id) => {
     return fetchApi(`/api/roles/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  getPermissions: async (roleId) => {
+    try {
+      console.log('🔍 roleService.getPermissions called with:', { roleId, type: typeof roleId });
+      
+      // Validate roleId before making the API call
+      if (!roleId || isNaN(parseInt(roleId))) {
+        console.error('❌ Invalid roleId passed to getPermissions:', roleId);
+        return [];
+      }
+      
+      const numericRoleId = parseInt(roleId);
+      console.log('📡 Making API call to:', `/api/roles/${numericRoleId}/permissions`);
+      
+      return await fetchApi(`/api/roles/${numericRoleId}/permissions`);
+    } catch (error) {
+      console.warn("Role permissions API failed:", error.message);
+      return [];
+    }
+  },
+
+  assignPermission: async (roleId, permissionId) => {
+    return fetchApi(`/api/roles/${roleId}/permissions/${permissionId}`, {
+      method: 'POST',
+    });
+  },
+
+  removePermission: async (roleId, permissionId) => {
+    return fetchApi(`/api/roles/${roleId}/permissions/${permissionId}`, {
       method: 'DELETE',
     });
   },

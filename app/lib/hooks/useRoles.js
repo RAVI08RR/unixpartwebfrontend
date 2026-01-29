@@ -15,12 +15,7 @@ export function useRoles() {
     } catch (err) {
       console.error('Error fetching roles:', err);
       setError(err.message);
-      // Set fallback data on error
-      setRoles([
-        { id: 1, name: "Administrator" },
-        { id: 2, name: "Manager" },
-        { id: 3, name: "Staff" }
-      ]);
+      setRoles([]);
     } finally {
       setLoading(false);
     }

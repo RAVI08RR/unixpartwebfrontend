@@ -59,6 +59,8 @@ export default function AddUserPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
+  const [rolePermissions, setRolePermissions] = useState([]);
+  const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
   const [roles, setRoles] = useState([
     { id: 1, name: "Administrator" },
     { id: 2, name: "Manager" },
@@ -126,6 +128,40 @@ export default function AddUserPage() {
     
     fetchData();
   }, []);
+
+  // Fetch role permissions when role is selected
+  useEffect(() => {
+    const fetchRolePermissions = async () => {
+      // Check if role_id is valid (not empty, not undefined, and is a number)
+      if (!formData.role_id || formData.role_id === "" || isNaN(parseInt(formData.role_id))) {
+        setRolePermissions([]);
+        return;
+      }
+
+      setRolePermissionsLoading(true);
+      try {
+        const roleId = parseInt(formData.role_id);
+        console.log('Fetching permissions for role ID:', roleId);
+        
+        const permissions = await roleService.getPermissions(roleId);
+        setRolePermissions(permissions || []);
+        
+        // Auto-select role permissions
+        const rolePermissionIds = permissions?.map(p => p.id) || [];
+        setFormData(prev => ({
+          ...prev,
+          permission_ids: rolePermissionIds
+        }));
+      } catch (error) {
+        console.error("Failed to fetch role permissions:", error);
+        setRolePermissions([]);
+      } finally {
+        setRolePermissionsLoading(false);
+      }
+    };
+
+    fetchRolePermissions();
+  }, [formData.role_id]);
 
   const handleSubmit = async () => {
       // Basic validation
@@ -407,6 +443,7 @@ export default function AddUserPage() {
                 <div className="space-y-2">
                   {modulePermissions.map((permission) => {
                     const isSelected = formData.permission_ids.includes(permission.id);
+                    const isRolePermission = rolePermissions.some(rp => rp.id === permission.id);
                     return (
                       <label
                         key={permission.id}
@@ -419,8 +456,15 @@ export default function AddUserPage() {
                           className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          <div className={`text-sm font-medium transition-colors ${
+                            isRolePermission 
+                              ? 'text-blue-600 dark:text-blue-400' 
+                              : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                          }`}>
                             {permission.name}
+                            {isRolePermission && (
+                              <span className="ml-1 text-xs text-blue-500 dark:text-blue-400">(Role)</span>
+                            )}
                           </div>
                         </div>
                       </label>

@@ -1,12 +1,13 @@
 /**
- * Roles Proxy Route - Bypasses CORS issues for roles API
+ * Role Permission Assignment/Removal Proxy Route
+ * POST - Assign permission to role
+ * DELETE - Remove permission from role
  */
 
-export async function GET(request) {
+export async function POST(request, { params }) {
   try {
-    const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    // In Next.js 15+, params is a Promise that needs to be awaited
+    const { id, permission_id } = await params;
     
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
@@ -14,83 +15,13 @@ export async function GET(request) {
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
     
-    console.log('Roles proxy - API Base URL:', apiBaseUrl);
-    console.log('Roles proxy - Auth header present:', !!authHeader);
+    console.log('Assign permission proxy - Role ID:', id, 'Permission ID:', permission_id);
+    console.log('Assign permission proxy - API Base URL:', apiBaseUrl);
+    console.log('Assign permission proxy - Auth header present:', !!authHeader);
     
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/roles/?skip=${skip}&limit=${limit}`;
-    console.log('Roles proxy - Backend URL:', backendUrl);
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
-    };
-    
-    // Forward auth header if present
-    if (authHeader) {
-      headers['Authorization'] = authHeader;
-    }
-    
-    const response = await fetch(backendUrl, {
-      method: 'GET',
-      headers,
-      signal: AbortSignal.timeout(10000), // 10 second timeout
-    });
-    
-    console.log('Roles proxy - Backend response status:', response.status);
-    
-    // Get response data
-    const data = await response.text();
-    console.log('Roles proxy - Backend response data length:', data.length);
-    
-    // Forward the response with CORS headers
-    return new Response(data, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: {
-        'Content-Type': response.headers.get('Content-Type') || 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      },
-    });
-    
-  } catch (error) {
-    console.error('Roles proxy error:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: 'Roles proxy failed', 
-        details: error.message 
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
-  }
-}
-
-export async function POST(request) {
-  try {
-    // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
-    
-    // Get auth token from request headers
-    const authHeader = request.headers.get('authorization');
-    
-    // Get request body
-    const body = await request.text();
-    
-    console.log('Create role proxy - API Base URL:', apiBaseUrl);
-    console.log('Create role proxy - Auth header present:', !!authHeader);
-    console.log('Create role proxy - Request body:', body);
-    
-    // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/roles/`;
-    console.log('Create role proxy - Backend URL:', backendUrl);
+    const backendUrl = `${apiBaseUrl}/api/roles/${id}/permissions/${permission_id}`;
+    console.log('Assign permission proxy - Backend URL:', backendUrl);
     
     const headers = {
       'Content-Type': 'application/json',
@@ -105,16 +36,13 @@ export async function POST(request) {
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
-      body,
-      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
     
-    console.log('Create role proxy - Backend response status:', response.status);
+    console.log('Assign permission proxy - Backend response status:', response.status);
     
     // Get response data
     const data = await response.text();
-    console.log('Create role proxy - Backend response data length:', data.length);
-    console.log('Create role proxy - Backend response data:', data);
+    console.log('Assign permission proxy - Backend response data length:', data.length);
     
     // Forward the response with CORS headers
     return new Response(data, {
@@ -129,26 +57,84 @@ export async function POST(request) {
     });
     
   } catch (error) {
-    console.error('Create role proxy error:', error);
-    
-    let errorMessage = 'Create role proxy failed';
-    let statusCode = 500;
-    
-    if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
-      errorMessage = 'Backend API timeout - please try again';
-      statusCode = 504;
-    } else if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
-      errorMessage = 'Backend API unavailable - please check connection';
-      statusCode = 503;
-    }
-    
+    console.error('Assign permission proxy error:', error);
     return new Response(
       JSON.stringify({ 
-        error: errorMessage, 
+        error: 'Assign permission proxy failed', 
         details: error.message 
       }),
       {
-        status: statusCode,
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    // In Next.js 15+, params is a Promise that needs to be awaited
+    const { id, permission_id } = await params;
+    
+    // Get API base URL
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
+    
+    // Get auth token from request headers
+    const authHeader = request.headers.get('authorization');
+    
+    console.log('Remove permission proxy - Role ID:', id, 'Permission ID:', permission_id);
+    console.log('Remove permission proxy - API Base URL:', apiBaseUrl);
+    console.log('Remove permission proxy - Auth header present:', !!authHeader);
+    
+    // Make the request to FastAPI backend
+    const backendUrl = `${apiBaseUrl}/api/roles/${id}/permissions/${permission_id}`;
+    console.log('Remove permission proxy - Backend URL:', backendUrl);
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    };
+    
+    // Forward auth header if present
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
+    const response = await fetch(backendUrl, {
+      method: 'DELETE',
+      headers,
+    });
+    
+    console.log('Remove permission proxy - Backend response status:', response.status);
+    
+    // Get response data
+    const data = await response.text();
+    console.log('Remove permission proxy - Backend response data length:', data.length);
+    
+    // Forward the response with CORS headers
+    return new Response(data, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+    
+  } catch (error) {
+    console.error('Remove permission proxy error:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Remove permission proxy failed', 
+        details: error.message 
+      }),
+      {
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
