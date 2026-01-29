@@ -3,125 +3,14 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
-  Users, Mail, Phone, MoreVertical, Search, 
+  Mail, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  ShieldCheck, UserCheck, UserCog, Package, ShieldAlert,
-  Info, Pencil, Trash2, Check, X, Eye, Ban, RefreshCw
+  ShieldCheck, Pencil, Trash2, Check, X, Eye
 } from "lucide-react";
 import { useUsers } from "@/app/lib/hooks/useUsers";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
-import { branchService } from "@/app/lib/services/branchService"; // Added branchService import
-import { authService } from "@/app/lib/services/authService"; // Added authService import
 import { getAuthToken } from "@/app/lib/api";
-
-// Initial user data
-const initialUsers = [
-  {
-    id: 1,
-    name: "Ahmed",
-    role: "Administrator",
-    roleColor: "text-purple-600 bg-purple-50 dark:bg-purple-500/10 dark:text-purple-400 border-purple-100 dark:border-purple-500/20",
-    roleIcon: ShieldCheck,
-    email: "ahmed.mansoori@unixparts.com",
-    phone: "+971 50 123 4567",
-    branch: "Main Warehouse - Dubai",
-    status: "Active",
-    lastActive: "2 minutes ago",
-    avatar: "https://ui-avatars.com/api/?name=Ahmed+Al-Mansoori&background=0D8ABC&color=fff"
-  },
-  {
-    id: 2,
-    name: "Sarah Johnson",
-    role: "Manager",
-    roleColor: "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-100 dark:border-blue-500/20",
-    roleIcon: UserCog,
-    email: "sarah.johnson@unixparts.com",
-    phone: "+971 52 234 5678",
-    branch: "Branch 1 - Abu Dhabi",
-    status: "Active",
-    lastActive: "1 hour ago",
-    avatar: "https://ui-avatars.com/api/?name=Sarah+Johnson&background=F3F4F6&color=333"
-  },
-  {
-    id: 3,
-    name: "Mohammed Hassan",
-    role: "Warehouse Staff",
-    roleColor: "text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 border-orange-100 dark:border-orange-500/20",
-    roleIcon: Package,
-    email: "mohammed.hassan@unixparts.com",
-    phone: "+971 55 345 6789",
-    branch: "Branch 2 - Sharjah",
-    status: "Active",
-    lastActive: "3 hours ago",
-    avatar: "https://ui-avatars.com/api/?name=Mohammed+Hassan&background=333&color=fff"
-  },
-  {
-    id: 4,
-    name: "Lisa Chen",
-    role: "Sales Representative",
-    roleColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20",
-    roleIcon: UserCheck,
-    email: "lisa.chen@unixparts.com",
-    phone: "+971 56 456 7890",
-    branch: "Main Warehouse - Dubai",
-    status: "Active",
-    lastActive: "5 hours ago",
-    avatar: "https://ui-avatars.com/api/?name=Lisa+Chen&background=0D8ABC&color=fff"
-  },
-  {
-    id: 5,
-    name: "Omar Khalid",
-    role: "Accountant",
-    roleColor: "text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20",
-    roleIcon: ShieldAlert,
-    email: "omar.khalid@unixparts.com",
-    phone: "+971 50 567 8901",
-    branch: "Branch 1 - Abu Dhabi",
-    status: "Active",
-    lastActive: "Yesterday",
-    avatar: "https://ui-avatars.com/api/?name=Omar+Khalid&background=333&color=fff"
-  },
-  {
-    id: 6,
-    name: "Emma Wilson",
-    role: "Warehouse Staff",
-    roleColor: "text-orange-600 bg-orange-50 dark:bg-orange-500/10 dark:text-orange-400 border-orange-100 dark:border-orange-500/20",
-    roleIcon: Package,
-    email: "emma.wilson@unixparts.com",
-    phone: "+971 52 678 9012",
-    branch: "Branch 3 - Ajman",
-    status: "Inactive",
-    lastActive: "2 days ago",
-    avatar: "https://ui-avatars.com/api/?name=Emma+Wilson&background=0D8ABC&color=fff"
-  },
-  {
-    id: 7,
-    name: "Ali Rahman",
-    role: "Viewer",
-    roleColor: "text-slate-600 bg-slate-50 dark:bg-slate-500/10 dark:text-slate-400 border-slate-100 dark:border-slate-500/20",
-    roleIcon: Users,
-    email: "ali.rahman@unixparts.com",
-    phone: "+971 55 789 0123",
-    branch: "Branch 4 - Ras Al Khaimah",
-    status: "Active",
-    lastActive: "1 week ago",
-    avatar: "https://ui-avatars.com/api/?name=Ali+Rahman&background=0D8ABC&color=fff"
-  },
-  {
-    id: 8,
-    name: "Fatima Al-Said",
-    role: "Manager",
-    roleColor: "text-blue-600 bg-blue-50 dark:bg-blue-500/10 dark:text-blue-400 border-blue-100 dark:border-blue-500/20",
-    roleIcon: UserCog,
-    email: "fatima.said@unixparts.com",
-    phone: "+971 56 890 1234",
-    branch: "Branch 2 - Sharjah",
-    status: "Suspended",
-    lastActive: "2 weeks ago",
-    avatar: "https://ui-avatars.com/api/?name=Fatima+Al-Said&background=0D8ABC&color=fff"
-  }
-];
 
 export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -144,14 +33,15 @@ export default function UserManagementPage() {
     }).catch(err => console.error("Failed to fetch roles", err));
   }, []);
   
-  // Handle Data Selection (API vs Mock) - Fixed for hydration
+  // Handle Data Selection (API only) - Fixed for hydration
   const users = useMemo(() => {
     // During SSR, always return empty array to prevent hydration mismatch
     if (typeof window === 'undefined') return [];
 
     const token = getAuthToken();
-    if (!token) { // If no token, return initial fallback users
-      return initialUsers;
+    if (!token) { 
+      // If no token, return empty array - user should be redirected to login
+      return [];
     }
     
     // Log the data state for debugging
@@ -163,15 +53,15 @@ export default function UserManagementPage() {
       isError
     });
     
-    // 2. If we have a real token -> strictly use API data
-    if (hasRealToken) {
+    // If we have API data, use it
+    if (apiUsers) {
         // Handle both array and object responses
         const data = Array.isArray(apiUsers) ? apiUsers : (apiUsers?.users || []);
         return data;
     }
 
-    // 3. If no token at all, fallback to initialUsers (for demo/landing)
-    return initialUsers;
+    // If no API data, return empty array
+    return [];
   }, [apiUsers, isError, isLoading]);
 
   // Add client-side mounting state to prevent hydration mismatch

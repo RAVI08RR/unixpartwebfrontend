@@ -37,24 +37,21 @@ export function useCurrentUser() {
             localStorage.setItem('current_user', JSON.stringify(userData));
           }
         } catch (apiError) {
-          console.warn('⚠️ Failed to fetch user from API (using cached/fallback data):', apiError.message);
+          console.warn('⚠️ Failed to fetch user from API:', apiError.message);
           
           // If API fails but we have a valid token and cached user, use cached data
           if (storedUser) {
             console.log('📋 Using cached user data due to API failure');
             // User is already set from cached data above
           } else {
-            // If no cached data and API fails, create a fallback user
-            console.log('🔄 Creating fallback user due to API failure');
-            const fallbackUser = {
-              id: 1,
-              name: "User",
-              email: "user@unixparts.com",
-              role: { name: "User" },
-              user_code: "USR-001"
-            };
-            setUser(fallbackUser);
-            localStorage.setItem('current_user', JSON.stringify(fallbackUser));
+            // If no cached data and API fails, clear the token and redirect to login
+            console.log('🔄 No cached user data and API failed - redirecting to login');
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('access_token');
+              localStorage.removeItem('current_user');
+              window.location.href = '/';
+            }
+            return;
           }
           
           // Clear the error state since we handled it gracefully
@@ -64,16 +61,13 @@ export function useCurrentUser() {
         console.error('Failed to fetch current user:', err);
         setError(err);
         
-        // Even if there's an error, try to provide a fallback user
-        if (!user) {
-          const fallbackUser = {
-            id: 1,
-            name: "User",
-            email: "user@unixparts.com",
-            role: { name: "User" },
-            user_code: "USR-001"
-          };
-          setUser(fallbackUser);
+        // If there's an error and no cached user, redirect to login
+        if (!user && !storedUser) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('current_user');
+            window.location.href = '/';
+          }
         }
       } finally {
         setLoading(false);
