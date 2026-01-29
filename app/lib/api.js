@@ -51,7 +51,10 @@ export const fetchApi = async (endpoint, options = {}) => {
     throw new Error('NEXT_PUBLIC_API_URL environment variable must be set in Vercel dashboard');
   }
   
-  const url = `${API_BASE_URL}/${endpoint.replace(/^\//, '')}`;
+  // Clean URL construction - remove trailing slash from base and leading slash from endpoint
+  const baseUrl = API_BASE_URL.replace(/\/+$/, ''); // Remove trailing slashes
+  const cleanEndpoint = endpoint.replace(/^\/+/, ''); // Remove leading slashes
+  const url = `${baseUrl}/${cleanEndpoint}`;
   
   const headers = {
     'Accept': 'application/json',
