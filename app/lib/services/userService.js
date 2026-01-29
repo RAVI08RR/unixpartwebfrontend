@@ -3,7 +3,7 @@ import { apiClient } from '../api';
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
-    return apiClient.get('api/users', { skip, limit });
+    return apiClient.get('api/users/', { skip, limit });
   },
 
   // Get single user by ID
@@ -13,7 +13,7 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
-    return apiClient.post('api/users', userData);
+    return apiClient.post('api/users/', userData);
   },
 
   // Update existing user

@@ -6,7 +6,7 @@ const EMPTY_ARRAY = [];
 export function useUsers(skip = 0, limit = 100) {
   const { data, error, isLoading, mutate } = useSWR(
     `users-${skip}-${limit}`,
-    () => apiClient.get('api/users', { skip, limit })
+    () => apiClient.get('api/users/', { skip, limit })
   );
 
   return {
