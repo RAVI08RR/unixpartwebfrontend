@@ -3,12 +3,12 @@ import { fetchApi } from '../api';
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
-    return fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
+    return fetchApi(`api/users?skip=${skip}&limit=${limit}`);
   },
 
   // Get single user by ID
   getById: async (id) => {
-    return fetchApi(`/api/users/${id}`);
+    return fetchApi(`api/users/${id}`);
   },
 
   // Debug method to check available users
@@ -31,11 +31,40 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
-    console.log("userService.create: POST /api/users/", userData);
-    return fetchApi('/api/users/', {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    console.log("userService.create: POST api/users", userData);
+    
+    // Try different endpoint formats to handle potential API variations
+    const endpointsToTry = [
+      'api/users',      // Standard format
+      'api/users/',     // With trailing slash
+    ];
+
+    let lastError;
+    for (const endpoint of endpointsToTry) {
+      try {
+        console.log(`🔄 Trying create endpoint: ${endpoint}`);
+        return await fetchApi(endpoint, {
+          method: 'POST',
+          body: JSON.stringify(userData),
+        });
+      } catch (error) {
+        console.warn(`❌ Create endpoint ${endpoint} failed:`, error.message);
+        lastError = error;
+        
+        // If this is a 422 error, log the detailed error for debugging
+        if (error.message.includes('422') || error.message.includes('Unprocessable Entity')) {
+          console.error('🚨 422 Validation Error Details:', {
+            endpoint,
+            userData,
+            error: error.message
+          });
+        }
+        continue;
+      }
+    }
+
+    // If all endpoints failed, throw the last error
+    throw lastError;
   },
 
 // Update existing user
@@ -57,10 +86,8 @@ update: async (id, userData) => {
 
     // Try different endpoint formats to see which one works
     const endpointsToTry = [
-      `/api/users/${id}`,      // Without trailing slash
-      `/api/users/${id}/`,     // With trailing slash
-      `/users/${id}`,          // Without /api prefix
-      `/users/${id}/`          // Without /api prefix, with trailing slash
+      `api/users/${id}`,      // Standard format
+      `api/users/${id}/`,     // With trailing slash
     ];
 
     let lastError;
@@ -93,7 +120,7 @@ update: async (id, userData) => {
   // Delete user
   delete: async (id) => {
     console.log('🗑️ Deleting user:', id);
-    return fetchApi(`/api/users/${id}`, {
+    return fetchApi(`api/users/${id}`, {
       method: 'DELETE',
     });
   },

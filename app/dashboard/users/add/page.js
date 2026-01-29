@@ -28,7 +28,7 @@ const useBranches = () => {
         }
 
         // Use the API service to handle the request
-        const response = await fetch('https://ccb7878ed7f8.ngrok-free.app/branches?skip=0&limit=100', {
+        const response = await fetch('https://a36498aba6e6.ngrok-free.app/branches?skip=0&limit=100', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -164,15 +164,15 @@ export default function AddUserPage() {
       try {
           // Prepare payload matching UserCreate schema
           const payload = {
-              name: formData.name,
-              email: formData.email,
+              name: formData.name.trim(),
+              email: formData.email.trim().toLowerCase(),
               password: formData.password,
-              user_code: formData.user_code,
+              user_code: formData.user_code.trim(),
               role_id: parseInt(formData.role_id),
               status: true,
               branch_ids: formData.branch ? [parseInt(formData.branch)] : [],
               supplier_ids: formData.supplier ? [parseInt(formData.supplier)] : [],
-              permission_ids: formData.permission_ids
+              permission_ids: formData.permission_ids || []
           };
 
           // Final check for valid numeric IDs
@@ -182,14 +182,22 @@ export default function AddUserPage() {
             return;
           }
 
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(payload.email)) {
+            alert("Please enter a valid email address.");
+            setLoading(false);
+            return;
+          }
+
           console.log("🚀 SUBMITTING NEW USER:", {
             token: !!token,
-            apiUrl: "/backend-api/api/users",
             payload,
             selectedPermissions: formData.permission_ids.length
           });
 
-          await userService.create(payload);
+          const result = await userService.create(payload);
+          console.log("✅ User creation successful:", result);
           alert("✅ User created successfully!");
           router.push("/dashboard/users");
       } catch (error) {
@@ -198,7 +206,13 @@ export default function AddUserPage() {
           // Try to show the most helpful error message
           let detailedMsg = error.message;
           if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: The server rejected one of the fields. Please check if the User Code or Email is already taken.";
+            detailedMsg = "Validation Error: Please check if the User Code or Email is already taken, or if required fields are missing.";
+          } else if (detailedMsg.includes("400")) {
+            detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
+          } else if (detailedMsg.includes("401")) {
+            detailedMsg = "Authentication Error: Please log in again.";
+          } else if (detailedMsg.includes("500")) {
+            detailedMsg = "Server Error: Please try again later or contact support.";
           }
           
           alert(`Failed to create user: ${detailedMsg}`);

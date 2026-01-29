@@ -14,7 +14,7 @@ export const getApiBaseUrl = () => {
   }
   
   // Fallback for local development
-  return "https://ccb7878ed7f8.ngrok-free.app";
+  return "https://a36498aba6e6.ngrok-free.app/";
 };
 
 // Cached base URL - computed once at module load
@@ -79,7 +79,7 @@ export async function fetchApi(endpoint, options = {}) {
     "Accept": "application/json",
     "Content-Type": "application/json",
     "ngrok-skip-browser-warning": "true",
-    // "Access to fetch at 'https://ccb7878ed7f8.ngrok-free.app/api/users/?skip=0&limit=100' from origin 'http://localhost:3000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    // "Access to fetch at 'https://a36498aba6e6.ngrok-free.app/api/users/?skip=0&limit=100' from origin 'http://localhost:3000' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource."
     ...options.headers,
   };
 
