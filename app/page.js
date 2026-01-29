@@ -22,7 +22,7 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     
-    // Clear any existing tokens (including mock tokens) before login attempt
+    // Clear any existing tokens before login attempt
     clearAuthToken();
     
     try {
@@ -39,22 +39,6 @@ export default function LoginPage() {
         }
     } catch (err) {
         console.error("Login error", err);
-        
-        // DEVELOPMENT FALLBACK: Only use mock login if the server is physically unreachable
-        if (err.message.includes('Network error') || err.message.includes('Failed to fetch')) {
-            console.warn("API unreachable, using 'OFFLINE_MODE' for development");
-            const mockToken = "mock_OFFLINE_USER_" + Date.now();
-            setAuthToken(mockToken);
-            localStorage.setItem("current_user", JSON.stringify({
-                id: 1,
-                name: "Demo User",
-                email: "demo@unixparts.com",
-                role: { name: "Administrator" }
-            }));
-            router.push("/dashboard");
-            return;
-        }
-        
         setError(err.message || "Login failed. Please check your credentials.");
     } finally {
         setLoading(false);

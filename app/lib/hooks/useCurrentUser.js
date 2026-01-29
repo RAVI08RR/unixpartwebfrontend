@@ -22,24 +22,9 @@ export function useCurrentUser() {
           }
         }
         
+        // Check if user has valid token
         const token = getAuthToken();
         if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        // Check if it's a mock token (supports both 'mock_token_' and 'mock_OFFLINE_')
-        if (token.startsWith('mock_')) {
-          console.warn("Using Mock/Offline User Identity");
-          const mockUser = {
-            id: 1,
-            name: "Demo User",
-            email: "demo@unixparts.com",
-            role: { name: "Administrator" },
-            user_code: "USR-001",
-            ...JSON.parse(localStorage.getItem('current_user') || '{}') // Merge with any stored details
-          };
-          setUser(mockUser);
           setLoading(false);
           return;
         }

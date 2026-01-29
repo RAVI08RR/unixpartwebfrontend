@@ -150,24 +150,18 @@ export default function UserManagementPage() {
     if (typeof window === 'undefined') return [];
 
     const token = getAuthToken();
-    if (!token) { // If no token, return initialUsers (mock data)
+    if (!token) { // If no token, return initial fallback users
       return initialUsers;
     }
-    const isMockToken = token?.startsWith('mock_token_') || token?.startsWith('mock_OFFLINE_');
-    const hasRealToken = token && !isMockToken;
     
     // Log the data state for debugging
     console.log("UX-DASHBOARD DATA DEBUG:", {
       hasApiData: !!apiUsers,
       apiCount: apiUsers?.length,
-      isMockToken,
-      hasRealToken,
+      hasToken: !!token,
       isLoading,
       isError
     });
-
-    // 1. If explicitly in mock mode -> initialUsers
-    if (isMockToken) return initialUsers;
     
     // 2. If we have a real token -> strictly use API data
     if (hasRealToken) {
