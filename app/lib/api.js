@@ -3,12 +3,23 @@
  * Uses NEXT_PUBLIC_API_URL environment variable
  */
 
-// Get API base URL from environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// Get API base URL from environment with build-time fallback
+const getApiBaseUrl = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // For build time, allow missing env var but warn
+  if (!apiUrl) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('NEXT_PUBLIC_API_URL not set in production. API calls will fail.');
+      return 'https://api.placeholder.com'; // Placeholder for build
+    }
+    return 'https://a36498aba6e6.ngrok-free.app'; // Development fallback
+  }
+  
+  return apiUrl;
+};
 
-if (!API_BASE_URL) {
-  throw new Error('NEXT_PUBLIC_API_URL environment variable is required');
-}
+const API_BASE_URL = getApiBaseUrl();
 
 // Token management
 const TOKEN_KEY = 'access_token';
@@ -35,6 +46,11 @@ export const clearAuthToken = () => {
  * Simple fetch wrapper for API calls
  */
 export const fetchApi = async (endpoint, options = {}) => {
+  // Runtime check for API URL
+  if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
+    throw new Error('NEXT_PUBLIC_API_URL environment variable must be set in Vercel dashboard');
+  }
+  
   const url = `${API_BASE_URL}/${endpoint.replace(/^\//, '')}`;
   
   const headers = {
