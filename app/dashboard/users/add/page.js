@@ -453,17 +453,17 @@ export default function AddUserPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => handlePermissionToggle(permission.id)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                          className="w-4 h-4 text-black bg-gray-100 border-gray-300 rounded focus:ring-black dark:focus:ring-black dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                         />
                         <div className="flex-1 min-w-0">
                           <div className={`text-sm font-medium transition-colors ${
                             isRolePermission 
-                              ? 'text-blue-600 dark:text-blue-400' 
-                              : 'text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                              ? 'text-black dark:text-white' 
+                              : 'text-black dark:text-white group-hover:text-gray-700 dark:group-hover:text-gray-300'
                           }`}>
                             {permission.name}
                             {isRolePermission && (
-                              <span className="ml-1 text-xs text-blue-500 dark:text-blue-400">(Role)</span>
+                              <span className="ml-1 text-xs text-gray-600 dark:text-gray-400">(Role)</span>
                             )}
                           </div>
                         </div>
