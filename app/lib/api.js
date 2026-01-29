@@ -7,11 +7,18 @@
 const getApiBaseUrl = () => {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   
+  // Debug logging
+  console.log('🔍 API URL Debug:', {
+    NEXT_PUBLIC_API_URL: apiUrl,
+    NODE_ENV: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
+  
   // For build time, allow missing env var but warn
   if (!apiUrl) {
     if (process.env.NODE_ENV === 'production') {
-      console.warn('NEXT_PUBLIC_API_URL not set in production. API calls will fail.');
-      return 'https://api.placeholder.com'; // Placeholder for build
+      console.warn('⚠️ NEXT_PUBLIC_API_URL not set in production. Using fallback.');
+      return 'https://a36498aba6e6.ngrok-free.app'; // Use direct URL as fallback
     }
     return 'https://a36498aba6e6.ngrok-free.app'; // Development fallback
   }
