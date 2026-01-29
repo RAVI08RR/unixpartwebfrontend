@@ -2,14 +2,14 @@ import { fetchApi, clearAuthToken } from '../api';
 
 export const authService = {
   login: async (email, password) => {
-    return fetchApi('api/auth/login', {
+    return fetchApi('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
   },
 
   register: async (userData) => {
-    return fetchApi('api/auth/register', {
+    return fetchApi('/api/auth/register', {
         method: 'POST',
         body: JSON.stringify(userData),
     });
@@ -18,7 +18,7 @@ export const authService = {
   logout: async () => {
     try {
         // Try to call the logout API endpoint
-        await fetchApi('api/auth/logout', { method: 'POST' });
+        await fetchApi('/api/auth/logout', { method: 'POST' });
         console.log('✅ Logout API call successful');
     } catch (e) {
         // If the API call fails (404, network error, etc.), log it but continue
@@ -34,10 +34,10 @@ export const authService = {
   getCurrentUser: async () => {
     // Try different possible endpoint formats with optional flag
     const endpointsToTry = [
-      'api/auth/me',        // Standard format
-      'api/auth/me/',       // With trailing slash
-      'api/user/me',        // Alternative path
-      'api/users/me'        // Users endpoint
+      '/api/auth/me',        // Standard format
+      '/api/auth/me/',       // With trailing slash
+      '/api/user/me',        // Alternative path
+      '/api/users/me'        // Users endpoint
     ];
 
     for (const endpoint of endpointsToTry) {

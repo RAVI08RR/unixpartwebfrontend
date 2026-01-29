@@ -2,19 +2,13 @@
  * API Base URL Configuration
  * 
  * VERCEL PRODUCTION FIX:
- * - Uses Next.js API proxy in production to avoid CORS issues
- * - Direct API calls in development for easier debugging
- * - Safe fallback only for local development
+ * - Uses Next.js proxy (/backend-api) to avoid CORS issues
+ * - Proxy is configured in next.config.mjs
  * - Works in both browser and Vercel edge runtime
  */
 export const getApiBaseUrl = () => {
-  // Always use the direct API URL from environment variable
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  
-  // Fallback for local development
-  return "https://a36498aba6e6.ngrok-free.app/";
+  // Always use the Next.js proxy to avoid CORS issues
+  return '/backend-api';
 };
 
 // Cached base URL - computed once at module load
@@ -84,8 +78,9 @@ export async function fetchApi(endpoint, options = {}) {
   };
 
   // Attach authorization token if available
-  // NOTE: This backend requires token even for login/register endpoints
-  if (token) {
+  // NOTE: Don't send auth token for login/register endpoints
+  const isAuthEndpoint = endpoint.includes('/auth/login') || endpoint.includes('/auth/register');
+  if (token && !isAuthEndpoint) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
@@ -99,10 +94,10 @@ export async function fetchApi(endpoint, options = {}) {
 
   // Development-only logging (verbose)
   if (process.env.NODE_ENV === 'development') {
-    const realTarget = "https://a36498aba6e6.ngrok-free.app/";
+    const realTarget = process.env.NEXT_PUBLIC_API_URL || "https://a36498aba6e6.ngrok-free.app/";
         
     console.log(`🚀 Proxied Request: ${config.method || 'GET'} ${url}`);
-    console.log(`👉 Real Target: ${realTarget}`);
+    console.log(`👉 Real Target: ${realTarget}${safeEndpoint}`);
     
     if (token) {
       console.log(`🔑 Auth: Bearer ${token.substring(0, 10)}...`);
