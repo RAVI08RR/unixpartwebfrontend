@@ -96,6 +96,8 @@ export default function AddUserPage() {
       setSuppliersLoading(true);
       
       try {
+        console.log('🔄 Starting to fetch roles, branches, and suppliers...');
+        
         // Fetch roles, branches, and suppliers in parallel
         const [rolesData, branchesData, suppliersData] = await Promise.all([
           roleService.getAll(),
@@ -103,22 +105,52 @@ export default function AddUserPage() {
           supplierService.getAll()
         ]);
         
+        console.log('📊 Fetched data:', {
+          roles: rolesData?.length || 0,
+          branches: branchesData?.length || 0,
+          suppliers: suppliersData?.length || 0
+        });
+        
         if (rolesData && rolesData.length > 0) {
           setRoles(rolesData);
         }
         
         if (branchesData && branchesData.length > 0) {
           setBranches(branchesData);
+          console.log('✅ Branches set:', branchesData);
+        } else {
+          console.log('❌ No branches data, using fallback');
+          setBranches([
+            { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
+            { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" }
+          ]);
         }
         
         if (suppliersData && suppliersData.length > 0) {
           setSuppliers(suppliersData);
+          console.log('✅ Suppliers set:', suppliersData);
+        } else {
+          console.log('❌ No suppliers data, using fallback');
+          setSuppliers([
+            { id: 1, name: "Global Parts Inc.", supplier_code: "SUP-001", type: "Owner", contact_person: "John Doe" },
+            { id: 2, name: "Auto Parts Rental LLC", supplier_code: "SUP-002", type: "Rental", contact_person: "Jane Smith" }
+          ]);
         }
         
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.error("❌ Failed to fetch data:", error);
         setBranchesError(error.message);
         setSuppliersError(error.message);
+        
+        // Set fallback data on error
+        setBranches([
+          { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
+          { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" }
+        ]);
+        setSuppliers([
+          { id: 1, name: "Global Parts Inc.", supplier_code: "SUP-001", type: "Owner", contact_person: "John Doe" },
+          { id: 2, name: "Auto Parts Rental LLC", supplier_code: "SUP-002", type: "Rental", contact_person: "Jane Smith" }
+        ]);
       } finally {
         setBranchesLoading(false);
         setSuppliersLoading(false);

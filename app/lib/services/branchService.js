@@ -3,13 +3,25 @@ import { fetchApi } from '../api';
 export const branchService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
+      console.log('🏢 Fetching branches from API...');
       const data = await fetchApi(`/api/branches/?skip=${skip}&limit=${limit}`);
-      return Array.isArray(data) ? data : (data?.branches || []);
+      console.log('🏢 Branches API response:', data);
+      
+      const branchesData = Array.isArray(data) ? data : (data?.branches || []);
+      
+      if (branchesData.length > 0) {
+        console.log('✅ Branches fetched successfully:', branchesData.length);
+        return branchesData;
+      } else {
+        console.log('⚠️ No branches in API response, using fallback');
+        throw new Error('No branches data from API');
+      }
     } catch (error) {
-       console.warn("Branches API failed, using fallbacks:", error.message);
+       console.warn("🏢 Branches API failed, using fallbacks:", error.message);
        return [
-         { id: 1, branch_name: "Main Warehouse - Dubai" },
-         { id: 2, branch_name: "Branch 1 - Abu Dhabi" }
+         { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
+         { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" },
+         { id: 3, branch_name: "Sharjah Branch", branch_code: "SHJ" }
        ];
     }
   },
