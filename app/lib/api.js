@@ -58,10 +58,19 @@ export const fetchApi = async (endpoint, options = {}) => {
     throw new Error('NEXT_PUBLIC_API_URL environment variable must be set in Vercel dashboard');
   }
   
-  // Clean URL construction - remove trailing slash from base and leading slash from endpoint
-  const baseUrl = API_BASE_URL.replace(/\/+$/, ''); // Remove trailing slashes
-  const cleanEndpoint = endpoint.replace(/^\/+/, ''); // Remove leading slashes
-  const url = `${baseUrl}/${cleanEndpoint}`;
+  // Check if this is a Next.js API route (starts with /)
+  const isNextApiRoute = endpoint.startsWith('/');
+  
+  let url;
+  if (isNextApiRoute) {
+    // Next.js API route - use relative path
+    url = endpoint;
+  } else {
+    // External API - use full URL
+    const baseUrl = API_BASE_URL.replace(/\/+$/, '');
+    const cleanEndpoint = endpoint.replace(/^\/+/, '');
+    url = `${baseUrl}/${cleanEndpoint}`;
+  }
   
   const headers = {
     'Accept': 'application/json',
@@ -83,27 +92,10 @@ export const fetchApi = async (endpoint, options = {}) => {
     headers,
   };
 
-  // Enhanced logging for production debugging
-  console.log('🚀 API Request Details:', {
-    method: config.method,
-    url: url,
-    headers: headers,
-    body: config.body,
-    origin: typeof window !== 'undefined' ? window.location.origin : 'server',
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server',
-    timestamp: new Date().toISOString()
-  });
+  console.log(`🚀 API Request: ${config.method} ${url}`);
 
   try {
     const response = await fetch(url, config);
-    
-    // Log response details
-    console.log('📥 API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
-      url: response.url
-    });
     
     // Handle 401 - clear token and throw error
     if (response.status === 401) {
@@ -145,13 +137,7 @@ export const fetchApi = async (endpoint, options = {}) => {
     
     return await response.text();
   } catch (error) {
-    console.error('❌ API Error Details:', {
-      url: url,
-      error: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
-    });
+    console.error(`❌ API Error: ${url}`, error);
     
     if (error.message === 'Failed to fetch') {
       throw new Error('Network error: Unable to connect to the API. Please check your connection.');
