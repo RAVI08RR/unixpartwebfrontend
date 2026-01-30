@@ -926,7 +926,7 @@ svg[class*="lucide"] {
 label,
 .form-label,
 form label {
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   color: #374151 !important;
 }
@@ -943,7 +943,7 @@ input::placeholder,
 textarea::placeholder,
 select::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   opacity: 1 !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
@@ -962,7 +962,7 @@ input[type="url"]::placeholder,
 textarea::placeholder,
 select::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   opacity: 1 !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
@@ -973,7 +973,7 @@ select::placeholder {
 .dark textarea::placeholder,
 .dark select::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   opacity: 1 !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
@@ -992,7 +992,7 @@ input[type="date"],
 input[type="time"],
 input[type="url"],
 input[type="search"] {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
   font-weight: 400 !important;
 }
@@ -1009,7 +1009,7 @@ input[type="url"],
 input[type="search"],
 textarea,
 select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: #000000 !important; /* Black text when typing */
   line-height: 1.5 !important;
 }
@@ -1031,7 +1031,7 @@ select {
 
 /* Select dropdown options styling - Force 18px */
 select option {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: #000000 !important;
   background-color: #ffffff !important;
   padding: 8px !important;
@@ -1047,7 +1047,7 @@ select option {
 
 /* Select element specific styling - Force 18px */
 select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
   font-weight: 400 !important;
 }
@@ -1055,19 +1055,19 @@ select {
 /* Ensure select elements show placeholder-like text properly */
 select:invalid {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 .dark select:invalid {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Force consistency across all possible selectors */
 * input,
 * textarea,
 * select {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Override any framework or component library styles */
@@ -1079,7 +1079,7 @@ input.form-control,
 input.form-input,
 select.form-select,
 textarea.form-textarea {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
 }
 
@@ -1114,14 +1114,14 @@ select.text-sm,
 select.text-base,
 select.text-lg,
 select.text-xl {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Override any inline styles or component styles */
 input[style*="font-size"],
 textarea[style*="font-size"],
 select[style*="font-size"] {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Specific targeting for React Select and other libraries */
@@ -1130,7 +1130,7 @@ select[style*="font-size"] {
 .react-select__placeholder,
 .react-select__single-value,
 .react-select__option {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Additional comprehensive overrides */
@@ -1143,7 +1143,7 @@ form select,
 fieldset input,
 fieldset textarea,
 fieldset select {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Global button border radius */
@@ -1192,7 +1192,7 @@ input[type="url"],
 input[type="search"],
 textarea,
 select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: #000000 !important; /* Black text when typing */
 }
 
@@ -1213,7 +1213,7 @@ select {
 
 /* Select dropdown options styling */
 select option {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: #000000 !important;
   background-color: #ffffff !important;
   padding: 8px !important;
@@ -1227,7 +1227,7 @@ select option {
 
 /* Select element specific styling */
 select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
 }
 
@@ -1254,7 +1254,7 @@ select:invalid {
 .add-form textarea::placeholder,
 .edit-form textarea::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
 }
 
@@ -1265,7 +1265,7 @@ select:invalid {
 .edit-form label,
 .form-group label,
 .input-group label {
-  font-size: 16px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
   color: #374151 !important;
 }
@@ -1283,7 +1283,7 @@ select:invalid {
 /* Ensure search inputs also follow the same pattern */
 input[type="search"]::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Override Tailwind's default placeholder colors */
@@ -1296,7 +1296,7 @@ input[type="search"]::placeholder {
 .dark\:placeholder-gray-300::placeholder,
 .dark\:placeholder-gray-600::placeholder {
   color: #90A1B9 !important;
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Override Tailwind's default label text sizes */
@@ -1308,7 +1308,7 @@ label.text-sm,
 label.text-base,
 label.text-lg,
 label.text-xs {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Additional select styling for consistency */
@@ -1316,7 +1316,7 @@ select.form-select,
 select.form-control,
 .form-select,
 .form-control {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Ensure all form elements have consistent font size */
@@ -1326,7 +1326,7 @@ select.form-control,
 input.form-input,
 textarea.form-textarea,
 select.form-select {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Override any smaller text sizes in forms */
@@ -1336,7 +1336,7 @@ form select,
 .form input,
 .form textarea,
 .form select {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Specific overrides for common form classes */
@@ -1352,19 +1352,19 @@ select.text-sm,
 input.text-xs,
 textarea.text-xs,
 select.text-xs {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Force override for any remaining small text */
 input[class*="text-"],
 textarea[class*="text-"],
 select[class*="text-"] {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Comprehensive placeholder override */
 *::placeholder {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: #90A1B9 !important;
 }
 
@@ -1380,7 +1380,7 @@ select[class*="text-"] {
 * input[type="time"],
 * textarea,
 * select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
 }
 
@@ -1392,14 +1392,14 @@ select[class*="text-"] {
 .ant-select,
 .chakra-input,
 .chakra-select {
-  font-size: 16px !important;
+  font-size: 14px !important;
 }
 
 /* Final catch-all for any missed elements */
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
 textarea,
 select {
-  font-size: 16px !important;
+  font-size: 14px !important;
   line-height: 1.5 !important;
 }
 
