@@ -177,13 +177,44 @@ export default function InvoiceManagementPage() {
   // Helper function to format currency
   const formatCurrency = (amount) => {
     if (!amount) return "$0.00";
-    // Handle very long decimal strings by parsing and formatting
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return "$0.00";
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(numAmount);
+    
+    try {
+      // Handle very long decimal strings by parsing and formatting
+      let numAmount;
+      
+      if (typeof amount === 'string') {
+        // Remove leading zeros and handle very long strings
+        const cleanAmount = amount.replace(/^0+/, '') || '0';
+        
+        // If the string is extremely long, truncate it to a reasonable length
+        if (cleanAmount.length > 15) {
+          // Take first 10 digits and add decimal point
+          const truncated = cleanAmount.substring(0, 10) + '.' + cleanAmount.substring(10, 12);
+          numAmount = parseFloat(truncated);
+        } else {
+          numAmount = parseFloat(cleanAmount);
+        }
+      } else {
+        numAmount = parseFloat(amount);
+      }
+      
+      if (isNaN(numAmount)) return "$0.00";
+      
+      // Cap extremely large numbers for display
+      if (numAmount > 999999999) {
+        return "$999M+";
+      }
+      
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(numAmount);
+    } catch (error) {
+      console.warn('Currency formatting error:', error, 'for amount:', amount);
+      return "$0.00";
+    }
   };
 
   // Helper function to format date
