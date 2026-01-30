@@ -25,13 +25,38 @@ export async function POST(request) {
         'ngrok-skip-browser-warning': 'true',
       },
       body: JSON.stringify(loginData),
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
     
     console.log('Login proxy - Backend response status:', response.status);
+    console.log('Login proxy - Backend response headers:', Object.fromEntries(response.headers.entries()));
     
     // Get response data
     const data = await response.text();
+    console.log('Login proxy - Backend response data length:', data.length);
     console.log('Login proxy - Backend response data:', data);
+    
+    // If it's a 500 error, let's provide more debugging info
+    if (response.status === 500) {
+      console.error('🚨 Backend 500 Error Details:');
+      console.error('- URL:', backendUrl);
+      console.error('- Request Body:', JSON.stringify(loginData));
+      console.error('- Response:', data);
+      
+      // Try to test if the backend is accessible at all
+      try {
+        const healthCheck = await fetch(`${apiBaseUrl}/`, {
+          method: 'GET',
+          headers: { 'ngrok-skip-browser-warning': 'true' },
+          signal: AbortSignal.timeout(5000),
+        });
+        console.log('🔍 Backend health check status:', healthCheck.status);
+        const healthData = await healthCheck.text();
+        console.log('🔍 Backend health check response:', healthData);
+      } catch (healthError) {
+        console.error('🔍 Backend health check failed:', healthError.message);
+      }
+    }
     
     // Forward the response with CORS headers
     return new Response(data, {
@@ -47,14 +72,27 @@ export async function POST(request) {
     
   } catch (error) {
     console.error('Login proxy error:', error);
+    
+    let errorMessage = 'Login proxy failed';
+    let statusCode = 500;
+    
+    if (error.name === 'AbortError') {
+      errorMessage = 'Backend request timeout - server took too long to respond';
+      statusCode = 504;
+    } else if (error.message.includes('fetch')) {
+      errorMessage = 'Failed to connect to backend server';
+      statusCode = 502;
+    }
+    
     return new Response(
       JSON.stringify({ 
-        error: 'Login proxy failed', 
+        error: errorMessage, 
         details: error.message,
-        stack: error.stack
+        backend_url: process.env.NEXT_PUBLIC_API_URL,
+        timestamp: new Date().toISOString()
       }),
       {
-        status: 500,
+        status: statusCode,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
