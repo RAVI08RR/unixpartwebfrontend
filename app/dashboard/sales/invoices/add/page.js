@@ -26,6 +26,35 @@ export default function AddInvoicePage() {
     items: []
   });
 
+  // Selected customer details
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Helper function to format currency for customer details
+  const formatCurrency = (amount) => {
+    if (!amount) return "₹0.00";
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return "₹0.00";
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(numAmount);
+  };
+
+  // Handle customer selection change
+  const handleCustomerChange = (customerId) => {
+    setFormData({...formData, customer_id: customerId});
+    
+    // Find and set selected customer details
+    if (customerId) {
+      const customer = customers.find(c => c.id === parseInt(customerId));
+      setSelectedCustomer(customer);
+    } else {
+      setSelectedCustomer(null);
+    }
+  };
+
   useEffect(() => {
     const fetchCustomers = async () => {
       setCustomersLoading(true);
@@ -39,25 +68,13 @@ export default function AddInvoicePage() {
           setCustomers(customersData);
           console.log('✅ Customers set:', customersData);
         } else {
-          console.log('❌ No customers data, using fallback');
-          setCustomers([
-            { id: 1, customer_code: "CUST-001", full_name: "John Doe", business_name: "Doe Enterprises" },
-            { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" },
-            { id: 3, customer_code: "CUST-003", full_name: "Ahmed Ali", business_name: "Ali Motors" },
-            { id: 4, customer_code: "CUST-004", full_name: "Priya Sharma", business_name: "Sharma Industries" },
-            { id: 5, customer_code: "CUST-005", full_name: "Rajesh Kumar", business_name: "Kumar Enterprises" }
-          ]);
+          console.log('❌ No customers data from API');
+          setCustomers([]);
         }
         
       } catch (error) {
         console.error("❌ Failed to fetch customers:", error);
-        setCustomers([
-          { id: 1, customer_code: "CUST-001", full_name: "John Doe", business_name: "Doe Enterprises" },
-          { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" },
-          { id: 3, customer_code: "CUST-003", full_name: "Ahmed Ali", business_name: "Ali Motors" },
-          { id: 4, customer_code: "CUST-004", full_name: "Priya Sharma", business_name: "Sharma Industries" },
-          { id: 5, customer_code: "CUST-005", full_name: "Rajesh Kumar", business_name: "Kumar Enterprises" }
-        ]);
+        setCustomers([]);
       } finally {
         setCustomersLoading(false);
       }
@@ -169,10 +186,17 @@ export default function AddInvoicePage() {
             <select 
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
               value={formData.customer_id}
-              onChange={(e) => setFormData({...formData, customer_id: e.target.value})}
+              onChange={(e) => handleCustomerChange(e.target.value)}
               disabled={customersLoading}
             >
-              <option value="">{customersLoading ? "Loading customers..." : "Select Customer"}</option>
+              <option value="">
+                {customersLoading 
+                  ? "Loading customers..." 
+                  : customers.length === 0 
+                    ? "No customers available" 
+                    : "Select Customer"
+                }
+              </option>
               {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
                   {customer.full_name} - {customer.business_name || customer.customer_code}
@@ -256,8 +280,90 @@ export default function AddInvoicePage() {
         </div>
       </div>
 
+      {/* Customer Details Section - Show when customer is selected */}
+      {selectedCustomer && (
+        <div className="lg:col-span-2 mt-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  {/* Customer Basic Info */}
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      {selectedCustomer.full_name}
+                    </h3>
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Code:</span> {selectedCustomer.customer_code}
+                      </p>
+                      {selectedCustomer.business_name && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Business:</span> {selectedCustomer.business_name}
+                        </p>
+                      )}
+                      {selectedCustomer.phone && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="font-medium">Phone:</span> {selectedCustomer.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Customer Financial Info */}
+                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
+                    <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 border border-gray-200 dark:border-zinc-700">
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                          Total Purchase
+                        </p>
+                        <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                          {formatCurrency(selectedCustomer.total_purchase)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 border border-gray-200 dark:border-zinc-700">
+                      <div className="text-center">
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                          Outstanding
+                        </p>
+                        <p className={`text-lg font-bold ${
+                          parseFloat(selectedCustomer.outstanding_balance || 0) > 0 
+                            ? 'text-red-600 dark:text-red-400' 
+                            : 'text-gray-600 dark:text-gray-400'
+                        }`}>
+                          {formatCurrency(selectedCustomer.outstanding_balance)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Customer Address & Notes */}
+                {(selectedCustomer.address || selectedCustomer.notes) && (
+                  <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
+                    {selectedCustomer.address && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <span className="font-medium">Address:</span> {selectedCustomer.address}
+                      </p>
+                    )}
+                    {selectedCustomer.notes && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <span className="font-medium">Notes:</span> {selectedCustomer.notes}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8 lg:col-span-2">
         <button 
             onClick={handleSubmit} 
             disabled={loading}

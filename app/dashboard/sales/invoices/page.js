@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { 
   Receipt, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
@@ -14,14 +15,36 @@ import { customerService } from "@/app/lib/services/customerService";
 import { getAuthToken } from "@/app/lib/api";
 
 export default function InvoiceManagementPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || "All");
+  const [customerFilter, setCustomerFilter] = useState(searchParams.get('customer') || "All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Data Fetching
+  // Data Fetching with API-level filtering
   const itemsPerPage = 8;
-  const { invoices: apiInvoices, isLoading, isError, mutate } = useInvoices(0, 100);
+  
+  // Convert status filter to API parameter
+  const getApiStatusParam = (statusFilter) => {
+    if (statusFilter === "Active") return "true";
+    if (statusFilter === "Inactive") return "false";
+    return null; // "All" case
+  };
+  
+  // Convert customer filter to API parameter
+  const getApiCustomerParam = (customerFilter) => {
+    return customerFilter === "All" ? null : customerFilter;
+  };
+  
+  const { invoices: apiInvoices, isLoading, isError, mutate } = useInvoices(
+    0, 
+    100, 
+    getApiCustomerParam(customerFilter),
+    getApiStatusParam(statusFilter)
+  );
   const [customers, setCustomers] = useState([]);
 
   useEffect(() => {
@@ -29,6 +52,25 @@ export default function InvoiceManagementPage() {
       if (data && data.length > 0) setCustomers(data);
     }).catch(err => console.error("Failed to fetch customers", err));
   }, []);
+
+  // Update URL parameters when filters change
+  const updateUrlParams = (status, customer) => {
+    const params = new URLSearchParams();
+    
+    // Map status names to boolean values for API
+    if (status !== "All") {
+      if (status === "Active") {
+        params.set('status', 'true');
+      } else if (status === "Inactive") {
+        params.set('status', 'false');
+      }
+    }
+    
+    if (customer !== "All") params.set('customer', customer);
+    
+    const newUrl = params.toString() ? `?${params.toString()}` : '';
+    router.replace(`/dashboard/sales/invoices${newUrl}`, { scroll: false });
+  };
   
   // Handle Data Selection (API only) - Fixed for hydration
   const invoices = useMemo(() => {
@@ -78,7 +120,7 @@ export default function InvoiceManagementPage() {
   const [editForm, setEditForm] = useState({});
   const [menuOpenId, setMenuOpenId] = useState(null);
 
-  // Filter and search logic
+  // Filter and search logic (API handles status and customer filtering)
   const filteredInvoices = useMemo(() => {
     if (!invoices) return [];
     return invoices.filter(invoice => {
@@ -86,11 +128,9 @@ export default function InvoiceManagementPage() {
         (invoice.invoice_number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (invoice.invoice_notes?.toLowerCase() || "").includes(searchQuery.toLowerCase());
       
-      const matchesStatus = statusFilter === "All" || invoice.invoice_status === statusFilter.toLowerCase();
-      
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [searchQuery, statusFilter, invoices]);
+  }, [searchQuery, invoices]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
@@ -174,6 +214,11 @@ export default function InvoiceManagementPage() {
     return customer ? customer.full_name : `Customer #${customerId}`;
   };
 
+  // Helper function to get customer invoice link
+  const getCustomerInvoiceLink = (customerId) => {
+    return `/dashboard/sales/invoices?customer=${customerId}`;
+  };
+
   // Helper function to format currency
   const formatCurrency = (amount) => {
     if (!amount) return "₹0.00";
@@ -230,7 +275,23 @@ export default function InvoiceManagementPage() {
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your sales invoices</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your sales invoices</p>
+              {(statusFilter !== "All" || customerFilter !== "All") && (
+                <div className="flex items-center gap-2">
+                  {statusFilter !== "All" && (
+                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-full">
+                      Status: {statusFilter}
+                    </span>
+                  )}
+                  {customerFilter !== "All" && (
+                    <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-medium rounded-full">
+                      Customer: {customers.find(c => c.id.toString() === customerFilter)?.full_name || customerFilter} ({filteredInvoices.length} invoices)
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="p-10 text-center">
@@ -277,24 +338,84 @@ export default function InvoiceManagementPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {["All", "Pending", "Paid", "Overdue", "Cancelled"].map((status) => (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Status Filter */}
+                  <div className="mb-4">
+                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</h4>
+                    <div className="space-y-1">
+                      {["All", "Active", "Inactive"].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            setStatusFilter(status);
+                            setCurrentPage(1);
+                            updateUrlParams(status, customerFilter);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            statusFilter === status 
+                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' 
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          {status === "All" ? "All Status" : status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Customer Filter */}
+                  <div className="mb-3">
+                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Customer</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      <button
+                        onClick={() => {
+                          setCustomerFilter("All");
+                          setCurrentPage(1);
+                          updateUrlParams(statusFilter, "All");
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          customerFilter === "All" 
+                            ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        All Customers
+                      </button>
+                      {customers.map((customer) => (
+                        <button
+                          key={customer.id}
+                          onClick={() => {
+                            setCustomerFilter(customer.id.toString());
+                            setCurrentPage(1);
+                            updateUrlParams(statusFilter, customer.id.toString());
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            customerFilter === customer.id.toString() 
+                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          {customer.full_name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Clear Filters */}
+                  <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
                     <button
-                      key={status}
                       onClick={() => {
-                        setStatusFilter(status);
-                        setIsFilterOpen(false);
+                        setStatusFilter("All");
+                        setCustomerFilter("All");
                         setCurrentPage(1);
+                        setIsFilterOpen(false);
+                        updateUrlParams("All", "All");
                       }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        statusFilter === status 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
+                      className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     >
-                      {status === "All" ? "All Status" : status}
+                      Clear All Filters
                     </button>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>
