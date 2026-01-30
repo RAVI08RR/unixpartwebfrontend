@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -14,15 +14,26 @@ import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
 import { getAuthToken } from "@/app/lib/api";
 
-export default function InvoiceManagementPage() {
+function InvoiceManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || "All");
-  const [customerFilter, setCustomerFilter] = useState(searchParams.get('customer') || "All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [customerFilter, setCustomerFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  
+  // Initialize filters from URL params after component mounts
+  useEffect(() => {
+    if (searchParams) {
+      const urlStatus = searchParams.get('status');
+      const urlCustomer = searchParams.get('customer');
+      
+      if (urlStatus) setStatusFilter(urlStatus);
+      if (urlCustomer) setCustomerFilter(urlCustomer);
+    }
+  }, [searchParams]);
   
   // Data Fetching with API-level filtering
   const itemsPerPage = 8;
@@ -683,5 +694,25 @@ export default function InvoiceManagementPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function InvoiceManagementPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+          <div className="shrink-0">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
+            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Loading invoices...</p>
+          </div>
+        </div>
+        <div className="p-10 text-center">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </div>
+    }>
+      <InvoiceManagementContent />
+    </Suspense>
   );
 }

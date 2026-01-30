@@ -58,6 +58,18 @@ export function Sidebar() {
         { label: "Role Management", href: "/dashboard/roles", icon: Shield },
       ]
     },
+    {
+      id: "Inventory",
+      icon: Package,
+      customIcon: "/icons/Button-3.svg",
+      label: "Inventory",
+      items: [
+        { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart },
+        { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck },
+        { label: "Stock Items", href: "/dashboard/inventory/stock-items", icon: Package },
+        { label: "Custom Clearances", href: "/dashboard/inventory/custom-clearances", icon: FileText },
+      ]
+    },
 
     {
       id: "Sales",

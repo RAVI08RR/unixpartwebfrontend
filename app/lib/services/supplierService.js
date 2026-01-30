@@ -1,10 +1,14 @@
 import { fetchApi } from '../api';
 
 export const supplierService = {
-  getAll: async (skip = 0, limit = 100) => {
+  // Get all suppliers with pagination and filters
+  getAll: async (skip = 0, limit = 100, status = null) => {
+    let queryParams = `skip=${skip}&limit=${limit}`;
+    if (status !== null) queryParams += `&status=${status}`;
+    
     try {
       console.log('🏭 Fetching suppliers from API...');
-      const data = await fetchApi(`/api/suppliers/?skip=${skip}&limit=${limit}`);
+      const data = await fetchApi(`/api/suppliers?${queryParams}`);
       console.log('🏭 Suppliers API response:', data);
       
       const suppliersData = Array.isArray(data) ? data : (data?.suppliers || []);
@@ -13,39 +17,39 @@ export const supplierService = {
         console.log('✅ Suppliers fetched successfully:', suppliersData.length);
         return suppliersData;
       } else {
-        console.log('⚠️ No suppliers in API response, using fallback');
-        throw new Error('No suppliers data from API');
+        console.log('⚠️ No suppliers in API response');
+        return [];
       }
     } catch (error) {
-       console.warn("🏭 Suppliers API failed, using fallbacks:", error.message);
-       return [
-         { id: 1, name: "Global Parts Inc.", supplier_code: "SUP-001", type: "Owner", contact_person: "John Doe" },
-         { id: 2, name: "Auto Parts Rental LLC", supplier_code: "SUP-002", type: "Rental", contact_person: "Jane Smith" },
-         { id: 3, name: "Premium Auto Supplies", supplier_code: "SUP-003", type: "Owner", contact_person: "Ahmed Ali" }
-       ];
+       console.error("🏭 Suppliers API failed:", error.message);
+       return [];
     }
   },
 
+  // Get single supplier by ID
   getById: async (id) => {
-    return fetchApi(`/api/suppliers/${id}/`);
+    return fetchApi(`/api/suppliers/${id}`);
   },
 
+  // Create new supplier
   create: async (supplierData) => {
-    return fetchApi('/api/suppliers/', {
+    return fetchApi('/api/suppliers', {
       method: 'POST',
       body: JSON.stringify(supplierData),
     });
   },
 
+  // Update existing supplier
   update: async (id, supplierData) => {
-    return fetchApi(`/api/suppliers/${id}/`, {
+    return fetchApi(`/api/suppliers/${id}`, {
       method: 'PUT',
       body: JSON.stringify(supplierData),
     });
   },
 
+  // Delete supplier
   delete: async (id) => {
-    return fetchApi(`/api/suppliers/${id}/`, {
+    return fetchApi(`/api/suppliers/${id}`, {
       method: 'DELETE',
     });
   },
