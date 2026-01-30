@@ -174,10 +174,8 @@ th.px-8.py-6.text-left.text-sm.font-black.text-gray-400.dark\:text-gray-500.uppe
 /* Global form focus styles - Fix for cutting border issue */
 input:focus,
 textarea:focus,
-select:focus,
-button:focus {
+select:focus {
   outline: none !important;
-  box-shadow: none !important;
 }
 
 /* Custom focus styles for form inputs */
@@ -194,8 +192,7 @@ textarea:focus,
 select:focus {
   outline: none !important;
   border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-  transform: none !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1) !important;
 }
 
 /* Dark mode focus styles */
@@ -211,12 +208,7 @@ select:focus {
 .dark textarea:focus,
 .dark select:focus {
   border-color: #60a5fa !important;
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1) !important;
-}
-
-/* Remove default focus outline from all elements */
-*:focus {
-  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1) !important;
 }
 
 /* Custom focus styles for buttons */
@@ -229,30 +221,54 @@ button:focus-visible {
   outline-color: #60a5fa !important;
 }
 
-/* Ensure form containers don't clip focus styles */
-form,
-.form-container,
-div[class*="space-y"],
-div[class*="grid"] {
-  overflow: visible !important;
-}
-
-/* Fix for input containers */
-.relative {
-  overflow: visible !important;
-}
-
-/* Prevent focus ring clipping */
-input,
-textarea,
-select {
-  position: relative;
-  z-index: 1;
-}
-
 /* Smooth transitions for focus states */
 input,
 textarea,
 select {
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+/* Fix for Lucide icons in forms - ensure they are visible */
+.relative svg[data-lucide],
+.relative svg.lucide,
+.relative .absolute svg {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 10 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure icon containers are properly positioned */
+.relative .absolute {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+}
+
+/* Specific positioning for form input icons */
+input[type="text"] + .absolute svg,
+input[type="email"] + .absolute svg,
+input[type="password"] + .absolute svg,
+input[type="tel"] + .absolute svg,
+textarea + .absolute svg,
+.absolute + input,
+.absolute + textarea {
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Override any hiding styles for Lucide icons */
+svg[class*="lucide"] {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Ensure form icon containers don't get hidden */
+.relative > .absolute:first-child {
+  z-index: 10 !important;
+  pointer-events: none !important;
 }
