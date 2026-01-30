@@ -1,12 +1,5 @@
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "./ThemeContext";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
-});
 
 export const metadata = {
   title: "Unixparts Dashboard",
@@ -16,10 +9,15 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} font-sans antialiased`}
-        style={{ fontFamily: 'var(--font-inter), sans-serif' }}
-      >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link 
+          href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" 
+          rel="stylesheet" 
+        />
+      </head>
+      <body className="font-sans antialiased google-sans-regular">
         <ThemeProvider>
           {children}
         </ThemeProvider>
