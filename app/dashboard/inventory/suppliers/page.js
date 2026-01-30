@@ -405,46 +405,66 @@ export default function SupplierManagementPage() {
                       <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
                            {isEditing ? (
-                              <>
-                                <button onClick={handleSave} className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20" title="Save">
-                                  <Check className="w-5 h-5" />
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={handleSave} 
+                                  className="flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 active:scale-95 font-semibold text-sm" 
+                                  title="Save Changes"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  <span>Save</span>
                                 </button>
-                                <button onClick={handleCancel} className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20" title="Cancel">
-                                  <X className="w-5 h-5" />
+                                <button 
+                                  onClick={handleCancel} 
+                                  className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-sm active:scale-95 font-semibold text-sm" 
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4" />
+                                  <span>Cancel</span>
                                 </button>
-                              </>
+                              </div>
                            ) : (
                               <div className="relative">
                                 <button 
                                   onClick={() => toggleMenu(supplier.id)}
-                                  className={`p-2 rounded-xl transition-all ${
+                                  className={`p-2.5 rounded-xl transition-all duration-200 ${
                                     menuOpenId === supplier.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
+                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105'
                                   }`}
+                                  title="More Actions"
                                 >
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
                                 
                                 {menuOpenId === supplier.id && (
-                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                  <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200 ${
                                     index > paginatedSuppliers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                   }`}>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                                      <Eye className="w-4 h-4" />
-                                      View Details
+                                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group">
+                                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
+                                        <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                      </div>
+                                      <span>View Details</span>
                                     </button>
                                     <button 
                                       onClick={() => handleEdit(supplier)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-all duration-200 group"
                                     >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Supplier
+                                      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                                        <Pencil className="w-4 h-4 text-green-600 dark:text-green-400" />
+                                      </div>
+                                      <span>Edit Supplier</span>
                                     </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                    <button onClick={() => handleDelete(supplier.id)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Supplier
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-2" />
+                                    <button 
+                                      onClick={() => handleDelete(supplier.id)} 
+                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all duration-200 group"
+                                    >
+                                      <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
+                                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                      </div>
+                                      <span>Delete Supplier</span>
                                     </button>
                                   </div>
                                 )}

@@ -47,10 +47,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-zinc-950 transition-colors duration-300">
-      {/* Left Panel - Branding */}
-      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
+      {/* Left Panel - Branding with Abstract Background */}
+      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/abuinix.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+        {/* Much lighter overlay to show background image clearly */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/20"></div>
+        
         <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
-          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1 bg-black/60 backdrop-blur-sm border border-white/20">
              <img 
                 src="/logo.png" 
                 alt="Unixparts Logo" 
@@ -58,64 +61,58 @@ export default function LoginPage() {
              />
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-2xl text-white">
             Welcome to Unixparts
           </h1>
           
-          <p className="text-gray-400 text-lg leading-relaxed">
+          <p className="text-gray-100 text-lg leading-relaxed drop-shadow-xl bg-black/30 p-4 rounded-xl backdrop-blur-sm">
             Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows across all branches—securely and efficiently.
           </p>
 
           <div className="space-y-6 pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/10 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Inventory, containers, and warehouse operations</span>
+              <span className="text-gray-100 drop-shadow-lg">Inventory, containers, and warehouse operations</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/10 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Sales, invoicing, and customer accounts</span>
+              <span className="text-gray-100 drop-shadow-lg">Sales, invoicing, and customer accounts</span>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/10 p-2 rounded-lg">
+            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
-              <span className="text-gray-300">Supplier settlements and expense tracking</span>
+              <span className="text-gray-100 drop-shadow-lg">Supplier settlements and expense tracking</span>
             </div>
           </div>
         </div>
-        
-        {/* Subtle background glow */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div>
       </div>
 
-      {/* Right Panel - Login Form */}
-      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300 bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/abuinix.jpeg)'}}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm"></div>
-        
+      {/* Right Panel - Clean Login Form */}
+      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
         <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
-              <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
+              <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
             </div>
-            <ThemeToggle className="p-2.5 rounded-xl bg-gray-50/80 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 shadow-sm backdrop-blur-sm" />
+            <ThemeToggle className="p-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-sm" />
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
             <div className="space-y-2">
-              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Email Address</label>
+              <label className="text-lg font-bold text-gray-800 dark:text-gray-200">Email Address</label>
               <div className="relative group">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type="email" 
                   placeholder="Enter Email Address"
                   autoComplete="email"
-                  className="w-full pl-11 pr-4 py-4 bg-white/90 dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg backdrop-blur-sm"
+                  className="w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition-all dark:text-white text-lg shadow-sm"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
@@ -124,14 +121,14 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Password</label>
+              <label className="text-lg font-bold text-gray-800 dark:text-gray-200">Password</label>
               <div className="relative group">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password"
                   autoComplete="current-password"
-                  className="w-full pl-11 pr-12 py-4 bg-white/90 dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg backdrop-blur-sm"
+                  className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition-all dark:text-white text-lg shadow-sm"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -149,23 +146,23 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
-                <span className="text-base text-gray-600 dark:text-gray-400">Remember me</span>
+                <span className="text-base text-gray-600 dark:text-gray-400 font-medium">Remember me</span>
               </label>
-              <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
+              <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors font-medium">Forgot password?</a>
             </div>
 
-            {error && <p className="text-red-500 text-sm text-center bg-white/80 dark:bg-zinc-900/80 p-2 rounded-lg backdrop-blur-sm">{error}</p>}
+            {error && <p className="text-red-600 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">{error}</p>}
 
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-black/90 dark:bg-white/90 dark:text-black text-white font-medium py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed backdrop-blur-sm"
+              className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
-          <p className="text-center text-base text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-zinc-900/60 p-2 rounded-lg backdrop-blur-sm">
+          <p className="text-center text-base text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
             Don't have an account? <Link href="/signup" className="text-black dark:text-white font-bold hover:underline">Sign up</Link>
           </p>
         </div>

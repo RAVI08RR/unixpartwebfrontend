@@ -240,13 +240,7 @@ select {
 }
 
 /* Ensure icon containers are properly positioned */
-.relative .absolute {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  /* pointer-events: none !important; */
-  z-index: 5 !important;
-}
+
 
 /* Specific positioning for form input icons */
 input[type="text"] + .absolute svg,
