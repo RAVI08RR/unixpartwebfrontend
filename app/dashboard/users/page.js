@@ -282,7 +282,7 @@ export default function UserManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
         <div className="overflow-x-auto w-full scrollbar-hide">
           <table className="w-full min-w-[800px]">
             <thead>
