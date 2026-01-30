@@ -91,16 +91,7 @@ export function Sidebar() {
         { label: "History", href: "/dashboard/approvals/history", icon: Layers },
       ]
     },
-    {
-      id: "Documents",
-      icon: FileText,
-      customIcon: "/icons/Button-6.svg",
-      label: "Documents",
-      items: [
-        { label: "Files", href: "/dashboard/documents/files", icon: FileText },
-        { label: "Archives", href: "/dashboard/documents/archives", icon: Layers },
-      ]
-    },
+
     {
       id: "Reports",
       icon: BarChart3,
@@ -189,10 +180,10 @@ export function Sidebar() {
                 <img 
                   src={group.customIcon} 
                   alt={group.label} 
-                  className={`w-[45px] h-[45px] transition-all duration-300 ${isActive ? 'brightness-0' : 'opacity-70 group-hover:opacity-100'}`}
+                  className={`w-[35px] h-[35px] transition-all duration-300 ${isActive ? 'brightness-0' : 'opacity-70 group-hover:opacity-100'}`}
                 />
               ) : (
-                <group.icon className={`w-[45px] h-[45px] ${isActive ? 'text-black' : 'text-gray-400 group-hover:text-white'}`} />
+                <group.icon className={`w-[35px] h-[35px] ${isActive ? 'text-black' : 'text-gray-400 group-hover:text-white'}`} />
               )}
               
               {/* Tooltip for desktop */}
@@ -243,7 +234,7 @@ export function Sidebar() {
                 `}
               >
                 <div className={`p-2 rounded-xl transition-colors ${isItemActive ? 'bg-white shadow-sm' : 'bg-gray-100 dark:bg-zinc-800 group-hover:bg-white dark:group-hover:bg-zinc-700'}`}>
-                  <item.icon className="w-4 h-4" />
+                  <item.icon className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-sm">{item.label}</span>
               </button>

@@ -11,7 +11,7 @@ export async function GET(request) {
     const parent_id = searchParams.get('parent_id');
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://289b47e1e00a.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
     
     // Build backend URL with query parameters
     let backendUrl = `${apiBaseUrl}/api/stock-items/?skip=${skip}&limit=${limit}`;
@@ -70,7 +70,7 @@ export async function POST(request) {
     const stockItemData = await request.json();
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://289b47e1e00a.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/`;
     
     console.log('Stock Items proxy - Create URL:', backendUrl);
