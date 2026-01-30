@@ -65,24 +65,24 @@ export default function LoginPage() {
             Welcome to Unixparts
           </h1>
           
-          <p className="text-gray-100 text-lg leading-relaxed drop-shadow-xl bg-black/30 p-4 rounded-xl backdrop-blur-sm">
+          <p className="text-gray-100 text-lg leading-relaxed drop-shadow-xl">
             Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows across all branches—securely and efficiently.
           </p>
 
           <div className="space-y-6 pt-6">
-            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+            <div className="flex items-center gap-4">
               <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
               <span className="text-gray-100 drop-shadow-lg">Inventory, containers, and warehouse operations</span>
             </div>
-            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+            <div className="flex items-center gap-4">
               <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
               <span className="text-gray-100 drop-shadow-lg">Sales, invoicing, and customer accounts</span>
             </div>
-            <div className="flex items-center gap-4 bg-black/30 p-3 rounded-xl backdrop-blur-sm">
+            <div className="flex items-center gap-4">
               <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
                 <Check className="w-5 h-5 text-white" />
               </div>
@@ -162,7 +162,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-base text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 p-3 rounded-lg">
+          <p className="text-center text-base text-gray-500 dark:text-gray-400">
             Don't have an account? <Link href="/signup" className="text-black dark:text-white font-bold hover:underline">Sign up</Link>
           </p>
         </div>
