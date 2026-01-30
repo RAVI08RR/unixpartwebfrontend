@@ -1,52 +1,66 @@
 import { fetchApi } from '../api';
 
 export const branchService = {
+  // Get all branches
   getAll: async (skip = 0, limit = 100) => {
     try {
-      console.log('🏢 Fetching branches from API...');
-      const data = await fetchApi(`/api/branches/?skip=${skip}&limit=${limit}`);
-      console.log('🏢 Branches API response:', data);
-      
-      const branchesData = Array.isArray(data) ? data : (data?.branches || []);
-      
-      if (branchesData.length > 0) {
-        console.log('✅ Branches fetched successfully:', branchesData.length);
-        return branchesData;
-      } else {
-        console.log('⚠️ No branches in API response, using fallback');
-        throw new Error('No branches data from API');
-      }
+      const response = await fetchApi(`/api/branches?skip=${skip}&limit=${limit}`);
+      return response;
     } catch (error) {
-       console.warn("🏢 Branches API failed, using fallbacks:", error.message);
-       return [
-         { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
-         { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" },
-         { id: 3, branch_name: "Sharjah Branch", branch_code: "SHJ" }
-       ];
+      console.error('Failed to fetch branches:', error);
+      throw error;
     }
   },
 
+  // Get branch by ID
   getById: async (id) => {
-    return fetchApi(`/api/branches/${id}/`);
+    try {
+      const response = await fetchApi(`/api/branches/${id}`);
+      return response;
+    } catch (error) {
+      console.error(`Failed to fetch branch ${id}:`, error);
+      throw error;
+    }
   },
 
+  // Create new branch
   create: async (branchData) => {
-    return fetchApi('/api/branches/', {
-      method: 'POST',
-      body: JSON.stringify(branchData),
-    });
+    try {
+      const response = await fetchApi('/api/branches', {
+        method: 'POST',
+        body: JSON.stringify(branchData),
+      });
+      return response;
+    } catch (error) {
+      console.error('Failed to create branch:', error);
+      throw error;
+    }
   },
 
+  // Update branch
   update: async (id, branchData) => {
-    return fetchApi(`/api/branches/${id}/`, {
-      method: 'PUT',
-      body: JSON.stringify(branchData),
-    });
+    try {
+      const response = await fetchApi(`/api/branches/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(branchData),
+      });
+      return response;
+    } catch (error) {
+      console.error(`Failed to update branch ${id}:`, error);
+      throw error;
+    }
   },
 
+  // Delete branch
   delete: async (id) => {
-    return fetchApi(`/api/branches/${id}/`, {
-      method: 'DELETE',
-    });
-  },
+    try {
+      const response = await fetchApi(`/api/branches/${id}`, {
+        method: 'DELETE',
+      });
+      return response;
+    } catch (error) {
+      console.error(`Failed to delete branch ${id}:`, error);
+      throw error;
+    }
+  }
 };

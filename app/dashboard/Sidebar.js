@@ -4,7 +4,7 @@ import React from "react";
 import { 
   BarChart3, LayoutDashboard, Box, Users, ShoppingCart, 
   FileText, Settings, LogOut, Layers, Package, Truck, 
-  DollarSign, X, Shield
+  DollarSign, X, Shield, Building2
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -132,6 +132,15 @@ export function Sidebar() {
       ]
     },
     {
+      id: "Administration",
+      icon: Settings,
+      customIcon: "/icons/Button-2.svg",
+      label: "Administration",
+      items: [
+        { label: "Branches", href: "/dashboard/administration/branches", icon: Building2 },
+      ]
+    },
+    {
       id: "Settings",
       icon: Settings,
       customIcon: "/icons/Button-10.svg",
@@ -141,7 +150,6 @@ export function Sidebar() {
         { label: "Profile", href: "/dashboard/settings/profile", icon: Users },
       ]
     },
- 
   ];
 
   const activeGroup = menuGroups.find(g => g.id === activeCategory) || menuGroups[0];

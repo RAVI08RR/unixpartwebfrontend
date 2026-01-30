@@ -266,3 +266,811 @@ svg[class*="lucide"] {
   z-index: 10 !important;
   pointer-events: none !important;
 }
+
+/* ===== GLOBAL TABLE COMPONENT STYLES ===== */
+
+/* Status Badge Styles - Consistent across all tables */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.status-badge-active {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background-color: rgb(240 253 244);
+  color: rgb(22 163 74);
+  border-radius: 9999px;
+}
+
+.dark .status-badge-active {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: rgb(74 222 128);
+}
+
+.status-badge-inactive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  background-color: rgb(254 242 242);
+  color: rgb(220 38 38);
+  border-radius: 9999px;
+}
+
+.dark .status-badge-inactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: rgb(248 113 113);
+}
+
+.status-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+}
+
+.status-dot-active {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: rgb(22 163 74);
+}
+
+.status-dot-inactive {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: rgb(220 38 38);
+}
+
+/* Role Badge Styles - Consistent across all tables */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  border: 1px solid;
+  border-radius: 20px;
+}
+
+
+.role-badge-admin {
+  background-color: rgb(250 245 255);
+  color: rgb(147 51 234);
+  border-color: rgb(196 181 253);
+}
+
+.dark .role-badge-admin {
+  background-color: rgba(168, 85, 247, 0.1);
+  color: rgb(196 181 253);
+  border-color: rgb(107 33 168);
+}
+
+.role-badge-manager {
+  background-color: rgb(239 246 255);
+  color: rgb(37 99 235);
+  border-color: rgb(147 197 253);
+}
+
+.dark .role-badge-manager {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: rgb(147 197 253);
+  border-color: rgb(30 64 175);
+}
+
+.role-badge-staff {
+  background-color: rgb(255 247 237);
+  color: rgb(234 88 12);
+  border-color: rgb(254 215 170);
+}
+
+.dark .role-badge-staff {
+  background-color: rgba(249, 115, 22, 0.1);
+  color: rgb(251 146 60);
+  border-color: rgb(154 52 18);
+}
+
+.role-badge-sales {
+  background-color: rgb(240 253 244);
+  color: rgb(22 163 74);
+  border-color: rgb(187 247 208);
+}
+
+.dark .role-badge-sales {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: rgb(74 222 128);
+  border-color: rgb(21 128 61);
+}
+
+.role-badge-accountant {
+  background-color: rgb(238 242 255);
+  color: rgb(79 70 229);
+  border-color: rgb(165 180 252);
+}
+
+.dark .role-badge-accountant {
+  background-color: rgba(99, 102, 241, 0.1);
+  color: rgb(165 180 252);
+  border-color: rgb(67 56 202);
+}
+
+.role-badge-default {
+  background-color: rgb(249 250 251);
+  color: rgb(75 85 99);
+  border-color: rgb(229 231 235);
+}
+
+.dark .role-badge-default {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: rgb(156 163 175);
+  border-color: rgb(55 65 81);
+}
+
+/* Category/Code Badge Styles */
+.category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background-color: rgb(243 244 246);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgb(55 65 81);
+}
+
+.dark .category-badge {
+  background-color: rgb(39 39 42);
+  color: rgb(212 212 216);
+}
+
+/* Action Button Styles - Consistent roundness */
+.action-button {
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.action-button-menu {
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  color: rgb(156 163 175);
+  transform: scale(1);
+}
+
+.action-button-menu:hover {
+  color: rgb(17 24 39);
+  background-color: rgb(243 244 246);
+  transform: scale(1.05);
+}
+
+.dark .action-button-menu:hover {
+  color: rgb(255 255 255);
+  background-color: rgb(39 39 42);
+}
+
+.action-button-menu-active {
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  background-color: rgb(0 0 0);
+  color: rgb(255 255 255);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+}
+
+.dark .action-button-menu-active {
+  background-color: rgb(255 255 255);
+  color: rgb(0 0 0);
+}
+
+/* Save/Cancel Button Styles */
+.save-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  color: rgb(255 255 255);
+  background: linear-gradient(to right, rgb(34 197 94), rgb(22 163 74));
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.25);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.save-button:hover {
+  background: linear-gradient(to right, rgb(22 163 74), rgb(21 128 61));
+  box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.4);
+}
+
+.save-button:active {
+  transform: scale(0.95);
+}
+
+.cancel-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  color: rgb(55 65 81);
+  background-color: rgb(243 244 246);
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.dark .cancel-button {
+  color: rgb(212 212 216);
+  background-color: rgb(39 39 42);
+}
+
+.cancel-button:hover {
+  background-color: rgb(229 231 235);
+}
+
+.dark .cancel-button:hover {
+  background-color: rgb(63 63 70);
+}
+
+.cancel-button:active {
+  transform: scale(0.95);
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  width: 13rem;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(243 244 246);
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  padding: 0.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dark .dropdown-menu {
+  background-color: rgb(24 24 27);
+  border-color: rgb(39 39 42);
+}
+
+.dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgb(55 65 81);
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.dark .dropdown-item {
+  color: rgb(212 212 216);
+}
+
+.dropdown-item-view:hover {
+  background-color: rgb(239 246 255);
+  color: rgb(37 99 235);
+}
+
+.dark .dropdown-item-view:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: rgb(147 197 253);
+}
+
+.dropdown-item-edit:hover {
+  background-color: rgb(240 253 244);
+  color: rgb(22 163 74);
+}
+
+.dark .dropdown-item-edit:hover {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: rgb(74 222 128);
+}
+
+.dropdown-item-delete:hover {
+  background-color: rgb(254 242 242);
+  color: rgb(220 38 38);
+}
+
+.dark .dropdown-item-delete:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: rgb(248 113 113);
+}
+
+.dropdown-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.dropdown-icon-view {
+  background-color: rgb(219 234 254);
+}
+
+.dark .dropdown-icon-view {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.dropdown-item-view:hover .dropdown-icon-view {
+  background-color: rgb(147 197 253);
+}
+
+.dark .dropdown-item-view:hover .dropdown-icon-view {
+  background-color: rgba(59, 130, 246, 0.5);
+}
+
+.dropdown-icon-edit {
+  background-color: rgb(187 247 208);
+}
+
+.dark .dropdown-icon-edit {
+  background-color: rgba(34, 197, 94, 0.3);
+}
+
+.dropdown-item-edit:hover .dropdown-icon-edit {
+  background-color: rgb(74 222 128);
+}
+
+.dark .dropdown-item-edit:hover .dropdown-icon-edit {
+  background-color: rgba(34, 197, 94, 0.5);
+}
+
+.dropdown-icon-delete {
+  background-color: rgb(254 202 202);
+}
+
+.dark .dropdown-icon-delete {
+  background-color: rgba(239, 68, 68, 0.3);
+}
+
+.dropdown-item-delete:hover .dropdown-icon-delete {
+  background-color: rgb(248 113 113);
+}
+
+.dark .dropdown-item-delete:hover .dropdown-icon-delete {
+  background-color: rgba(239, 68, 68, 0.5);
+}
+
+/* Header Action Button Styles */
+.header-button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background-color: rgb(0 0 0);
+  color: rgb(255 255 255);
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.dark .header-button-primary {
+  background-color: rgb(255 255 255);
+  color: rgb(0 0 0);
+}
+
+.header-button-primary:active {
+  transform: scale(0.95);
+}
+
+.header-button-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  color: rgb(107 114 128);
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.dark .header-button-secondary {
+  background-color: rgb(24 24 27);
+  border-color: rgb(39 39 42);
+  color: rgb(156 163 175);
+}
+
+.header-button-secondary:hover {
+  background-color: rgb(249 250 251);
+}
+
+.dark .header-button-secondary:hover {
+  background-color: rgba(39, 39, 42, 0.5);
+}
+
+/* Filter Dropdown Styles */
+.filter-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: 12rem;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(243 244 246);
+  border-radius: 0.75rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+  padding: 0.5rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dark .filter-dropdown {
+  background-color: rgb(24 24 27);
+  border-color: rgb(39 39 42);
+}
+
+.filter-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.filter-item-active {
+  background-color: rgb(254 242 242);
+  color: rgb(220 38 38);
+}
+
+.dark .filter-item-active {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: rgb(248 113 113);
+}
+
+.filter-item-inactive {
+  color: rgb(75 85 99);
+}
+
+.dark .filter-item-inactive {
+  color: rgb(156 163 175);
+}
+
+.filter-item-inactive:hover {
+  background-color: rgb(249 250 251);
+}
+
+.dark .filter-item-inactive:hover {
+  background-color: rgb(39 39 42);
+}
+
+/* Pagination Button Styles */
+.pagination-button {
+  padding: 0.75rem 1.25rem;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: rgb(75 85 99);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.dark .pagination-button {
+  background-color: rgb(24 24 27);
+  border-color: rgb(39 39 42);
+  color: rgb(156 163 175);
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: rgb(249 250 251);
+}
+
+.dark .pagination-button:hover:not(:disabled) {
+  background-color: rgb(39 39 42);
+}
+
+.pagination-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.pagination-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pagination-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-number-active {
+  background-color: rgb(0 0 0);
+  color: rgb(255 255 255);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.dark .pagination-number-active {
+  background-color: rgb(255 255 255);
+  color: rgb(0 0 0);
+}
+
+.pagination-number-inactive {
+  color: rgb(156 163 175);
+}
+
+.pagination-number-inactive:hover {
+  color: rgb(17 24 39);
+  background-color: rgb(243 244 246);
+}
+
+.dark .pagination-number-inactive:hover {
+  color: rgb(255 255 255);
+  background-color: rgb(39 39 42);
+}
+
+/* Form Input Styles for Inline Editing */
+.inline-edit-input {
+  width: 100%;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dark .inline-edit-input {
+  background-color: rgb(39 39 42);
+  border-color: rgb(63 63 70);
+}
+
+.inline-edit-input:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.inline-edit-textarea {
+  width: 100%;
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  resize: none;
+}
+
+.dark .inline-edit-textarea {
+  background-color: rgb(39 39 42);
+  border-color: rgb(63 63 70);
+}
+
+.inline-edit-textarea:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.inline-edit-select {
+  background-color: rgb(255 255 255);
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dark .inline-edit-select {
+  background-color: rgb(39 39 42);
+  border-color: rgb(63 63 70);
+}
+
+.inline-edit-select:focus {
+  outline: none;
+  border-color: rgb(59 130 246);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== GLOBAL FORM AND UI STYLES ===== */
+
+/* Global placeholder styling */
+input::placeholder,
+textarea::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+  opacity: 1 !important;
+}
+
+/* Specific input type placeholders */
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="number"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+  opacity: 1 !important;
+}
+
+/* Dark mode placeholder styling */
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+  opacity: 1 !important;
+}
+
+/* Global button border radius */
+button {
+  border-radius: 8px !important;
+}
+
+/* Specific button classes that might override */
+.rounded-xl button,
+.rounded-2xl button,
+.rounded-lg button,
+.rounded-full button {
+  border-radius: 8px !important;
+}
+
+/* Global anchor tag hover color */
+a:hover {
+  color: #EE010B !important;
+  transition: color 0.2s ease !important;
+}
+
+/* Ensure anchor tags in dark mode also use the red hover */
+.dark a:hover {
+  color: #EE010B !important;
+}
+
+/* Override any specific anchor hover colors */
+a:hover,
+a.hover\:text-red-600:hover,
+a.hover\:text-red-500:hover,
+a.hover\:text-blue-600:hover,
+a.hover\:text-blue-500:hover,
+a.hover\:underline:hover {
+  color: #EE010B !important;
+}
+
+/* Ensure form inputs have consistent styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+input[type="search"],
+textarea,
+select {
+  font-size: 16px !important;
+  color: #000000 !important; /* Black text when typing */
+}
+
+/* Dark mode input text color */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="tel"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="url"],
+.dark input[type="search"],
+.dark textarea,
+.dark select {
+  color: #ffffff !important; /* White text in dark mode */
+}
+
+/* Override any existing placeholder colors in specific components */
+.login-form input::placeholder,
+.signup-form input::placeholder,
+.add-form input::placeholder,
+.edit-form input::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+}
+
+/* Ensure search inputs also follow the same pattern */
+input[type="search"]::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+}
+
+/* Override Tailwind's default placeholder colors */
+.placeholder-gray-400::placeholder,
+.placeholder-gray-500::placeholder,
+.dark\:placeholder-gray-400::placeholder,
+.dark\:placeholder-gray-500::placeholder {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+}
+
+/* ===== GLOBAL TABLE HEADER STYLING ===== */
+
+/* Table header (thead) global color */
+thead th,
+table thead th,
+.table thead th,
+th {
+  color: #45556C !important;
+}
+
+/* Dark mode table header color */
+.dark thead th,
+.dark table thead th,
+.dark .table thead th,
+.dark th {
+  color: #45556C !important;
+}
+
+/* Override any existing table header text colors */
+th.text-gray-400,
+th.text-gray-500,
+thead th.text-gray-400,
+thead th.text-gray-500,
+.dark\:text-gray-400,
+.dark\:text-gray-500 {
+  color: #45556C !important;
+}
+
+/* Ensure table headers maintain the color even with Tailwind classes */
+.text-gray-400.dark\:text-gray-500,
+.uppercase.tracking-\[0\.2em\],
+.font-black.text-gray-400 {
+  color: #45556C !important;
+}

@@ -367,7 +367,14 @@ export default function UserManagementPage() {
                             ))}
                           </select>
                         ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-sm font-black tracking-tight`}>
+                          <div className={`role-badge ${
+                            user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
+                            user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
+                            user.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
+                            user.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
+                            user.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
+                            'role-badge-default'
+                          }`}>
                             <ShieldCheck className="w-3.5 h-3.5" />
                             {user.role?.name || "No Role"}
                           </div>
@@ -401,14 +408,8 @@ export default function UserManagementPage() {
                              <option value={false}>Inactive</option>
                            </select>
                         ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                            user.status 
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              user.status ? 'bg-green-600' : 'bg-red-600'
-                            }`}></div>
+                          <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                            <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
                             {user.status ? "Active" : "Inactive"}
                           </div>
                         )}
@@ -425,14 +426,24 @@ export default function UserManagementPage() {
                       <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
                            {isEditing ? (
-                              <>
-                                <button onClick={handleSave} className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20" title="Save">
-                                  <Check className="w-5 h-5" />
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={handleSave} 
+                                  className="save-button" 
+                                  title="Save Changes"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  <span>Save</span>
                                 </button>
-                                <button onClick={handleCancel} className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20" title="Cancel">
-                                  <X className="w-5 h-5" />
+                                <button 
+                                  onClick={handleCancel} 
+                                  className="cancel-button" 
+                                  title="Cancel"
+                                >
+                                  <X className="w-4 h-4" />
+                                  <span>Cancel</span>
                                 </button>
-                              </>
+                              </div>
                            ) : (
                               <div className="relative">
                                 <button 

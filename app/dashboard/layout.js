@@ -46,8 +46,8 @@ function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300"
-    >
+    <header className="sticky top-0 z-40 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300" style={{backgroundColor: '#F8FAFC'}}>
+    
       <div className="flex items-center gap-4 flex-1">
         {/* Desktop Toggle */}
         <button 

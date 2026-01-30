@@ -46,14 +46,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white dark:bg-zinc-950 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
       {/* Left Panel - Branding with Abstract Background */}
       <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/abuinix.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
-        {/* Much lighter overlay to show background image clearly */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/20"></div>
+        {/* Custom gradient overlay for better visual appeal */}
+        <div className="absolute inset-0" style={{background: 'linear-gradient(180deg, rgba(30, 30, 30, 0) 0%, #1E1E1E 100%)'}}></div>
         
         <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
-          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1 bg-black/60 backdrop-blur-sm border border-white/20">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1">
              <img 
                 src="/logo.png" 
                 alt="Unixparts Logo" 
@@ -61,7 +61,7 @@ export default function LoginPage() {
              />
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-2xl text-white">
+          <h1 className="text-3xl md:text-3xl font-bold tracking-tight drop-shadow-2xl text-white">
             Welcome to Unixparts
           </h1>
           
@@ -97,7 +97,7 @@ export default function LoginPage() {
         <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
-              <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
+              <h2 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
             </div>
             <ThemeToggle className="p-2.5 rounded-xl bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-sm" />
