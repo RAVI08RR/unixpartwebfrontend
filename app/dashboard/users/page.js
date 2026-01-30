@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
-  Mail, MoreVertical, Search, 
+  Mail, MoreVertical, Search, Phone,
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   ShieldCheck, Pencil, Trash2, Check, X, Eye
 } from "lucide-react";
@@ -76,10 +76,11 @@ export default function UserManagementPage() {
     setCurrentPage(1);
   }, [users.length]);
 
-  // Inline Editing State
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // Filter and search logic
   const filteredUsers = useMemo(() => {
@@ -110,87 +111,44 @@ export default function UserManagementPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
-  // Inline Editing Handlers
-  const handleEdit = (user) => {
-    setEditingId(user.id);
-    setEditForm({ ...user });
-    setMenuOpenId(null);
-  };
-
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
+  const handleViewUser = (user) => {
+    setSelectedUser(user);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
   };
 
-  const handleSave = async () => {
+  const handleDeleteClick = (user) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUser) return;
+    
     try {
-        // Construct a clean, strict payload matching UserUpdate schema provided by user
-        const payload = {
-            name: editForm.name || undefined,
-            email: editForm.email || undefined,
-            role_id: editForm.role_id ? parseInt(editForm.role_id) : undefined,
-            status: typeof editForm.status === 'boolean' ? editForm.status : (editForm.status === "true"),
-            user_code: editForm.user_code || undefined,
-        };
-
-        // Handle Branch IDs
-        if (editForm.branches) {
-            payload.branch_ids = editForm.branches.map(b => 
-                typeof b === 'object' ? parseInt(b.id) : parseInt(b)
-            ).filter(id => !isNaN(id));
-        }
-        
-        // Handle Supplier IDs
-        if (editForm.suppliers) {
-            payload.supplier_ids = editForm.suppliers.map(s => 
-                typeof s === 'object' ? parseInt(s.id) : parseInt(s)
-            ).filter(id => !isNaN(id));
-        }
-
-        // Handle Permission IDs (if any)
-        if (editForm.permissions) {
-             payload.permission_ids = editForm.permissions.map(p => 
-                typeof p === 'object' ? parseInt(p.id) : parseInt(p)
-            ).filter(id => !isNaN(id));
-        }
-
-        // Clean up undefined fields
-        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-
-        console.log("Saving User Update with strict schema:", { id: editingId, payload });
-
-        await userService.update(editingId, payload);
-        
-        // Success: Refresh and clean up
-        mutate(); 
-        setEditingId(null);
-        setEditForm({});
-        setMenuOpenId(null);
+      await userService.delete(selectedUser.id);
+      mutate();
+      setDeleteModalOpen(false);
+      setSelectedUser(null);
     } catch (error) {
-        console.error("Update Error Details:", error);
-        alert(`Update Failed: ${error.message}`);
+      console.error("Failed to delete user", error);
+      alert("Failed to delete user");
     }
   };
 
-  const handleDelete = async (id) => {
-      if(confirm("Are you sure you want to delete this user?")) {
-          try {
-              await userService.delete(id);
-              mutate();
-          } catch (error) {
-              console.error("Failed to delete user", error);
-              alert("Failed to delete user");
-          }
-      }
-  }
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedUser(null);
+  };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({ ...prev, [name]: value }));
+  const handleViewClose = () => {
+    setViewModalOpen(false);
+    setSelectedUser(null);
   };
 
   // Show loading state only after component is mounted to prevent hydration mismatch
@@ -301,10 +259,8 @@ export default function UserManagementPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedUsers.length > 0 ? (
                 paginatedUsers.map((user, index) => {
-                  const isEditing = editingId === user.id;
-                  
                   return (
-                    <tr key={user.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}
+                    <tr key={user.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Name / User */}
@@ -316,17 +272,7 @@ export default function UserManagementPage() {
                             className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
                           />
                           <div>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                name="name"
-                                value={editForm.name}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
-                            )}
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
                             <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">{user.user_code}</p>
                           </div>
                         </div>
@@ -337,82 +283,52 @@ export default function UserManagementPage() {
                         <div className="space-y-1.5 min-w-[180px]">
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
                             <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            {isEditing ? (
-                              <input 
-                                type="email"
-                                name="email"
-                                value={editForm.email}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
-                            )}
+                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
                           </div>
+                          {user.phone && (
+                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
+                              <Phone className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.phone}</span>
+                            </div>
+                          )}
                         </div>
                       </td>
 
                       {/* Role */}
                       <td className="px-6 py-6">
-                        {isEditing ? (
-                          <select
-                            name="role_id"
-                            value={editForm.role_id}
-                            onChange={handleChange}
-                            className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500"
-                          >
-                            <option value="">Select Role</option>
-                            {roles.map(role => (
-                              <option key={role.id} value={role.id}>{role.name}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <div className={`role-badge ${
-                            user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
-                            user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
-                            user.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
-                            user.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
-                            user.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
-                            'role-badge-default'
-                          }`}>
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            {user.role?.name || "No Role"}
-                          </div>
-                        )}
+                        <div className={`role-badge ${
+                          user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
+                          user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
+                          user.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
+                          user.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
+                          user.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
+                          'role-badge-default'
+                        }`}>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          {user.role?.name || "No Role"}
+                        </div>
                       </td>
 
                       {/* Branch */}
                       <td className="px-6 py-6">
-                              <div className="flex flex-col gap-1">
-                                <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                                   {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
-                                </span>
-                                {user.suppliers?.length > 0 && (
-                                  <span className="text-xs font-medium text-blue-500">
-                                    {user.suppliers.map(s => s.name || s.supplier_code).join(", ")}
-                                  </span>
-                                )}
-                              </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                             {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
+                          </span>
+                          {user.suppliers?.length > 0 && (
+                            <span className="text-xs font-medium text-blue-500">
+                              {user.suppliers.map(s => s.name || s.supplier_code).join(", ")}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Status */}
                       <td className="px-6 py-6">
-                        {isEditing ? (
-                           <select
-                              name="status"
-                              value={editForm.status}
-                              onChange={handleChange}
-                              className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500"
-                           >
-                             <option value={true}>Active</option>
-                             <option value={false}>Inactive</option>
-                           </select>
-                        ) : (
-                          <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                            <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                            {user.status ? "Active" : "Inactive"}
-                          </div>
-                        )}
+                        <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                          <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                          {user.status ? "Active" : "Inactive"}
+                        </div>
                       </td>
 
                       {/* Last Active */}
@@ -425,62 +341,47 @@ export default function UserManagementPage() {
                       {/* Actions */}
                       <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
-                           {isEditing ? (
-                              <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(user.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === user.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === user.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
                                 <button 
-                                  onClick={handleSave} 
-                                  className="save-button" 
-                                  title="Save Changes"
+                                  onClick={() => handleViewUser(user)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
-                                  <Check className="w-4 h-4" />
-                                  <span>Save</span>
+                                  <Eye className="w-4 h-4" />
+                                  View Details
                                 </button>
-                                <button 
-                                  onClick={handleCancel} 
-                                  className="cancel-button" 
-                                  title="Cancel"
+                                <Link 
+                                  href={`/dashboard/users/edit/${user.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
-                                  <X className="w-4 h-4" />
-                                  <span>Cancel</span>
+                                  <Pencil className="w-4 h-4" />
+                                  Edit User
+                                </Link>
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                <button 
+                                  onClick={() => handleDeleteClick(user)} 
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete User
                                 </button>
                               </div>
-                           ) : (
-                              <div className="relative">
-                                <button 
-                                  onClick={() => toggleMenu(user.id)}
-                                  className={`p-2 rounded-xl transition-all ${
-                                    menuOpenId === user.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                  }`}
-                                >
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
-                                
-                                {menuOpenId === user.id && (
-                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                    index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                                      <Eye className="w-4 h-4" />
-                                      View Details
-                                    </button>
-                                    <button 
-                                      onClick={() => handleEdit(user)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit User
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                    <button onClick={() => handleDelete(user.id)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete User
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                           )}
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -538,6 +439,222 @@ export default function UserManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* View User Modal */}
+      {viewModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
+              <div className="flex items-center gap-4">
+                <img 
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                  alt={selectedUser.name} 
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                />
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedUser.name}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.user_code}</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleViewClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Email Address</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone Number</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.phone || "Not provided"}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">User Code</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.user_code}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Role</label>
+                    <div className={`inline-flex mt-1 role-badge ${
+                      selectedUser.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
+                      selectedUser.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
+                      selectedUser.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
+                      selectedUser.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
+                      selectedUser.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
+                      'role-badge-default'
+                    }`}>
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      {selectedUser.role?.name || "No Role"}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
+                    <div className={`inline-flex mt-1 ${selectedUser.status ? 'status-badge-active' : 'status-badge-inactive'}`}>
+                      <div className={selectedUser.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                      {selectedUser.status ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignments */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assignments</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Branches</label>
+                    <div className="mt-2">
+                      {selectedUser.branches?.length > 0 ? (
+                        <div className="space-y-1">
+                          {selectedUser.branches.map((branch, index) => (
+                            <span key={index} className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-lg mr-1 mb-1">
+                              {branch.branch_name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No branches assigned</p>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Associated Suppliers</label>
+                    <div className="mt-2">
+                      {selectedUser.suppliers?.length > 0 ? (
+                        <div className="space-y-1">
+                          {selectedUser.suppliers.map((supplier, index) => (
+                            <span key={index} className="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-xs font-medium rounded-lg mr-1 mb-1">
+                              {supplier.name}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No suppliers assigned</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Permissions */}
+              {selectedUser.permissions && selectedUser.permissions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Permissions</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {selectedUser.permissions.map((permission, index) => (
+                      <span key={index} className="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 text-xs font-medium rounded-lg">
+                        {permission.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedUser.updated_at ? new Date(selectedUser.updated_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleViewClose}
+                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+              <Link 
+                href={`/dashboard/users/edit/${selectedUser.id}`}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                onClick={handleViewClose}
+              >
+                Edit User
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete User</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">{selectedUser.name}</span>? 
+                This action cannot be undone.
+              </p>
+              
+              {/* User Info */}
+              <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    alt={selectedUser.name} 
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">{selectedUser.user_code}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleDeleteCancel}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete User
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

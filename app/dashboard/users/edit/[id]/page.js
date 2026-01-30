@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { 
   User, Mail, Phone, Shield, Building2, Store, 
   Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
-  Check, X, Lock, Hash
+  Check, X, Lock, Hash, ArrowLeft
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
@@ -15,17 +15,17 @@ import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
 
-export default function AddUserPage() {
+export default function EditUserPage() {
   const router = useRouter();
+  const params = useParams();
+  const userId = params.id;
+  
   const [loading, setLoading] = useState(false);
+  const [userLoading, setUserLoading] = useState(true);
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
   const [rolePermissions, setRolePermissions] = useState([]);
   const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
-  const [roles, setRoles] = useState([
-    { id: 1, name: "Administrator" },
-    { id: 2, name: "Manager" },
-    { id: 3, name: "Staff" }
-  ]);
+  const [roles, setRoles] = useState([]);
   
   // Define branches and suppliers state
   const [branches, setBranches] = useState([]);
@@ -39,13 +39,63 @@ export default function AddUserPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
+    phone: "",
     user_code: "",
     role_id: "",
-    branch_ids: [], // Changed to array for multi-selection
-    supplier_ids: [], // Changed to array for multi-selection
+    status: true,
+    branch_ids: [],
+    supplier_ids: [],
     permission_ids: []
   });
+
+  // Fetch user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!userId) return;
+      
+      // Check authentication first
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert("You need to log in to access this page.");
+        router.push("/");
+        return;
+      }
+      
+      setUserLoading(true);
+      try {
+        const userData = await userService.getById(userId);
+        console.log('Fetched user data:', userData);
+        
+        setFormData({
+          name: userData.name || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+          user_code: userData.user_code || "",
+          role_id: userData.role_id || userData.role?.id || "",
+          status: userData.status !== undefined ? userData.status : true,
+          branch_ids: userData.branches?.map(b => b.id) || userData.branch_ids || [],
+          supplier_ids: userData.suppliers?.map(s => s.id) || userData.supplier_ids || [],
+          permission_ids: userData.permissions?.map(p => p.id) || userData.permission_ids || []
+        });
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        
+        // Check if it's an authentication error
+        if (error.message.includes("session has expired") || error.message.includes("401")) {
+          alert("Your session has expired. Please log in again.");
+          router.push("/");
+          return;
+        }
+        
+        alert("Failed to load user data");
+        router.push("/dashboard/users");
+      } finally {
+        setUserLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId, router]);
 
   // Permission selection handlers
   const handlePermissionToggle = (permissionId) => {
@@ -214,12 +264,7 @@ export default function AddUserPage() {
         const permissions = await roleService.getPermissions(roleId);
         setRolePermissions(permissions || []);
         
-        // Auto-select role permissions
-        const rolePermissionIds = permissions?.map(p => p.id) || [];
-        setFormData(prev => ({
-          ...prev,
-          permission_ids: rolePermissionIds
-        }));
+        // Don't auto-select role permissions when editing - keep existing permissions
       } catch (error) {
         console.error("Failed to fetch role permissions:", error);
         
@@ -241,8 +286,8 @@ export default function AddUserPage() {
 
   const handleSubmit = async () => {
       // Basic validation
-      if(!formData.name || !formData.email || !formData.password || !formData.user_code || !formData.role_id) {
-          alert("Please fill in all required fields (Name, Email, Password, User Code, and Role)");
+      if(!formData.name || !formData.email || !formData.phone || !formData.role_id) {
+          alert("Please fill in all required fields (Name, Email, Phone, and Role)");
           return;
       }
 
@@ -255,14 +300,14 @@ export default function AddUserPage() {
 
       setLoading(true);
       try {
-          // Prepare payload matching UserCreate schema
+          // Prepare payload matching UserUpdate schema
           const payload = {
               name: formData.name.trim(),
               email: formData.email.trim().toLowerCase(),
-              password: formData.password,
+              phone: formData.phone.trim(),
               user_code: formData.user_code.trim(),
               role_id: parseInt(formData.role_id),
-              status: true,
+              status: formData.status,
               branch_ids: formData.branch_ids || [],
               supplier_ids: formData.supplier_ids || [],
               permission_ids: formData.permission_ids || []
@@ -283,18 +328,19 @@ export default function AddUserPage() {
             return;
           }
 
-          console.log("🚀 SUBMITTING NEW USER:", {
+          console.log("🚀 UPDATING USER:", {
+            userId,
             token: !!token,
             payload,
             selectedPermissions: formData.permission_ids.length
           });
 
-          const result = await userService.create(payload);
-          console.log("✅ User creation successful:", result);
-          alert("✅ User created successfully!");
+          const result = await userService.update(userId, payload);
+          console.log("✅ User update successful:", result);
+          alert("✅ User updated successfully!");
           router.push("/dashboard/users");
       } catch (error) {
-          console.error("❌ CREATE USER FAILED:", error);
+          console.error("❌ UPDATE USER FAILED:", error);
           
           // Try to show the most helpful error message
           let detailedMsg = error.message;
@@ -308,19 +354,35 @@ export default function AddUserPage() {
             detailedMsg = "Server Error: Please try again later or contact support.";
           }
           
-          alert(`Failed to create user: ${detailedMsg}`);
+          alert(`Failed to update user: ${detailedMsg}`);
       } finally {
           setLoading(false);
       }
   };
+
+  if (userLoading) {
+    return (
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit User</h1>
+            <p className="text-gray-500 text-sm">Update user account and permissions</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-500">Loading user data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add User</h1>
-          <p className="text-gray-500 text-sm">Create a new user account and assign permissions</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit User</h1>
+          <p className="text-gray-500 text-sm">Update user account and permissions</p>
         </div>
       </div>
 
@@ -360,19 +422,19 @@ export default function AddUserPage() {
           </div>
         </div>
 
-        {/* Password */}
+        {/* Phone Number */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Password <span className="text-red-500">*</span>
+            Phone Number <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
-              type="password"
-              placeholder="Enter password"
+              type="tel"
+              placeholder="+971 50 123 4567"
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              value={formData.phone || ""}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
             />
           </div>
         </div>
@@ -410,6 +472,24 @@ export default function AddUserPage() {
               {roles.map(role => (
                 <option key={role.id} value={role.id}>{role.name}</option>
               ))}
+            </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Status <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <select 
+              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value === 'true'})}
+            >
+              <option value={true}>Active</option>
+              <option value={false}>Inactive</option>
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -568,7 +648,7 @@ export default function AddUserPage() {
             className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
         >
           <Check className="w-4 h-4" />
-          <span>{loading ? "Creating..." : "Create User"}</span>
+          <span>{loading ? "Updating..." : "Update User"}</span>
         </button>
         <Link href="/dashboard/users" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
           Cancel

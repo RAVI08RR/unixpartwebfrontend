@@ -922,33 +922,228 @@ svg[class*="lucide"] {
 
 /* ===== GLOBAL FORM AND UI STYLES ===== */
 
-/* Global placeholder styling */
+/* Global form label styling */
+label,
+.form-label,
+form label {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+/* Dark mode form label styling */
+.dark label,
+.dark .form-label,
+.dark form label {
+  color: #D1D5DB !important;
+}
+
+/* Global placeholder styling - All 18px */
 input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+select::placeholder {
   color: #90A1B9 !important;
   font-size: 16px !important;
   opacity: 1 !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
 }
 
-/* Specific input type placeholders */
+/* Specific input type placeholders - All 18px */
 input[type="text"]::placeholder,
 input[type="email"]::placeholder,
 input[type="password"]::placeholder,
 input[type="tel"]::placeholder,
 input[type="number"]::placeholder,
 input[type="search"]::placeholder,
-textarea::placeholder {
+input[type="date"]::placeholder,
+input[type="time"]::placeholder,
+input[type="url"]::placeholder,
+textarea::placeholder,
+select::placeholder {
   color: #90A1B9 !important;
   font-size: 16px !important;
   opacity: 1 !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
 }
 
 /* Dark mode placeholder styling */
 .dark input::placeholder,
-.dark textarea::placeholder {
+.dark textarea::placeholder,
+.dark select::placeholder {
   color: #90A1B9 !important;
   font-size: 16px !important;
   opacity: 1 !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* Force all form inputs to be 18px */
+input,
+textarea,
+select,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+input[type="search"] {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+}
+
+/* Ensure form inputs have consistent styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="url"],
+input[type="search"],
+textarea,
+select {
+  font-size: 16px !important;
+  color: #000000 !important; /* Black text when typing */
+  line-height: 1.5 !important;
+}
+
+/* Dark mode input text color */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="tel"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="url"],
+.dark input[type="search"],
+.dark textarea,
+.dark select {
+  color: #ffffff !important; /* White text in dark mode */
+}
+
+/* Select dropdown options styling - Force 18px */
+select option {
+  font-size: 16px !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  padding: 8px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+}
+
+/* Dark mode select options */
+.dark select option {
+  color: #ffffff !important;
+  background-color: #1f2937 !important;
+}
+
+/* Select element specific styling - Force 18px */
+select {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+}
+
+/* Ensure select elements show placeholder-like text properly */
+select:invalid {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+}
+
+.dark select:invalid {
+  color: #90A1B9 !important;
+  font-size: 16px !important;
+}
+
+/* Force consistency across all possible selectors */
+* input,
+* textarea,
+* select {
+  font-size: 16px !important;
+}
+
+/* Override any framework or component library styles */
+.form-control,
+.form-input,
+.form-select,
+.form-textarea,
+input.form-control,
+input.form-input,
+select.form-select,
+textarea.form-textarea {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Override Tailwind utility classes */
+.text-xs input,
+.text-sm input,
+.text-base input,
+.text-lg input,
+.text-xl input,
+.text-xs textarea,
+.text-sm textarea,
+.text-base textarea,
+.text-lg textarea,
+.text-xl textarea,
+.text-xs select,
+.text-sm select,
+.text-base select,
+.text-lg select,
+.text-xl select,
+input.text-xs,
+input.text-sm,
+input.text-base,
+input.text-lg,
+input.text-xl,
+textarea.text-xs,
+textarea.text-sm,
+textarea.text-base,
+textarea.text-lg,
+textarea.text-xl,
+select.text-xs,
+select.text-sm,
+select.text-base,
+select.text-lg,
+select.text-xl {
+  font-size: 16px !important;
+}
+
+/* Override any inline styles or component styles */
+input[style*="font-size"],
+textarea[style*="font-size"],
+select[style*="font-size"] {
+  font-size: 16px !important;
+}
+
+/* Specific targeting for React Select and other libraries */
+.react-select__control,
+.react-select__input,
+.react-select__placeholder,
+.react-select__single-value,
+.react-select__option {
+  font-size: 16px !important;
+}
+
+/* Additional comprehensive overrides */
+div input,
+div textarea,
+div select,
+form input,
+form textarea,
+form select,
+fieldset input,
+fieldset textarea,
+fieldset select {
+  font-size: 16px !important;
 }
 
 /* Global button border radius */
@@ -1016,13 +1211,73 @@ select {
   color: #ffffff !important; /* White text in dark mode */
 }
 
+/* Select dropdown options styling */
+select option {
+  font-size: 16px !important;
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  padding: 8px !important;
+}
+
+/* Dark mode select options */
+.dark select option {
+  color: #ffffff !important;
+  background-color: #1f2937 !important;
+}
+
+/* Select element specific styling */
+select {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensure select elements show placeholder-like text properly */
+select:invalid {
+  color: #90A1B9 !important;
+}
+
+.dark select:invalid {
+  color: #90A1B9 !important;
+}
+
 /* Override any existing placeholder colors in specific components */
 .login-form input::placeholder,
 .signup-form input::placeholder,
 .add-form input::placeholder,
-.edit-form input::placeholder {
+.edit-form input::placeholder,
+.login-form select::placeholder,
+.signup-form select::placeholder,
+.add-form select::placeholder,
+.edit-form select::placeholder,
+.login-form textarea::placeholder,
+.signup-form textarea::placeholder,
+.add-form textarea::placeholder,
+.edit-form textarea::placeholder {
   color: #90A1B9 !important;
   font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Override any existing label colors in specific components */
+.login-form label,
+.signup-form label,
+.add-form label,
+.edit-form label,
+.form-group label,
+.input-group label {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+/* Dark mode label overrides */
+.dark .login-form label,
+.dark .signup-form label,
+.dark .add-form label,
+.dark .edit-form label,
+.dark .form-group label,
+.dark .input-group label {
+  color: #D1D5DB !important;
 }
 
 /* Ensure search inputs also follow the same pattern */
@@ -1034,10 +1289,118 @@ input[type="search"]::placeholder {
 /* Override Tailwind's default placeholder colors */
 .placeholder-gray-400::placeholder,
 .placeholder-gray-500::placeholder,
+.placeholder-gray-300::placeholder,
+.placeholder-gray-600::placeholder,
 .dark\:placeholder-gray-400::placeholder,
-.dark\:placeholder-gray-500::placeholder {
+.dark\:placeholder-gray-500::placeholder,
+.dark\:placeholder-gray-300::placeholder,
+.dark\:placeholder-gray-600::placeholder {
   color: #90A1B9 !important;
   font-size: 16px !important;
+}
+
+/* Override Tailwind's default label text sizes */
+.text-sm label,
+.text-base label,
+.text-lg label,
+.text-xs label,
+label.text-sm,
+label.text-base,
+label.text-lg,
+label.text-xs {
+  font-size: 16px !important;
+}
+
+/* Additional select styling for consistency */
+select.form-select,
+select.form-control,
+.form-select,
+.form-control {
+  font-size: 16px !important;
+}
+
+/* Ensure all form elements have consistent font size */
+.form-input,
+.form-textarea,
+.form-select,
+input.form-input,
+textarea.form-textarea,
+select.form-select {
+  font-size: 16px !important;
+}
+
+/* Override any smaller text sizes in forms */
+form input,
+form textarea,
+form select,
+.form input,
+.form textarea,
+.form select {
+  font-size: 16px !important;
+}
+
+/* Specific overrides for common form classes */
+.text-sm input,
+.text-sm textarea,
+.text-sm select,
+.text-xs input,
+.text-xs textarea,
+.text-xs select,
+input.text-sm,
+textarea.text-sm,
+select.text-sm,
+input.text-xs,
+textarea.text-xs,
+select.text-xs {
+  font-size: 16px !important;
+}
+
+/* Force override for any remaining small text */
+input[class*="text-"],
+textarea[class*="text-"],
+select[class*="text-"] {
+  font-size: 16px !important;
+}
+
+/* Comprehensive placeholder override */
+*::placeholder {
+  font-size: 16px !important;
+  color: #90A1B9 !important;
+}
+
+/* Force all inputs regardless of nesting */
+* input[type="text"],
+* input[type="email"],
+* input[type="password"],
+* input[type="tel"],
+* input[type="number"],
+* input[type="search"],
+* input[type="url"],
+* input[type="date"],
+* input[type="time"],
+* textarea,
+* select {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Override any component library styles that might interfere */
+.MuiInputBase-input,
+.MuiSelect-select,
+.MuiTextField-root input,
+.ant-input,
+.ant-select,
+.chakra-input,
+.chakra-select {
+  font-size: 16px !important;
+}
+
+/* Final catch-all for any missed elements */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+textarea,
+select {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
 }
 
 /* ===== GLOBAL TABLE HEADER STYLING ===== */
@@ -1073,4 +1436,10 @@ thead th.text-gray-500,
 .uppercase.tracking-\[0\.2em\],
 .font-black.text-gray-400 {
   color: #45556C !important;
+}
+
+
+span.truncate {
+    font-size: 16px;
+    font-weight: 400;
 }

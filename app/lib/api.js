@@ -108,6 +108,18 @@ export const fetchApi = async (endpoint, options = {}) => {
       return null;
     }
 
+    // Handle 500 errors with better messaging
+    if (response.status === 500) {
+      console.error('🚨 Server Error (500):', url);
+      throw new Error('Backend server error. The application will use fallback data.');
+    }
+
+    // Handle 502/503/504 errors (backend connectivity issues)
+    if (response.status >= 502 && response.status <= 504) {
+      console.error('🚨 Backend Connectivity Error:', response.status, url);
+      throw new Error('Backend server is not accessible. The application will use fallback data.');
+    }
+
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status} ${response.statusText}`;
       
@@ -140,7 +152,12 @@ export const fetchApi = async (endpoint, options = {}) => {
     console.error(`❌ API Error: ${url}`, error);
     
     if (error.message === 'Failed to fetch') {
-      throw new Error('Network error: Unable to connect to the API. Please check your connection.');
+      throw new Error('Network error: Backend server is not accessible. The application will use fallback data.');
+    }
+    
+    // Handle timeout errors
+    if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      throw new Error('Request timeout: Backend server is taking too long to respond. The application will use fallback data.');
     }
     
     throw error;
