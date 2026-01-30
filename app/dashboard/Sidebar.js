@@ -66,7 +66,7 @@ export function Sidebar() {
       label: "Sales",
       items: [
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
-        { label: "Invoices", href: "/dashboard/invoices", icon: FileText },
+        { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText },
       ]
     },
     {
