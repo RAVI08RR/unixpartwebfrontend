@@ -150,7 +150,7 @@ For different environments:
 
 ```bash
 # Development
-NEXT_PUBLIC_API_URL=https://a36498aba6e6.ngrok-free.app
+NEXT_PUBLIC_API_URL=https://289b47e1e00a.ngrok-free.app
 
 # Production
 NEXT_PUBLIC_API_URL=https://api.yourapp.com

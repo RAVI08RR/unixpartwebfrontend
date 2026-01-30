@@ -4,7 +4,7 @@ export async function POST(request) {
     const body = await request.json();
     
     // Make the same request your frontend makes
-    const response = await fetch('https://a36498aba6e6.ngrok-free.app/api/auth/login', {
+    const response = await fetch('https://289b47e1e00a.ngrok-free.app/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -9,7 +9,7 @@ export async function POST(request) {
     const loginData = await request.json();
     
     // Get API base URL and clean it
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://289b47e1e00a.ngrok-free.app').replace(/\/+$/, '');
     
     console.log('Login proxy - API Base URL:', apiBaseUrl);
     console.log('Login proxy - Request data:', loginData);

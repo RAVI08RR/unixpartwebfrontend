@@ -8,7 +8,7 @@ export async function GET(request, { params }) {
     const { slug } = await params;
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://a36498aba6e6.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://289b47e1e00a.ngrok-free.app').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
