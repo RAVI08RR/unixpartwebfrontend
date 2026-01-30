@@ -244,7 +244,7 @@ select {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  pointer-events: none !important;
+  /* pointer-events: none !important; */
   z-index: 5 !important;
 }
 
