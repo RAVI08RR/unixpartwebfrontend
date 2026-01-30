@@ -93,14 +93,17 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
-        <div className="max-w-xl w-full mx-auto space-y-8">
+      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300 bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/abuinix.jpeg)'}}>
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-sm"></div>
+        
+        <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <h2 className="text-5xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>
               <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Sign in to your account to continue</p>
             </div>
-            <ThemeToggle className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 shadow-sm" />
+            <ThemeToggle className="p-2.5 rounded-xl bg-gray-50/80 dark:bg-zinc-900/80 border border-gray-100 dark:border-zinc-800 shadow-sm backdrop-blur-sm" />
           </div>
 
           <form className="space-y-5" onSubmit={handleLogin}>
@@ -112,7 +115,7 @@ export default function LoginPage() {
                   type="email" 
                   placeholder="Enter Email Address"
                   autoComplete="email"
-                  className="w-full pl-11 pr-4 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
+                  className="w-full pl-11 pr-4 py-4 bg-white/90 dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg backdrop-blur-sm"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
@@ -128,7 +131,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"} 
                   placeholder="Enter Password"
                   autoComplete="current-password"
-                  className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
+                  className="w-full pl-11 pr-12 py-4 bg-white/90 dark:bg-zinc-900/90 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg backdrop-blur-sm"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={loading}
@@ -151,18 +154,18 @@ export default function LoginPage() {
               <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors">Forgot password?</a>
             </div>
 
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+            {error && <p className="text-red-500 text-sm text-center bg-white/80 dark:bg-zinc-900/80 p-2 rounded-lg backdrop-blur-sm">{error}</p>}
 
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-black dark:bg-white dark:text-black text-white font-medium py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-black/90 dark:bg-white/90 dark:text-black text-white font-medium py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed backdrop-blur-sm"
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
-          <p className="text-center text-base text-gray-500 dark:text-gray-400">
+          <p className="text-center text-base text-gray-500 dark:text-gray-400 bg-white/60 dark:bg-zinc-900/60 p-2 rounded-lg backdrop-blur-sm">
             Don't have an account? <Link href="/signup" className="text-black dark:text-white font-bold hover:underline">Sign up</Link>
           </p>
         </div>
