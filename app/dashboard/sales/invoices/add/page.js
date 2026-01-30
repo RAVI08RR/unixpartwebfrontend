@@ -42,7 +42,10 @@ export default function AddInvoicePage() {
           console.log('❌ No customers data, using fallback');
           setCustomers([
             { id: 1, customer_code: "CUST-001", full_name: "John Doe", business_name: "Doe Enterprises" },
-            { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" }
+            { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" },
+            { id: 3, customer_code: "CUST-003", full_name: "Ahmed Ali", business_name: "Ali Motors" },
+            { id: 4, customer_code: "CUST-004", full_name: "Priya Sharma", business_name: "Sharma Industries" },
+            { id: 5, customer_code: "CUST-005", full_name: "Rajesh Kumar", business_name: "Kumar Enterprises" }
           ]);
         }
         
@@ -50,7 +53,10 @@ export default function AddInvoicePage() {
         console.error("❌ Failed to fetch customers:", error);
         setCustomers([
           { id: 1, customer_code: "CUST-001", full_name: "John Doe", business_name: "Doe Enterprises" },
-          { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" }
+          { id: 2, customer_code: "CUST-002", full_name: "Jane Smith", business_name: "Smith Trading LLC" },
+          { id: 3, customer_code: "CUST-003", full_name: "Ahmed Ali", business_name: "Ali Motors" },
+          { id: 4, customer_code: "CUST-004", full_name: "Priya Sharma", business_name: "Sharma Industries" },
+          { id: 5, customer_code: "CUST-005", full_name: "Rajesh Kumar", business_name: "Kumar Enterprises" }
         ]);
       } finally {
         setCustomersLoading(false);
@@ -169,7 +175,7 @@ export default function AddInvoicePage() {
               <option value="">{customersLoading ? "Loading customers..." : "Select Customer"}</option>
               {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.full_name} ({customer.customer_code})
+                  {customer.full_name} - {customer.business_name || customer.customer_code}
                 </option>
               ))}
             </select>

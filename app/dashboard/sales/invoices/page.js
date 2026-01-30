@@ -176,7 +176,7 @@ export default function InvoiceManagementPage() {
 
   // Helper function to format currency
   const formatCurrency = (amount) => {
-    if (!amount) return "$0.00";
+    if (!amount) return "₹0.00";
     
     try {
       // Handle very long decimal strings by parsing and formatting
@@ -184,7 +184,7 @@ export default function InvoiceManagementPage() {
       
       if (typeof amount === 'string') {
         // Remove leading zeros and handle very long strings
-        const cleanAmount = amount.replace(/^0+/, '') || '0';
+        const cleanAmount = amount.replace(/^[+-]?0+/, '') || '0';
         
         // If the string is extremely long, truncate it to a reasonable length
         if (cleanAmount.length > 15) {
@@ -198,22 +198,22 @@ export default function InvoiceManagementPage() {
         numAmount = parseFloat(amount);
       }
       
-      if (isNaN(numAmount)) return "$0.00";
+      if (isNaN(numAmount)) return "₹0.00";
       
       // Cap extremely large numbers for display
       if (numAmount > 999999999) {
-        return "$999M+";
+        return "₹999M+";
       }
       
-      return new Intl.NumberFormat('en-US', {
+      return new Intl.NumberFormat('en-IN', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'INR',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }).format(numAmount);
     } catch (error) {
       console.warn('Currency formatting error:', error, 'for amount:', amount);
-      return "$0.00";
+      return "₹0.00";
     }
   };
 
