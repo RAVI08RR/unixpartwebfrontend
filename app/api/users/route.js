@@ -71,6 +71,11 @@ export async function GET(request) {
     console.error('Users proxy GET error:', error);
     console.log('👥 Users API failed, using fallback users:', error.message);
     
+    // Get skip and limit from the original request
+    const { searchParams } = new URL(request.url);
+    const skip = searchParams.get('skip') || '0';
+    const limit = searchParams.get('limit') || '100';
+    
     // Return fallback users data when backend is unavailable
     const fallbackUsers = {
       items: [

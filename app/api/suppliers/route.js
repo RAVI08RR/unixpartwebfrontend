@@ -76,6 +76,11 @@ export async function GET(request) {
     console.error('Suppliers proxy GET error:', error);
     console.log('🏭 Suppliers API failed, using fallback suppliers:', error.message);
     
+    // Get skip and limit from the original request
+    const { searchParams } = new URL(request.url);
+    const skip = searchParams.get('skip') || '0';
+    const limit = searchParams.get('limit') || '100';
+    
     // Return fallback suppliers data when backend is unavailable
     const fallbackSuppliers = {
       items: [
