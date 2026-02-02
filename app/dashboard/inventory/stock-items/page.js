@@ -5,8 +5,8 @@ import Link from "next/link";
 import { 
   Package, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  Pencil, Trash2, Check, X, Eye, Calendar,
-  Tag, FileText, Layers, Box
+  Pencil, Trash2, X, Eye, Calendar,
+  Tag, FileText
 } from "lucide-react";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { stockItemService } from "@/app/lib/services/stockItemService";
@@ -65,10 +65,11 @@ export default function StockItemsManagementPage() {
     setCurrentPage(1);
   }, [stockItems.length]);
 
-  // Inline Editing State
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedStockItem, setSelectedStockItem] = useState(null);
 
   // Filter and search logic
   const filteredStockItems = useMemo(() => {
@@ -99,68 +100,44 @@ export default function StockItemsManagementPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
-  // Inline Editing Handlers
-  const handleEdit = (item) => {
-    setEditingId(item.id);
-    setEditForm({ ...item });
-    setMenuOpenId(null);
-  };
-
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
+  const handleViewStockItem = (item) => {
+    setSelectedStockItem(item);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
   };
 
-  const handleSave = async () => {
+  const handleDeleteClick = (item) => {
+    setSelectedStockItem(item);
+    setDeleteModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedStockItem) return;
+    
     try {
-        // Construct a clean payload for stock item update
-        const payload = {
-            name: editForm.name || undefined,
-            description: editForm.description || undefined,
-            parent_category_id: editForm.parent_category_id || undefined,
-            status: editForm.status !== undefined ? editForm.status : undefined,
-        };
-
-        // Clean up undefined fields
-        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-
-        console.log("Saving Stock Item Update:", { id: editingId, payload });
-
-        await stockItemService.update(editingId, payload);
-        
-        // Success: Refresh and clean up
-        mutate(); 
-        setEditingId(null);
-        setEditForm({});
-        setMenuOpenId(null);
+      await stockItemService.delete(selectedStockItem.id);
+      mutate();
+      setDeleteModalOpen(false);
+      setSelectedStockItem(null);
     } catch (error) {
-        console.error("Update Error Details:", error);
-        alert(`Update Failed: ${error.message}`);
+      console.error("Failed to delete stock item", error);
+      alert("Failed to delete stock item");
     }
   };
 
-  const handleDelete = async (id) => {
-      if(confirm("Are you sure you want to delete this stock item?")) {
-          try {
-              await stockItemService.delete(id);
-              mutate();
-          } catch (error) {
-              console.error("Failed to delete stock item", error);
-              alert("Failed to delete stock item");
-          }
-      }
-  }
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedStockItem(null);
+  };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditForm(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
+  const handleViewClose = () => {
+    setViewModalOpen(false);
+    setSelectedStockItem(null);
   };
 
   // Format date
@@ -278,10 +255,8 @@ export default function StockItemsManagementPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedStockItems.length > 0 ? (
                 paginatedStockItems.map((item, index) => {
-                  const isEditing = editingId === item.id;
-                  
                   return (
-                    <tr key={item.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}
+                    <tr key={item.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Item Name */}
@@ -291,17 +266,7 @@ export default function StockItemsManagementPage() {
                             <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                           </div>
                           <div>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                name="name"
-                                value={editForm.name || ''}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{item.name || 'N/A'}</p>
-                            )}
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{item.name || 'N/A'}</p>
                             <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {item.id}</p>
                           </div>
                         </div>
@@ -310,22 +275,12 @@ export default function StockItemsManagementPage() {
                       {/* Description */}
                       <td className="px-6 py-6">
                         <div className="max-w-xs">
-                          {isEditing ? (
-                            <textarea 
-                              name="description"
-                              value={editForm.description || ''}
-                              onChange={handleChange}
-                              rows="2"
-                              className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500 resize-none"
-                            />
-                          ) : (
-                            <div className="flex items-start gap-2">
-                              <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                                {item.description || 'No description'}
-                              </span>
-                            </div>
-                          )}
+                          <div className="flex items-start gap-2">
+                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {item.description || 'No description'}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
@@ -333,54 +288,25 @@ export default function StockItemsManagementPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           <Tag className="w-4 h-4 text-gray-400" />
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              name="parent_category_id"
-                              value={editForm.parent_category_id || ''}
-                              onChange={handleChange}
-                              className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                              Category {item.parent_category_id || 'N/A'}
-                            </span>
-                          )}
+                          <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                            Category {item.parent_category_id || 'N/A'}
+                          </span>
                         </div>
                       </td>
 
                       {/* Status */}
                       <td className="px-6 py-6">
-                        {isEditing ? (
-                           <label className="flex items-center gap-2">
-                             <input
-                               type="checkbox"
-                               name="status"
-                               checked={editForm.status || false}
-                               onChange={handleChange}
-                               className="checkbox-black"
-                             />
-                             <span className="text-sm font-medium">Active</span>
-                           </label>
-                        ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                            item.status
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              item.status ? 'bg-green-600' : 'bg-red-600'
-                            }`}></div>
-                            {item.status ? "Active" : "Inactive"}
-                          </div>
-                        )}
+                        <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                          <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                          {item.status ? "Active" : "Inactive"}
+                        </div>
                       </td>
 
                       {/* Created Date */}
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
                             {formatDate(item.created_at)}
                           </span>
                         </div>
@@ -389,72 +315,47 @@ export default function StockItemsManagementPage() {
                       {/* Actions */}
                       <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
-                           {isEditing ? (
-                              <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(item.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === item.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === item.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedStockItems.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
                                 <button 
-                                  onClick={handleSave} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 active:scale-95 font-semibold text-sm" 
-                                  title="Save Changes"
+                                  onClick={() => handleViewStockItem(item)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
-                                  <Check className="w-4 h-4" />
-                                  <span>Save</span>
+                                  <Eye className="w-4 h-4" />
+                                  View Details
                                 </button>
-                                <button 
-                                  onClick={handleCancel} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-sm active:scale-95 font-semibold text-sm" 
-                                  title="Cancel"
+                                <Link 
+                                  href={`/dashboard/inventory/stock-items/edit/${item.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
-                                  <X className="w-4 h-4" />
-                                  <span>Cancel</span>
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Stock Item
+                                </Link>
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                <button 
+                                  onClick={() => handleDeleteClick(item)} 
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Stock Item
                                 </button>
                               </div>
-                           ) : (
-                              <div className="relative">
-                                <button 
-                                  onClick={() => toggleMenu(item.id)}
-                                  className={`p-2.5 rounded-xl transition-all duration-200 ${
-                                    menuOpenId === item.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
-                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105'
-                                  }`}
-                                  title="More Actions"
-                                >
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
-                                
-                                {menuOpenId === item.id && (
-                                  <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200 ${
-                                    index > paginatedStockItems.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group">
-                                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                                        <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                      </div>
-                                      <span>View Details</span>
-                                    </button>
-                                    <button 
-                                      onClick={() => handleEdit(item)}
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-all duration-200 group"
-                                    >
-                                      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                                        <Pencil className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                      </div>
-                                      <span>Edit Stock Item</span>
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-2" />
-                                    <button 
-                                      onClick={() => handleDelete(item.id)} 
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all duration-200 group"
-                                    >
-                                      <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
-                                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                      </div>
-                                      <span>Delete Stock Item</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                           )}
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -512,6 +413,147 @@ export default function StockItemsManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* View Stock Item Modal */}
+      {viewModalOpen && selectedStockItem && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                  <Package className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedStockItem.name}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID: {selectedStockItem.id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleViewClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Item Name</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedStockItem.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Category ID</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedStockItem.parent_category_id || "Not assigned"}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedStockItem.description || "No description provided"}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
+                    <div className={`inline-flex mt-1 ${selectedStockItem.status ? 'status-badge-active' : 'status-badge-inactive'}`}>
+                      <div className={selectedStockItem.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                      {selectedStockItem.status ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedStockItem.created_at ? new Date(selectedStockItem.created_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedStockItem.updated_at ? new Date(selectedStockItem.updated_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleViewClose}
+                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+              <Link 
+                href={`/dashboard/inventory/stock-items/edit/${selectedStockItem.id}`}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                onClick={handleViewClose}
+              >
+                Edit Stock Item
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedStockItem && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Stock Item</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">{selectedStockItem.name}</span>? 
+                This action cannot be undone.
+              </p>
+              
+              {/* Stock Item Info */}
+              <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                    <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedStockItem.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedStockItem.description || 'No description'}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">ID: {selectedStockItem.id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleDeleteCancel}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Stock Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

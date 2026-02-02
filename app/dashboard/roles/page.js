@@ -5,15 +5,16 @@ import Link from "next/link";
 import { 
   Shield, Filter, Download, Plus, ChevronLeft, ChevronRight,
   MoreVertical, Search, ShieldCheck, UserCog, Package, UserCheck,
-  Pencil, Trash2, Check, X, Eye, Ban, Loader2
+  Pencil, Trash2, X, Eye, Loader2
 } from "lucide-react";
 import { useRoles } from "../../lib/hooks/useRoles";
 
 export default function RolesPage() {
   const { roles, loading, error, updateRole, deleteRole } = useRoles();
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -45,50 +46,43 @@ export default function RolesPage() {
   };
 
   // Edit Handlers
-  const handleEdit = (role) => {
-    setEditingId(role.id);
-    setEditForm({
-      name: role.name,
-      description: role.description || '',
-    });
-    setMenuOpenId(null);
-  };
-
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
   };
 
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
+  const handleViewRole = (role) => {
+    setSelectedRole(role);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleDeleteClick = (role) => {
+    setSelectedRole(role);
+    setDeleteModalOpen(true);
+    setMenuOpenId(null);
   };
 
-  const handleSave = async () => {
+  const handleDeleteConfirm = async () => {
+    if (!selectedRole) return;
+    
     try {
-      await updateRole(editingId, editForm);
-      setEditingId(null);
-      setEditForm({});
+      await deleteRole(selectedRole.id);
+      setDeleteModalOpen(false);
+      setSelectedRole(null);
     } catch (error) {
-      alert(`Update failed: ${error.message}`);
+      console.error("Failed to delete role", error);
+      alert("Failed to delete role");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this role?")) {
-      try {
-        await deleteRole(id);
-      } catch (error) {
-        alert(`Delete failed: ${error.message}`);
-      }
-    }
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedRole(null);
+  };
+
+  const handleViewClose = () => {
+    setViewModalOpen(false);
+    setSelectedRole(null);
   };
 
   // Filter and search logic
@@ -209,35 +203,22 @@ export default function RolesPage() {
                     }}
                     >
                       <td className="px-6 py-6">
-                        {editingId === role.id ? (
-                          <input
-                            type="text"
-                            name="name"
-                            value={editForm.name}
-                            onChange={handleChange}
-                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                        ) : (
-                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
-                        )}
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
+                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {role.id}</p>
+                          </div>
+                        </div>
                       </td>
 
                       <td className="px-6 py-6">
-                        {editingId === role.id ? (
-                          <input
-                            type="text"
-                            name="description"
-                            value={editForm.description}
-                            onChange={handleChange}
-                            placeholder="Role description"
-                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-[11px] font-black focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                        ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${roleDisplay.badgeColor}`}>
-                            <IconComponent className="w-3.5 h-3.5" />
-                            {role.name}
-                          </div>
-                        )}
+                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${roleDisplay.badgeColor}`}>
+                          <IconComponent className="w-3.5 h-3.5" />
+                          {role.name}
+                        </div>
                       </td>
 
                       <td className="px-6 py-6">
@@ -247,74 +228,54 @@ export default function RolesPage() {
                       </td>
 
                       <td className="px-6 py-6">
-                        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
                           {role.updated_at ? new Date(role.updated_at).toLocaleDateString() : 'Recently'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6 text-center relative">
-                        <div className="flex items-center justify-start gap-2">
-                          {editingId === role.id ? (
-                            <>
-                              <button 
-                                onClick={handleSave}
-                                className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20"
-                                title="Save"
-                              >
-                                <Check className="w-5 h-5" />
-                              </button>
-                              <button 
-                                onClick={handleCancel}
-                                className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20"
-                                title="Cancel"
-                              >
-                                <X className="w-5 h-5" />
-                              </button>
-                            </>
-                          ) : (
-                            <div className="relative">
-                              <button 
-                                onClick={() => toggleMenu(role.id)}
-                                className={`p-2 rounded-xl transition-all ${
-                                  menuOpenId === role.id 
-                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                }`}
-                              >
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
-                              
-                              {menuOpenId === role.id && (
-                                <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                  index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                }`}>
-                                  <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                                    <Eye className="w-4 h-4" />
-                                    View Access
-                                  </button>
-                                  <button 
-                                    onClick={() => handleEdit(role)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                    Edit Role
-                                  </button>
-                                  <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 rounded-xl transition-colors">
-                                    <Ban className="w-4 h-4" />
-                                    Deactivate
-                                  </button>
-                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                  <button 
-                                    onClick={() => handleDelete(role.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Role
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                      <td className="px-6 py-6 text-right relative">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(role.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === role.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === role.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
+                                <button 
+                                  onClick={() => handleViewRole(role)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </button>
+                                <Link 
+                                  href={`/dashboard/roles/edit/${role.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Role
+                                </Link>
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                <button 
+                                  onClick={() => handleDeleteClick(role)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Role
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -372,6 +333,154 @@ export default function RolesPage() {
           </div>
         </div>
       </div>
+
+      {/* View Role Modal */}
+      {viewModalOpen && selectedRole && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                  <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedRole.name}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID: {selectedRole.id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleViewClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Role Name</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedRole.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Role ID</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedRole.id}</p>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Description</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedRole.description || "No description provided"}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Permissions */}
+              {selectedRole.permissions && selectedRole.permissions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Permissions ({selectedRole.permissions.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {selectedRole.permissions.map((permission, index) => (
+                      <span key={index} className="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 text-xs font-medium rounded-lg">
+                        {permission.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedRole.created_at ? new Date(selectedRole.created_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedRole.updated_at ? new Date(selectedRole.updated_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleViewClose}
+                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+              <Link 
+                href={`/dashboard/roles/edit/${selectedRole.id}`}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                onClick={handleViewClose}
+              >
+                Edit Role
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedRole && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Role</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">{selectedRole.name}</span>? 
+                This action cannot be undone.
+              </p>
+              
+              {/* Role Info */}
+              <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedRole.name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedRole.description || 'No description'}</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500">ID: {selectedRole.id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleDeleteCancel}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Role
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

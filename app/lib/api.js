@@ -18,9 +18,9 @@ const getApiBaseUrl = () => {
   if (!apiUrl) {
     if (process.env.NODE_ENV === 'production') {
       console.warn('⚠️ NEXT_PUBLIC_API_URL not set in production. Using fallback.');
-      return 'https://228385806398.ngrok-free.app/'; // Use direct URL as fallback
+      return 'http://srv1029267.hstgr.cloud:8000/'; // Use direct URL as fallback
     }
-    return 'https://228385806398.ngrok-free.app/'; // Development fallback
+    return 'http://srv1029267.hstgr.cloud:8000/'; // Development fallback
   }
   
   return apiUrl;

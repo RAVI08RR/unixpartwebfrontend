@@ -19,19 +19,14 @@ export default function AddStockItemPage() {
     status: true,
   });
 
-  // Fetch categories on component mount
+  // Set categories directly since we're using fallback data
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const categoriesData = await stockItemService.getCategories();
-        setCategories(categoriesData || []);
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        // Continue without categories if fetch fails
-      }
+    const loadCategories = async () => {
+      const categoriesData = await stockItemService.getCategories();
+      setCategories(categoriesData);
     };
-
-    fetchCategories();
+    
+    loadCategories();
   }, []);
 
   const handleChange = (e) => {
@@ -141,15 +136,6 @@ export default function AddStockItemPage() {
                       {category.name}
                     </option>
                   ))}
-                  {/* Fallback options if categories API fails */}
-                  {categories.length === 0 && (
-                    <>
-                      <option value="1">Engine Parts</option>
-                      <option value="2">Transmission Parts</option>
-                      <option value="3">Brake Parts</option>
-                      <option value="4">Electrical Parts</option>
-                    </>
-                  )}
                 </select>
               </div>
             </div>
