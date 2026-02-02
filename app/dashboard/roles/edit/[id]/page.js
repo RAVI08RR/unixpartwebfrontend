@@ -49,6 +49,11 @@ export default function EditRolePage() {
           description: roleData.description || "",
           permission_ids: roleData.permissions?.map(p => p.id) || roleData.permission_ids || []
         });
+        
+        // Show a warning if using fallback data
+        if (roleData.name && roleData.name.startsWith('Role ')) {
+          console.log('⚠️ Using fallback role data');
+        }
       } catch (error) {
         console.error("❌ Failed to fetch role:", error);
         
@@ -131,7 +136,13 @@ export default function EditRolePage() {
 
       const result = await roleService.update(roleId, payload);
       console.log("✅ Role update successful:", result);
-      alert("✅ Role updated successfully!");
+      
+      if (result._fallback) {
+        alert("⚠️ Role updated successfully (using fallback mode)!\n\nNote: The backend API is not available, so changes are only stored locally. Please contact support to ensure your changes are properly saved.");
+      } else {
+        alert("✅ Role updated successfully!");
+      }
+      
       router.push("/dashboard/roles");
     } catch (error) {
       console.error("❌ UPDATE ROLE FAILED:", error);
