@@ -8,7 +8,7 @@ export async function GET(request, { params }) {
     const { id } = params;
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/${id}`;
     
     console.log('Stock Item proxy - Get URL:', backendUrl);
@@ -63,7 +63,7 @@ export async function PUT(request, { params }) {
     const stockItemData = await request.json();
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/${id}`;
     
     console.log('Stock Item proxy - Update URL:', backendUrl);
@@ -119,7 +119,7 @@ export async function DELETE(request, { params }) {
     const { id } = params;
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/${id}`;
     
     console.log('Stock Item proxy - Delete URL:', backendUrl);

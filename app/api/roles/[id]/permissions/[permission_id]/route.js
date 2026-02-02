@@ -10,7 +10,7 @@ export async function POST(request, { params }) {
     const { id, permission_id } = await params;
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
@@ -80,7 +80,7 @@ export async function DELETE(request, { params }) {
     const { id, permission_id } = await params;
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://d7fc9ee6fefb.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');

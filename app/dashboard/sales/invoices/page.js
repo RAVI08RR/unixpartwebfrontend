@@ -126,9 +126,10 @@ function InvoiceManagementContent() {
     setCurrentPage(1);
   }, [invoices.length]);
 
-  // Inline Editing State
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  // Modal states
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
 
   // Filter and search logic (API handles status and customer filtering)
@@ -156,67 +157,41 @@ function InvoiceManagementContent() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
-  // Inline Editing Handlers
+  // Action handlers
   const handleEdit = (invoice) => {
-    setEditingId(invoice.id);
-    setEditForm({ ...invoice });
+    router.push(`/dashboard/sales/invoices/edit/${invoice.id}`);
     setMenuOpenId(null);
+  };
+
+  // Modal handlers
+  const handleView = (invoice) => {
+    setSelectedInvoice(invoice);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeleteClick = (invoice) => {
+    setSelectedInvoice(invoice);
+    setDeleteModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedInvoice) return;
+    
+    try {
+      await invoiceService.delete(selectedInvoice.id);
+      mutate();
+      setDeleteModalOpen(false);
+      setSelectedInvoice(null);
+    } catch (error) {
+      console.error("Failed to delete invoice", error);
+      alert("Failed to delete invoice");
+    }
   };
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
-  };
-
-  const handleSave = async () => {
-    try {
-        // Construct a clean payload for invoice update
-        const payload = {
-            invoice_number: editForm.invoice_number || undefined,
-            customer_id: editForm.customer_id ? parseInt(editForm.customer_id) : undefined,
-            invoice_date: editForm.invoice_date || undefined,
-            invoice_status: editForm.invoice_status || undefined,
-            overall_load_status: editForm.overall_load_status || undefined,
-            invoice_notes: editForm.invoice_notes || undefined,
-        };
-
-        // Clean up undefined fields
-        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-
-        console.log("Saving Invoice Update:", { id: editingId, payload });
-
-        await invoiceService.update(editingId, payload);
-        
-        // Success: Refresh and clean up
-        mutate(); 
-        setEditingId(null);
-        setEditForm({});
-        setMenuOpenId(null);
-    } catch (error) {
-        console.error("Update Error Details:", error);
-        alert(`Update Failed: ${error.message}`);
-    }
-  };
-
-  const handleDelete = async (id) => {
-      if(confirm("Are you sure you want to delete this invoice?")) {
-          try {
-              await invoiceService.delete(id);
-              mutate();
-          } catch (error) {
-              console.error("Failed to delete invoice", error);
-              alert("Failed to delete invoice");
-          }
-      }
-  }
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({ ...prev, [name]: value }));
   };
 
   // Helper function to get customer name
@@ -461,10 +436,8 @@ function InvoiceManagementContent() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedInvoices.length > 0 ? (
                 paginatedInvoices.map((invoice, index) => {
-                  const isEditing = editingId === invoice.id;
-                  
                   return (
-                    <tr key={invoice.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}
+                    <tr key={invoice.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Invoice Number */}
@@ -474,17 +447,7 @@ function InvoiceManagementContent() {
                             <Receipt className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                name="invoice_number"
-                                value={editForm.invoice_number}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{invoice.invoice_number}</p>
-                            )}
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{invoice.invoice_number}</p>
                             <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {invoice.id}</p>
                           </div>
                         </div>
@@ -495,21 +458,7 @@ function InvoiceManagementContent() {
                         <div className="space-y-1.5 min-w-[180px]">
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
                             <User className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            {isEditing ? (
-                              <select
-                                name="customer_id"
-                                value={editForm.customer_id}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Select Customer</option>
-                                {customers.map(customer => (
-                                  <option key={customer.id} value={customer.id}>{customer.full_name}</option>
-                                ))}
-                              </select>
-                            ) : (
-                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{getCustomerName(invoice.customer_id)}</span>
-                            )}
+                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{getCustomerName(invoice.customer_id)}</span>
                           </div>
                         </div>
                       </td>
@@ -528,55 +477,31 @@ function InvoiceManagementContent() {
 
                       {/* Status */}
                       <td className="px-6 py-6">
-                        {isEditing ? (
-                           <select
-                              name="invoice_status"
-                              value={editForm.invoice_status}
-                              onChange={handleChange}
-                              className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-black focus:ring-2 focus:ring-blue-500"
-                           >
-                             <option value="pending">Pending</option>
-                             <option value="paid">Paid</option>
-                             <option value="overdue">Overdue</option>
-                             <option value="cancelled">Cancelled</option>
-                           </select>
-                        ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                            invoice.invoice_status === 'paid'
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : invoice.invoice_status === 'overdue'
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                              : invoice.invoice_status === 'cancelled'
-                              ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
-                              : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              invoice.invoice_status === 'paid' ? 'bg-green-600' : 
-                              invoice.invoice_status === 'overdue' ? 'bg-red-600' :
-                              invoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
-                            }`}></div>
-                            {invoice.invoice_status?.charAt(0).toUpperCase() + invoice.invoice_status?.slice(1) || "Pending"}
-                          </div>
-                        )}
+                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
+                          invoice.invoice_status === 'paid'
+                            ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                            : invoice.invoice_status === 'overdue'
+                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                            : invoice.invoice_status === 'cancelled'
+                            ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
+                            : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
+                        }`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${
+                            invoice.invoice_status === 'paid' ? 'bg-green-600' : 
+                            invoice.invoice_status === 'overdue' ? 'bg-red-600' :
+                            invoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
+                          }`}></div>
+                          {invoice.invoice_status?.charAt(0).toUpperCase() + invoice.invoice_status?.slice(1) || "Pending"}
+                        </div>
                       </td>
 
                       {/* Date */}
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          {isEditing ? (
-                            <input 
-                              type="date"
-                              name="invoice_date"
-                              value={editForm.invoice_date}
-                              onChange={handleChange}
-                              className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                              {formatDate(invoice.invoice_date)}
-                            </span>
-                          )}
+                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
+                            {formatDate(invoice.invoice_date)}
+                          </span>
                         </div>
                       </td>
 
@@ -590,38 +515,46 @@ function InvoiceManagementContent() {
                       {/* Actions */}
                       <td className="px-6 py-6 text-right relative">
                         <div className="flex items-center justify-end gap-2">
-                           {isEditing ? (
-                              <>
-                                <button onClick={handleSave} className="p-2 text-white bg-green-500 hover:bg-green-600 rounded-xl transition-all shadow-md shadow-green-500/20" title="Save">
-                                  <Check className="w-5 h-5" />
-                                </button>
-                                <button onClick={handleCancel} className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-xl transition-all shadow-md shadow-red-500/20" title="Cancel">
-                                  <X className="w-5 h-5" />
-                                </button>
-                              </>
-                           ) : (
-                              <div className="relative">
-                                <button 
-                                  onClick={() => toggleMenu(invoice.id)}
-                                  className={`p-2 rounded-xl transition-all ${
-                                    menuOpenId === invoice.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                  }`}
-                                >
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(invoice.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === invoice.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
                                 
                                 {menuOpenId === invoice.id && (
                                   <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                     index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                   }`}>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                                    <button 
+                                      onClick={() => handleView(invoice)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                    >
                                       <Eye className="w-4 h-4" />
                                       View Details
                                     </button>
                                     <button 
                                       onClick={() => handleEdit(invoice)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit Invoice
+                                    </button>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <button 
+                                      onClick={() => handleDeleteClick(invoice)} 
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete Invoice
+                                    </button>
+                                  </div>
+                                )}
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                     >
                                       <Pencil className="w-4 h-4" />
@@ -635,7 +568,6 @@ function InvoiceManagementContent() {
                                   </div>
                                 )}
                               </div>
-                           )}
                         </div>
                       </td>
                     </tr>
@@ -693,6 +625,210 @@ function InvoiceManagementContent() {
           </div>
         </div>
       </div>
+
+      {/* View Invoice Modal */}
+      {viewModalOpen && selectedInvoice && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-50" 
+            onClick={() => setViewModalOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                      <Receipt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice Details</h2>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{selectedInvoice.invoice_number}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setViewModalOpen(false)}
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Invoice Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Number</h3>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Customer</h3>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Date</h3>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(selectedInvoice.invoice_date)}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</h3>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${
+                      selectedInvoice.invoice_status === 'paid'
+                        ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                        : selectedInvoice.invoice_status === 'overdue'
+                        ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                        : selectedInvoice.invoice_status === 'cancelled'
+                        ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
+                        : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
+                    }`}>
+                      <div className={`w-2 h-2 rounded-full ${
+                        selectedInvoice.invoice_status === 'paid' ? 'bg-green-600' : 
+                        selectedInvoice.invoice_status === 'overdue' ? 'bg-red-600' :
+                        selectedInvoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
+                      }`}></div>
+                      {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Information */}
+                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Summary</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Paid Amount</p>
+                      <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedInvoice.paid_amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding</p>
+                      <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(selectedInvoice.outstanding_amount)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Load Status */}
+                {selectedInvoice.overall_load_status && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Load Status</h3>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                      {selectedInvoice.overall_load_status.replace('_', ' ')}
+                    </p>
+                  </div>
+                )}
+
+                {/* Notes */}
+                {selectedInvoice.invoice_notes && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</h3>
+                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-3">
+                      {selectedInvoice.invoice_notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex justify-end gap-3">
+                <button 
+                  onClick={() => setViewModalOpen(false)}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+                <button 
+                  onClick={() => {
+                    setViewModalOpen(false);
+                    handleEdit(selectedInvoice);
+                  }}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit Invoice
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedInvoice && (
+        <>
+          <div 
+            className="fixed inset-0 bg-black/50 z-50" 
+            onClick={() => setDeleteModalOpen(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                    <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Invoice</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                      <Receipt className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{getCustomerName(selectedInvoice.customer_id)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-700">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Total Amount:</span>
+                      <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-gray-500 dark:text-gray-400">Status:</span>
+                      <span className={`font-semibold ${
+                        selectedInvoice.invoice_status === 'paid' ? 'text-green-600 dark:text-green-400' :
+                        selectedInvoice.invoice_status === 'overdue' ? 'text-red-600 dark:text-red-400' :
+                        'text-yellow-600 dark:text-yellow-400'
+                      }`}>
+                        {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Are you sure you want to delete this invoice? This will permanently remove the invoice and all associated data.
+                </p>
+
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={confirmDelete}
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Invoice
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
