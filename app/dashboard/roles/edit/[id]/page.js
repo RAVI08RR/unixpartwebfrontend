@@ -40,8 +40,9 @@ export default function EditRolePage() {
       
       setRoleLoading(true);
       try {
+        console.log('🔍 Fetching role with ID:', roleId);
         const roleData = await roleService.getById(roleId);
-        console.log('Fetched role data:', roleData);
+        console.log('✅ Fetched role data:', roleData);
         
         setFormData({
           name: roleData.name || "",
@@ -49,7 +50,7 @@ export default function EditRolePage() {
           permission_ids: roleData.permissions?.map(p => p.id) || roleData.permission_ids || []
         });
       } catch (error) {
-        console.error("Failed to fetch role:", error);
+        console.error("❌ Failed to fetch role:", error);
         
         // Check if it's an authentication error
         if (error.message.includes("session has expired") || error.message.includes("401")) {
@@ -58,7 +59,13 @@ export default function EditRolePage() {
           return;
         }
         
-        alert("Failed to load role data");
+        // Check if it's a 500 error (backend issue)
+        if (error.message.includes("500")) {
+          alert("Backend server error. The role data could not be loaded. Please try again later or contact support.");
+        } else {
+          alert("Failed to load role data: " + error.message);
+        }
+        
         router.push("/dashboard/roles");
       } finally {
         setRoleLoading(false);
@@ -138,7 +145,9 @@ export default function EditRolePage() {
       } else if (detailedMsg.includes("401")) {
         detailedMsg = "Authentication Error: Please log in again.";
       } else if (detailedMsg.includes("500")) {
-        detailedMsg = "Server Error: Please try again later or contact support.";
+        detailedMsg = "Server Error: The backend API is not responding properly. This might be because the roles API endpoint is not implemented on the backend server. Please contact support.";
+      } else if (detailedMsg.includes("Backend server error")) {
+        detailedMsg = "Backend Server Error: The roles API endpoint may not be available. Please contact support or try again later.";
       }
       
       alert(`Failed to update role: ${detailedMsg}`);

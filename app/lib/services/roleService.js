@@ -7,7 +7,15 @@ export const roleService = {
   },
 
   getById: async (id) => {
-    return fetchApi(`/api/roles/${id}`);
+    try {
+      console.log('🚀 roleService.getById called with:', { id, type: typeof id });
+      const result = await fetchApi(`/api/roles/${id}`);
+      console.log('✅ roleService.getById successful:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ roleService.getById failed:', error);
+      throw error;
+    }
   },
 
   getBySlug: async (slug) => {
@@ -22,10 +30,18 @@ export const roleService = {
   },
 
   update: async (id, roleData) => {
-    return fetchApi(`/api/roles/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(roleData),
-    });
+    try {
+      console.log('🚀 roleService.update called with:', { id, roleData });
+      const result = await fetchApi(`/api/roles/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(roleData),
+      });
+      console.log('✅ roleService.update successful:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ roleService.update failed:', error);
+      throw error;
+    }
   },
 
   delete: async (id) => {
