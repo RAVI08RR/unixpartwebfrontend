@@ -8,8 +8,15 @@ export function useInvoices(skip = 0, limit = 100, customer_id = null, status = 
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      errorRetryCount: 3,
+      dedupingInterval: 10000, // Increased from 5s to 10s
+      errorRetryCount: 2, // Reduced from 3 to 2
+      errorRetryInterval: 2000, // 2 second delay between retries
+      shouldRetryOnError: (error) => {
+        // Only retry on network errors, not on 4xx errors
+        return !error.message.includes('401') && 
+               !error.message.includes('403') && 
+               !error.message.includes('404');
+      },
       onError: (error) => {
         console.error('useInvoices error:', error);
       }

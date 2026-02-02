@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -13,10 +13,14 @@ import { customerService } from "@/app/lib/services/customerService";
 export default function EditInvoicePage({ params }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState('');
   const [pageLoading, setPageLoading] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
-  const [invoiceId, setInvoiceId] = useState(null);
+  
+  // Unwrap params using React.use()
+  const resolvedParams = use(params);
+  const invoiceId = resolvedParams.id;
   
   const [formData, setFormData] = useState({
     invoice_number: "",
@@ -61,9 +65,10 @@ export default function EditInvoicePage({ params }) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get invoice ID from params
-        const id = await params.id;
-        setInvoiceId(id);
+        // Validate invoice ID
+        if (!invoiceId || invoiceId === 'undefined') {
+          throw new Error('Invalid invoice ID');
+        }
 
         // Fetch customers and invoice data in parallel
         const [customersData, invoiceData] = await Promise.all([
@@ -71,7 +76,7 @@ export default function EditInvoicePage({ params }) {
             console.error('Failed to fetch customers:', err);
             return [];
           }),
-          invoiceService.getById(id).catch(err => {
+          invoiceService.getById(invoiceId).catch(err => {
             console.error('Failed to fetch invoice:', err);
             throw err;
           })
@@ -111,7 +116,7 @@ export default function EditInvoicePage({ params }) {
     };
     
     fetchData();
-  }, [params, router]);
+  }, [invoiceId, router]);
 
   const handleSubmit = async () => {
       // Basic validation
@@ -128,6 +133,8 @@ export default function EditInvoicePage({ params }) {
       }
 
       setLoading(true);
+      setUpdateProgress('Validating data...');
+      
       try {
           // Prepare payload matching InvoiceUpdate schema
           const payload = {
@@ -144,12 +151,20 @@ export default function EditInvoicePage({ params }) {
             payload
           });
 
+          setUpdateProgress('Updating invoice...');
           const result = await invoiceService.update(invoiceId, payload);
+          
           console.log("✅ Invoice update successful:", result);
+          setUpdateProgress('Update successful! Redirecting...');
+          
+          // Show success message
           alert("✅ Invoice updated successfully!");
-          router.push("/dashboard/sales/invoices");
+          
+          // Use window.location for more reliable navigation
+          window.location.href = "/dashboard/sales/invoices";
       } catch (error) {
           console.error("❌ UPDATE INVOICE FAILED:", error);
+          setUpdateProgress('');
           
           // Try to show the most helpful error message
           let detailedMsg = error.message;
@@ -166,6 +181,7 @@ export default function EditInvoicePage({ params }) {
           alert(`Failed to update invoice: ${detailedMsg}`);
       } finally {
           setLoading(false);
+          setUpdateProgress('');
       }
   };
 
@@ -413,7 +429,7 @@ export default function EditInvoicePage({ params }) {
             className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
         >
           <Check className="w-4 h-4" />
-          <span>{loading ? "Updating..." : "Update Invoice"}</span>
+          <span>{loading ? (updateProgress || "Updating...") : "Update Invoice"}</span>
         </button>
         <Link href="/dashboard/sales/invoices" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
           Cancel

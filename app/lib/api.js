@@ -50,9 +50,11 @@ export const clearAuthToken = () => {
 };
 
 /**
- * Simple fetch wrapper for API calls
+ * Simple fetch wrapper for API calls with retry logic
  */
-export const fetchApi = async (endpoint, options = {}) => {
+export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
+  const maxRetries = 2;
+  
   // Runtime check for API URL
   if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
     throw new Error('NEXT_PUBLIC_API_URL environment variable must be set in Vercel dashboard');
@@ -90,9 +92,15 @@ export const fetchApi = async (endpoint, options = {}) => {
     method: 'GET',
     ...options,
     headers,
+    // Add timeout for all requests - longer for login and updates
+    signal: AbortSignal.timeout(
+      endpoint.includes('auth/login') ? 30000 : 
+      (options.method === 'PUT' || options.method === 'POST') ? 45000 : 
+      15000
+    ),
   };
 
-  console.log(`🚀 API Request: ${config.method} ${url}`);
+  console.log(`🚀 API Request: ${config.method} ${url}${retryCount > 0 ? ` (retry ${retryCount})` : ''}`);
 
   try {
     const response = await fetch(url, config);
@@ -114,9 +122,17 @@ export const fetchApi = async (endpoint, options = {}) => {
       throw new Error('Backend server error. The application will use fallback data.');
     }
 
-    // Handle 502/503/504 errors (backend connectivity issues)
+    // Handle 502/503/504 errors (backend connectivity issues) - retry these
     if (response.status >= 502 && response.status <= 504) {
       console.error('🚨 Backend Connectivity Error:', response.status, url);
+      
+      // Retry on gateway errors
+      if (retryCount < maxRetries) {
+        console.log(`🔄 Retrying request in ${(retryCount + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+        return fetchApi(endpoint, options, retryCount + 1);
+      }
+      
       throw new Error('Backend server is not accessible. The application will use fallback data.');
     }
 
@@ -151,12 +167,23 @@ export const fetchApi = async (endpoint, options = {}) => {
   } catch (error) {
     console.error(`❌ API Error: ${url}`, error);
     
-    if (error.message === 'Failed to fetch') {
+    // Handle network errors with retry
+    if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+      if (retryCount < maxRetries) {
+        console.log(`🔄 Network error, retrying in ${(retryCount + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+        return fetchApi(endpoint, options, retryCount + 1);
+      }
       throw new Error('Network error: Backend server is not accessible. The application will use fallback data.');
     }
     
-    // Handle timeout errors
+    // Handle timeout errors with retry
     if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      if (retryCount < maxRetries) {
+        console.log(`🔄 Timeout error, retrying in ${(retryCount + 1) * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
+        return fetchApi(endpoint, options, retryCount + 1);
+      }
       throw new Error('Request timeout: Backend server is taking too long to respond. The application will use fallback data.');
     }
     

@@ -25,7 +25,7 @@ export async function POST(request) {
         'ngrok-skip-browser-warning': 'true',
       },
       body: JSON.stringify(loginData),
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(30000), // 30 second timeout for login
     });
     
     console.log('Login proxy - Backend response status:', response.status);

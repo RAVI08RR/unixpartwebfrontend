@@ -4,7 +4,7 @@ import React from "react";
 import { 
   BarChart3, LayoutDashboard, Box, Users, ShoppingCart, 
   FileText, Settings, LogOut, Layers, Package, Truck, 
-  DollarSign, X, Shield, Building2
+  DollarSign, X, Shield, Building2, UserCheck
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -77,6 +77,7 @@ export function Sidebar() {
       customIcon: "/icons/Button-4.svg",
       label: "Sales",
       items: [
+        { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck },
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText },
       ]

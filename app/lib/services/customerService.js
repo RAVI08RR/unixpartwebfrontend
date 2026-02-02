@@ -1,4 +1,5 @@
 import { fetchApi } from '../api';
+import { getFallbackData } from '../fallbackData';
 
 export const customerService = {
   // Get all customers with pagination and filters
@@ -22,35 +23,68 @@ export const customerService = {
       }
     } catch (error) {
        console.error("🏢 Customers API failed:", error.message);
-       return [];
+       
+       // Return fallback data when backend is unavailable
+       console.log('📋 Using fallback customer data');
+       const fallbackData = await getFallbackData('customers', { skip, limit });
+       return fallbackData.data.map(customer => ({ ...customer, _fallback: true }));
     }
   },
 
   // Get single customer by ID
   getById: async (id) => {
-    return fetchApi(`/api/customers/${id}`);
+    try {
+      return await fetchApi(`/api/customers/${id}`);
+    } catch (error) {
+      console.warn('📋 Customer service falling back to mock data for ID:', id, error.message);
+      
+      // Get fallback data and find customer
+      const fallbackData = await getFallbackData('customers');
+      const customer = fallbackData.data.find(cust => cust.id === parseInt(id));
+      
+      if (customer) {
+        return { ...customer, _fallback: true };
+      }
+      
+      throw new Error(`Customer with ID ${id} not found in fallback data`);
+    }
   },
 
   // Create new customer
   create: async (customerData) => {
-    return fetchApi('/api/customers', {
-      method: 'POST',
-      body: JSON.stringify(customerData),
-    });
+    try {
+      return await fetchApi('/api/customers', {
+        method: 'POST',
+        body: JSON.stringify(customerData),
+      });
+    } catch (error) {
+      console.warn('📋 Customer creation failed, backend unavailable:', error.message);
+      throw new Error('Cannot create customer: Backend server is unavailable. Please try again later.');
+    }
   },
 
   // Update existing customer
   update: async (id, customerData) => {
-    return fetchApi(`/api/customers/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(customerData),
-    });
+    try {
+      return await fetchApi(`/api/customers/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(customerData),
+      });
+    } catch (error) {
+      console.warn('📋 Customer update failed, backend unavailable:', error.message);
+      throw new Error('Cannot update customer: Backend server is unavailable. Please try again later.');
+    }
   },
 
   // Delete customer
   delete: async (id) => {
-    return fetchApi(`/api/customers/${id}`, {
-      method: 'DELETE',
-    });
+    try {
+      return await fetchApi(`/api/customers/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.warn('📋 Customer deletion failed, backend unavailable:', error.message);
+      throw new Error('Cannot delete customer: Backend server is unavailable. Please try again later.');
+    }
   },
 };

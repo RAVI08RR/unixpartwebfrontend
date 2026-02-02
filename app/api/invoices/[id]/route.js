@@ -196,7 +196,7 @@ export async function PUT(request, { params }) {
       method: 'PUT',
       headers,
       body,
-      signal: AbortSignal.timeout(15000), // 15 second timeout for invoice update
+      signal: AbortSignal.timeout(45000), // 45 second timeout for invoice update
     });
     
     console.log('Update invoice proxy - Backend response status:', response.status);

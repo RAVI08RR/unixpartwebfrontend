@@ -555,18 +555,6 @@ function InvoiceManagementContent() {
                                     </button>
                                   </div>
                                 )}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Invoice
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                    <button onClick={() => handleDelete(invoice.id)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Invoice
-                                    </button>
-                                  </div>
-                                )}
                               </div>
                         </div>
                       </td>

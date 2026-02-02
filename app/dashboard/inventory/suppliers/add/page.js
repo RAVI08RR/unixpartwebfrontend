@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Truck, User, Mail, Phone, Building2, 
-  Check, X, MapPin, FileText
+  Check, X, MapPin, FileText, Hash, Tag, ChevronDown
 } from "lucide-react";
 import { supplierService } from "@/app/lib/services/supplierService";
 
@@ -14,19 +14,21 @@ export default function AddSupplierPage() {
   const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
+    supplier_code: "",
     name: "",
     email: "",
     phone: "",
     company: "",
     address: "",
     notes: "",
+    type: "Wholesale", // Default type
     status: true
   });
 
   const handleSubmit = async () => {
       // Basic validation
-      if(!formData.name || !formData.email) {
-          alert("Please fill in all required fields (Name and Email)");
+      if(!formData.name || !formData.email || !formData.supplier_code) {
+          alert("Please fill in all required fields (Supplier Code, Name and Email)");
           return;
       }
 
@@ -41,12 +43,14 @@ export default function AddSupplierPage() {
       try {
           // Prepare payload
           const payload = {
+              supplier_code: formData.supplier_code.trim(),
               name: formData.name.trim(),
               email: formData.email.trim(),
               phone: formData.phone?.trim() || null,
               company: formData.company?.trim() || null,
               address: formData.address?.trim() || null,
               notes: formData.notes?.trim() || null,
+              type: formData.type,
               status: formData.status
           };
 
@@ -65,7 +69,7 @@ export default function AddSupplierPage() {
           // Try to show the most helpful error message
           let detailedMsg = error.message;
           if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: Please check if the email is already taken, or if required fields are missing.";
+            detailedMsg = "Validation Error: Please check if the supplier code or email is already taken, or if required fields are missing.";
           } else if (detailedMsg.includes("400")) {
             detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
           } else if (detailedMsg.includes("401")) {
@@ -92,6 +96,23 @@ export default function AddSupplierPage() {
 
       {/* Main Form Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+        {/* Supplier Code */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Supplier Code <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="text"
+              placeholder="e.g. SUP-001"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              value={formData.supplier_code}
+              onChange={(e) => setFormData({...formData, supplier_code: e.target.value})}
+            />
+          </div>
+        </div>
+
         {/* Supplier Name */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -123,6 +144,29 @@ export default function AddSupplierPage() {
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
+          </div>
+        </div>
+
+        {/* Supplier Type */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Supplier Type <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select 
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              value={formData.type}
+              onChange={(e) => setFormData({...formData, type: e.target.value})}
+            >
+              <option value="Wholesale">Wholesale</option>
+              <option value="Retail">Retail</option>
+              <option value="Manufacturer">Manufacturer</option>
+              <option value="Distributor">Distributor</option>
+              <option value="Owner">Owner</option>
+              <option value="Rental">Rental</option>
+            </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
