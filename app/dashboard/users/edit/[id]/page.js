@@ -382,9 +382,17 @@ export default function EditUserPage() {
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit User</h1>
-          <p className="text-gray-500 text-sm">Update user account and permissions</p>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/dashboard/users" 
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit User</h1>
+            <p className="text-gray-500 text-sm">Update user account and permissions</p>
+          </div>
         </div>
       </div>
 
@@ -447,7 +455,7 @@ export default function EditUserPage() {
                 User Code <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-                <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                 <input 
                     type="text"
                     placeholder="e.g. USR-001"

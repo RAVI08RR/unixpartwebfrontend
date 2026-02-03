@@ -89,9 +89,17 @@ export default function AddCustomerPage() {
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add New Customer</h1>
-          <p className="text-gray-500 text-sm">Create a new customer record</p>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/dashboard/sales/customers" 
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add New Customer</h1>
+            <p className="text-gray-500 text-sm">Create a new customer record</p>
+          </div>
         </div>
       </div>
 

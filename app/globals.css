@@ -97,104 +97,6 @@ body {
   background: rgba(0, 0, 0, 0.7);
 }
 
-/* Phone Input Styles */
-.phone-input-container {
-  width: 100%;
-}
-
-.phone-input-container .PhoneInputInput {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  border: 1px solid rgb(229 231 235);
-  border-radius: 0.75rem;
-  background-color: rgb(255 255 255);
-  color: rgb(17 24 39);
-  font-size: 14px !important;
-  font-weight: 500;
-  transition: all 0.2s;
-  outline: none;
-}
-
-.phone-input-container .PhoneInputInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.phone-input-container .PhoneInputInput::placeholder {
-  color: #90A1B9;
-  font-size: 14px;
-  opacity: 1;
-}
-
-.phone-input-container .PhoneInputCountrySelect {
-  border: 1px solid rgb(229 231 235);
-  border-radius: 0.75rem;
-  background-color: rgb(255 255 255);
-  padding: 0.875rem 0.5rem;
-  margin-right: 0.5rem;
-  transition: all 0.2s;
-  outline: none;
-}
-
-.phone-input-container .PhoneInputCountrySelect:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.phone-input-container .PhoneInputCountrySelectArrow {
-  color: rgb(107 114 128);
-  margin-left: 0.25rem;
-}
-
-.phone-input-container .PhoneInputCountryIcon {
-  width: 1.25rem;
-  height: 1rem;
-  margin-right: 0.5rem;
-}
-
-/* Dark mode phone input styles */
-.dark .phone-input-container .PhoneInputInput {
-  background-color: rgb(31 41 55);
-  border-color: rgb(75 85 99);
-  color: rgb(255 255 255);
-}
-
-.dark .phone-input-container .PhoneInputInput:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.dark .phone-input-container .PhoneInputInput::placeholder {
-  color: #90A1B9;
-}
-
-.dark .phone-input-container .PhoneInputCountrySelect {
-  background-color: rgb(31 41 55);
-  border-color: rgb(75 85 99);
-  color: rgb(255 255 255);
-}
-
-.dark .phone-input-container .PhoneInputCountrySelect:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-}
-
-.dark .phone-input-container .PhoneInputCountrySelectArrow {
-  color: rgb(156 163 175);
-}
-
-/* Error state */
-.phone-input-container.error .PhoneInputInput,
-.phone-input-container.error .PhoneInputCountrySelect {
-  border-color: rgb(239 68 68);
-}
-
-.phone-input-container.error .PhoneInputInput:focus,
-.phone-input-container.error .PhoneInputCountrySelect:focus {
-  border-color: rgb(239 68 68);
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
-}
-
 /* Enhanced Table Header Styles */
 table thead th {
   background-color: rgb(249 250 251) !important;
@@ -1692,4 +1594,29 @@ thead th.text-gray-500,
 .dark thead th,
 .dark tbody tr {
     border-bottom: 1.8px solid #3f3f46 !important;
+}
+/* 
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea, select {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    width: 100%;
+    height: 42px;
+} */
+
+.react-tel-input .form-control {
+    letter-spacing: .01rem;
+    background: #fff;
+    border: 1px solid #cacaca;
+    border-radius: 5px;
+    outline: none;
+    width: 100% !important;
+    height: 42px;
+    margin-left: 0;
+    padding-left: 48px;
+    font-size: 14px;
+    line-height: 25px;
+    position: relative;
+    margin-top: 0 !important;
+    /* z-index: 999 !important; */
+    margin-bottom: 0 !important;
 }

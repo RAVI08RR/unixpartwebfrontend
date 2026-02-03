@@ -14,6 +14,7 @@
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
     "react": "19.2.3",
+    "react-country-phone-input": "^1.0.2",
     "react-dom": "19.2.3",
     "react-is": "^19.2.3",
     "react-phone-number-input": "^3.4.14",

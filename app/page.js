@@ -4,10 +4,10 @@ import { Check, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { ThemeToggle } from "./dashboard/ThemeToggle";
 import { authService } from "./lib/services/authService";
 import { setAuthToken, clearAuthToken } from "./lib/api";
+import { useToast } from "./components/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,12 +15,34 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { success, error } = useToast();
+
+  // Helper function to parse validation errors into user-friendly messages
+  const parseValidationError = (errorMessage) => {
+    if (errorMessage.includes("body.email: value is not a valid email address")) {
+      return "Please enter a valid email address.";
+    }
+    if (errorMessage.includes("body.password: String should have at least 6 characters")) {
+      return "Password must be at least 6 characters long.";
+    }
+    if (errorMessage.includes("body.email") && errorMessage.includes("@-sign")) {
+      return "Please enter a valid email address with exactly one @ symbol.";
+    }
+    if (errorMessage.includes("Invalid credentials") || errorMessage.includes("401")) {
+      return "Invalid email or password. Please check your credentials and try again.";
+    }
+    if (errorMessage.includes("422")) {
+      return "Please check your email and password format.";
+    }
+    if (errorMessage.includes("500")) {
+      return "Server error. Please try again later.";
+    }
+    return errorMessage;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
     
     // Clear any existing tokens before login attempt
     clearAuthToken();
@@ -33,13 +55,15 @@ export default function LoginPage() {
             if (response.user) {
                 localStorage.setItem("current_user", JSON.stringify(response.user));
             }
+            success("Login successful! Redirecting to dashboard...");
             router.push("/dashboard");
         } else {
-            setError("Login failed. No token received.");
+            error("Login failed. No authentication token received.");
         }
     } catch (err) {
         console.error("Login error", err);
-        setError(err.message || "Login failed. Please check your credentials.");
+        const friendlyMessage = parseValidationError(err.message || "Login failed. Please check your credentials.");
+        error(friendlyMessage);
     } finally {
         setLoading(false);
     }
@@ -150,8 +174,6 @@ export default function LoginPage() {
               </label>
               <a href="#" className="text-base text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors font-medium">Forgot password?</a>
             </div>
-
-            {error && <p className="text-red-600 text-sm text-center bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">{error}</p>}
 
             <button 
               type="submit"

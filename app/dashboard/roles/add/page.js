@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  Shield, Filter, Download, Plus, Check, Search, Loader2
+  Shield, Filter, Download, Plus, Check, Search, Loader2, ArrowLeft
 } from "lucide-react";
 import { useRoles } from "@/app/lib/hooks/useRoles";
 import { useCurrentUser } from "@/app/lib/hooks/useCurrentUser";
@@ -153,9 +153,17 @@ export default function AddRolePage() {
         <>
           {/* Header Section */}
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Role</h1>
-              <p className="text-gray-500 text-sm">Create a new user account and assign permissions</p>
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/dashboard/roles" 
+                className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Role</h1>
+                <p className="text-gray-500 text-sm">Create a new user account and assign permissions</p>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { customerService } from "../../../../../lib/services/customerService";
 import { useCustomer } from "../../../../../lib/hooks/useCustomers";
+import PhoneInput from "@/app/components/PhoneInput";
+import { useToast } from "@/app/components/Toast";
 
 export default function EditCustomerPage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function EditCustomerPage() {
   const [loading, setLoading] = useState(false);
   const [customerLoading, setCustomerLoading] = useState(true);
   const { customer, loading: hookLoading } = useCustomer(customerId);
+  const { success, error } = useToast();
   
   const [formData, setFormData] = useState({
     customer_code: "",

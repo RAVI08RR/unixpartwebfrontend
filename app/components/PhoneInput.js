@@ -1,10 +1,10 @@
 "use client";
 
 import React from 'react';
-import PhoneInputComponent from 'react-phone-number-input';
-import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-country-phone-input';
+import 'react-country-phone-input/lib/style.css';
 
-const PhoneInput = ({ 
+const CustomPhoneInput = ({ 
   value, 
   onChange, 
   placeholder = "Enter phone number",
@@ -14,16 +14,28 @@ const PhoneInput = ({
   error = false,
   ...props 
 }) => {
+  const handleChange = (phone, country) => {
+    if (onChange) {
+      onChange(phone);
+    }
+  };
+
   return (
-    <div className="relative">
-      <PhoneInputComponent
-        international
-        defaultCountry="IN"
+    <div className={`${className} ${error ? 'error' : ''}`}>
+      <PhoneInput
         value={value}
-        onChange={onChange}
+        onChange={handleChange}
         placeholder={placeholder}
         disabled={disabled}
-        className={`phone-input-container ${className} ${error ? 'error' : ''}`}
+        defaultCountry="in"
+        enableSearch={true}
+        disableCountryCode={false}
+        disableDropdown={false}
+        inputProps={{
+          name: 'phone',
+          required: required,
+          autoFocus: false
+        }}
         {...props}
       />
       {required && !value && (
@@ -33,4 +45,4 @@ const PhoneInput = ({
   );
 };
 
-export default PhoneInput;
+export default CustomPhoneInput;
