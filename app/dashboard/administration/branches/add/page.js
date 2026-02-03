@@ -75,7 +75,7 @@ export default function AddBranchPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Add New Branch</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Create a new branch in the system</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Create a new branch in the system</p>
         </div>
       </div>
 

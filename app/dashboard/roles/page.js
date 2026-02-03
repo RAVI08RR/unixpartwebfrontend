@@ -8,6 +8,8 @@ import {
   Pencil, Trash2, X, Eye, Loader2
 } from "lucide-react";
 import { useRoles } from "../../lib/hooks/useRoles";
+import { useToast } from "@/app/components/Toast";
+import { useConfirm } from "@/app/components/ConfirmModal";
 
 export default function RolesPage() {
   const { roles, loading, error, updateRole, deleteRole } = useRoles();
@@ -18,6 +20,8 @@ export default function RolesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const { success, error: showError } = useToast();
+  const confirm = useConfirm();
 
   // Helper function to get role icon and badge color
   const getRoleDisplay = (roleName) => {
@@ -56,28 +60,25 @@ export default function RolesPage() {
     setMenuOpenId(null);
   };
 
-  const handleDeleteClick = (role) => {
-    setSelectedRole(role);
-    setDeleteModalOpen(true);
-    setMenuOpenId(null);
-  };
+  const handleDeleteClick = async (role) => {
+    const confirmed = await confirm({
+      title: "Delete Role",
+      message: `Are you sure you want to delete "${role.name}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      type: "danger"
+    });
 
-  const handleDeleteConfirm = async () => {
-    if (!selectedRole) return;
-    
-    try {
-      await deleteRole(selectedRole.id);
-      setDeleteModalOpen(false);
-      setSelectedRole(null);
-    } catch (error) {
-      console.error("Failed to delete role", error);
-      alert("Failed to delete role");
+    if (confirmed) {
+      try {
+        await deleteRole(role.id);
+        success("Role deleted successfully!");
+      } catch (err) {
+        console.error("Failed to delete role", err);
+        showError("Failed to delete role: " + err.message);
+      }
     }
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModalOpen(false);
-    setSelectedRole(null);
+    setMenuOpenId(null);
   };
 
   const handleViewClose = () => {
@@ -133,7 +134,7 @@ export default function RolesPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Role Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">Manage your user management</p>
+          <p className="text-gray-400 dark:text-white text-sm font-medium">Manage your user management</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -180,15 +181,15 @@ export default function RolesPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
                 style={{
                   width: '22rem'
                 }}
                 >Last Updated</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -456,7 +457,7 @@ export default function RolesPage() {
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{selectedRole.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{selectedRole.description || 'No description'}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">ID: {selectedRole.id}</p>
+                    <p className="text-xs text-gray-400 dark:text-white">ID: {selectedRole.id}</p>
                   </div>
                 </div>
               </div>

@@ -9,6 +9,7 @@ import {
 import { useRoles } from "@/app/lib/hooks/useRoles";
 import { useCurrentUser } from "@/app/lib/hooks/useCurrentUser";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
+import { useToast } from "@/app/components/Toast";
 
 export default function AddRolePage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function AddRolePage() {
   const { user, loading: userLoading } = useCurrentUser();
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
   const [loading, setLoading] = useState(false);
+  const { success, error, warning } = useToast();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -62,13 +64,13 @@ export default function AddRolePage() {
     e.preventDefault();
     
     if (!formData.name.trim()) {
-      alert('Role name is required');
+      error('Role name is required');
       return;
     }
 
     // Check if user is authenticated
     if (!user) {
-      alert('You must be logged in to create roles. Please log in and try again.');
+      error('You must be logged in to create roles. Please log in and try again.');
       router.push('/');
       return;
     }
@@ -87,14 +89,15 @@ export default function AddRolePage() {
         permission_ids: formData.permission_ids || [] // Include selected permissions
       });
       
+      success('Role created successfully!');
       // Success - redirect to roles list
       router.push('/dashboard/roles');
-    } catch (error) {
-      console.error('Error creating role:', error);
+    } catch (err) {
+      console.error('Error creating role:', err);
       
       // Provide more specific error messages
-      let errorMessage = error.message;
-      if (error.message.includes('401') || error.message.includes('Unauthorized') || error.message.includes('Invalid or revoked token')) {
+      let errorMessage = err.message;
+      if (err.message.includes('401') || err.message.includes('Unauthorized') || err.message.includes('Invalid or revoked token')) {
         errorMessage = 'Authentication failed. Please log in again and try creating the role.';
         // Clear the token and redirect to login
         if (typeof window !== 'undefined') {
@@ -102,13 +105,15 @@ export default function AddRolePage() {
           localStorage.removeItem('current_user');
           router.push('/');
         }
-      } else if (error.message.includes('422')) {
+      } else if (err.message.includes('422')) {
         errorMessage = 'Validation error. Please check that all required fields are filled correctly and the role slug is unique.';
-      } else if (error.message.includes('500')) {
-        errorMessage = 'Server error. This might be due to authentication issues or backend problems. Please try logging in again.';
+      } else if (err.message.includes('500')) {
+        errorMessage = 'Server error. The roles API endpoint may not be available on the backend. Please contact support.';
+      } else if (err.message.includes('Backend server error')) {
+        errorMessage = 'Backend API is not responding. The roles functionality may not be implemented on the server.';
       }
       
-      alert(`Failed to create role: ${errorMessage}`);
+      error(`Failed to create role: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -229,7 +234,7 @@ export default function AddRolePage() {
               <div className="relative">
                 <select 
                   name="status"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
                   value={formData.status}
                   onChange={handleChange}
                 >

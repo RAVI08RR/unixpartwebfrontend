@@ -1,5 +1,7 @@
 import "./globals.css";
 import { ThemeProvider } from "./ThemeContext";
+import ToastProvider from "./components/Toast";
+import ConfirmProvider from "./components/ConfirmModal";
 
 export const metadata = {
   title: "Unixparts Dashboard",
@@ -19,7 +21,11 @@ export default function RootLayout({ children }) {
       </head>
       <body className="font-sans antialiased google-sans-regular">
         <ThemeProvider>
-          {children}
+          <ToastProvider>
+            <ConfirmProvider>
+              {children}
+            </ConfirmProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

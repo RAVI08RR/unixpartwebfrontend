@@ -84,7 +84,7 @@ export default function AddStockItemPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Add New Stock Item</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Create a new stock item in the system</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Create a new stock item in the system</p>
         </div>
       </div>
 

@@ -17,7 +17,7 @@ const ChartTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border border-gray-100 dark:border-zinc-800 p-3 rounded-xl shadow-xl transition-all animate-in fade-in zoom-in duration-200">
-        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">{label}</p>
+        <p className="text-[10px] font-bold text-gray-400 dark:text-white uppercase tracking-widest mb-1">{label}</p>
         {payload.map((entry, index) => (
           <div key={index} className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color || entry.fill }} />
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Overall Balance</p>
+              <p className="text-gray-400 dark:text-white text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Overall Balance</p>
               <div className="flex items-center gap-3">
                 <h3 className="text-4xl font-black dark:text-white">$2,538,942</h3>
                 <span className="text-green-500 text-xs font-bold flex items-center bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-500/20">
@@ -228,7 +228,7 @@ export default function DashboardPage() {
               </div>
               <MoreVertical className="text-gray-400 w-5 h-5" />
            </div>
-           <p className="text-gray-400 dark:text-gray-500 text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">TOTAL INCOME</p>
+           <p className="text-gray-400 dark:text-white text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">TOTAL INCOME</p>
            <h4 className="text-3xl font-black dark:text-white mb-2">$6,280</h4>
            <p className="text-green-500 text-xs font-bold font-medium">+18% last month</p>
            <div className="absolute bottom-0 left-0 right-0 h-16 w-full opacity-50 group-hover:opacity-100 transition-opacity">

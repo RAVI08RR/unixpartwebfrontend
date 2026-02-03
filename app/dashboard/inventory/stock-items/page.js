@@ -157,7 +157,7 @@ export default function StockItemsManagementPage() {
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Stock Items Management</h1>
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your stock items</p>
+            <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your stock items</p>
           </div>
         </div>
         <div className="p-10 text-center">
@@ -173,7 +173,7 @@ export default function StockItemsManagementPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Stock Items Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your stock items</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your stock items</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -244,12 +244,12 @@ export default function StockItemsManagementPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Item</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Created</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Item</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Created</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -529,7 +529,7 @@ export default function StockItemsManagementPage() {
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{selectedStockItem.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{selectedStockItem.description || 'No description'}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">ID: {selectedStockItem.id}</p>
+                    <p className="text-xs text-gray-400 dark:text-white">ID: {selectedStockItem.id}</p>
                   </div>
                 </div>
               </div>

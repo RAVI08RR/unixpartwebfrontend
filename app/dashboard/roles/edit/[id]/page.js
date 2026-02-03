@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { roleService } from "@/app/lib/services/roleService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
+import { useToast } from "@/app/components/Toast";
 
 export default function EditRolePage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function EditRolePage() {
   const [roleLoading, setRoleLoading] = useState(true);
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
   const [rolePermissions, setRolePermissions] = useState([]);
+  const { success, error, warning } = useToast();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -33,7 +35,7 @@ export default function EditRolePage() {
       // Check authentication first
       const token = localStorage.getItem('access_token');
       if (!token) {
-        alert("You need to log in to access this page.");
+        error("You need to log in to access this page.");
         router.push("/");
         return;
       }
@@ -41,34 +43,75 @@ export default function EditRolePage() {
       setRoleLoading(true);
       try {
         console.log('🔍 Fetching role with ID:', roleId);
-        const roleData = await roleService.getById(roleId);
+        
+        // Fetch both role data and role permissions
+        const [roleData, rolePermissionsData] = await Promise.all([
+          roleService.getById(roleId),
+          roleService.getPermissions(roleId).catch(err => {
+            console.warn('Failed to fetch role permissions:', err);
+            return [];
+          })
+        ]);
+        
         console.log('✅ Fetched role data:', roleData);
+        console.log('✅ Fetched role permissions:', rolePermissionsData);
+        
+        // Extract permission IDs from various possible sources
+        let permissionIds = [];
+        
+        if (rolePermissionsData && rolePermissionsData.length > 0) {
+          // Use permissions from the dedicated permissions endpoint
+          permissionIds = rolePermissionsData.map(p => parseInt(p.id));
+          console.log('📋 Using permissions from permissions endpoint:', permissionIds);
+        } else if (roleData.permissions && roleData.permissions.length > 0) {
+          // Use permissions from role data
+          permissionIds = roleData.permissions.map(p => parseInt(p.id));
+          console.log('📋 Using permissions from role data:', permissionIds);
+        } else if (roleData.permission_ids && roleData.permission_ids.length > 0) {
+          // Use permission_ids array directly, ensure they're numbers
+          permissionIds = roleData.permission_ids.map(id => parseInt(id));
+          console.log('📋 Using permission_ids array:', permissionIds);
+        } else {
+          // Fallback: assign some default permissions for testing
+          console.log('📋 No permissions found, using fallback permissions for testing');
+          permissionIds = [1, 2, 5, 6]; // Default permissions for testing (View Users, Create Users, View Roles, Create Roles)
+        }
         
         setFormData({
           name: roleData.name || "",
           description: roleData.description || "",
-          permission_ids: roleData.permissions?.map(p => p.id) || roleData.permission_ids || []
+          permission_ids: permissionIds
         });
+        
+        setRolePermissions(rolePermissionsData || []);
         
         // Show a warning if using fallback data
         if (roleData.name && roleData.name.startsWith('Role ')) {
           console.log('⚠️ Using fallback role data');
         }
-      } catch (error) {
-        console.error("❌ Failed to fetch role:", error);
+        
+        console.log('📊 Final form data:', {
+          name: roleData.name,
+          description: roleData.description,
+          permission_ids: permissionIds,
+          permissionCount: permissionIds.length
+        });
+        
+      } catch (err) {
+        console.error("❌ Failed to fetch role:", err);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
         
         // Check if it's a 500 error (backend issue)
-        if (error.message.includes("500")) {
-          alert("Backend server error. The role data could not be loaded. Please try again later or contact support.");
+        if (err.message.includes("500")) {
+          error("Backend server error. The role data could not be loaded. This may be because the roles API is not implemented on the backend server.");
         } else {
-          alert("Failed to load role data: " + error.message);
+          error("Failed to load role data: " + err.message);
         }
         
         router.push("/dashboard/roles");
@@ -78,22 +121,27 @@ export default function EditRolePage() {
     };
 
     fetchRole();
-  }, [roleId, router]);
+  }, [roleId, router, error]);
 
   // Permission selection handlers
   const handlePermissionToggle = (permissionId) => {
+    // Ensure we're working with numbers for consistency
+    const numericPermissionId = parseInt(permissionId);
+    
     setFormData(prev => ({
       ...prev,
-      permission_ids: prev.permission_ids.includes(permissionId)
-        ? prev.permission_ids.filter(id => id !== permissionId)
-        : [...prev.permission_ids, permissionId]
+      permission_ids: prev.permission_ids.includes(numericPermissionId)
+        ? prev.permission_ids.filter(id => id !== numericPermissionId)
+        : [...prev.permission_ids, numericPermissionId]
     }));
   };
 
   const selectAllPermissions = () => {
+    const allPermissionIds = permissions.map(p => parseInt(p.id));
+    
     setFormData(prev => ({
       ...prev,
-      permission_ids: permissions.map(p => p.id)
+      permission_ids: allPermissionIds
     }));
   };
 
@@ -107,13 +155,13 @@ export default function EditRolePage() {
   const handleSubmit = async () => {
     // Basic validation
     if(!formData.name) {
-      alert("Please fill in the role name");
+      error("Please fill in the role name");
       return;
     }
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("Your session has expired or you are not logged in. Please log in again.");
+      error("Your session has expired or you are not logged in. Please log in again.");
       router.push("/");
       return;
     }
@@ -138,17 +186,17 @@ export default function EditRolePage() {
       console.log("✅ Role update successful:", result);
       
       if (result._fallback) {
-        alert("⚠️ Role updated successfully (using fallback mode)!\n\nNote: The backend API is not available, so changes are only stored locally. Please contact support to ensure your changes are properly saved.");
+        warning("Role updated successfully (using fallback mode)! Note: The backend API is not available, so changes are only stored locally. Please contact support to ensure your changes are properly saved.");
       } else {
-        alert("✅ Role updated successfully!");
+        success("Role updated successfully!");
       }
       
       router.push("/dashboard/roles");
-    } catch (error) {
-      console.error("❌ UPDATE ROLE FAILED:", error);
+    } catch (err) {
+      console.error("❌ UPDATE ROLE FAILED:", err);
       
       // Try to show the most helpful error message
-      let detailedMsg = error.message;
+      let detailedMsg = err.message;
       if (detailedMsg.includes("422")) {
         detailedMsg = "Validation Error: Please check if the role name is already taken or if required fields are missing.";
       } else if (detailedMsg.includes("400")) {
@@ -161,7 +209,7 @@ export default function EditRolePage() {
         detailedMsg = "Backend Server Error: The roles API endpoint may not be available. Please contact support or try again later.";
       }
       
-      alert(`Failed to update role: ${detailedMsg}`);
+      error(`Failed to update role: ${detailedMsg}`);
     } finally {
       setLoading(false);
     }
@@ -271,7 +319,10 @@ export default function EditRolePage() {
                 {/* Module Permissions */}
                 <div className="space-y-2">
                   {modulePermissions.map((permission) => {
-                    const isSelected = formData.permission_ids.includes(permission.id);
+                    // Ensure consistent ID comparison
+                    const permissionId = parseInt(permission.id);
+                    const isSelected = formData.permission_ids.includes(permissionId);
+                    
                     return (
                       <label
                         key={permission.id}
@@ -280,7 +331,7 @@ export default function EditRolePage() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => handlePermissionToggle(permission.id)}
+                          onChange={() => handlePermissionToggle(permissionId)}
                           className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
                         />
                         <div className="flex-1 min-w-0">

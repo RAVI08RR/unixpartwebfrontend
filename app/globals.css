@@ -97,6 +97,203 @@ body {
   background: rgba(0, 0, 0, 0.7);
 }
 
+/* Phone Input Styles */
+.phone-input-container {
+  width: 100%;
+}
+
+.phone-input-container .PhoneInputInput {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  background-color: rgb(255 255 255);
+  color: rgb(17 24 39);
+  font-size: 14px !important;
+  font-weight: 500;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.phone-input-container .PhoneInputInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.phone-input-container .PhoneInputInput::placeholder {
+  color: #90A1B9;
+  font-size: 14px;
+  opacity: 1;
+}
+
+.phone-input-container .PhoneInputCountrySelect {
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  background-color: rgb(255 255 255);
+  padding: 0.875rem 0.5rem;
+  margin-right: 0.5rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.phone-input-container .PhoneInputCountrySelect:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.phone-input-container .PhoneInputCountrySelectArrow {
+  color: rgb(107 114 128);
+  margin-left: 0.25rem;
+}
+
+.phone-input-container .PhoneInputCountryIcon {
+  width: 1.25rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+/* Dark mode phone input styles */
+.dark .phone-input-container .PhoneInputInput {
+  background-color: rgb(31 41 55);
+  border-color: rgb(75 85 99);
+  color: rgb(255 255 255);
+}
+
+.dark .phone-input-container .PhoneInputInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dark .phone-input-container .PhoneInputInput::placeholder {
+  color: #90A1B9;
+}
+
+.dark .phone-input-container .PhoneInputCountrySelect {
+  background-color: rgb(31 41 55);
+  border-color: rgb(75 85 99);
+  color: rgb(255 255 255);
+}
+
+.dark .phone-input-container .PhoneInputCountrySelect:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dark .phone-input-container .PhoneInputCountrySelectArrow {
+  color: rgb(156 163 175);
+}
+
+/* Error state */
+.phone-input-container.error .PhoneInputInput,
+.phone-input-container.error .PhoneInputCountrySelect {
+  border-color: rgb(239 68 68);
+}
+
+.phone-input-container.error .PhoneInputInput:focus,
+.phone-input-container.error .PhoneInputCountrySelect:focus {
+  border-color: rgb(239 68 68);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+}
+
+/* Enhanced Table Header Styles */
+table thead th {
+  background-color: rgb(249 250 251) !important;
+  color: rgb(55 65 81) !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.2em !important;
+  border-bottom: 2px solid rgb(229 231 235) !important;
+  position: relative;
+}
+
+.dark table thead th {
+  background-color: rgb(24 24 27) !important;
+  color: rgb(212 212 216) !important;
+  border-bottom: 2px solid rgb(63 63 70) !important;
+}
+
+/* Table header hover effect */
+table thead th:hover {
+  background-color: rgb(243 244 246) !important;
+}
+
+.dark table thead th:hover {
+  background-color: rgb(39 39 42) !important;
+}
+
+/* Table row styling improvements */
+table tbody tr {
+  transition: all 0.2s ease;
+}
+
+table tbody tr:hover {
+  background-color: rgb(249 250 251) !important;
+}
+
+.dark table tbody tr:hover {
+  background-color: rgb(24 24 27) !important;
+}
+
+/* Table cell improvements */
+table td, table th {
+  border-color: rgb(229 231 235) !important;
+}
+
+.dark table td, .dark table th {
+  border-color: rgb(63 63 70) !important;
+}
+
+/* Consistent table row borders */
+table tbody tr {
+  border-bottom: 0.9px solid #E2E8F0 !important;
+}
+
+/* .dark table tbody tr {
+  border-bottom: 0.9px solid rgb(63 63 70) !important;
+} */
+
+/* Toast Animation Styles */
+@keyframes slide-in-from-right-full {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in-95 {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-duration: 0.2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+.slide-in-from-right-full {
+  animation-name: slide-in-from-right-full;
+}
+
+.zoom-in-95 {
+  animation-name: zoom-in-95;
+}
+
+.duration-200 {
+  animation-duration: 0.2s;
+}
+
 .card-shadow {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -288,7 +485,7 @@ svg[class*="lucide"] {
   font-weight: 700;
   background-color: rgb(240 253 244);
   color: rgb(22 163 74);
-  border-radius: 9999px;
+  border-radius: 30px;
 }
 
 .dark .status-badge-active {
@@ -343,7 +540,7 @@ svg[class*="lucide"] {
   font-weight: 700;
   letter-spacing: 0.025em;
   border: 1px solid;
-  border-radius: 20px;
+  border-radius: 30px;
 }
 
 
@@ -351,6 +548,7 @@ svg[class*="lucide"] {
   background-color: rgb(250 245 255);
   color: rgb(147 51 234);
   border-color: rgb(196 181 253);
+      margin-left: 11px;
 }
 
 .dark .role-badge-admin {
@@ -411,6 +609,7 @@ svg[class*="lucide"] {
   background-color: rgb(249 250 251);
   color: rgb(75 85 99);
   border-color: rgb(229 231 235);
+  margin-left: 11px;
 }
 
 .dark .role-badge-default {
@@ -1442,4 +1641,55 @@ thead th.text-gray-500,
 span.truncate {
     font-size: 14px;
     font-weight: 400;
+}
+
+p.text-sm.text-gray-400.mt-1.font-medium.tracking-wide {
+    font-size: 10px;
+}
+
+p.text-sm.font-black.text-gray-900.dark\:text-white.group-hover\:text-red-600.transition-colors.leading-tight {
+    font-size: 14px;
+    text-transform: capitalize;
+}
+
+
+/* LIGHT MODE (default) */
+th.text-gray-400,
+th.text-gray-500,
+thead th.text-gray-400,
+thead th.text-gray-500,
+.text-gray-400.dark\:text-gray-500,
+.uppercase.tracking-\[0\.2em\],
+.font-black.text-gray-400 {
+    color: #45556C;
+}
+
+/* DARK MODE */
+.dark th.text-gray-400,
+.dark th.text-gray-500,
+.dark thead th.text-gray-400,
+.dark thead th.text-gray-500,
+.dark .dark\:text-gray-400,
+.dark .dark\:text-gray-500,
+.dark .text-gray-400.dark\:text-gray-500,
+.dark .uppercase.tracking-\[0\.2em\],
+.dark .font-black.text-gray-400 {
+    color: #acb0b6 !important;
+}
+
+
+/* LIGHT MODE */
+
+
+/* DARK MODE */
+
+
+/* .dark .border-b,
+.dark .dark-border-bottom {
+    border-bottom: 1.8px solid #3f3f46 !important;
+} */
+
+.dark thead th,
+.dark tbody tr {
+    border-bottom: 1.8px solid #3f3f46 !important;
 }

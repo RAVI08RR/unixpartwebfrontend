@@ -147,7 +147,7 @@ export default function CustomersPage() {
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Customer Management</h1>
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your customer database</p>
+            <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your customer database</p>
           </div>
         </div>
         <div className="p-10 text-center">
@@ -163,7 +163,7 @@ export default function CustomersPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Customer Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your customer database</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your customer database</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -234,15 +234,15 @@ export default function CustomersPage() {
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
                 style={{ width: '10rem' }}
                 >Last Updated</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -598,7 +598,7 @@ export default function CustomersPage() {
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{selectedCustomer.full_name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCustomer.customer_code}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{selectedCustomer.phone}</p>
+                    <p className="text-xs text-gray-400 dark:text-white">{selectedCustomer.phone}</p>
                   </div>
                 </div>
               </div>

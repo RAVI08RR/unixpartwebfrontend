@@ -14,10 +14,12 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
+import { useToast } from "@/app/components/Toast";
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
+  const { success, error } = useToast();
   const userId = params.id;
   
   const [loading, setLoading] = useState(false);
@@ -56,7 +58,7 @@ export default function EditUserPage() {
       // Check authentication first
       const token = localStorage.getItem('access_token');
       if (!token) {
-        alert("You need to log in to access this page.");
+        error("You need to log in to access this page.");
         router.push("/");
         return;
       }
@@ -81,13 +83,13 @@ export default function EditUserPage() {
         console.error("Failed to fetch user:", error);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
         
-        alert("Failed to load user data");
+        error("Failed to load user data");
         router.push("/dashboard/users");
       } finally {
         setUserLoading(false);
@@ -125,7 +127,7 @@ export default function EditUserPage() {
     // Check authentication first
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("You need to log in to access this page.");
+      error("You need to log in to access this page.");
       router.push("/");
       return;
     }
@@ -204,12 +206,12 @@ export default function EditUserPage() {
           setSuppliersError(null); // Clear error since we have fallback data
         }
         
-      } catch (error) {
-        console.error("❌ Failed to fetch data:", error);
+      } catch (err) {
+        console.error("❌ Failed to fetch data:", err);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
@@ -269,8 +271,8 @@ export default function EditUserPage() {
         console.error("Failed to fetch role permissions:", error);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
@@ -287,13 +289,13 @@ export default function EditUserPage() {
   const handleSubmit = async () => {
       // Basic validation
       if(!formData.name || !formData.email || !formData.phone || !formData.role_id) {
-          alert("Please fill in all required fields (Name, Email, Phone, and Role)");
+          error("Please fill in all required fields (Name, Email, Phone, and Role)");
           return;
       }
 
       const token = localStorage.getItem('access_token');
       if (!token) {
-          alert("Your session has expired or you are not logged in. Please log in again.");
+          error("Your session has expired or you are not logged in. Please log in again.");
           router.push("/");
           return;
       }
@@ -315,7 +317,7 @@ export default function EditUserPage() {
 
           // Final check for valid numeric IDs
           if (isNaN(payload.role_id)) {
-            alert("Error: The selected Role has an invalid ID. Please try selecting it again.");
+            error("Error: The selected Role has an invalid ID. Please try selecting it again.");
             setLoading(false);
             return;
           }
@@ -323,7 +325,7 @@ export default function EditUserPage() {
           // Validate email format
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(payload.email)) {
-            alert("Please enter a valid email address.");
+            error("Please enter a valid email address.");
             setLoading(false);
             return;
           }
@@ -337,7 +339,7 @@ export default function EditUserPage() {
 
           const result = await userService.update(userId, payload);
           console.log("✅ User update successful:", result);
-          alert("✅ User updated successfully!");
+          success("User updated successfully!");
           router.push("/dashboard/users");
       } catch (error) {
           console.error("❌ UPDATE USER FAILED:", error);
@@ -354,7 +356,7 @@ export default function EditUserPage() {
             detailedMsg = "Server Error: Please try again later or contact support.";
           }
           
-          alert(`Failed to update user: ${detailedMsg}`);
+          error(`Failed to update user: ${detailedMsg}`);
       } finally {
           setLoading(false);
       }
@@ -464,7 +466,7 @@ export default function EditUserPage() {
           <div className="relative">
             <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.role_id}
               onChange={(e) => setFormData({...formData, role_id: e.target.value})}
             >
@@ -484,7 +486,7 @@ export default function EditUserPage() {
           </label>
           <div className="relative">
             <select 
-              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.status}
               onChange={(e) => setFormData({...formData, status: e.target.value === 'true'})}
             >

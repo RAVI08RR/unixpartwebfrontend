@@ -9,10 +9,13 @@ import {
   Check, X, Lock, Hash, ArrowLeft
 } from "lucide-react";
 import { customerService } from "../../../../lib/services/customerService";
+import PhoneInput from "@/app/components/PhoneInput";
+import { useToast } from "@/app/components/Toast";
 
 export default function AddCustomerPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { success, error } = useToast();
   const [formData, setFormData] = useState({
     customer_code: "",
     full_name: "",
@@ -27,13 +30,13 @@ export default function AddCustomerPage() {
   const handleSubmit = async () => {
     // Basic validation
     if(!formData.full_name || !formData.customer_code || !formData.phone || !formData.address) {
-      alert("Please fill in all required fields (Name, Customer Code, Phone, and Address)");
+      error("Please fill in all required fields (Name, Customer Code, Phone, and Address)");
       return;
     }
 
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("Your session has expired or you are not logged in. Please log in again.");
+      error("Your session has expired or you are not logged in. Please log in again.");
       router.push("/");
       return;
     }
@@ -59,13 +62,13 @@ export default function AddCustomerPage() {
 
       const result = await customerService.create(payload);
       console.log("✅ Customer creation successful:", result);
-      alert("✅ Customer created successfully!");
+      success("Customer created successfully!");
       router.push("/dashboard/sales/customers");
-    } catch (error) {
-      console.error("❌ CREATE CUSTOMER FAILED:", error);
+    } catch (err) {
+      console.error("❌ CREATE CUSTOMER FAILED:", err);
       
       // Try to show the most helpful error message
-      let detailedMsg = error.message;
+      let detailedMsg = err.message;
       if (detailedMsg.includes("422")) {
         detailedMsg = "Validation Error: Please check if the Customer Code is already taken, or if required fields are missing.";
       } else if (detailedMsg.includes("400")) {
@@ -76,7 +79,7 @@ export default function AddCustomerPage() {
         detailedMsg = "Server Error: Please try again later or contact support.";
       }
       
-      alert(`Failed to create customer: ${detailedMsg}`);
+      error(`Failed to create customer: ${detailedMsg}`);
     } finally {
       setLoading(false);
     }
@@ -133,16 +136,13 @@ export default function AddCustomerPage() {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="tel"
-              placeholder="+971 50 123 4567"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.phone || ""}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-            />
-          </div>
+          <PhoneInput
+            value={formData.phone}
+            onChange={(value) => setFormData({...formData, phone: value})}
+            placeholder="Enter phone number"
+            required={true}
+            className="w-full"
+          />
         </div>
 
         {/* Business Name */}
@@ -186,7 +186,7 @@ export default function AddCustomerPage() {
           </label>
           <div className="relative">
             <select 
-              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.status}
               onChange={(e) => setFormData({...formData, status: e.target.value === 'true'})}
             >

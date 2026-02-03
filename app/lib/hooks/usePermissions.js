@@ -18,53 +18,47 @@ export function usePermissions() {
       
       // Set comprehensive fallback permissions data
       const fallbackPermissions = [
-        // Users module
-        { id: 1, name: "View Users", module: "users", description: "Can view user list" },
-        { id: 2, name: "Create Users", module: "users", description: "Can create new users" },
-        { id: 3, name: "Update Users", module: "users", description: "Can update user information" },
-        { id: 4, name: "Delete Users", module: "users", description: "Can delete users" },
+        // User Management
+        { id: 1, name: "View Users", module: "User Management", description: "Can view user list and details" },
+        { id: 2, name: "Create Users", module: "User Management", description: "Can create new users" },
+        { id: 3, name: "Edit Users", module: "User Management", description: "Can edit existing users" },
+        { id: 4, name: "Delete Users", module: "User Management", description: "Can delete users" },
         
-        // Branches module
-        { id: 5, name: "View Branches", module: "branches", description: "Can view branch list" },
-        { id: 6, name: "Create Branches", module: "branches", description: "Can create new branches" },
-        { id: 7, name: "Update Branches", module: "branches", description: "Can update branch information" },
-        { id: 8, name: "Delete Branches", module: "branches", description: "Can delete branches" },
+        // Role Management
+        { id: 5, name: "View Roles", module: "Role Management", description: "Can view roles list" },
+        { id: 6, name: "Create Roles", module: "Role Management", description: "Can create new roles" },
+        { id: 7, name: "Edit Roles", module: "Role Management", description: "Can edit existing roles" },
+        { id: 8, name: "Delete Roles", module: "Role Management", description: "Can delete roles" },
         
-        // Suppliers module
-        { id: 9, name: "View Suppliers", module: "suppliers", description: "Can view supplier list" },
-        { id: 10, name: "Create Suppliers", module: "suppliers", description: "Can create new suppliers" },
-        { id: 11, name: "Update Suppliers", module: "suppliers", description: "Can update supplier information" },
-        { id: 12, name: "Delete Suppliers", module: "suppliers", description: "Can delete suppliers" },
+        // Inventory Management
+        { id: 9, name: "View Inventory", module: "Inventory", description: "Can view inventory items" },
+        { id: 10, name: "Create Inventory", module: "Inventory", description: "Can add new inventory items" },
+        { id: 11, name: "Edit Inventory", module: "Inventory", description: "Can edit inventory items" },
+        { id: 12, name: "Delete Inventory", module: "Inventory", description: "Can delete inventory items" },
         
-        // Stock Items module
-        { id: 13, name: "View Stock Items", module: "stock_items", description: "Can view stock items" },
-        { id: 14, name: "Create Stock Items", module: "stock_items", description: "Can create new stock items" },
-        { id: 15, name: "Update Stock Items", module: "stock_items", description: "Can update stock items" },
-        { id: 16, name: "Delete Stock Items", module: "stock_items", description: "Can delete stock items" },
+        // Sales Management
+        { id: 13, name: "View Sales", module: "Sales", description: "Can view sales data" },
+        { id: 14, name: "Create Sales", module: "Sales", description: "Can create sales orders" },
+        { id: 15, name: "Edit Sales", module: "Sales", description: "Can edit sales orders" },
+        { id: 16, name: "Delete Sales", module: "Sales", description: "Can delete sales orders" },
         
-        // Roles module
-        { id: 17, name: "View Roles", module: "roles", description: "Can view roles" },
-        { id: 18, name: "Create Roles", module: "roles", description: "Can create new roles" },
-        { id: 19, name: "Update Roles", module: "roles", description: "Can update roles" },
-        { id: 20, name: "Delete Roles", module: "roles", description: "Can delete roles" },
+        // Suppliers
+        { id: 17, name: "View Suppliers", module: "Suppliers", description: "Can view supplier list" },
+        { id: 18, name: "Create Suppliers", module: "Suppliers", description: "Can create new suppliers" },
+        { id: 19, name: "Edit Suppliers", module: "Suppliers", description: "Can edit suppliers" },
+        { id: 20, name: "Delete Suppliers", module: "Suppliers", description: "Can delete suppliers" },
         
-        // Permissions module
-        { id: 21, name: "View Permissions", module: "permissions", description: "Can view permissions" },
-        { id: 22, name: "Manage Permissions", module: "permissions", description: "Can manage permissions" },
+        // Reports
+        { id: 21, name: "View Reports", module: "Reports", description: "Can view system reports" },
+        { id: 22, name: "Export Reports", module: "Reports", description: "Can export reports" },
         
-        // Invoices module
-        { id: 23, name: "View Invoices", module: "invoices", description: "Can view invoices" },
-        { id: 24, name: "Create Invoices", module: "invoices", description: "Can create new invoices" },
-        { id: 25, name: "Update Invoices", module: "invoices", description: "Can update invoices" },
-        { id: 26, name: "Delete Invoices", module: "invoices", description: "Can delete invoices" },
+        // Settings
+        { id: 23, name: "System Settings", module: "Settings", description: "Can modify system settings" },
+        { id: 24, name: "Branch Management", module: "Settings", description: "Can manage branches" },
         
-        // Reports module
-        { id: 27, name: "View Reports", module: "reports", description: "Can view system reports" },
-        { id: 28, name: "Export Reports", module: "reports", description: "Can export reports" },
-        
-        // Settings module
-        { id: 29, name: "View Settings", module: "settings", description: "Can view system settings" },
-        { id: 30, name: "Manage Settings", module: "settings", description: "Can manage system settings" }
+        // Finance
+        { id: 25, name: "View Finance", module: "Finance", description: "Can view financial data" },
+        { id: 26, name: "Manage Finance", module: "Finance", description: "Can manage financial operations" }
       ];
       
       setPermissions(fallbackPermissions);

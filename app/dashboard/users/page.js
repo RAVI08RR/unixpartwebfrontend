@@ -5,18 +5,20 @@ import Link from "next/link";
 import { 
   Mail, MoreVertical, Search, Phone,
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  ShieldCheck, Pencil, Trash2, Check, X, Eye
+  ShieldCheck, Pencil, Trash2, Check, X, Eye, User, Building2, Store, Calendar
 } from "lucide-react";
 import { useUsers } from "@/app/lib/hooks/useUsers";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
 import { getAuthToken } from "@/app/lib/api";
+import { useToast } from "@/app/components/Toast";
 
 export default function UserManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { success, error } = useToast();
   
   // Data Fetching
   const itemsPerPage = 8;
@@ -135,9 +137,9 @@ export default function UserManagementPage() {
       mutate();
       setDeleteModalOpen(false);
       setSelectedUser(null);
-    } catch (error) {
-      console.error("Failed to delete user", error);
-      alert("Failed to delete user");
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      error("Failed to delete user");
     }
   };
 
@@ -158,7 +160,7 @@ export default function UserManagementPage() {
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your user management</p>
+            <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your user management</p>
           </div>
         </div>
         <div className="p-10 text-center">
@@ -174,7 +176,7 @@ export default function UserManagementPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your user management</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your user management</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -261,7 +263,7 @@ export default function UserManagementPage() {
                 paginatedUsers.map((user, index) => {
                   return (
                     <tr key={user.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style= {{borderBottom :"0.9px solid #E2E8F0"}}
+                   
                     >
                       {/* Name / User */}
                       <td className="px-6 py-6">
@@ -443,53 +445,65 @@ export default function UserManagementPage() {
       {/* View User Modal */}
       {viewModalOpen && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-zinc-800">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
-              <div className="flex items-center gap-4">
-                <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
-                  alt={selectedUser.name} 
-                  className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
-                />
+            <div className="flex items-center justify-between p-8 border-b border-gray-200 dark:border-zinc-800">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    alt={selectedUser.name} 
+                    className="w-16 h-16 rounded-full object-cover border-4 border-white dark:border-zinc-800 shadow-lg"
+                  />
+                  <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-3 border-white dark:border-zinc-900 ${selectedUser.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedUser.name}</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.user_code}</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{selectedUser.name}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{selectedUser.user_code}</p>
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mt-2 ${selectedUser.status ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}>
+                    <div className={`w-2 h-2 rounded-full ${selectedUser.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    {selectedUser.status ? "Active" : "Inactive"}
+                  </div>
                 </div>
               </div>
               <button 
                 onClick={handleViewClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                className="p-3 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-6 h-6 text-gray-500" />
               </button>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
               {/* Basic Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Full Name</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.name}</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                    <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Email Address</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.email}</p>
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Full Name</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedUser.name}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone Number</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.phone || "Not provided"}</p>
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email Address</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2 break-all">{selectedUser.email}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">User Code</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedUser.user_code}</p>
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone Number</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedUser.phone || "Not provided"}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Role</label>
-                    <div className={`inline-flex mt-1 role-badge ${
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">User Code</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedUser.user_code}</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</label>
+                    <div className={`inline-flex mt-3 role-badge ${
                       selectedUser.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
                       selectedUser.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
                       selectedUser.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
@@ -501,9 +515,9 @@ export default function UserManagementPage() {
                       {selectedUser.role?.name || "No Role"}
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
-                    <div className={`inline-flex mt-1 ${selectedUser.status ? 'status-badge-active' : 'status-badge-inactive'}`}>
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
+                    <div className={`inline-flex mt-3 ${selectedUser.status ? 'status-badge-active' : 'status-badge-inactive'}`}>
                       <div className={selectedUser.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
                       {selectedUser.status ? "Active" : "Inactive"}
                     </div>
@@ -513,37 +527,50 @@ export default function UserManagementPage() {
 
               {/* Assignments */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assignments</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Assigned Branches</label>
-                    <div className="mt-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                    <Building2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  </div>
+                  Assignments
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-6">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 block">Assigned Branches</label>
+                    <div className="space-y-3">
                       {selectedUser.branches?.length > 0 ? (
-                        <div className="space-y-1">
-                          {selectedUser.branches.map((branch, index) => (
-                            <span key={index} className="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-lg mr-1 mb-1">
-                              {branch.branch_name}
-                            </span>
-                          ))}
-                        </div>
+                        selectedUser.branches.map((branch, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700">
+                            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                              <Building2 className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">{branch.branch_name}</span>
+                          </div>
+                        ))
                       ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No branches assigned</p>
+                        <div className="text-center py-8">
+                          <Building2 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No branches assigned</p>
+                        </div>
                       )}
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Associated Suppliers</label>
-                    <div className="mt-2">
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-6">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4 block">Associated Suppliers</label>
+                    <div className="space-y-3">
                       {selectedUser.suppliers?.length > 0 ? (
-                        <div className="space-y-1">
-                          {selectedUser.suppliers.map((supplier, index) => (
-                            <span key={index} className="inline-block px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-xs font-medium rounded-lg mr-1 mb-1">
-                              {supplier.name}
-                            </span>
-                          ))}
-                        </div>
+                        selectedUser.suppliers.map((supplier, index) => (
+                          <div key={index} className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700">
+                            <div className="w-8 h-8 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
+                              <Store className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                            </div>
+                            <span className="font-medium text-gray-900 dark:text-white">{supplier.name}</span>
+                          </div>
+                        ))
                       ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No suppliers assigned</p>
+                        <div className="text-center py-8">
+                          <Store className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">No suppliers assigned</p>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -553,30 +580,45 @@ export default function UserManagementPage() {
               {/* Permissions */}
               {selectedUser.permissions && selectedUser.permissions.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Permissions</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {selectedUser.permissions.map((permission, index) => (
-                      <span key={index} className="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200 text-xs font-medium rounded-lg">
-                        {permission.name}
-                      </span>
-                    ))}
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                      <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    Permissions
+                  </h3>
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {selectedUser.permissions.map((permission, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700">
+                          <div className="w-6 h-6 bg-purple-100 dark:bg-purple-900/20 rounded-md flex items-center justify-center">
+                            <Check className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{permission.name}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Timestamps */}
+              {/* Activity */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                  Activity
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created At</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">
                       {selectedUser.created_at ? new Date(selectedUser.created_at).toLocaleString() : "Not available"}
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Updated</label>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">
                       {selectedUser.updated_at ? new Date(selectedUser.updated_at).toLocaleString() : "Not available"}
                     </p>
                   </div>
@@ -585,20 +627,26 @@ export default function UserManagementPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
-              <button 
-                onClick={handleViewClose}
-                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-              >
-                Close
-              </button>
-              <Link 
-                href={`/dashboard/users/edit/${selectedUser.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
-                onClick={handleViewClose}
-              >
-                Edit User
-              </Link>
+            <div className="flex items-center justify-between gap-4 p-8 border-t border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                User ID: <span className="font-mono font-bold text-gray-900 dark:text-white">#{selectedUser.id}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleViewClose}
+                  className="px-6 py-3 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 font-bold rounded-xl hover:bg-gray-300 dark:hover:bg-zinc-600 transition-all"
+                >
+                  Close
+                </button>
+                <Link 
+                  href={`/dashboard/users/edit/${selectedUser.id}`}
+                  className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
+                  onClick={handleViewClose}
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit User
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -630,7 +678,7 @@ export default function UserManagementPage() {
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.name}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">{selectedUser.email}</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">{selectedUser.user_code}</p>
+                    <p className="text-xs text-gray-400 dark:text-white">{selectedUser.user_code}</p>
                   </div>
                 </div>
               </div>

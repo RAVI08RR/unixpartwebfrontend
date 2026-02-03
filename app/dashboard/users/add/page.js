@@ -14,6 +14,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
+import PhoneInput from "@/app/components/PhoneInput";
+import { useToast } from "@/app/components/Toast";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -21,6 +23,7 @@ export default function AddUserPage() {
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
   const [rolePermissions, setRolePermissions] = useState([]);
   const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
+  const { success, error } = useToast();
   const [roles, setRoles] = useState([
     { id: 1, name: "Administrator" },
     { id: 2, name: "Manager" },
@@ -41,6 +44,7 @@ export default function AddUserPage() {
     email: "",
     password: "",
     user_code: "",
+    phone: "",
     role_id: "",
     branch_ids: [], // Changed to array for multi-selection
     supplier_ids: [], // Changed to array for multi-selection
@@ -75,7 +79,7 @@ export default function AddUserPage() {
     // Check authentication first
     const token = localStorage.getItem('access_token');
     if (!token) {
-      alert("You need to log in to access this page.");
+      error("You need to log in to access this page.");
       router.push("/");
       return;
     }
@@ -154,12 +158,12 @@ export default function AddUserPage() {
           setSuppliersError(null); // Clear error since we have fallback data
         }
         
-      } catch (error) {
-        console.error("❌ Failed to fetch data:", error);
+      } catch (err) {
+        console.error("❌ Failed to fetch data:", err);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
@@ -220,12 +224,12 @@ export default function AddUserPage() {
           ...prev,
           permission_ids: rolePermissionIds
         }));
-      } catch (error) {
-        console.error("Failed to fetch role permissions:", error);
+      } catch (err) {
+        console.error("Failed to fetch role permissions:", err);
         
         // Check if it's an authentication error
-        if (error.message.includes("session has expired") || error.message.includes("401")) {
-          alert("Your session has expired. Please log in again.");
+        if (err.message.includes("session has expired") || err.message.includes("401")) {
+          error("Your session has expired. Please log in again.");
           router.push("/");
           return;
         }
@@ -242,13 +246,13 @@ export default function AddUserPage() {
   const handleSubmit = async () => {
       // Basic validation
       if(!formData.name || !formData.email || !formData.password || !formData.user_code || !formData.role_id) {
-          alert("Please fill in all required fields (Name, Email, Password, User Code, and Role)");
+          error("Please fill in all required fields (Name, Email, Password, User Code, and Role)");
           return;
       }
 
       const token = localStorage.getItem('access_token');
       if (!token) {
-          alert("Your session has expired or you are not logged in. Please log in again.");
+          error("Your session has expired or you are not logged in. Please log in again.");
           router.push("/");
           return;
       }
@@ -261,6 +265,7 @@ export default function AddUserPage() {
               email: formData.email.trim().toLowerCase(),
               password: formData.password,
               user_code: formData.user_code.trim(),
+              phone: formData.phone?.trim() || null,
               role_id: parseInt(formData.role_id),
               status: true,
               branch_ids: formData.branch_ids || [],
@@ -270,7 +275,7 @@ export default function AddUserPage() {
 
           // Final check for valid numeric IDs
           if (isNaN(payload.role_id)) {
-            alert("Error: The selected Role has an invalid ID. Please try selecting it again.");
+            error("Error: The selected Role has an invalid ID. Please try selecting it again.");
             setLoading(false);
             return;
           }
@@ -278,7 +283,7 @@ export default function AddUserPage() {
           // Validate email format
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(payload.email)) {
-            alert("Please enter a valid email address.");
+            error("Please enter a valid email address.");
             setLoading(false);
             return;
           }
@@ -291,13 +296,13 @@ export default function AddUserPage() {
 
           const result = await userService.create(payload);
           console.log("✅ User creation successful:", result);
-          alert("✅ User created successfully!");
+          success("User created successfully!");
           router.push("/dashboard/users");
-      } catch (error) {
-          console.error("❌ CREATE USER FAILED:", error);
+      } catch (err) {
+          console.error("❌ CREATE USER FAILED:", err);
           
           // Try to show the most helpful error message
-          let detailedMsg = error.message;
+          let detailedMsg = err.message;
           if (detailedMsg.includes("422")) {
             detailedMsg = "Validation Error: Please check if the User Code or Email is already taken, or if required fields are missing.";
           } else if (detailedMsg.includes("400")) {
@@ -308,7 +313,7 @@ export default function AddUserPage() {
             detailedMsg = "Server Error: Please try again later or contact support.";
           }
           
-          alert(`Failed to create user: ${detailedMsg}`);
+          error(`Failed to create user: ${detailedMsg}`);
       } finally {
           setLoading(false);
       }
@@ -360,6 +365,19 @@ export default function AddUserPage() {
           </div>
         </div>
 
+        {/* Phone Number */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <PhoneInput
+            value={formData.phone}
+            onChange={(value) => setFormData({...formData, phone: value})}
+            placeholder="Enter phone number"
+            className="w-full"
+          />
+        </div>
+
         {/* Password */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -402,7 +420,7 @@ export default function AddUserPage() {
           <div className="relative">
             <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-gray-100"
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.role_id}
               onChange={(e) => setFormData({...formData, role_id: e.target.value})}
             >

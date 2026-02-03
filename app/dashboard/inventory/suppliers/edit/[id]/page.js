@@ -1,20 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { 
   Truck, User, Mail, Phone, Building2, 
-  Check, X, MapPin, FileText, Hash, Tag, ChevronDown
+  Check, X, MapPin, FileText, Hash, Tag, ChevronDown, ArrowLeft
 } from "lucide-react";
 import { supplierService } from "@/app/lib/services/supplierService";
 import PhoneInput from "@/app/components/PhoneInput";
 import { useToast } from "@/app/components/Toast";
 
-export default function AddSupplierPage() {
+export default function EditSupplierPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const params = useParams();
   const { success, error } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     supplier_code: "",
@@ -25,77 +27,135 @@ export default function AddSupplierPage() {
     company: "",
     address: "",
     notes: "",
-    type: "Wholesale", // Default type
+    type: "Wholesale",
     status: true
   });
 
-  const handleSubmit = async () => {
-      // Basic validation
-      if(!formData.name || !formData.contact_email || !formData.supplier_code) {
-          error("Please fill in all required fields (Supplier Code, Name and Email)");
-          return;
-      }
-
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-          error("Your session has expired or you are not logged in. Please log in again.");
-          router.push("/");
-          return;
-      }
-
-      setLoading(true);
+  // Fetch supplier data on component mount
+  useEffect(() => {
+    const fetchSupplier = async () => {
+      if (!params.id) return;
+      
       try {
-          // Prepare payload
-          const payload = {
-              supplier_code: formData.supplier_code.trim(),
-              name: formData.name.trim(),
-              contact_person: formData.contact_person?.trim() || null,
-              contact_email: formData.contact_email.trim(),
-              contact_number: formData.contact_number?.trim() || null,
-              company: formData.company?.trim() || null,
-              address: formData.address?.trim() || null,
-              notes: formData.notes?.trim() || null,
-              type: formData.type,
-              status: formData.status
-          };
-
-          console.log("🚀 SUBMITTING NEW SUPPLIER:", {
-            token: !!token,
-            payload
-          });
-
-          const result = await supplierService.create(payload);
-          console.log("✅ Supplier creation successful:", result);
-          success("Supplier created successfully!");
-          router.push("/dashboard/inventory/suppliers");
+        setFetchLoading(true);
+        const supplier = await supplierService.getById(params.id);
+        console.log("Fetched supplier:", supplier);
+        
+        setFormData({
+          supplier_code: supplier.supplier_code || "",
+          name: supplier.name || "",
+          contact_person: supplier.contact_person || "",
+          contact_email: supplier.contact_email || "",
+          contact_number: supplier.contact_number || "",
+          company: supplier.company || "",
+          address: supplier.address || "",
+          notes: supplier.notes || "",
+          type: supplier.type || "Wholesale",
+          status: supplier.status === true || supplier.status === "active"
+        });
       } catch (err) {
-          console.error("❌ CREATE SUPPLIER FAILED:", err);
-          
-          // Try to show the most helpful error message
-          let detailedMsg = err.message;
-          if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: Please check if the supplier code or email is already taken, or if required fields are missing.";
-          } else if (detailedMsg.includes("400")) {
-            detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
-          } else if (detailedMsg.includes("401")) {
-            detailedMsg = "Authentication Error: Please log in again.";
-          } else if (detailedMsg.includes("500")) {
-            detailedMsg = "Server Error: Please try again later or contact support.";
-          }
-          
-          error(`Failed to create supplier: ${detailedMsg}`);
+        console.error("Failed to fetch supplier:", err);
+        error("Failed to load supplier data");
+        router.push("/dashboard/inventory/suppliers");
       } finally {
-          setLoading(false);
+        setFetchLoading(false);
       }
+    };
+
+    fetchSupplier();
+  }, [params.id, router, error]);
+
+  const handleSubmit = async () => {
+    // Basic validation
+    if(!formData.name || !formData.contact_email || !formData.supplier_code) {
+      error("Please fill in all required fields (Supplier Code, Name and Email)");
+      return;
+    }
+
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      error("Your session has expired or you are not logged in. Please log in again.");
+      router.push("/");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Prepare payload
+      const payload = {
+        supplier_code: formData.supplier_code.trim(),
+        name: formData.name.trim(),
+        contact_person: formData.contact_person?.trim() || null,
+        contact_email: formData.contact_email.trim(),
+        contact_number: formData.contact_number?.trim() || null,
+        company: formData.company?.trim() || null,
+        address: formData.address?.trim() || null,
+        notes: formData.notes?.trim() || null,
+        type: formData.type,
+        status: formData.status
+      };
+
+      console.log("🚀 UPDATING SUPPLIER:", {
+        id: params.id,
+        payload
+      });
+
+      const result = await supplierService.update(params.id, payload);
+      console.log("✅ Supplier update successful:", result);
+      success("Supplier updated successfully!");
+      router.push("/dashboard/inventory/suppliers");
+    } catch (err) {
+      console.error("❌ UPDATE SUPPLIER FAILED:", err);
+      
+      // Try to show the most helpful error message
+      let detailedMsg = err.message;
+      if (detailedMsg.includes("422")) {
+        detailedMsg = "Validation Error: Please check if the supplier code or email is already taken, or if required fields are missing.";
+      } else if (detailedMsg.includes("400")) {
+        detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
+      } else if (detailedMsg.includes("401")) {
+        detailedMsg = "Authentication Error: Please log in again.";
+      } else if (detailedMsg.includes("500")) {
+        detailedMsg = "Server Error: Please try again later or contact support.";
+      }
+      
+      error(`Failed to update supplier: ${detailedMsg}`);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (fetchLoading) {
+    return (
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Supplier</h1>
+            <p className="text-gray-500 text-sm">Loading supplier data...</p>
+          </div>
+        </div>
+        <div className="p-10 text-center">
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Supplier</h1>
-          <p className="text-gray-500 text-sm">Create a new supplier record</p>
+        <div className="flex items-center gap-4">
+          <Link 
+            href="/dashboard/inventory/suppliers"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Supplier</h1>
+            <p className="text-gray-500 text-sm">Update supplier information</p>
+          </div>
         </div>
       </div>
 
@@ -169,6 +229,19 @@ export default function AddSupplierPage() {
           </div>
         </div>
 
+        {/* Phone */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <PhoneInput
+            value={formData.contact_number}
+            onChange={(value) => setFormData({...formData, contact_number: value})}
+            placeholder="Enter phone number"
+            className="w-full"
+          />
+        </div>
+
         {/* Supplier Type */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -190,19 +263,6 @@ export default function AddSupplierPage() {
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
-        </div>
-
-        {/* Phone */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
-          <PhoneInput
-            value={formData.contact_number}
-            onChange={(value) => setFormData({...formData, contact_number: value})}
-            placeholder="Enter phone number"
-            className="w-full"
-          />
         </div>
 
         {/* Company */}
@@ -280,12 +340,12 @@ export default function AddSupplierPage() {
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
         <button 
-            onClick={handleSubmit} 
-            disabled={loading}
-            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
+          onClick={handleSubmit} 
+          disabled={loading}
+          className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
         >
           <Check className="w-4 h-4" />
-          <span>{loading ? "Creating..." : "Create Supplier"}</span>
+          <span>{loading ? "Updating..." : "Update Supplier"}</span>
         </button>
         <Link href="/dashboard/inventory/suppliers" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
           Cancel

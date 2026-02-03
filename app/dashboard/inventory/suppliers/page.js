@@ -6,17 +6,26 @@ import {
   Truck, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, Check, X, Eye, Calendar,
-  User, Building2, Phone, MapPin
+  User, Building2, Phone, MapPin, Mail, Tag
 } from "lucide-react";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { getAuthToken } from "@/app/lib/api";
+import { useToast } from "@/app/components/Toast";
+import { useConfirm } from "@/app/components/ConfirmModal";
+import ViewSupplierModal from "@/app/components/ViewSupplierModal";
 
 export default function SupplierManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const { success, error } = useToast();
+  const confirm = useConfirm();
+  
+  // View modal state
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   
   // Data Fetching
   const itemsPerPage = 8;
@@ -76,12 +85,14 @@ export default function SupplierManagementPage() {
     return suppliers.filter(supplier => {
       const matchesSearch = 
         (supplier.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (supplier.email?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (supplier.company?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+        (supplier.contact_email?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (supplier.contact_person?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (supplier.contact_number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (supplier.address?.toLowerCase() || "").includes(searchQuery.toLowerCase());
       
       const matchesStatus = statusFilter === "All" || 
-        (statusFilter === "Active" && supplier.status === true) ||
-        (statusFilter === "Inactive" && supplier.status === false);
+        (statusFilter === "Active" && (supplier.status === true || supplier.status === "active")) ||
+        (statusFilter === "Inactive" && (supplier.status === false || supplier.status === "inactive"));
       
       return matchesSearch && matchesStatus;
     });
@@ -121,8 +132,9 @@ export default function SupplierManagementPage() {
         // Construct a clean payload for supplier update
         const payload = {
             name: editForm.name || undefined,
-            email: editForm.email || undefined,
-            phone: editForm.phone || undefined,
+            contact_email: editForm.contact_email || undefined,
+            contact_number: editForm.contact_number || undefined,
+            contact_person: editForm.contact_person || undefined,
             company: editForm.company || undefined,
             address: editForm.address || undefined,
             status: editForm.status !== undefined ? editForm.status : undefined,
@@ -140,23 +152,44 @@ export default function SupplierManagementPage() {
         setEditingId(null);
         setEditForm({});
         setMenuOpenId(null);
-    } catch (error) {
-        console.error("Update Error Details:", error);
-        alert(`Update Failed: ${error.message}`);
+        success("Supplier updated successfully!");
+    } catch (err) {
+        console.error("Update Error Details:", err);
+        error(`Update Failed: ${err.message}`);
     }
   };
 
   const handleDelete = async (id) => {
-      if(confirm("Are you sure you want to delete this supplier?")) {
+      const confirmed = await confirm({
+        title: "Delete Supplier",
+        message: "Are you sure you want to delete this supplier? This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger"
+      });
+
+      if (confirmed) {
           try {
               await supplierService.delete(id);
               mutate();
-          } catch (error) {
-              console.error("Failed to delete supplier", error);
-              alert("Failed to delete supplier");
+              success("Supplier deleted successfully!");
+          } catch (err) {
+              console.error("Failed to delete supplier", err);
+              error("Failed to delete supplier");
           }
       }
   }
+
+  const handleView = (supplier) => {
+    setSelectedSupplier(supplier);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const closeViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedSupplier(null);
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -173,7 +206,7 @@ export default function SupplierManagementPage() {
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Supplier Management</h1>
-            <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your suppliers</p>
+            <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your suppliers</p>
           </div>
         </div>
         <div className="p-10 text-center">
@@ -189,7 +222,7 @@ export default function SupplierManagementPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Supplier Management</h1>
-          <p className="text-gray-400 dark:text-gray-500 text-sm font-normal">Manage your suppliers</p>
+          <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your suppliers</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -198,7 +231,7 @@ export default function SupplierManagementPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search by name, email, company..."
+              placeholder="Search by name, email, contact person, phone..."
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
               value={searchQuery}
               onChange={(e) => {
@@ -255,17 +288,20 @@ export default function SupplierManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
         <div className="overflow-x-auto w-full scrollbar-hide">
           <table className="w-full min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Company</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Location</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Company</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
+                style={{ width: '10rem' }}
+                >Last Updated</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -295,7 +331,7 @@ export default function SupplierManagementPage() {
                             ) : (
                               <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{supplier.name || 'N/A'}</p>
                             )}
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {supplier.id}</p>
+                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">{supplier.supplier_code || `SUP-${supplier.id}`}</p>
                           </div>
                         </div>
                       </td>
@@ -307,14 +343,15 @@ export default function SupplierManagementPage() {
                             <User className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
                             {isEditing ? (
                               <input 
-                                type="email"
-                                name="email"
-                                value={editForm.email || ''}
+                                type="text"
+                                name="contact_person"
+                                value={editForm.contact_person || ''}
                                 onChange={handleChange}
                                 className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                                placeholder="Contact person"
                               />
                             ) : (
-                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{supplier.email || 'N/A'}</span>
+                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{supplier.contact_person || 'N/A'}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
@@ -322,22 +359,52 @@ export default function SupplierManagementPage() {
                             {isEditing ? (
                               <input 
                                 type="text"
-                                name="phone"
-                                value={editForm.phone || ''}
+                                name="contact_number"
+                                value={editForm.contact_number || ''}
                                 onChange={handleChange}
                                 className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                                placeholder="Phone number"
                               />
                             ) : (
-                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{supplier.phone || 'N/A'}</span>
+                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{supplier.contact_number || 'N/A'}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
+                            <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                            {isEditing ? (
+                              <input 
+                                type="email"
+                                name="contact_email"
+                                value={editForm.contact_email || ''}
+                                onChange={handleChange}
+                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
+                                placeholder="Email address"
+                              />
+                            ) : (
+                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{supplier.contact_email || 'N/A'}</span>
                             )}
                           </div>
                         </div>
                       </td>
 
+                      {/* Type */}
+                      <td className="px-6 py-6">
+                        <div className={`role-badge ${
+                          supplier.type?.toLowerCase() === 'owner' ? 'role-badge-admin' :
+                          supplier.type?.toLowerCase() === 'rental' ? 'role-badge-manager' :
+                          supplier.type?.toLowerCase() === 'wholesale' ? 'role-badge-staff' :
+                          supplier.type?.toLowerCase() === 'retail' ? 'role-badge-sales' :
+                          supplier.type?.toLowerCase() === 'manufacturer' ? 'role-badge-accountant' :
+                          'role-badge-default'
+                        }`}>
+                          <Tag className="w-3.5 h-3.5" />
+                          {supplier.type || "N/A"}
+                        </div>
+                      </td>
+
                       {/* Company */}
                       <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                        <div className="flex flex-col gap-1">
                           {isEditing ? (
                             <input 
                               type="text"
@@ -347,8 +414,13 @@ export default function SupplierManagementPage() {
                               className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
                             />
                           ) : (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                              {supplier.company || 'N/A'}
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                              {supplier.company || "Not Specified"}
+                            </span>
+                          )}
+                          {supplier.address && (
+                            <span className="text-xs font-medium text-blue-500">
+                              {supplier.address.length > 30 ? supplier.address.substring(0, 30) + '...' : supplier.address}
                             </span>
                           )}
                         </div>
@@ -361,44 +433,25 @@ export default function SupplierManagementPage() {
                              <input
                                type="checkbox"
                                name="status"
-                               checked={editForm.status || false}
-                               onChange={handleChange}
+                               checked={editForm.status === true || editForm.status === "active"}
+                               onChange={(e) => setEditForm(prev => ({ ...prev, status: e.target.checked }))}
                                className="checkbox-black"
                              />
                              <span className="text-sm font-medium">Active</span>
                            </label>
                         ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                            supplier.status
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              supplier.status ? 'bg-green-600' : 'bg-red-600'
-                            }`}></div>
+                          <div className={supplier.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                            <div className={supplier.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
                             {supplier.status ? "Active" : "Inactive"}
                           </div>
                         )}
                       </td>
 
-                      {/* Location */}
+                      {/* Last Updated */}
                       <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                          {isEditing ? (
-                            <input 
-                              type="text"
-                              name="address"
-                              value={editForm.address || ''}
-                              onChange={handleChange}
-                              className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                              {supplier.address || 'N/A'}
-                            </span>
-                          )}
-                        </div>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
+                          {supplier.updated_at ? new Date(supplier.updated_at).toLocaleDateString() : "-"}
+                        </span>
                       </td>
 
                       {/* Actions */}
@@ -427,44 +480,41 @@ export default function SupplierManagementPage() {
                               <div className="relative">
                                 <button 
                                   onClick={() => toggleMenu(supplier.id)}
-                                  className={`p-2.5 rounded-xl transition-all duration-200 ${
+                                  className={`p-2 rounded-xl transition-all ${
                                     menuOpenId === supplier.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
-                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105'
+                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
                                   }`}
-                                  title="More Actions"
                                 >
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
                                 
                                 {menuOpenId === supplier.id && (
-                                  <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200 ${
+                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                     index > paginatedSuppliers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                   }`}>
-                                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group">
-                                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                                        <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                      </div>
-                                      <span>View Details</span>
-                                    </button>
                                     <button 
-                                      onClick={() => handleEdit(supplier)}
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-all duration-200 group"
+                                      onClick={() => handleView(supplier)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                     >
-                                      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                                        <Pencil className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                      </div>
-                                      <span>Edit Supplier</span>
+                                      <Eye className="w-4 h-4" />
+                                      View Details
                                     </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-2" />
+                                    <Link 
+                                      href={`/dashboard/inventory/suppliers/edit/${supplier.id}`}
+                                      onClick={() => setMenuOpenId(null)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit Supplier
+                                    </Link>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
                                     <button 
                                       onClick={() => handleDelete(supplier.id)} 
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all duration-200 group"
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                     >
-                                      <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
-                                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                      </div>
-                                      <span>Delete Supplier</span>
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete Supplier
                                     </button>
                                   </div>
                                 )}
@@ -477,7 +527,7 @@ export default function SupplierManagementPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="py-24 text-center">
+                  <td colSpan="7" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No suppliers found</p>
                   </td>
                 </tr>
@@ -527,6 +577,13 @@ export default function SupplierManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* View Supplier Modal */}
+      <ViewSupplierModal 
+        supplier={selectedSupplier}
+        isOpen={viewModalOpen}
+        onClose={closeViewModal}
+      />
     </div>
   );
 }
