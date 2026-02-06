@@ -1,25 +1,5 @@
 import { fetchApi } from '../api';
 
-// Function to map frontend fields to API expected fields
-const mapToApiFields = (userData) => {
-  const apiData = { ...userData };
-  
-  // Map frontend fields to API fields
-  if (userData.name && !userData.full_name) {
-    apiData.full_name = userData.name;
-  }
-  
-  if (userData.status !== undefined && userData.is_active === undefined) {
-    apiData.is_active = userData.status;
-  }
-  
-  if (userData.user_code && !userData.username) {
-    apiData.username = userData.user_code;
-  }
-  
-  return apiData;
-};
-
 // Function to map API response fields to frontend expected fields
 const mapFromApiFields = (userData) => {
   if (!userData) return userData;
@@ -66,20 +46,20 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
-    const apiData = mapToApiFields(userData);
+    // Send data as-is, API expects these field names
     const response = await fetchApi('/api/users', {
       method: 'POST',
-      body: JSON.stringify(apiData),
+      body: JSON.stringify(userData),
     });
     return mapFromApiFields(response);
   },
 
   // Update existing user
   update: async (id, userData) => {
-    const apiData = mapToApiFields(userData);
+    // Send data as-is, API expects these field names
     const response = await fetchApi(`/api/users/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(apiData),
+      body: JSON.stringify(userData),
     });
     return mapFromApiFields(response);
   },
