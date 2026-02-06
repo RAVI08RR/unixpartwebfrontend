@@ -1924,3 +1924,45 @@ a.bg-black svg,
     box-shadow: 0 1px 2px #0000000d;
     justify-content: center;
 }
+
+.dark input.form-control {
+    background-color: #18181b;
+    border-color: #27272a;
+}
+
+.dark .react-tel-input .selected-flag {
+    border-radius: 3px 0 0 3px;
+    outline: none;
+    width: 38px;
+    height: 100%;
+    padding: 0 0 0 8px;
+    position: relative;
+    background-color: #18181b;
+    border-color: #27272a;
+}
+
+.dark .react-tel-input .country-list {
+    z-index: 1;
+    background-color: #18181b !important;
+    border-radius: 0 0 3px 3px;
+    outline: none;
+    width: 300px;
+    max-height: 200px;
+    margin: 10px 0 10px -1px;
+    padding: 0;
+    list-style: none;
+    position: absolute;
+    overflow-y: scroll;
+    box-shadow: 1px 2px 10px #00000059;
+}
+
+.dark .react-tel-input .country-list .search {
+    background-color: #18181b !important;
+    padding: 10px 0 6px 10px;
+
+}
+
+.dark .react-tel-input .flag-dropdown.open .selected-flag {
+    background: #18181b !important;
+    border-radius: 3px 0 0;
+}
