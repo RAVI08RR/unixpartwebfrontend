@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "../dashboard/ThemeToggle";
 import { authService } from "../lib/services/authService";
+import PasswordInput from "../components/PasswordInput";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -143,27 +143,17 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-lg font-bold text-gray-700 dark:text-gray-300">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Enter Password"
-                  className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all dark:text-white text-lg"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter Password"
+              required={true}
+              disabled={loading}
+              size="large"
+              variant="login"
+              label="Password"
+              autoComplete="new-password"
+            />
 
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 

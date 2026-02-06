@@ -19,11 +19,12 @@ export const authService = {
 
   logout: async () => {
     try {
-      // Direct API call for logout
-      await fetchApi('api/auth/logout', { method: 'POST' });
+      // Call Next.js logout route to clear HttpOnly cookie
+      await fetchApi('/api/auth/logout', { method: 'POST' });
     } catch (e) {
       console.warn("Logout API failed:", e.message);
     }
+    // Also clear localStorage as fallback
     clearAuthToken();
   },
 

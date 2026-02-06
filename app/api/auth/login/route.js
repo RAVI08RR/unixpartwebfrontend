@@ -58,8 +58,16 @@ export async function POST(request) {
       }
     }
     
-    // Forward the response with CORS headers
-    return new Response(data, {
+    // Parse response to extract token for cookie
+    let parsedData;
+    try {
+      parsedData = JSON.parse(data);
+    } catch (e) {
+      parsedData = null;
+    }
+    
+    // Create response with CORS headers
+    const nextResponse = new Response(data, {
       status: response.status,
       statusText: response.statusText,
       headers: {
@@ -69,6 +77,27 @@ export async function POST(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
+    
+    // If login successful and we have a token, set it as HttpOnly cookie
+    if (response.ok && parsedData?.access_token) {
+      const token = parsedData.access_token;
+      const isProduction = process.env.NODE_ENV === 'production';
+      
+      // Set HttpOnly cookie with security flags
+      const cookieOptions = [
+        `auth_token=${token}`,
+        'Path=/',
+        'HttpOnly',
+        'SameSite=Lax',
+        'Max-Age=86400', // 24 hours
+        isProduction ? 'Secure' : '', // Only use Secure in production (HTTPS)
+      ].filter(Boolean).join('; ');
+      
+      nextResponse.headers.set('Set-Cookie', cookieOptions);
+      console.log('🍪 Auth token set as HttpOnly cookie');
+    }
+    
+    return nextResponse;
     
   } catch (error) {
     console.error('Login proxy error:', error);

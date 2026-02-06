@@ -4,22 +4,18 @@
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
     
-    console.log('Permissions proxy - API Base URL:', apiBaseUrl);
-    console.log('Permissions proxy - Auth header present:', !!authHeader);
+    console.log('Permissions proxy GET - API Base URL:', apiBaseUrl);
+    console.log('Permissions proxy GET - Auth header present:', !!authHeader);
     
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/permissions/?skip=${skip}&limit=${limit}`;
-    console.log('Permissions proxy - Backend URL:', backendUrl);
+    const backendUrl = `${apiBaseUrl}/api/permissions/`;
+    console.log('Permissions proxy GET - Backend URL:', backendUrl);
     
     const headers = {
       'Content-Type': 'application/json',
@@ -37,7 +33,7 @@ export async function GET(request) {
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
     
-    console.log('Permissions proxy - Backend response status:', response.status);
+    console.log('Permissions proxy GET - Backend response status:', response.status);
     
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
@@ -53,7 +49,7 @@ export async function GET(request) {
     
     // Get response data
     const data = await response.text();
-    console.log('Permissions proxy - Backend response data length:', data.length);
+    console.log('Permissions proxy GET - Backend response data length:', data.length);
     
     // Forward the response with CORS headers
     return new Response(data, {
@@ -68,107 +64,256 @@ export async function GET(request) {
     });
     
   } catch (error) {
-    console.error('Permissions proxy error:', error);
+    console.error('Permissions proxy GET error:', error);
     console.log('🔐 Permissions API failed, using fallback permissions:', error.message);
     
-    // Get skip and limit from the original request
-    const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
     // Return fallback permissions data when backend is unavailable
-    const fallbackPermissions = {
-      items: [
-        {
-          id: 1,
-          name: "user_management",
-          description: "Manage users - create, read, update, delete user accounts",
-          category: "User Management",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 2,
-          name: "role_management",
-          description: "Manage roles and permissions - create, assign, and modify user roles",
-          category: "Role Management",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 3,
-          name: "inventory_read",
-          description: "View inventory items and stock levels",
-          category: "Inventory",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 4,
-          name: "inventory_write",
-          description: "Create and modify inventory items",
-          category: "Inventory",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 5,
-          name: "sales_read",
-          description: "View sales data and invoices",
-          category: "Sales",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 6,
-          name: "sales_write",
-          description: "Create and modify sales transactions and invoices",
-          category: "Sales",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 7,
-          name: "reports_access",
-          description: "Access and generate business reports",
-          category: "Reports",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 8,
-          name: "branch_management",
-          description: "Manage branch locations and settings",
-          category: "Administration",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 9,
-          name: "supplier_management",
-          description: "Manage supplier information and relationships",
-          category: "Procurement",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        },
-        {
-          id: 10,
-          name: "system_admin",
-          description: "Full system administration access",
-          category: "Administration",
-          created_at: "2024-01-15T10:00:00Z",
-          updated_at: "2024-01-15T10:00:00Z"
-        }
-      ],
-      total: 10,
-      skip: parseInt(skip),
-      limit: parseInt(limit)
-    };
+    const fallbackPermissions = [
+      {
+        id: 1,
+        name: "View Users",
+        slug: "view_users",
+        description: "Can view user list and details",
+        module: "Users",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 2,
+        name: "Create Users",
+        slug: "create_users",
+        description: "Can create new users",
+        module: "Users",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 3,
+        name: "Edit Users",
+        slug: "edit_users",
+        description: "Can edit existing users",
+        module: "Users",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 4,
+        name: "Delete Users",
+        slug: "delete_users",
+        description: "Can delete users",
+        module: "Users",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 5,
+        name: "View Roles",
+        slug: "view_roles",
+        description: "Can view role list and details",
+        module: "Roles",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 6,
+        name: "Create Roles",
+        slug: "create_roles",
+        description: "Can create new roles",
+        module: "Roles",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 7,
+        name: "Edit Roles",
+        slug: "edit_roles",
+        description: "Can edit existing roles",
+        module: "Roles",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 8,
+        name: "Delete Roles",
+        slug: "delete_roles",
+        description: "Can delete roles",
+        module: "Roles",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 9,
+        name: "View Permissions",
+        slug: "view_permissions",
+        description: "Can view permission list and details",
+        module: "Permissions",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 10,
+        name: "Create Permissions",
+        slug: "create_permissions",
+        description: "Can create new permissions",
+        module: "Permissions",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 11,
+        name: "Edit Permissions",
+        slug: "edit_permissions",
+        description: "Can edit existing permissions",
+        module: "Permissions",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 12,
+        name: "Delete Permissions",
+        slug: "delete_permissions",
+        description: "Can delete permissions",
+        module: "Permissions",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 13,
+        name: "View Inventory",
+        slug: "view_inventory",
+        description: "Can view inventory items",
+        module: "Inventory",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 14,
+        name: "Manage Inventory",
+        slug: "manage_inventory",
+        description: "Can create, edit, and delete inventory items",
+        module: "Inventory",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 15,
+        name: "View Sales",
+        slug: "view_sales",
+        description: "Can view sales data and reports",
+        module: "Sales",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      },
+      {
+        id: 16,
+        name: "Manage Sales",
+        slug: "manage_sales",
+        description: "Can create and manage sales orders",
+        module: "Sales",
+        created_at: "2024-01-15T10:00:00Z",
+        updated_at: "2024-01-15T10:00:00Z"
+      }
+    ];
     
     return new Response(
       JSON.stringify(fallbackPermissions),
       {
         status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+      }
+    );
+  }
+}
+
+export async function POST(request) {
+  try {
+    // Get API base URL
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    
+    // Get auth token from request headers
+    const authHeader = request.headers.get('authorization');
+    
+    // Get request body
+    const body = await request.text();
+    
+    console.log('Permissions proxy POST - API Base URL:', apiBaseUrl);
+    console.log('Permissions proxy POST - Auth header present:', !!authHeader);
+    console.log('Permissions proxy POST - Request body length:', body.length);
+    
+    // Make the request to FastAPI backend
+    const backendUrl = `${apiBaseUrl}/api/permissions/`;
+    console.log('Permissions proxy POST - Backend URL:', backendUrl);
+    
+    const headers = {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    };
+    
+    // Forward auth header if present
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
+    
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers,
+      body,
+      signal: AbortSignal.timeout(15000), // 15 second timeout for permission creation
+    });
+    
+    console.log('Permissions proxy POST - Backend response status:', response.status);
+    
+    // Get response data
+    const data = await response.text();
+    console.log('Permissions proxy POST - Backend response data length:', data.length);
+    
+    // Forward the response with CORS headers
+    return new Response(data, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: {
+        'Content-Type': response.headers.get('Content-Type') || 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
+    });
+    
+  } catch (error) {
+    console.error('Permissions proxy POST error:', error);
+    console.log('➕ Create permission API failed, using fallback response:', error.message);
+    
+    // Parse the request body to get permission data
+    let permissionData = {};
+    try {
+      permissionData = JSON.parse(body);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+    }
+    
+    // Generate a new permission ID (simulate auto-increment)
+    const newPermissionId = Math.floor(Math.random() * 1000) + 100;
+    
+    // Return fallback created permission data when backend is unavailable
+    const fallbackCreatedPermission = {
+      id: newPermissionId,
+      name: permissionData.name || `New Permission ${newPermissionId}`,
+      slug: permissionData.slug || `new_permission_${newPermissionId}`,
+      description: permissionData.description || `Description for permission ${newPermissionId}`,
+      module: permissionData.module || "General",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    return new Response(
+      JSON.stringify(fallbackCreatedPermission),
+      {
+        status: 201,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',

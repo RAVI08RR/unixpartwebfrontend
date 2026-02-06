@@ -626,7 +626,7 @@ function InvoiceManagementContent() {
               <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-full bg-black-100 dark:bg-black-900/20 flex items-center justify-center">
                       <Receipt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>

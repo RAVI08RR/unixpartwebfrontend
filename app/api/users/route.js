@@ -95,14 +95,14 @@ export async function GET(request) {
           },
           branch_ids: [1, 2],
           branches: [
-            { id: 1, name: "Main Branch", location: "Downtown" },
-            { id: 2, name: "North Branch", location: "North District" }
+            { id: 1, branch_name: "Main Branch", branch_code: "MB001" },
+            { id: 2, branch_name: "North Branch", branch_code: "NB002" }
           ],
           supplier_ids: [1, 2, 3],
           suppliers: [
-            { id: 1, name: "ABC Electronics Ltd" },
-            { id: 2, name: "Global Components Inc" },
-            { id: 3, name: "Tech Solutions Corp" }
+            { id: 1, name: "ABC Electronics Ltd", supplier_code: "SUP001" },
+            { id: 2, name: "Global Components Inc", supplier_code: "SUP002" },
+            { id: 3, name: "Tech Solutions Corp", supplier_code: "SUP003" }
           ],
           created_at: "2024-01-15T10:00:00Z",
           updated_at: "2024-01-15T10:00:00Z"
@@ -123,12 +123,12 @@ export async function GET(request) {
           },
           branch_ids: [1],
           branches: [
-            { id: 1, name: "Main Branch", location: "Downtown" }
+            { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
           ],
           supplier_ids: [1, 2],
           suppliers: [
-            { id: 1, name: "ABC Electronics Ltd" },
-            { id: 2, name: "Global Components Inc" }
+            { id: 1, name: "ABC Electronics Ltd", supplier_code: "SUP001" },
+            { id: 2, name: "Global Components Inc", supplier_code: "SUP002" }
           ],
           created_at: "2024-01-16T11:30:00Z",
           updated_at: "2024-01-16T11:30:00Z"
@@ -149,7 +149,7 @@ export async function GET(request) {
           },
           branch_ids: [1],
           branches: [
-            { id: 1, name: "Main Branch", location: "Downtown" }
+            { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
           ],
           supplier_ids: [],
           suppliers: [],
@@ -172,13 +172,13 @@ export async function GET(request) {
           },
           branch_ids: [2],
           branches: [
-            { id: 2, name: "North Branch", location: "North District" }
+            { id: 2, branch_name: "North Branch", branch_code: "NB002" }
           ],
           supplier_ids: [1, 3, 4],
           suppliers: [
-            { id: 1, name: "ABC Electronics Ltd" },
-            { id: 3, name: "Tech Solutions Corp" },
-            { id: 4, name: "Premium Parts Ltd" }
+            { id: 1, name: "ABC Electronics Ltd", supplier_code: "SUP001" },
+            { id: 3, name: "Tech Solutions Corp", supplier_code: "SUP003" },
+            { id: 4, name: "Premium Parts Ltd", supplier_code: "SUP004" }
           ],
           created_at: "2024-01-18T09:45:00Z",
           updated_at: "2024-01-18T09:45:00Z"
@@ -199,7 +199,7 @@ export async function GET(request) {
           },
           branch_ids: [1],
           branches: [
-            { id: 1, name: "Main Branch", location: "Downtown" }
+            { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
           ],
           supplier_ids: [],
           suppliers: [],
@@ -299,11 +299,11 @@ export async function POST(request) {
     // Return fallback created user data when backend is unavailable
     const fallbackCreatedUser = {
       id: newUserId,
-      username: userData.username || `new_user_${newUserId}`,
+      username: userData.username || userData.user_code || `new_user_${newUserId}`,
       email: userData.email || `user${newUserId}@company.com`,
-      full_name: userData.full_name || `New User ${newUserId}`,
+      full_name: userData.full_name || userData.name || `New User ${newUserId}`,
       phone: userData.phone || `+1-555-${String(newUserId).padStart(4, '0')}`,
-      is_active: userData.is_active !== undefined ? userData.is_active : true,
+      is_active: userData.is_active !== undefined ? userData.is_active : (userData.status !== undefined ? userData.status : true),
       role_id: userData.role_id || 1,
       role: {
         id: userData.role_id || 1,
@@ -313,7 +313,7 @@ export async function POST(request) {
       },
       branch_ids: userData.branch_ids || [1],
       branches: [
-        { id: 1, name: "Main Branch", location: "Downtown" }
+        { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
       ],
       supplier_ids: userData.supplier_ids || [],
       suppliers: [],

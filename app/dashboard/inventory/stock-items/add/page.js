@@ -92,8 +92,8 @@ export default function AddStockItemPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="p-8">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
-              <Package className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-purple-900/20 flex items-center justify-center">
+              <Package className="w-6 h-6 text-red-600 dark:text-purple-400" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Stock Item Information</h2>
@@ -184,7 +184,7 @@ export default function AddStockItemPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 <span>{isLoading ? "Creating..." : "Create Stock Item"}</span>

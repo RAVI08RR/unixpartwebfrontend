@@ -1,21 +1,39 @@
 "use client";
 
-import { Check, Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Check, Mail } from "lucide-react";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "./dashboard/ThemeToggle";
 import { authService } from "./lib/services/authService";
-import { setAuthToken, clearAuthToken } from "./lib/api";
+import { setAuthToken, clearAuthToken, getAuthToken } from "./lib/api";
+import PasswordInput from "./components/PasswordInput";
 import { useToast } from "./components/Toast";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const { success, error } = useToast();
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      const token = getAuthToken();
+      if (token) {
+        // User already has a token, redirect to dashboard
+        console.log('✅ User already authenticated, redirecting to dashboard');
+        router.replace('/dashboard');
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+    
+    checkExistingAuth();
+  }, [router]);
 
   // Helper function to parse validation errors into user-friendly messages
   const parseValidationError = (errorMessage) => {
@@ -50,13 +68,23 @@ export default function LoginPage() {
     try {
         const response = await authService.login(email, password);
         if (response && response.access_token) {
+            // Store token in localStorage as fallback (cookie is set by API route)
             setAuthToken(response.access_token);
+            
             // Also store user info if available
             if (response.user) {
                 localStorage.setItem("current_user", JSON.stringify(response.user));
             }
+            
             success("Login successful! Redirecting to dashboard...");
-            router.push("/dashboard");
+            
+            // Get redirect URL from query params or default to dashboard
+            const redirectUrl = searchParams.get('redirect') || '/dashboard';
+            
+            // Small delay to show success message
+            setTimeout(() => {
+              router.push(redirectUrl);
+            }, 500);
         } else {
             error("Login failed. No authentication token received.");
         }
@@ -68,6 +96,18 @@ export default function LoginPage() {
         setLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-zinc-950">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
@@ -144,28 +184,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-lg font-bold text-gray-800 dark:text-gray-200">Password</label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-red-500 transition-colors" />
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="Enter Password"
-                  autoComplete="current-password"
-                  className="w-full pl-11 pr-12 py-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 transition-all dark:text-white text-lg shadow-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
-                <button 
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter Password"
+              required={true}
+              disabled={loading}
+              size="large"
+              variant="login"
+              label="Password"
+              autoComplete="current-password"
+            />
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -178,7 +207,7 @@ export default function LoginPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl shadow-lg shadow-black/10 hover:shadow-black/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-lg disabled:opacity-70 disabled:cursor-not-allowed btn-primary"
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
@@ -190,5 +219,20 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-zinc-950">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

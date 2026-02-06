@@ -1620,3 +1620,307 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type=
     /* z-index: 999 !important; */
     margin-bottom: 0 !important;
 }
+
+/* Phone Input Component Styles */
+.react-country-phone-input {
+  width: 100% !important;
+}
+
+.react-country-phone-input .form-control {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+}
+
+.react-country-phone-input .form-control:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
+}
+
+.react-country-phone-input .flag-dropdown {
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px 0 0 8px !important;
+  background-color: white !important;
+}
+
+.react-country-phone-input .flag-dropdown:hover {
+  background-color: #f9fafb !important;
+}
+
+.react-country-phone-input .selected-flag {
+  padding: 10px 8px !important;
+}
+
+.react-country-phone-input .country-list {
+  border-radius: 8px !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e5e7eb !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.react-country-phone-input .country-list .country {
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+}
+
+.react-country-phone-input .country-list .country:hover {
+  background-color: #f3f4f6 !important;
+}
+
+.react-country-phone-input .country-list .country.highlight {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Dark mode styles for phone input */
+.dark .react-country-phone-input .form-control {
+  background-color: rgb(39 39 42) !important;
+  border-color: rgb(63 63 70) !important;
+  color: white !important;
+}
+
+.dark .react-country-phone-input .form-control:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
+}
+
+.dark .react-country-phone-input .flag-dropdown {
+  background-color: rgb(39 39 42) !important;
+  border-color: rgb(63 63 70) !important;
+}
+
+.dark .react-country-phone-input .flag-dropdown:hover {
+  background-color: rgb(63 63 70) !important;
+}
+
+.dark .react-country-phone-input .country-list {
+  background-color: rgb(39 39 42) !important;
+  border-color: rgb(63 63 70) !important;
+}
+
+.dark .react-country-phone-input .country-list .country {
+  color: white !important;
+}
+
+.dark .react-country-phone-input .country-list .country:hover {
+  background-color: rgb(63 63 70) !important;
+}
+
+.dark .react-country-phone-input .country-list .country.highlight {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+/* Fix for button and icon colors in light and dark modes */
+
+/* Primary buttons - black in light mode, white in dark mode */
+.btn-primary {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.dark .btn-primary {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.btn-primary:hover {
+  background-color: #1f2937 !important;
+}
+
+.dark .btn-primary:hover {
+  background-color: #f3f4f6 !important;
+}
+
+/* Fix for buttons with bg-black dark:bg-white classes */
+.bg-black {
+  background-color: #000000 !important;
+}
+
+.dark .bg-black {
+  background-color: #ffffff !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+.dark .text-white {
+  color: #ffffff !important;
+}
+
+.text-black {
+  color: #000000 !important;
+}
+
+.dark .text-black {
+  color: #ffffff !important;
+}
+
+/* Ensure icons inherit proper colors */
+.bg-black svg,
+.bg-black .lucide {
+  color: #ffffff !important;
+}
+
+.dark .bg-black svg,
+.dark .bg-black .lucide {
+  color: #000000 !important;
+}
+
+/* Fix for menu buttons */
+.menu-button-active {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark .menu-button-active {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.menu-button-active svg {
+  color: #ffffff !important;
+}
+
+.dark .menu-button-active svg {
+  color: #000000 !important;
+}
+
+/* Fix for pagination buttons */
+.pagination-active {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark .pagination-active {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+/* Fix for filter buttons */
+.filter-button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark .filter-button {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.filter-button svg {
+  color: #ffffff !important;
+}
+
+.dark .filter-button svg {
+  color: #000000 !important;
+}
+
+/* Fix for add/create buttons */
+.add-button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark .add-button {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.add-button svg {
+  color: #ffffff !important;
+}
+
+.dark .add-button svg {
+  color: #000000 !important;
+}
+
+/* Ensure all buttons with these classes work properly */
+button.bg-black,
+a.bg-black,
+.bg-black {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark button.bg-black,
+.dark a.bg-black,
+.dark .bg-black {
+  background-color: #000000 !important;
+  color: #000000 !important;
+}
+
+button.bg-black svg,
+a.bg-black svg,
+.bg-black svg {
+  color: #ffffff !important;
+}
+
+.dark button.bg-black svg,
+.dark a.bg-black svg,
+.dark .bg-black svg {
+  color: #000000 !important;
+}
+
+/* Force override for any conflicting styles */
+.dark .text-white {
+  color: #f9f9f9 !important;
+}
+
+.dark .dark\:text-black {
+  color: #000000 !important;
+}
+
+.dark .dark\:bg-white {
+  background-color: #ffffff !important;
+}
+
+/* Fix for specific button combinations */
+.bg-black.text-white {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.dark .bg-black.text-white {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.dark .dark\:bg-white.dark\:text-black {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.react-tel-input .form-control {
+
+    height: 40px !important;
+
+}
+
+.tracking-widest {
+    --tw-tracking: var(--tracking-widest);
+    letter-spacing: 0px !important;
+}
+
+.pagination-button {
+    color: #4b5563;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: .5rem;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1.25rem;
+    font-size: .875rem;
+    font-weight: 700;
+    transition: all .2s;
+    display: flex;
+    box-shadow: 0 1px 2px #0000000d;
+    justify-content: center;
+}

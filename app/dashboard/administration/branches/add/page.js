@@ -83,7 +83,7 @@ export default function AddBranchPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
         <div className="p-8">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black dark:bg-black-900/20 flex items-center justify-center">
               <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
@@ -190,7 +190,7 @@ export default function AddBranchPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-6 py-3 bg-black hover:bg-black text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 <span>{isLoading ? "Creating..." : "Create Branch"}</span>

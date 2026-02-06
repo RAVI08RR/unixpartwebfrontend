@@ -139,6 +139,7 @@ export function Sidebar() {
       label: "Settings",
       items: [
         { label: "General", href: "/dashboard/settings", icon: Settings },
+        { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield },
         { label: "Profile", href: "/dashboard/settings/profile", icon: Users },
       ]
     },

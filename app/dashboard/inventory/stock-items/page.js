@@ -197,7 +197,7 @@ export default function StockItemsManagementPage() {
             <div className="relative flex-1 sm:flex-none">
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -230,7 +230,7 @@ export default function StockItemsManagementPage() {
               <Download className="w-4 h-4" />
               <span>Export</span>
             </button>
-            <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+            <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Stock Item</span>
             </Link>
@@ -318,9 +318,9 @@ export default function StockItemsManagementPage() {
                           <div className="relative">
                             <button 
                               onClick={() => toggleMenu(item.id)}
-                              className={`p-2 rounded-xl transition-all ${
+                              className={`p-2 rounded-xl transition-all menu-button ${
                                 menuOpenId === item.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
                                   : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
                               }`}
                             >
@@ -392,9 +392,9 @@ export default function StockItemsManagementPage() {
                 <button 
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all pagination-button ${
                     currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10 pagination-active' 
                     : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
                   }`}
                 >
@@ -495,7 +495,7 @@ export default function StockItemsManagementPage() {
               </button>
               <Link 
                 href={`/dashboard/inventory/stock-items/edit/${selectedStockItem.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
                 onClick={handleViewClose}
               >
                 Edit Stock Item

@@ -246,7 +246,7 @@ export default function SupplierManagementPage() {
             <div className="relative flex-1 sm:flex-none">
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -279,7 +279,7 @@ export default function SupplierManagementPage() {
               <Download className="w-4 h-4" />
               <span>Export</span>
             </button>
-            <Link href="/dashboard/inventory/suppliers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+            <Link href="/dashboard/inventory/suppliers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Supplier</span>
             </Link>

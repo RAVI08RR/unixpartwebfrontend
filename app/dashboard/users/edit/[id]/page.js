@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
-  User, Mail, Phone, Shield, Building2, Store, 
+  User, Mail, Shield, Building2, Store, 
   Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
   Check, X, Lock, Hash, ArrowLeft
 } from "lucide-react";
@@ -14,6 +14,7 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
+import PhoneInput from "@/app/components/PhoneInput";
 import { useToast } from "@/app/components/Toast";
 
 export default function EditUserPage() {
@@ -71,7 +72,7 @@ export default function EditUserPage() {
         setFormData({
           name: userData.name || "",
           email: userData.email || "",
-          phone: userData.phone || "",
+          phone: userData.phone || "+91",
           user_code: userData.user_code || "",
           role_id: userData.role_id || userData.role?.id || "",
           status: userData.status !== undefined ? userData.status : true,
@@ -293,6 +294,12 @@ export default function EditUserPage() {
           return;
       }
 
+      // Validate phone number format (should start with + and have at least 10 digits)
+      if (!formData.phone || formData.phone.length < 10) {
+          error("Please enter a valid phone number");
+          return;
+      }
+
       const token = localStorage.getItem('access_token');
       if (!token) {
           error("Your session has expired or you are not logged in. Please log in again.");
@@ -437,16 +444,12 @@ export default function EditUserPage() {
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="tel"
-              placeholder="+971 50 123 4567"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.phone || ""}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
-            />
-          </div>
+          <PhoneInput
+            value={formData.phone}
+            onChange={(value) => setFormData({...formData, phone: value})}
+            placeholder="Enter phone number"
+            className="w-full"
+          />
         </div>
 
         {/* User Code */}
@@ -655,7 +658,7 @@ export default function EditUserPage() {
         <button 
             onClick={handleSubmit} 
             disabled={loading}
-            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
+            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 btn-primary"
         >
           <Check className="w-4 h-4" />
           <span>{loading ? "Updating..." : "Update User"}</span>

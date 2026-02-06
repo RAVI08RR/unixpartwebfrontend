@@ -342,7 +342,7 @@ export default function RolesPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                <div className="w-12 h-12 rounded-full bg-black-100 dark:bg-black-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                   <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>

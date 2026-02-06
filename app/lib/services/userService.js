@@ -1,31 +1,85 @@
 import { fetchApi } from '../api';
 
+// Function to map frontend fields to API expected fields
+const mapToApiFields = (userData) => {
+  const apiData = { ...userData };
+  
+  // Map frontend fields to API fields
+  if (userData.name && !userData.full_name) {
+    apiData.full_name = userData.name;
+  }
+  
+  if (userData.status !== undefined && userData.is_active === undefined) {
+    apiData.is_active = userData.status;
+  }
+  
+  if (userData.user_code && !userData.username) {
+    apiData.username = userData.user_code;
+  }
+  
+  return apiData;
+};
+
+// Function to map API response fields to frontend expected fields
+const mapFromApiFields = (userData) => {
+  if (!userData) return userData;
+  
+  return {
+    ...userData,
+    // Map API fields to frontend expected fields
+    name: userData.full_name || userData.name,
+    status: userData.is_active !== undefined ? userData.is_active : userData.status,
+    user_code: userData.username || userData.user_code,
+    // Keep original fields as well for backward compatibility
+    full_name: userData.full_name,
+    is_active: userData.is_active,
+    username: userData.username,
+  };
+};
+
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
     // Use Next.js proxy route to bypass CORS issues
-    return fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
+    const response = await fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
+    
+    // Handle both array and object responses
+    if (response && response.items && Array.isArray(response.items)) {
+      return {
+        ...response,
+        items: response.items.map(mapFromApiFields)
+      };
+    } else if (Array.isArray(response)) {
+      return response.map(mapFromApiFields);
+    }
+    
+    return response;
   },
 
   // Get single user by ID
   getById: async (id) => {
-    return fetchApi(`/api/users/${id}`);
+    const response = await fetchApi(`/api/users/${id}`);
+    return mapFromApiFields(response);
   },
 
   // Create new user
   create: async (userData) => {
-    return fetchApi('/api/users', {
+    const apiData = mapToApiFields(userData);
+    const response = await fetchApi('/api/users', {
       method: 'POST',
-      body: JSON.stringify(userData),
+      body: JSON.stringify(apiData),
     });
+    return mapFromApiFields(response);
   },
 
   // Update existing user
   update: async (id, userData) => {
-    return fetchApi(`/api/users/${id}`, {
+    const apiData = mapToApiFields(userData);
+    const response = await fetchApi(`/api/users/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(userData),
+      body: JSON.stringify(apiData),
     });
+    return mapFromApiFields(response);
   },
 
   // Delete user

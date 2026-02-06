@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  User, Mail, Phone, Shield, Building2, Store, 
+  User, Mail, Shield, Building2, Store, 
   Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
-  Check, X, Lock, Hash, ArrowLeft
+  Check, X, Hash, ArrowLeft
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
@@ -15,6 +15,7 @@ import { supplierService } from "@/app/lib/services/supplierService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
 import PhoneInput from "@/app/components/PhoneInput";
+import PasswordInput from "@/app/components/PasswordInput";
 import { useToast } from "@/app/components/Toast";
 
 export default function AddUserPage() {
@@ -44,7 +45,7 @@ export default function AddUserPage() {
     email: "",
     password: "",
     user_code: "",
-    phone: "",
+    phone: "+91",
     role_id: "",
     branch_ids: [], // Changed to array for multi-selection
     supplier_ids: [], // Changed to array for multi-selection
@@ -250,6 +251,12 @@ export default function AddUserPage() {
           return;
       }
 
+      // Validate phone number if provided
+      if (formData.phone && formData.phone.length < 10) {
+          error("Please enter a valid phone number");
+          return;
+      }
+
       const token = localStorage.getItem('access_token');
       if (!token) {
           error("Your session has expired or you are not logged in. Please log in again.");
@@ -387,21 +394,13 @@ export default function AddUserPage() {
         </div>
 
         {/* Password */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Password <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="password"
-              placeholder="Enter password"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.password}
-              onChange={(e) => setFormData({...formData, password: e.target.value})}
-            />
-          </div>
-        </div>
+        <PasswordInput
+          value={formData.password}
+          onChange={(e) => setFormData({...formData, password: e.target.value})}
+          placeholder="Enter password"
+          required={true}
+          label="Password"
+        />
 
         {/* User Code */}
         <div className="space-y-1.5">
@@ -591,7 +590,7 @@ export default function AddUserPage() {
         <button 
             onClick={handleSubmit} 
             disabled={loading}
-            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
+            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 btn-primary"
         >
           <Check className="w-4 h-4" />
           <span>{loading ? "Creating..." : "Create User"}</span>
