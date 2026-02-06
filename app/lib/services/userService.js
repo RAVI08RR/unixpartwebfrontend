@@ -46,6 +46,11 @@ export const userService = {
 
   // Create new user
   create: async (userData) => {
+    // Log what we're sending
+    console.log("📤 userService.create called with:", userData);
+    console.log("📤 userData keys:", Object.keys(userData));
+    console.log("📤 userData stringified:", JSON.stringify(userData, null, 2));
+    
     // Send data as-is, API expects these field names
     const response = await fetchApi('/api/users', {
       method: 'POST',

@@ -331,10 +331,13 @@ export default function AddUserPage() {
 
           console.log("🚀 SUBMITTING NEW USER:", {
             token: !!token,
-            payload,
+            payload: JSON.stringify(payload, null, 2),
+            payloadKeys: Object.keys(payload),
             selectedPermissions: formData.permission_ids.length,
             hasProfileImage: !!profileImage
           });
+
+          console.log("📦 Exact payload being sent:", payload);
 
           const result = await userService.create(payload);
           console.log("✅ User creation successful:", result);
