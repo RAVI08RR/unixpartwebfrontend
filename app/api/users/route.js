@@ -228,20 +228,21 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  // Get API base URL
+  const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+  
+  // Get auth token from request headers
+  const authHeader = request.headers.get('authorization');
+  
+  // Get request body - moved to function scope so it's available in catch block
+  const body = await request.text();
+  
+  console.log('Users proxy POST - API Base URL:', apiBaseUrl);
+  console.log('Users proxy POST - Auth header present:', !!authHeader);
+  console.log('Users proxy POST - Request body length:', body.length);
+  console.log('Users proxy POST - Request body content:', body);
+  
   try {
-    // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
-    // Get auth token from request headers
-    const authHeader = request.headers.get('authorization');
-    
-    // Get request body
-    const body = await request.text();
-    
-    console.log('Users proxy POST - API Base URL:', apiBaseUrl);
-    console.log('Users proxy POST - Auth header present:', !!authHeader);
-    console.log('Users proxy POST - Request body length:', body.length);
-    
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/users/`;
     console.log('Users proxy POST - Backend URL:', backendUrl);
@@ -268,6 +269,7 @@ export async function POST(request) {
     // Get response data
     const data = await response.text();
     console.log('Users proxy POST - Backend response data length:', data.length);
+    console.log('Users proxy POST - Backend response data:', data);
     
     // Forward the response with CORS headers
     return new Response(data, {

@@ -118,7 +118,8 @@ export default function EditUserPage() {
         
         // Set current profile image
         if (userData.profile_image) {
-          setCurrentProfileImage(userData.profile_image);
+          const fullImageUrl = userService.getProfileImageUrl(userData.profile_image);
+          setCurrentProfileImage(fullImageUrl);
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
@@ -403,11 +404,11 @@ export default function EditUserPage() {
           
           success("User updated successfully!");
           router.push("/dashboard/users");
-      } catch (error) {
-          console.error("❌ UPDATE USER FAILED:", error);
+      } catch (err) {
+          console.error("❌ UPDATE USER FAILED:", err);
           
           // Try to show the most helpful error message
-          let detailedMsg = error.message;
+          let detailedMsg = err.message;
           if (detailedMsg.includes("422")) {
             detailedMsg = "Validation Error: Please check if the User Code or Email is already taken, or if required fields are missing.";
           } else if (detailedMsg.includes("400")) {

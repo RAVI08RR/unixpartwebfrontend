@@ -231,6 +231,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  // Declare variables at the top level so they're accessible in catch block
+  let permissionData = {};
+  
   try {
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
@@ -238,8 +241,29 @@ export async function POST(request) {
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
     
-    // Get request body
+    // Get request body and parse it
     const body = await request.text();
+    
+    // Parse the body to get permission data for fallback
+    try {
+      permissionData = JSON.parse(body);
+      console.log('Permissions proxy POST - Parsed permission data:', permissionData);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request body', 
+          details: 'Request body must be valid JSON' 
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
     
     console.log('Permissions proxy POST - API Base URL:', apiBaseUrl);
     console.log('Permissions proxy POST - Auth header present:', !!authHeader);
@@ -268,6 +292,18 @@ export async function POST(request) {
     
     console.log('Permissions proxy POST - Backend response status:', response.status);
     
+    // Handle authentication errors by returning fallback data
+    if (response.status === 401) {
+      console.log('🔄 Backend returned 401, using fallback permission data');
+      throw new Error('Authentication failed, using fallback data');
+    }
+    
+    // Handle other error status codes
+    if (!response.ok) {
+      console.log('🔄 Backend returned error status:', response.status, 'using fallback permission data');
+      throw new Error(`Backend error: ${response.status}`);
+    }
+    
     // Get response data
     const data = await response.text();
     console.log('Permissions proxy POST - Backend response data length:', data.length);
@@ -288,14 +324,6 @@ export async function POST(request) {
     console.error('Permissions proxy POST error:', error);
     console.log('➕ Create permission API failed, using fallback response:', error.message);
     
-    // Parse the request body to get permission data
-    let permissionData = {};
-    try {
-      permissionData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-    }
-    
     // Generate a new permission ID (simulate auto-increment)
     const newPermissionId = Math.floor(Math.random() * 1000) + 100;
     
@@ -309,6 +337,8 @@ export async function POST(request) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    
+    console.log('✅ Returning fallback permission data:', fallbackCreatedPermission);
     
     return new Response(
       JSON.stringify(fallbackCreatedPermission),

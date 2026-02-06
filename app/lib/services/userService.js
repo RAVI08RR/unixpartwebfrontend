@@ -82,7 +82,15 @@ export const userService = {
     formData.append('file', file);
 
     const token = localStorage.getItem('access_token');
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
+    
+    console.log('📸 Uploading profile image:', {
+      userId,
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+      apiUrl: `${apiBaseUrl}/api/users/${userId}/upload-profile-image`
+    });
     
     const response = await fetch(`${apiBaseUrl}/api/users/${userId}/upload-profile-image`, {
       method: 'POST',
@@ -94,11 +102,35 @@ export const userService = {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to upload profile image');
+      const errorText = await response.text();
+      console.error('❌ Profile image upload failed:', errorText);
+      let errorMessage = 'Failed to upload profile image';
+      try {
+        const error = JSON.parse(errorText);
+        errorMessage = error.detail || error.message || errorMessage;
+      } catch (e) {
+        // Use default error message
+      }
+      throw new Error(errorMessage);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('✅ Profile image uploaded successfully:', result);
+    return result;
+  },
+  
+  // Get profile image URL
+  getProfileImageUrl: (profileImagePath) => {
+    if (!profileImagePath) return null;
+    
+    // If it's already a full URL, return it
+    if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
+      return profileImagePath;
+    }
+    
+    // Otherwise, construct the full URL
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
+    return `${apiBaseUrl}/${profileImagePath}`;
   },
 };
 

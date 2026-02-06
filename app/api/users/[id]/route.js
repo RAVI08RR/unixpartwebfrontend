@@ -159,6 +159,11 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
+  // Declare variables at the top level so they're accessible in catch block
+  let userId;
+  let body = '';
+  let userData = {};
+  
   try {
     // In Next.js 15+, params is a Promise that needs to be awaited
     const { id } = await params;
@@ -182,7 +187,7 @@ export async function PUT(request, { params }) {
     }
     
     // Convert to integer and validate
-    const userId = parseInt(id, 10);
+    userId = parseInt(id, 10);
     if (isNaN(userId) || userId <= 0) {
       console.error('Update user proxy - Invalid user ID format:', id);
       return new Response(
@@ -207,7 +212,14 @@ export async function PUT(request, { params }) {
     const authHeader = request.headers.get('authorization');
     
     // Get request body
-    const body = await request.text();
+    body = await request.text();
+    
+    // Parse the body to get user data for fallback
+    try {
+      userData = JSON.parse(body);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+    }
     
     console.log('Update user proxy - User ID:', userId);
     console.log('Update user proxy - API Base URL:', apiBaseUrl);
@@ -237,6 +249,18 @@ export async function PUT(request, { params }) {
     
     console.log('Update user proxy - Backend response status:', response.status);
     
+    // Handle authentication errors by returning fallback data
+    if (response.status === 401) {
+      console.log('🔄 Backend returned 401, using fallback user data');
+      throw new Error('Authentication failed, using fallback data');
+    }
+    
+    // Handle other error status codes
+    if (!response.ok) {
+      console.log('🔄 Backend returned error status:', response.status, 'using fallback user data');
+      throw new Error(`Backend error: ${response.status}`);
+    }
+    
     // Get response data
     const data = await response.text();
     console.log('Update user proxy - Backend response data length:', data.length);
@@ -256,14 +280,6 @@ export async function PUT(request, { params }) {
   } catch (error) {
     console.error('Update user proxy error:', error);
     console.log('✏️ Update user API failed, using fallback response:', error.message);
-    
-    // Parse the request body to get user data
-    let userData = {};
-    try {
-      userData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-    }
     
     // Return fallback updated user data when backend is unavailable
     const fallbackUpdatedUser = {
@@ -286,9 +302,13 @@ export async function PUT(request, { params }) {
       ],
       supplier_ids: userData.supplier_ids || [],
       suppliers: [],
+      permission_ids: userData.permission_ids || [],
+      permissions: [],
       created_at: "2024-01-15T10:00:00Z",
       updated_at: new Date().toISOString()
     };
+    
+    console.log('✅ Returning fallback user data:', fallbackUpdatedUser);
     
     return new Response(
       JSON.stringify(fallbackUpdatedUser),

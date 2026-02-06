@@ -269,7 +269,7 @@ export default function UserManagementPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <img 
-                            src={user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                            src={user.profile_image ? userService.getProfileImageUrl(user.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
                             alt={user.name} 
                             className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
                             onError={(e) => {
@@ -454,7 +454,7 @@ export default function UserManagementPage() {
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <img 
-                    src={selectedUser.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    src={selectedUser.profile_image ? userService.getProfileImageUrl(selectedUser.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
                     alt={selectedUser.name} 
                     className="w-16 h-16 rounded-full object-cover border-4 border-white dark:border-zinc-800 shadow-lg"
                     onError={(e) => {
@@ -677,7 +677,7 @@ export default function UserManagementPage() {
               <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={selectedUser.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    src={selectedUser.profile_image ? userService.getProfileImageUrl(selectedUser.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
                     alt={selectedUser.name} 
                     className="w-10 h-10 rounded-full object-cover"
                     onError={(e) => {

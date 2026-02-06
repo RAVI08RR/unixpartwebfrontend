@@ -135,13 +135,14 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-  let body = '';
-  let permissionData = {};
+  // Declare variables at the top level so they're accessible in catch block
   let permissionId;
+  let permissionData = {};
   
   try {
     // In Next.js 15+, params is a Promise that needs to be awaited
-    const { id } = await params;
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
     
     // Validate the permission ID parameter
     if (!id || id === 'undefined' || id === 'null') {
@@ -180,21 +181,35 @@ export async function PUT(request, { params }) {
       );
     }
     
+    // Get request body and parse it
+    const body = await request.text();
+    
+    // Parse the body to get permission data for fallback
+    try {
+      permissionData = JSON.parse(body);
+      console.log('Update permission proxy - Parsed permission data:', permissionData);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request body', 
+          details: 'Request body must be valid JSON' 
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+    
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
-    // Get request body and parse it immediately
-    body = await request.text();
-    
-    // Parse the body to get permission data for fallback
-    try {
-      permissionData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-    }
     
     console.log('Update permission proxy - Permission ID:', permissionId);
     console.log('Update permission proxy - API Base URL:', apiBaseUrl);
@@ -256,6 +271,23 @@ export async function PUT(request, { params }) {
     console.error('Update permission proxy error:', error);
     console.log('✏️ Update permission API failed, using fallback response:', error.message);
     
+    // Ensure we have a valid permission ID for fallback
+    if (!permissionId || isNaN(permissionId)) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid permission ID', 
+          details: 'Cannot create fallback data without valid permission ID' 
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+    
     // Return fallback updated permission data when backend is unavailable
     const fallbackUpdatedPermission = {
       id: permissionId,
@@ -266,6 +298,8 @@ export async function PUT(request, { params }) {
       created_at: "2024-01-15T10:00:00Z",
       updated_at: new Date().toISOString()
     };
+    
+    console.log('✅ Returning fallback permission data:', fallbackUpdatedPermission);
     
     return new Response(
       JSON.stringify(fallbackUpdatedPermission),
