@@ -150,39 +150,24 @@ export const userService = {
   getProfileImageUrl: (profileImagePath) => {
     if (!profileImagePath) return null;
     
-    // If it's already a full URL, return it
+    // If it's already a full URL, return it as-is
     if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
       return profileImagePath;
     }
     
-    // Get API base URL - check multiple sources
-    let apiBaseUrl = '';
-    
-    // First try to get from environment variable (works in both build and runtime)
-    if (typeof window !== 'undefined') {
-      // Client-side: use the environment variable that was baked in at build time
-      apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    } else {
-      // Server-side: use the environment variable
-      apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    }
-    
-    // Fallback to hardcoded URL if environment variable is not set
-    if (!apiBaseUrl) {
-      apiBaseUrl = 'http://srv1029267.hstgr.cloud:8000';
-      console.warn('⚠️ NEXT_PUBLIC_API_URL not set, using fallback:', apiBaseUrl);
-    }
-    
-    // Remove trailing slashes
-    apiBaseUrl = apiBaseUrl.replace(/\/+$/, '');
-    
     // Remove leading slash from profile image path if present
     const cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
     
-    const fullUrl = `${apiBaseUrl}/${cleanPath}`;
-    console.log('🖼️ Profile image URL:', { profileImagePath, apiBaseUrl, fullUrl });
+    // Use Next.js API proxy route to avoid mixed content errors
+    // This works in both local (HTTP) and production (HTTPS) environments
+    const proxyUrl = `/api/images/${cleanPath}`;
     
-    return fullUrl;
+    console.log('🖼️ Profile image URL:', { 
+      originalPath: profileImagePath, 
+      proxyUrl 
+    });
+    
+    return proxyUrl;
   },
 };
 
