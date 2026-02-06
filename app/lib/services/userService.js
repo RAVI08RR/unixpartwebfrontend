@@ -86,15 +86,15 @@ export const userService = {
       throw new Error('No authentication token found. Please log in again.');
     }
     
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
-    const uploadUrl = `${apiBaseUrl}/api/users/${userId}/upload-profile-image`;
+    // Use Next.js API proxy route to avoid mixed content errors
+    const uploadUrl = `/api/users/${userId}/upload-profile-image`;
     
     console.log('📸 Uploading profile image:', {
       userId,
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      apiUrl: uploadUrl,
+      uploadUrl,
       hasToken: !!token
     });
     
@@ -103,7 +103,6 @@ export const userService = {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'ngrok-skip-browser-warning': 'true',
         },
         body: formData,
         signal: AbortSignal.timeout(30000), // 30 second timeout for image upload
