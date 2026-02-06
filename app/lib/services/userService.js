@@ -150,20 +150,31 @@ export const userService = {
   getProfileImageUrl: (profileImagePath) => {
     if (!profileImagePath) return null;
     
-    // If it's already a full URL, return it as-is
+    // Extract the relative path from full URL if present
+    let cleanPath = profileImagePath;
+    
+    // If it's a full URL, extract just the path part
     if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
-      return profileImagePath;
+      try {
+        const url = new URL(profileImagePath);
+        // Get the pathname without leading slash
+        cleanPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
+      } catch (e) {
+        console.error('Failed to parse profile image URL:', profileImagePath);
+        return null;
+      }
+    } else {
+      // Remove leading slash if present
+      cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
     }
     
-    // Remove leading slash from profile image path if present
-    const cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
-    
-    // Use Next.js API proxy route to avoid mixed content errors
+    // Always use Next.js API proxy route to avoid mixed content errors
     // This works in both local (HTTP) and production (HTTPS) environments
     const proxyUrl = `/api/images/${cleanPath}`;
     
     console.log('🖼️ Profile image URL:', { 
       originalPath: profileImagePath, 
+      cleanPath,
       proxyUrl 
     });
     
