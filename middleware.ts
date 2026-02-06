@@ -13,6 +13,16 @@ const protectedRoutes = ['/dashboard', '/profile', '/settings'];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Skip middleware for static files, API routes, and Next.js internals
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/static') ||
+    pathname.includes('.')
+  ) {
+    return NextResponse.next();
+  }
+  
   // Get token from cookie (HttpOnly) or fallback to checking if user might have it in localStorage
   const token = request.cookies.get('auth_token')?.value;
   
@@ -26,6 +36,7 @@ export function middleware(request: NextRequest) {
     hasToken: !!token,
     isProtectedRoute,
     isAuthRoute,
+    host: request.headers.get('host'),
   });
   
   // If user is authenticated (has token)
