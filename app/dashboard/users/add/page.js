@@ -346,12 +346,20 @@ export default function AddUserPage() {
           if (profileImage && result.id) {
             try {
               console.log("📸 Uploading profile image for user:", result.id);
-              await userService.uploadProfileImage(result.id, profileImage);
-              console.log("✅ Profile image uploaded successfully");
+              const uploadResult = await userService.uploadProfileImage(result.id, profileImage);
+              console.log("✅ Profile image uploaded successfully:", uploadResult);
             } catch (imgError) {
               console.error("❌ Profile image upload failed:", imgError);
+              console.error("❌ Error details:", {
+                message: imgError.message,
+                stack: imgError.stack,
+                userId: result.id,
+                fileName: profileImage.name,
+                fileSize: profileImage.size,
+                fileType: profileImage.type
+              });
               // Don't fail the whole operation if image upload fails
-              error("User created but profile image upload failed. You can upload it later.");
+              error(`User created but profile image upload failed: ${imgError.message}`);
             }
           }
           

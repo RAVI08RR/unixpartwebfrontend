@@ -82,41 +82,69 @@ export const userService = {
     formData.append('file', file);
 
     const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.');
+    }
+    
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
+    const uploadUrl = `${apiBaseUrl}/api/users/${userId}/upload-profile-image`;
     
     console.log('📸 Uploading profile image:', {
       userId,
       fileName: file.name,
       fileSize: file.size,
       fileType: file.type,
-      apiUrl: `${apiBaseUrl}/api/users/${userId}/upload-profile-image`
+      apiUrl: uploadUrl,
+      hasToken: !!token
     });
     
-    const response = await fetch(`${apiBaseUrl}/api/users/${userId}/upload-profile-image`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'ngrok-skip-browser-warning': 'true',
-      },
-      body: formData,
-    });
+    try {
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: formData,
+        signal: AbortSignal.timeout(30000), // 30 second timeout for image upload
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Profile image upload failed:', errorText);
-      let errorMessage = 'Failed to upload profile image';
-      try {
-        const error = JSON.parse(errorText);
-        errorMessage = error.detail || error.message || errorMessage;
-      } catch (e) {
-        // Use default error message
+      console.log('📸 Upload response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Profile image upload failed with status:', response.status);
+        console.error('❌ Response body:', errorText);
+        
+        let errorMessage = `Failed to upload profile image (${response.status})`;
+        try {
+          const error = JSON.parse(errorText);
+          errorMessage = error.detail || error.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use the text as error message
+          if (errorText && errorText.length < 200) {
+            errorMessage = errorText;
+          }
+        }
+        throw new Error(errorMessage);
       }
-      throw new Error(errorMessage);
-    }
 
-    const result = await response.json();
-    console.log('✅ Profile image uploaded successfully:', result);
-    return result;
+      const result = await response.json();
+      console.log('✅ Profile image uploaded successfully:', result);
+      return result;
+    } catch (error) {
+      // Handle network errors
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        throw new Error('Upload timeout: The image upload took too long. Please try with a smaller image.');
+      }
+      
+      if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
+        throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
+      }
+      
+      // Re-throw other errors
+      throw error;
+    }
   },
   
   // Get profile image URL

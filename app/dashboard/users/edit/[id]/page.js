@@ -393,12 +393,20 @@ export default function EditUserPage() {
           if (profileImage) {
             try {
               console.log("📸 Uploading new profile image for user:", userId);
-              await userService.uploadProfileImage(userId, profileImage);
-              console.log("✅ Profile image uploaded successfully");
+              const uploadResult = await userService.uploadProfileImage(userId, profileImage);
+              console.log("✅ Profile image uploaded successfully:", uploadResult);
             } catch (imgError) {
               console.error("❌ Profile image upload failed:", imgError);
+              console.error("❌ Error details:", {
+                message: imgError.message,
+                stack: imgError.stack,
+                userId,
+                fileName: profileImage.name,
+                fileSize: profileImage.size,
+                fileType: profileImage.type
+              });
               // Don't fail the whole operation if image upload fails
-              error("User updated but profile image upload failed. You can upload it later.");
+              error(`User updated but profile image upload failed: ${imgError.message}`);
             }
           }
           
