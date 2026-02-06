@@ -269,9 +269,12 @@ export default function UserManagementPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <img 
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                            src={user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
                             alt={user.name} 
                             className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
+                            }}
                           />
                           <div>
                             <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
@@ -451,9 +454,12 @@ export default function UserManagementPage() {
               <div className="flex items-center gap-6">
                 <div className="relative">
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    src={selectedUser.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
                     alt={selectedUser.name} 
                     className="w-16 h-16 rounded-full object-cover border-4 border-white dark:border-zinc-800 shadow-lg"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`;
+                    }}
                   />
                   <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-3 border-white dark:border-zinc-900 ${selectedUser.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
                 </div>
@@ -671,9 +677,12 @@ export default function UserManagementPage() {
               <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-3">
                   <img 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
+                    src={selectedUser.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`}
                     alt={selectedUser.name} 
                     className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.name)}&background=random`;
+                    }}
                   />
                   <div className="text-left">
                     <p className="font-semibold text-gray-900 dark:text-white">{selectedUser.name}</p>

@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { 
   User, Mail, Shield, Building2, Store, 
   Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
-  Check, X, Lock, Hash, ArrowLeft
+  Check, X, Lock, Hash, ArrowLeft, Upload, Camera
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
@@ -51,6 +51,41 @@ export default function EditUserPage() {
     permission_ids: []
   });
 
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [currentProfileImage, setCurrentProfileImage] = useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        error("Please select a valid image file");
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        error("Image size should be less than 5MB");
+        return;
+      }
+      
+      setProfileImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setProfileImage(null);
+    setProfileImagePreview(null);
+  };
+
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
@@ -80,6 +115,11 @@ export default function EditUserPage() {
           supplier_ids: userData.suppliers?.map(s => s.id) || userData.supplier_ids || [],
           permission_ids: userData.permissions?.map(p => p.id) || userData.permission_ids || []
         });
+        
+        // Set current profile image
+        if (userData.profile_image) {
+          setCurrentProfileImage(userData.profile_image);
+        }
       } catch (error) {
         console.error("Failed to fetch user:", error);
         
@@ -341,11 +381,26 @@ export default function EditUserPage() {
             userId,
             token: !!token,
             payload,
-            selectedPermissions: formData.permission_ids.length
+            selectedPermissions: formData.permission_ids.length,
+            hasNewProfileImage: !!profileImage
           });
 
           const result = await userService.update(userId, payload);
           console.log("✅ User update successful:", result);
+          
+          // Upload new profile image if provided
+          if (profileImage) {
+            try {
+              console.log("📸 Uploading new profile image for user:", userId);
+              await userService.uploadProfileImage(userId, profileImage);
+              console.log("✅ Profile image uploaded successfully");
+            } catch (imgError) {
+              console.error("❌ Profile image upload failed:", imgError);
+              // Don't fail the whole operation if image upload fails
+              error("User updated but profile image upload failed. You can upload it later.");
+            }
+          }
+          
           success("User updated successfully!");
           router.push("/dashboard/users");
       } catch (error) {
@@ -450,6 +505,66 @@ export default function EditUserPage() {
             placeholder="Enter phone number"
             className="w-full"
           />
+        </div>
+
+        {/* Profile Image Upload */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Profile Image <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <div className="flex items-center gap-4">
+            {/* Image Preview */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800">
+                {profileImagePreview ? (
+                  <img 
+                    src={profileImagePreview} 
+                    alt="Profile preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : currentProfileImage ? (
+                  <img 
+                    src={currentProfileImage} 
+                    alt="Current profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              {(profileImagePreview || currentProfileImage) && (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Upload Button */}
+            <div className="flex-1">
+              <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                <Camera className="w-4 h-4" />
+                <span>{profileImage || currentProfileImage ? 'Change Image' : 'Upload Image'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                JPG, PNG or GIF. Max size 5MB.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* User Code */}

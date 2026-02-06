@@ -34,6 +34,8 @@ const mapFromApiFields = (userData) => {
     full_name: userData.full_name,
     is_active: userData.is_active,
     username: userData.username,
+    // Profile image
+    profile_image: userData.profile_image || null,
   };
 };
 
@@ -88,4 +90,30 @@ export const userService = {
       method: 'DELETE',
     });
   },
+
+  // Upload profile image
+  uploadProfileImage: async (userId, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('access_token');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/').replace(/\/+$/, '');
+    
+    const response = await fetch(`${apiBaseUrl}/api/users/${userId}/upload-profile-image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to upload profile image');
+    }
+
+    return response.json();
+  },
 };
+
