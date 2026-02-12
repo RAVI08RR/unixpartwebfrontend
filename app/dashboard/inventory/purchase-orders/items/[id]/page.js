@@ -31,7 +31,7 @@ export default function ContainerItemsPage() {
         // Fetch container details and items in parallel
         const [containerData, itemsData] = await Promise.all([
           containerService.getById(containerId).catch(() => null),
-          containerItemService.getAll(0, 1000, containerId)
+          containerItemService.getAll(0, 100, containerId) // Backend limit is 100
         ]);
         
         setContainer(containerData);
