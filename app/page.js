@@ -16,23 +16,18 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false); // Start as false for instant render
   const { success, error } = useToast();
 
-  // Check if user is already authenticated on mount
+  // Check if user is already authenticated on mount (instant check)
   useEffect(() => {
-    const checkExistingAuth = async () => {
-      const token = getAuthToken();
-      if (token) {
-        // User already has a token, redirect to dashboard
-        console.log('✅ User already authenticated, redirecting to dashboard');
-        router.replace('/dashboard');
-      } else {
-        setIsCheckingAuth(false);
-      }
-    };
-    
-    checkExistingAuth();
+    const token = getAuthToken();
+    if (token) {
+      // User already has a token, redirect immediately without showing login form
+      console.log('✅ User already authenticated, redirecting to dashboard');
+      setIsCheckingAuth(true); // Show loading only during redirect
+      router.replace('/dashboard');
+    }
   }, [router]);
 
   // Helper function to parse validation errors into user-friendly messages

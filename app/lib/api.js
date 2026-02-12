@@ -33,12 +33,25 @@ const TOKEN_KEY = 'access_token';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) return null;
+  
+  // Check if token is expired
+  if (isTokenExpired()) {
+    clearAuthToken();
+    return null;
+  }
+  
+  return token;
 };
 
 export const setAuthToken = (token) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(TOKEN_KEY, token);
+    // Set session timestamp for 24 hours
+    const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    localStorage.setItem('token_expiry', expiryTime.toString());
   }
 };
 
@@ -46,7 +59,17 @@ export const clearAuthToken = () => {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('current_user');
+    localStorage.removeItem('token_expiry');
   }
+};
+
+export const isTokenExpired = () => {
+  if (typeof window === 'undefined') return true;
+  
+  const expiryTime = localStorage.getItem('token_expiry');
+  if (!expiryTime) return true;
+  
+  return Date.now() > parseInt(expiryTime);
 };
 
 /**
