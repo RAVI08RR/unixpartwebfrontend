@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken } from '../lib/api';
 
 export default function AuthGuard({ children }) {
   const router = useRouter();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const checkAuth = () => {
@@ -15,10 +16,11 @@ export default function AuthGuard({ children }) {
         router.push('/');
         return false;
       }
+      setIsChecking(false);
       return true;
     };
 
-    // Check authentication on mount
+    // Quick check on mount
     checkAuth();
 
     // Listen for storage changes (token removal from other tabs)
@@ -36,17 +38,9 @@ export default function AuthGuard({ children }) {
     };
   }, [router]);
 
-  // Check if we have a token before rendering children
-  const token = getAuthToken();
-  if (!token) {
-    return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-gray-500 mb-4">Checking authentication...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      </div>
-    );
+  // Fast check - only show loading briefly
+  if (isChecking) {
+    return null; // Return nothing instead of loading screen for faster perceived load
   }
 
   return children;

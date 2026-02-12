@@ -16,14 +16,14 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check authentication status on mount and route changes
+  // Check authentication status only on mount (not on every route change)
   useEffect(() => {
     checkAuth();
-  }, [pathname]);
+  }, []); // Empty dependency array - only run once on mount
 
   const checkAuth = async () => {
     try {
-      // Check if token exists in localStorage (fallback)
+      // Quick check: if token exists in localStorage
       const token = getAuthToken();
       
       if (!token) {
@@ -33,11 +33,26 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // Verify token is still valid by fetching current user
+      // Fast path: Check if user is already in localStorage
+      const cachedUser = localStorage.getItem('current_user');
+      if (cachedUser) {
+        try {
+          const parsedUser = JSON.parse(cachedUser);
+          setUser(parsedUser);
+          setIsAuthenticated(true);
+          setLoading(false);
+          return; // Skip API call for faster load
+        } catch (e) {
+          console.error('Failed to parse cached user:', e);
+        }
+      }
+
+      // Slow path: Only verify with API if no cached user
       try {
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
         setIsAuthenticated(true);
+        localStorage.setItem('current_user', JSON.stringify(currentUser));
       } catch (error) {
         // Token is invalid or expired
         console.error('Auth check failed:', error);
