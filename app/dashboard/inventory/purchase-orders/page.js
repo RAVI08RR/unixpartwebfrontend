@@ -329,6 +329,13 @@ export default function PurchaseOrdersPage() {
                                   View Details
                                 </button>
                                 <Link 
+                                  href={`/dashboard/inventory/purchase-orders/items/${container.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                >
+                                  <Package className="w-4 h-4" />
+                                  View Container Items
+                                </Link>
+                                <Link 
                                   href={`/dashboard/inventory/purchase-orders/edit/${container.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
