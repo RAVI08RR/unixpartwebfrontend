@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { 
   User, Mail, Phone, Building, MapPin, 
   Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
-  Check, X, Lock, Hash, ArrowLeft
+  Check, X, Lock, Hash, ArrowLeft, Camera
 } from "lucide-react";
 import { customerService } from "../../../../../lib/services/customerService";
 import { useCustomer } from "../../../../../lib/hooks/useCustomers";
@@ -34,6 +34,41 @@ export default function EditCustomerPage() {
     status: true
   });
 
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+  const [currentProfileImage, setCurrentProfileImage] = useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        error("Please select a valid image file");
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        error("Image size should be less than 5MB");
+        return;
+      }
+      
+      setProfileImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setProfileImage(null);
+    setProfileImagePreview(null);
+  };
+
   // Update form data when customer is loaded
   useEffect(() => {
     if (customer) {
@@ -47,6 +82,13 @@ export default function EditCustomerPage() {
         notes: customer.notes || "",
         status: customer.status ?? true
       });
+      
+      // Set current profile image
+      if (customer.profile_image) {
+        const fullImageUrl = customerService.getProfileImageUrl(customer.profile_image);
+        setCurrentProfileImage(fullImageUrl);
+      }
+      
       setCustomerLoading(false);
     }
   }, [customer]);
@@ -92,7 +134,26 @@ export default function EditCustomerPage() {
 
       const result = await customerService.update(customerId, payload);
       console.log("✅ Customer update successful:", result);
-      alert("✅ Customer updated successfully!");
+      
+      // Check if fallback mode was used
+      if (result._fallback) {
+        error("⚠️ Backend server issue: Changes saved locally but not synced to server. Please contact support.");
+      }
+      
+      // Upload new profile image if provided
+      if (profileImage) {
+        try {
+          console.log("📸 Uploading new profile image for customer:", customerId);
+          const uploadResult = await customerService.uploadProfileImage(customerId, profileImage);
+          console.log("✅ Profile image uploaded successfully:", uploadResult);
+        } catch (imgError) {
+          console.error("❌ Profile image upload failed:", imgError);
+          // Don't fail the whole operation if image upload fails
+          error(`Customer updated but profile image upload failed: ${imgError.message}`);
+        }
+      }
+      
+      success("Customer updated successfully!");
       router.push("/dashboard/sales/customers");
     } catch (error) {
       console.error("❌ UPDATE CUSTOMER FAILED:", error);
@@ -207,6 +268,66 @@ export default function EditCustomerPage() {
               value={formData.phone || ""}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
             />
+          </div>
+        </div>
+
+        {/* Profile Image Upload */}
+        <div className="space-y-1.5 lg:col-span-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Profile Image <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <div className="flex items-center gap-4">
+            {/* Image Preview */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200 dark:border-zinc-700 bg-gray-100 dark:bg-zinc-800">
+                {profileImagePreview ? (
+                  <img 
+                    src={profileImagePreview} 
+                    alt="Profile preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : currentProfileImage ? (
+                  <img 
+                    src={currentProfileImage} 
+                    alt="Current profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.full_name)}&background=random`;
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
+                )}
+              </div>
+              {(profileImagePreview || currentProfileImage) && (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Upload Button */}
+            <div className="flex-1">
+              <label className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all cursor-pointer">
+                <Camera className="w-4 h-4" />
+                <span>{profileImage || currentProfileImage ? 'Change Image' : 'Upload Image'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                JPG, PNG or GIF. Max size 5MB.
+              </p>
+            </div>
           </div>
         </div>
 

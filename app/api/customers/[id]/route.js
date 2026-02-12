@@ -266,7 +266,7 @@ export async function PUT(request, { params }) {
     console.log('Customer proxy PUT - Request body length:', body.length);
     
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/customers/${customerId}`;
+    const backendUrl = `${apiBaseUrl}/api/customers/${customerId}/`;
     console.log('Customer proxy PUT - Backend URL:', backendUrl);
     
     const headers = {
@@ -290,7 +290,19 @@ export async function PUT(request, { params }) {
     
     // Get response data
     const data = await response.text();
+    console.log('Customer proxy PUT - Backend response data:', data);
     console.log('Customer proxy PUT - Backend response data length:', data.length);
+    
+    // Log error details if status is not OK
+    if (!response.ok) {
+      console.error('Customer proxy PUT - Backend error response:', data);
+      try {
+        const errorJson = JSON.parse(data);
+        console.error('Customer proxy PUT - Parsed error:', JSON.stringify(errorJson, null, 2));
+      } catch (e) {
+        console.error('Customer proxy PUT - Raw error text:', data);
+      }
+    }
     
     // Forward the response with CORS headers
     return new Response(data, {

@@ -119,7 +119,24 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     // Handle 500 errors with better messaging
     if (response.status === 500) {
       console.error('🚨 Server Error (500):', url);
-      throw new Error('Backend server error. The application will use fallback data.');
+      
+      // Try to get the error details from the response
+      let errorDetails = 'Backend server error.';
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          errorDetails = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : JSON.stringify(errorData.detail);
+        } else if (errorData.message) {
+          errorDetails = errorData.message;
+        }
+        console.error('🚨 Server Error Details:', errorDetails);
+      } catch (e) {
+        // Could not parse error response
+      }
+      
+      throw new Error(`Backend server error: ${errorDetails}`);
     }
 
     // Handle 502/503/504 errors (backend connectivity issues) - retry these

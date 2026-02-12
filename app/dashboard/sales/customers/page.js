@@ -256,9 +256,12 @@ export default function CustomersPage() {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <img 
-                            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
+                            src={customer.profile_image ? customerService.getProfileImageUrl(customer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
                             alt={customer.full_name} 
                             className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`;
+                            }}
                           />
                           <div>
                             <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{customer.full_name}</p>
@@ -442,9 +445,12 @@ export default function CustomersPage() {
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
               <div className="flex items-center gap-4">
                 <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedCustomer.full_name)}&background=random`}
+                  src={selectedCustomer.profile_image ? customerService.getProfileImageUrl(selectedCustomer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedCustomer.full_name)}&background=random`}
                   alt={selectedCustomer.full_name} 
                   className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                  onError={(e) => {
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedCustomer.full_name)}&background=random`;
+                  }}
                 />
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedCustomer.full_name}</h2>
