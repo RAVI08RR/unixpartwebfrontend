@@ -134,16 +134,37 @@ export const customerService = {
   },
 
   // Get profile image URL
-  getProfileImageUrl: (imagePath) => {
-    if (!imagePath) return null;
+  getProfileImageUrl: (profileImagePath) => {
+    if (!profileImagePath) return null;
     
-    // If it's already a full URL, return it
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
+    // Extract the relative path from full URL if present
+    let cleanPath = profileImagePath;
+    
+    // If it's a full URL, extract just the path part
+    if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
+      try {
+        const url = new URL(profileImagePath);
+        // Get the pathname without leading slash
+        cleanPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
+      } catch (e) {
+        console.error('Failed to parse customer profile image URL:', profileImagePath);
+        return null;
+      }
+    } else {
+      // Remove leading slash if present
+      cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
     }
     
-    // Otherwise, construct the full URL using the API base
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
-    return `${apiBaseUrl}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+    // Always use Next.js API proxy route to avoid mixed content errors
+    // This works in both local (HTTP) and production (HTTPS) environments
+    const proxyUrl = `/api/images/${cleanPath}`;
+    
+    console.log('🖼️ Customer profile image URL:', { 
+      original: profileImagePath, 
+      cleaned: cleanPath, 
+      proxy: proxyUrl 
+    });
+    
+    return proxyUrl;
   },
 };
