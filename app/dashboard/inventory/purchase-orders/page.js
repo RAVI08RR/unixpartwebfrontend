@@ -318,7 +318,7 @@ export default function PurchaseOrdersPage() {
                             </button>
                             
                             {menuOpenId === container.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              <div className={`absolute right-0 w-[250px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
