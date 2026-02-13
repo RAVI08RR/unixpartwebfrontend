@@ -68,6 +68,7 @@ export async function POST(request) {
     const backendUrl = `${apiBaseUrl}/api/container-items/`;
     console.log('📦 Container items proxy POST - Backend URL:', backendUrl);
     console.log('📦 Container items proxy POST - Body:', body);
+    console.log('📦 Container items proxy POST - Parsed body:', JSON.parse(body));
     
     const headers = {
       'Content-Type': 'application/json',
@@ -87,6 +88,15 @@ export async function POST(request) {
     
     const data = await response.text();
     console.log('📦 Container items proxy POST - Response status:', response.status);
+    console.log('📦 Container items proxy POST - Response body:', data);
+    
+    if (!response.ok) {
+      console.error('📦 Container items proxy POST - Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: data
+      });
+    }
     
     return new Response(data, {
       status: response.status,
@@ -97,7 +107,7 @@ export async function POST(request) {
     });
     
   } catch (error) {
-    console.error('Container items proxy POST error:', error);
+    console.error('📦 Container items proxy POST error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

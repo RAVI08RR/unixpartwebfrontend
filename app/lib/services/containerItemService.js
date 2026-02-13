@@ -5,9 +5,9 @@ export const containerItemService = {
   getAll: async (skip = 0, limit = 100, container_id = null, branch_id = null, status = null) => {
     let queryParams = `skip=${skip}&limit=${limit}`;
     
+    // Only add container_id to query params
     if (container_id) queryParams += `&container_id=${container_id}`;
-    if (branch_id) queryParams += `&branch_id=${branch_id}`;
-    if (status) queryParams += `&status=${status}`;
+    // Note: branch_id and status are NOT passed as query parameters
     
     try {
       console.log('📦 Fetching container items from API...');
