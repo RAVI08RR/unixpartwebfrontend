@@ -14,7 +14,7 @@ export const containerItemService = {
       const data = await fetchApi(`/api/container-items?${queryParams}`);
       console.log('📦 Container items API response:', data);
       
-      const itemsData = Array.isArray(data) ? data : (data?.items || []);
+      const itemsData = Array.isArray(data) ? data : (data?.items || data?.container_items || []);
       
       if (itemsData.length > 0) {
         console.log('✅ Container items fetched successfully:', itemsData.length);
@@ -25,7 +25,7 @@ export const containerItemService = {
       }
     } catch (error) {
       console.error("📦 Container items API failed:", error.message);
-      return [];
+      throw error;
     }
   },
 

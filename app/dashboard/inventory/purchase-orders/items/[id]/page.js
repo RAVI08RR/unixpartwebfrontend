@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { 
   ArrowLeft, Package, Hash, Building2, FileText, 
-  Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye
+  Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar
 } from "lucide-react";
 import { containerItemService } from "../../../../../lib/services/containerItemService";
 import { containerService } from "../../../../../lib/services/containerService";
@@ -31,25 +31,20 @@ export default function ContainerItemsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [branchFilter, setBranchFilter] = useState("all");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const itemsPerPage = 10;
   
   // Fetch branches for dropdown
-  const { branches } = useBranches();
+  const { branches: apiBranches } = useBranches();
+  const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   
   // Fetch stock items for dropdown
   const { stockItems: apiStockItems, isLoading: stockItemsLoading, isError: stockItemsError } = useStockItems(0, 100);
   const stockItems = useMemo(() => {
-    if (!apiStockItems) {
-      console.log('📦 No stock items data yet');
-      return [];
-    }
-    const items = Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
-    console.log('📦 Stock items loaded for dropdown:', {
-      count: items.length,
-      firstItem: items[0],
-      allItems: items
-    });
-    return items;
+    if (!apiStockItems) return [];
+    return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
   }, [apiStockItems]);
   
   // Form state
@@ -66,53 +61,53 @@ export default function ContainerItemsPage() {
     quantity: 1
   });
 
+  // Handle click outside to close menu
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch container details
-        const containerData = await containerService.getById(containerId).catch(() => null);
-        setContainer(containerData);
-        
-        // Fetch items with only container_id (no branch_id, supplier_id, or status filters)
-        console.log('🔍 Fetching container items with params:', {
-          container_id: containerId,
-          limit: 100
-        });
-        
-        const itemsData = await containerItemService.getAll(
-          0, 
-          100, 
-          containerId
-        );
-        
-        setItems(itemsData || []);
-      } catch (err) {
-        console.error("Failed to fetch container items:", err);
-        error("Failed to load container items");
-      } finally {
-        setLoading(false);
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.action-menu-container')) {
+        setMenuOpenId(null);
       }
     };
-    
-    if (containerId) {
-      fetchData();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const containerData = await containerService.getById(containerId).catch(() => null);
+      setContainer(containerData);
+      
+      const itemsData = await containerItemService.getAll(0, 100, containerId);
+      setItems(itemsData || []);
+    } catch (err) {
+      console.error("Failed to fetch container items:", err);
+      error("Failed to load container items: " + (err.message || "Server connection issue"));
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (containerId) fetchData();
   }, [containerId]);
 
-  // Filter items based on search
+  // Filter items based on search and filters
   const filteredItems = useMemo(() => {
-    if (!items) return [];
+    if (!items || !Array.isArray(items)) return [];
     return items.filter(item => {
       const matchesSearch = 
-        (item.stock_number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (item.stock_number?.toString().toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (item.po_description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (item.stock_notes?.toLowerCase() || "").includes(searchQuery.toLowerCase());
       
-      return matchesSearch;
+      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      const matchesBranch = branchFilter === "all" || 
+                           item.current_branch_id?.toString() === branchFilter.toString();
+      
+      return matchesSearch && matchesStatus && matchesBranch;
     });
-  }, [searchQuery, items]);
+  }, [searchQuery, items, statusFilter, branchFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
@@ -140,7 +135,7 @@ export default function ContainerItemsPage() {
       parent_item_id: 0,
       po_description: "",
       stock_notes: "",
-      current_branch_id: container?.branch_id || "",
+      current_branch_id: container?.arrival_branch_id || container?.current_branch_id || "",
       status: "in_stock",
       is_dismantled: false,
       quantity: 1
@@ -164,6 +159,21 @@ export default function ContainerItemsPage() {
     });
     setEditModalOpen(true);
     setMenuOpenId(null);
+  };
+
+  const handleDismantle = async (item) => {
+    if (item.is_dismantled) {
+      error("Item is already dismantled");
+      return;
+    }
+    
+    try {
+      await containerItemService.dismantle({ container_item_id: item.id });
+      success("Item dismantled successfully");
+      fetchData();
+    } catch (err) {
+      error(err.message || "Failed to dismantle item");
+    }
   };
 
   const handleViewItem = (item) => {
@@ -192,7 +202,6 @@ export default function ContainerItemsPage() {
     
     try {
       if (selectedItem) {
-        // Update existing item - match backend PUT schema (no parent_item_id)
         const updateData = {
           stock_number: formData.stock_number,
           container_id: parseInt(containerId),
@@ -204,14 +213,10 @@ export default function ContainerItemsPage() {
           is_dismantled: formData.is_dismantled,
           quantity: parseInt(formData.quantity) || 1,
         };
-        
-        console.log('📦 Updating container item:', updateData);
-        
         await containerItemService.update(selectedItem.id, updateData);
         success("Container item updated successfully");
         setEditModalOpen(false);
       } else {
-        // Create new item - includes parent_item_id
         const createData = {
           stock_number: formData.stock_number,
           container_id: parseInt(containerId),
@@ -224,20 +229,12 @@ export default function ContainerItemsPage() {
           is_dismantled: formData.is_dismantled,
           quantity: parseInt(formData.quantity) || 1,
         };
-        
-        console.log('📦 Creating container item:', createData);
-        
         await containerItemService.create(createData);
         success("Container item added successfully");
         setAddModalOpen(false);
       }
-      
-      // Refresh items list (only with container_id)
-      const itemsData = await containerItemService.getAll(0, 100, containerId);
-      setItems(itemsData || []);
-      
+      fetchData();
     } catch (err) {
-      console.error("Failed to save container item:", err);
       error(err.message || "Failed to save container item");
     } finally {
       setSubmitting(false);
@@ -246,30 +243,15 @@ export default function ContainerItemsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedItem) return;
-    
     try {
       await containerItemService.delete(selectedItem.id);
       success("Container item deleted successfully");
       setDeleteModalOpen(false);
       setSelectedItem(null);
-      
-      // Refresh items list
-      const itemsData = await containerItemService.getAll(0, 100, containerId);
-      setItems(itemsData || []);
+      fetchData();
     } catch (err) {
-      console.error("Failed to delete container item:", err);
       error("Failed to delete container item");
     }
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteModalOpen(false);
-    setSelectedItem(null);
-  };
-
-  const handleViewClose = () => {
-    setViewModalOpen(false);
-    setSelectedItem(null);
   };
 
   const getStatusBadge = (status) => {
@@ -279,9 +261,7 @@ export default function ContainerItemsPage() {
       reserved: { class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400', label: 'Reserved' },
       damaged: { class: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400', label: 'Damaged' },
     };
-    
     const statusInfo = statusMap[status] || statusMap.in_stock;
-    
     return (
       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${statusInfo.class}`}>
         {statusInfo.label}
@@ -291,10 +271,8 @@ export default function ContainerItemsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading container items...</div>
-        </div>
+      <div className="flex items-center justify-center py-24">
+        <div className="text-gray-500 font-bold uppercase tracking-widest animate-pulse">Loading container items...</div>
       </div>
     );
   }
@@ -311,33 +289,103 @@ export default function ContainerItemsPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Container Items</h1>
-            <p className="text-gray-400 dark:text-white text-sm font-normal">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight"> Purchase Orders Container Items</h1>
+            <p className="text-black dark:text-white text-sm font-normal">
               {container ? `${container.po_id} - ${container.container_code}` : 'Loading...'}
             </p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          {/* Search Bar */}
-          <div className="relative w-full lg:max-w-xl">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Filters */}
+          <div className="relative w-full sm:w-auto">
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 hover:shadow-black/20 active:scale-95 transition-all"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+            </button>
+            
+            {isFilterOpen && (
+              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+                    <div className="space-y-1">
+                      {["all", "in_stock", "sold", "reserved", "damaged"].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            setStatusFilter(status);
+                            setIsFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                            statusFilter === status 
+                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          {status === "all" ? "All Status" : status.replace('_', ' ').toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
+                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                      <button
+                        onClick={() => {
+                          setBranchFilter("all");
+                          setIsFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                          branchFilter === "all" 
+                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        ALL BRANCHES
+                      </button>
+                      {branches.map(b => (
+                        <button
+                          key={b.id}
+                          onClick={() => {
+                            setBranchFilter(b.id);
+                            setIsFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                            branchFilter.toString() === b.id.toString()
+                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          {b.branch_name.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search by stock number, description..."
-              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
+              placeholder="Search items..."
+              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 shadow-sm"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
-          {/* Add Item Button */}
           <button
             onClick={handleAddItem}
-            className="flex items-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-95"
+            className="flex items-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-95 btn-add-po"
+            style={{ cursor: "pointer", width: "19rem", textAlign: "center", display: "flex", justifyContent: "center" }}
           >
             <Plus className="w-4 h-4" />
             Add Item
@@ -345,168 +393,102 @@ export default function ContainerItemsPage() {
         </div>
       </div>
 
-      {/* Container Info Card */}
-      {container && (
-        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">PO ID</label>
-              <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{container.po_id}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Container Code</label>
-              <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{container.container_code}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Items</label>
-              <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{items.length}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Quantity</label>
-              <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-                {items.reduce((sum, item) => sum + (item.quantity || 0), 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Items Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full">
         <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Stock Number</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Quantity</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Notes</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Stock Number</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Item</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">PO Description</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Stock Notes</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Supplier</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Qty</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Branch</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Status</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Dismantled</th>
+                <th className="px-6 py-4 text-right text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedItems.length > 0 ? (
-                paginatedItems.map((item, index) => (
-                  <tr key={item.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                  style={{borderBottom:"0.9px solid #E2E8F0"}}>
-                    {/* Stock Number */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
-                          {item.stock_number}
-                        </span>
-                      </div>
-                    </td>
+                paginatedItems.map((item, idx) => (
+                  <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all border-b border-gray-100 dark:border-zinc-800 last:border-0">
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-black text-gray-900 dark:text-white">{item.stock_number}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-bold text-gray-600 dark:text-gray-400">{stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}</span></td>
+                    <td className="px-6 py-4 max-w-xs truncate"><span className="text-sm text-gray-500">{item.po_description}</span></td>
+                    <td className="px-6 py-4 max-w-xs truncate"><span className="text-sm text-gray-500">{item.stock_notes || '-'}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm text-gray-500">{container?.supplier_name || '-'}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-black text-gray-900 dark:text-white">{item.quantity}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm text-gray-500">{branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(item.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap"><span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${item.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>{item.is_dismantled ? "Yes" : "No"}</span></td>
+                    <td className="px-6 py-4 text-right relative">
+                      <div className="relative flex justify-end action-menu-container">
+                        <button 
+                          onClick={() => toggleMenu(item.id)}
+                          className={`p-2 rounded-xl transition-all ${
+                            menuOpenId === item.id 
+                              ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
 
-                    {/* Description */}
-                    <td className="px-6 py-6">
-                      <div className="space-y-1">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">
-                          {item.po_description}
-                        </p>
-                        {item.is_dismantled && (
-                          <span className="inline-flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-                            <Box className="w-3 h-3" />
-                            Dismantled
-                          </span>
-                        )}
-                      </div>
-                    </td>
+                        {menuOpenId === item.id && (
+                          <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                            idx > paginatedItems.length - 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                          }`}>
+                            <button 
+                              onClick={() => handleViewItem(item)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                            >
+                              <Eye className="w-4 h-4" /> 
+                              View Details
+                            </button>
+                            
+                            <button 
+                              onClick={() => handleEditItem(item)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                            >
+                              <Pencil className="w-4 h-4" /> 
+                              Edit Item
+                            </button>
 
-                    {/* Branch */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                        <Building2 className="w-4 h-4" />
-                        <span className="text-sm font-medium">
-                          Branch {item.current_branch_id}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Quantity */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">
-                          {item.quantity}
-                        </span>
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-6">
-                      {getStatusBadge(item.status)}
-                    </td>
-
-                    {/* Notes */}
-                    <td className="px-6 py-6">
-                      <div className="flex items-start gap-2 max-w-xs">
-                        {item.stock_notes && (
-                          <>
-                            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                              {item.stock_notes}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-6 text-right relative">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="relative">
-                          <button 
-                            onClick={() => toggleMenu(item.id)}
-                            className={`p-2 rounded-xl transition-all ${
-                              menuOpenId === item.id 
-                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                            }`}
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                          
-                          {menuOpenId === item.id && (
-                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                              index > paginatedItems.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                            }`}>
+                            {!item.is_dismantled && (
                               <button 
-                                onClick={() => handleViewItem(item)}
+                                onClick={() => {
+                                  handleDismantle(item);
+                                  setMenuOpenId(null);
+                                }}
                                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                               >
-                                <Eye className="w-4 h-4" />
-                                View Details
+                                <Box className="w-4 h-4" /> 
+                                Dismantle Item
                               </button>
-                              <button 
-                                onClick={() => handleEditItem(item)}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                              >
-                                <Pencil className="w-4 h-4" />
-                                Edit Item
-                              </button>
-                              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                              <button 
-                                onClick={() => handleDeleteClick(item)} 
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete Item
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                            )}
+                            
+                            <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                            
+                            <button 
+                              onClick={() => handleDeleteClick(item)}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" /> 
+                              Delete Item
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No items found</p>
+                  <td colSpan="13" className="py-24 text-center">
+                    <p className="text-gray-400 font-bold uppercase tracking-widest animate-pulse">No items found for this container</p>
                   </td>
                 </tr>
               )}
@@ -515,26 +497,28 @@ export default function ContainerItemsPage() {
         </div>
 
         {/* Pagination Footer */}
+        {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredItems.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredItems.length}</span> items
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+            Showing <span className="text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white">{Math.min(startIndex + itemsPerPage, filteredItems.length)}</span> of <span className="text-gray-900 dark:text-white">{filteredItems.length}</span>
           </p>
           
           <div className="flex items-center gap-3">
             <button 
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
+              <span className="uppercase tracking-widest text-[10px]">Prev</span>
             </button>
+
             <div className="hidden sm:flex items-center gap-1.5">
               {[...Array(totalPages)].map((_, i) => (
                 <button 
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+                  className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
                     currentPage === i + 1 
                     ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
                     : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
@@ -544,532 +528,263 @@ export default function ContainerItemsPage() {
                 </button>
               ))}
             </div>
+
             <button 
               onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
             >
-              <span>Next</span>
+              <span className="uppercase tracking-widest text-[10px]">Next</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Keep existing modals logic but clean them up for the new fields if needed */}
+      {/* (Skipping detailed modal JSX for brevity but it's there in the full file) */}
       
-      {/* Add Item Modal */}
+      {/* Confirm Delete Modal */}
+      <ConfirmModal 
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Item"
+        message={`Are you sure you want to delete ${selectedItem?.stock_number}? This action cannot be undone.`}
+      />
+
+      {/* Modals for Add/Edit as previously defined... */}
       {addModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 px-8 py-6 flex items-center justify-between">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white">Add Container Item</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Add a new item to {container?.container_code}
-                </p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Add Item</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">To {container?.container_code}</p>
               </div>
-              <button
-                onClick={() => setAddModalOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+              <button onClick={() => setAddModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100"><X className="w-5 h-5" /></button>
             </div>
-
-            {/* Modal Body */}
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Stock Number */}
+            
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Stock Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="stock_number"
-                    value={formData.stock_number}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                    placeholder="Enter stock number"
-                  />
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Number</label>
+                   <input type="text" name="stock_number" value={formData.stock_number} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
                 </div>
-
-                {/* Stock Item (Required) */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Stock Item <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="item_id"
-                    value={formData.item_id}
-                    onChange={handleFormChange}
-                    required
-                    disabled={stockItemsLoading}
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 disabled:opacity-50"
-                  >
-                    <option value="">
-                      {stockItemsLoading ? 'Loading stock items...' : 'Select Stock Item'}
-                    </option>
-                    {!stockItemsLoading && stockItems.length > 0 && stockItems.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.name || item.item_name || 'Unnamed Item'}
-                        {item.part_number && ` - ${item.part_number}`}
-                        {item.description && ` (${item.description})`}
-                      </option>
-                    ))}
-                  </select>
-                  {!stockItemsLoading && stockItems.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">
-                      No stock items available. Please add stock items first.
-                    </p>
-                  )}
-                  {stockItemsError && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Failed to load stock items. Please try again.
-                    </p>
-                  )}
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</label>
+                   <select name="item_id" value={formData.item_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
+                     <option value="">Select Item</option>
+                     {stockItems.map(si => <option key={si.id} value={si.id}>{si.name || si.item_name}</option>)}
+                   </select>
                 </div>
-
-                {/* Branch */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Branch <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="current_branch_id"
-                    value={formData.current_branch_id}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map(branch => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.branch_name}
-                      </option>
-                    ))}
-                  </select>
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</label>
+                   <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
                 </div>
-
-                {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Quantity <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleFormChange}
-                    required
-                    min="1"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Status <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  >
-                    <option value="in_stock">In Stock</option>
-                    <option value="sold">Sold</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="damaged">Damaged</option>
-                  </select>
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
+                   <select name="current_branch_id" value={formData.current_branch_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
+                     <option value="">Select Branch</option>
+                     {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+                   </select>
                 </div>
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="po_description"
-                  value={formData.po_description}
-                  onChange={handleFormChange}
-                  required
-                  rows="3"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 resize-none"
-                  placeholder="Enter item description"
-                />
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">PO Description</label>
+                <textarea name="po_description" value={formData.po_description} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="3" />
               </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  name="stock_notes"
-                  value={formData.stock_notes}
-                  onChange={handleFormChange}
-                  rows="2"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 resize-none"
-                  placeholder="Additional notes (optional)"
-                />
-              </div>
-
-              {/* Is Dismantled Checkbox */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="is_dismantled"
-                  id="is_dismantled"
-                  checked={formData.is_dismantled}
-                  onChange={handleFormChange}
-                  className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-600"
-                />
-                <label htmlFor="is_dismantled" className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                  Item is dismantled
-                </label>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setAddModalOpen(false)}
-                  className="flex-1 px-6 py-3.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Adding..." : "Add Item"}
-                </button>
+              <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex gap-4">
+                <button type="button" onClick={() => setAddModalOpen(false)} className="flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-600 font-black uppercase text-xs tracking-widest rounded-2xl">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all">{submitting ? 'Adding...' : 'Add Item'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* Edit Item Modal */}
-      {editModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 px-8 py-6 flex items-center justify-between">
+      {editModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white">Edit Container Item</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Update item {selectedItem.stock_number}
-                </p>
+                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Edit Item</h2>
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{selectedItem?.stock_number}</p>
               </div>
-              <button
-                onClick={() => setEditModalOpen(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+              <button onClick={() => setEditModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100"><X className="w-5 h-5" /></button>
             </div>
-
-            {/* Modal Body - Same form as Add */}
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Stock Number */}
+            
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Stock Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="stock_number"
-                    value={formData.stock_number}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                    placeholder="Enter stock number"
-                  />
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Number</label>
+                   <input type="text" name="stock_number" value={formData.stock_number} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
                 </div>
-
-                {/* Stock Item */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Stock Item <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="item_id"
-                    value={formData.item_id}
-                    onChange={handleFormChange}
-                    required
-                    disabled={stockItemsLoading}
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 disabled:opacity-50"
-                  >
-                    <option value="">
-                      {stockItemsLoading ? 'Loading stock items...' : 'Select Stock Item'}
-                    </option>
-                    {!stockItemsLoading && stockItems.length > 0 && stockItems.map(item => (
-                      <option key={item.id} value={item.id}>
-                        {item.name || item.item_name || 'Unnamed Item'}
-                        {item.part_number && ` - ${item.part_number}`}
-                        {item.description && ` (${item.description})`}
-                      </option>
-                    ))}
-                  </select>
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</label>
+                   <select name="item_id" value={formData.item_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
+                     <option value="">Select Item</option>
+                     {stockItems.map(si => <option key={si.id} value={si.id}>{si.name || si.item_name}</option>)}
+                   </select>
                 </div>
-
-                {/* Branch */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Branch <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="current_branch_id"
-                    value={formData.current_branch_id}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map(branch => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.branch_name}
-                      </option>
-                    ))}
-                  </select>
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</label>
+                   <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
                 </div>
-
-                {/* Quantity */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Quantity <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleFormChange}
-                    required
-                    min="1"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  />
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
+                   <select name="current_branch_id" value={formData.current_branch_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
+                     <option value="">Select Branch</option>
+                     {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+                   </select>
                 </div>
-
-                {/* Status */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                    Status <span className="text-red-500">*</span>
+                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
+                   <select name="status" value={formData.status} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
+                     <option value="in_stock">In Stock</option>
+                     <option value="sold">Sold</option>
+                     <option value="reserved">Reserved</option>
+                     <option value="damaged">Damaged</option>
+                   </select>
+                </div>
+                <div className="flex items-end pb-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_dismantled" checked={formData.is_dismantled} onChange={handleFormChange} className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-600" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dismantled</span>
                   </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50"
-                  >
-                    <option value="in_stock">In Stock</option>
-                    <option value="sold">Sold</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="damaged">Damaged</option>
-                  </select>
                 </div>
               </div>
-
-              {/* Description */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="po_description"
-                  value={formData.po_description}
-                  onChange={handleFormChange}
-                  required
-                  rows="3"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 resize-none"
-                  placeholder="Enter item description"
-                />
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">PO Description</label>
+                <textarea name="po_description" value={formData.po_description} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="3" />
               </div>
-
-              {/* Notes */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  name="stock_notes"
-                  value={formData.stock_notes}
-                  onChange={handleFormChange}
-                  rows="2"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 resize-none"
-                  placeholder="Additional notes (optional)"
-                />
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Notes</label>
+                <textarea name="stock_notes" value={formData.stock_notes} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="2" />
               </div>
-
-              {/* Is Dismantled Checkbox */}
-              <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="is_dismantled"
-                  id="is_dismantled_edit"
-                  checked={formData.is_dismantled}
-                  onChange={handleFormChange}
-                  className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-600"
-                />
-                <label htmlFor="is_dismantled_edit" className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                  Item is dismantled
-                </label>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setEditModalOpen(false)}
-                  className="flex-1 px-6 py-3.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? "Updating..." : "Update Item"}
-                </button>
+              <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex gap-4">
+                <button type="button" onClick={() => setEditModalOpen(false)} className="flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-600 font-black uppercase text-xs tracking-widest rounded-2xl">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all">{submitting ? 'Saving...' : 'Save Changes'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* View Item Modal */}
+      {/* View Details Modal */}
       {viewModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800 px-8 py-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white">Item Details</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {selectedItem.stock_number}
-                </p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[110] p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20 dark:border-zinc-800">
+            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/50">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl">
+                  <Box className="w-7 h-7 text-white dark:text-black" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{selectedItem.stock_number}</h2>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Item Details Overview</p>
+                </div>
               </div>
-              <button
-                onClick={handleViewClose}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+              <button 
+                onClick={() => setViewModalOpen(false)} 
+                className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all shadow-sm border border-gray-100 dark:border-zinc-800"
               >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Modal Body */}
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Stock Number</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedItem.stock_number}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
-                  <div className="mt-2">{getStatusBadge(selectedItem.status)}</div>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Branch ID</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedItem.current_branch_id}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quantity</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedItem.quantity}</p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4 md:col-span-2">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-2">{selectedItem.po_description}</p>
-                </div>
-                {selectedItem.stock_notes && (
-                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4 md:col-span-2">
-                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notes</label>
-                    <p className="text-sm text-gray-900 dark:text-white mt-2">{selectedItem.stock_notes}</p>
+            
+            <div className="flex-1 overflow-y-auto p-10 space-y-10">
+              {/* Main Info Section */}
+              <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</p>
+                    <p className="text-base font-black text-gray-900 dark:text-white">{stockItems.find(si => si.id.toString() === selectedItem.item_id?.toString())?.name || "Item " + selectedItem.item_id}</p>
                   </div>
-                )}
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dismantled</label>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">{selectedItem.is_dismantled ? 'Yes' : 'No'}</p>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</p>
+                    <p className="text-base font-black text-gray-900 dark:text-white">{selectedItem.quantity}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</p>
+                    <p className="text-base font-black text-gray-900 dark:text-white">{branches.find(b => b.id.toString() === selectedItem.current_branch_id?.toString())?.branch_name || "B-" + selectedItem.current_branch_id}</p>
+                  </div>
                 </div>
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</label>
-                  <p className="text-sm text-gray-900 dark:text-white mt-2">
-                    {selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleString() : 'N/A'}
+                <div className="space-y-6">
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</p>
+                    <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dismantled</p>
+                    <span className={`text-[10px] uppercase font-black px-3 py-1 rounded-full ${selectedItem.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                      {selectedItem.is_dismantled ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Supplier</p>
+                    <p className="text-base font-black text-gray-900 dark:text-white">{container?.supplier_name || '-'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-px bg-gray-100 dark:bg-zinc-800" />
+
+              {/* Financial Section (Moved from table) */}
+              <div className="grid grid-cols-3 gap-8">
+                <div className="bg-green-50/50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100/50 dark:border-green-900/20">
+                  <p className="text-[10px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <DollarSign className="w-3 h-3" /> Sale Amount
+                  </p>
+                  <p className="text-xl font-black text-green-700 dark:text-green-300">
+                    {selectedItem.sale_amount ? `AED ${selectedItem.sale_amount}` : 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-3xl border border-blue-100/50 dark:border-blue-900/20">
+                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <FileText className="w-3 h-3" /> Invoice #
+                  </p>
+                  <p className="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                    {selectedItem.invoice_number || 'N/A'}
+                  </p>
+                </div>
+                <div className="bg-purple-50/50 dark:bg-purple-900/10 p-6 rounded-3xl border border-purple-100/50 dark:border-purple-900/20">
+                  <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <Calendar className="w-3 h-3" /> Sale Date
+                  </p>
+                  <p className="text-xl font-black text-purple-700 dark:text-purple-300">
+                    {selectedItem.sale_date ? new Date(selectedItem.sale_date).toLocaleDateString() : 'N/A'}
                   </p>
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-4 p-8 border-t border-gray-100 dark:border-zinc-800">
-              <button
-                onClick={handleViewClose}
-                className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => {
-                  handleViewClose();
-                  handleEditItem(selectedItem);
-                }}
-                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
-              >
-                <Pencil className="w-4 h-4" />
-                Edit Item
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="h-px bg-gray-100 dark:bg-zinc-800" />
 
-      {/* Delete Confirmation Modal */}
-      {deleteModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
-            {/* Modal Header */}
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Container Item</h2>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">{selectedItem.stock_number}</span>? 
-                This action cannot be undone.
-              </p>
-              
-              {/* Item Info */}
-              <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
-                <div className="text-left space-y-2">
-                  <p className="text-sm"><span className="font-semibold text-gray-700 dark:text-gray-300">Stock:</span> {selectedItem.stock_number}</p>
-                  <p className="text-sm"><span className="font-semibold text-gray-700 dark:text-gray-300">Description:</span> {selectedItem.po_description}</p>
-                  <p className="text-sm"><span className="font-semibold text-gray-700 dark:text-gray-300">Quantity:</span> {selectedItem.quantity}</p>
+              {/* Notes Section */}
+              <div className="space-y-8">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">PO Description</p>
+                  <div className="p-6 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed italic">"{selectedItem.po_description || 'No description provided'}"</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Stock Notes</p>
+                  <div className="p-6 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed italic">"{selectedItem.stock_notes || 'No notes available'}"</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+            <div className="p-8 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
               <button 
-                onClick={handleDeleteCancel}
-                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                onClick={() => {
+                  handleEditItem(selectedItem);
+                  setViewModalOpen(false);
+                }} 
+                className="w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-sm tracking-widest rounded-[24px] shadow-2xl hover:shadow-black/20 active:scale-95 transition-all flex items-center justify-center gap-3"
               >
-                Cancel
-              </button>
-              <button 
-                onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Item
+                <Pencil className="w-5 h-5" /> Edit This Item
               </button>
             </div>
           </div>
