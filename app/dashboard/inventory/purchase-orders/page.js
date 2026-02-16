@@ -5,12 +5,13 @@ import Link from "next/link";
 import { 
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
-  Eye, Package, Calendar, Building2, DollarSign, Hash
+  Eye, Package, Calendar, Building2, DollarSign, Hash,
+  AlertCircle
 } from "lucide-react";
-import { useContainers } from "../../../lib/hooks/useContainers";
-import { containerService } from "../../../lib/services/containerService";
-import { getAuthToken } from "../../../lib/api";
+import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
+import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { useToast } from "@/app/components/Toast";
+import { useContainers } from "@/app/lib/hooks/useContainers";
 
 export default function PurchaseOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,23 +21,9 @@ export default function PurchaseOrdersPage() {
   const { success, error } = useToast();
   
   // Data Fetching
-  const itemsPerPage = 8;
-  const { containers: apiContainers, loading: isLoading, error: isError, refetch } = useContainers(0, 100);
-
-  // Handle Data Selection
-  const containers = useMemo(() => {
-    if (typeof window === 'undefined') return [];
-
-    const token = getAuthToken();
-    if (!token) return [];
-    
-    if (apiContainers) {
-      const data = Array.isArray(apiContainers) ? apiContainers : (apiContainers?.containers || []);
-      return data;
-    }
-
-    return [];
-  }, [apiContainers, isError, isLoading]);
+  const itemsPerPage = 6;
+  const { purchaseOrders, loading, refetch } = usePurchaseOrders(0, 100);
+  const { containers } = useContainers();
 
   const [isMounted, setIsMounted] = useState(false);
   
@@ -46,33 +33,29 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [containers.length]);
+  }, [purchaseOrders.length, searchQuery, statusFilter]);
 
-  // Menu state and modals
+  // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [selectedContainer, setSelectedContainer] = useState(null);
+  const [selectedPO, setSelectedPO] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   // Filter and search logic
-  const filteredContainers = useMemo(() => {
-    if (!containers) return [];
-    return containers.filter(container => {
-      const matchesSearch = 
-        (container.po_id?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (container.container_code?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (container.container_number?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-      
-      const matchesStatus = statusFilter === "All" || container.status === statusFilter.toLowerCase();
-      
+  const filteredPOs = useMemo(() => {
+    if (!purchaseOrders) return [];
+    return purchaseOrders.filter(po => {
+      const searchTarget = `${po.po_id} ${po.notes}`.toLowerCase();
+      const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "All" || po.status?.toLowerCase() === statusFilter.toLowerCase();
       return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, statusFilter, containers]);
+  }, [searchQuery, statusFilter, purchaseOrders]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredContainers.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredPOs.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedContainers = filteredContainers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedPOs = filteredPOs.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -86,83 +69,53 @@ export default function PurchaseOrdersPage() {
     setMenuOpenId(prev => prev === id ? null : id);
   };
 
-  const handleViewContainer = (container) => {
-    setSelectedContainer(container);
-    setViewModalOpen(true);
-    setMenuOpenId(null);
-  };
-
-  const handleDeleteClick = (container) => {
-    setSelectedContainer(container);
-    setDeleteModalOpen(true);
-    setMenuOpenId(null);
-  };
-
   const handleDeleteConfirm = async () => {
-    if (!selectedContainer) return;
-    
+    if (!selectedPO) return;
+    setDeleteError(null);
     try {
-      await containerService.delete(selectedContainer.id);
+      await purchaseOrderService.delete(selectedPO.id);
       success("Purchase order deleted successfully!");
-      refetch();
       setDeleteModalOpen(false);
-      setSelectedContainer(null);
+      refetch();
     } catch (err) {
-      console.error("Failed to delete purchase order", err);
-      error("Failed to delete purchase order: " + err.message);
+      const errorMsg = err.message || "Unknown error";
+      if (errorMsg.includes("Cannot delete purchase order with items")) {
+        setDeleteError("This purchase order has items. Please delete all items first.");
+      } else {
+        setDeleteError(errorMsg);
+        error("Failed to delete purchase order: " + errorMsg);
+      }
     }
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteModalOpen(false);
-    setSelectedContainer(null);
-  };
-
-  const handleViewClose = () => {
-    setViewModalOpen(false);
-    setSelectedContainer(null);
-  };
-
   const getStatusBadge = (status) => {
-    const statusMap = {
-      pending: { class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400', label: 'Pending' },
-      in_transit: { class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400', label: 'In Transit' },
-      arrived: { class: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400', label: 'Arrived' },
-      completed: { class: 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400', label: 'Completed' },
+    const s = status?.toLowerCase() || 'pending';
+    const styles = {
+      pending: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50',
+      in_stock: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/50',
+      cancelled: 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/50',
+      active: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50'
     };
     
-    const statusInfo = statusMap[status] || statusMap.pending;
+    // Fallback if status isn't mapping exactly
+    const resolvedStyle = styles[s] || 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400 border border-gray-200 dark:border-zinc-700';
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${statusInfo.class}`}>
-        {statusInfo.label}
+      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${resolvedStyle}`}>
+        {s.replace('_', ' ')}
       </span>
     );
   };
 
-  if (!isMounted || (isLoading && (!containers || containers.length === 0))) {
-    return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
-          <div className="shrink-0">
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orders</h1>
-            <p className="text-gray-400 dark:text-white text-sm font-normal">Manage container shipments and purchase orders</p>
-          </div>
-        </div>
-        <div className="p-10 text-center">
-          <div className="text-gray-500">Loading purchase orders...</div>
-        </div>
-      </div>
-    );
-  }
+  if (!isMounted) return null;
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orders</h1>
-          <p className="text-gray-400 dark:text-white text-sm font-normal">Manage container shipments and purchase orders</p>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Manage inventory procurement and stock arrivals</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -171,13 +124,10 @@ export default function PurchaseOrdersPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search by PO ID, container code..."
+              placeholder="Search by PO ID, notes..."
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
@@ -186,7 +136,7 @@ export default function PurchaseOrdersPage() {
             <div className="relative flex-1 sm:flex-none">
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -194,13 +144,12 @@ export default function PurchaseOrdersPage() {
               
               {isFilterOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {["All", "Pending", "In_transit", "Arrived", "Completed"].map((status) => (
+                  {['All', 'Pending', 'In_Stock', 'Cancelled'].map((status) => (
                     <button
                       key={status}
                       onClick={() => {
                         setStatusFilter(status);
                         setIsFilterOpen(false);
-                        setCurrentPage(1);
                       }}
                       className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
                         statusFilter === status 
@@ -208,7 +157,7 @@ export default function PurchaseOrdersPage() {
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                       }`}
                     >
-                      {status === "All" ? "All Status" : status.replace('_', ' ')}
+                      {status === "All" ? "All Orders" : status.replace('_', ' ')}
                     </button>
                   ))}
                 </div>
@@ -219,9 +168,13 @@ export default function PurchaseOrdersPage() {
               <Download className="w-4 h-4" />
               <span>Export</span>
             </button>
-            <Link href="/dashboard/inventory/purchase-orders/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+
+            <Link 
+              href="/dashboard/inventory/purchase-orders/add"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+            >
               <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add PO</span>
+              <span className="whitespace-nowrap font-black">Add order</span>
             </Link>
           </div>
         </div>
@@ -229,127 +182,120 @@ export default function PurchaseOrdersPage() {
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
+        <div className="overflow-x-auto w-full scrollbar-hide">
+          <table className="w-full min-w-[1000px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">PO Details</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Container</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Arrival</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Order ID</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Container</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Revenue</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Stock Qty</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedContainers.length > 0 ? (
-                paginatedContainers.map((container, index) => {
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Orders...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedPOs.length > 0 ? (
+                paginatedPOs.map((po, index) => {
+                  const container = containers?.find(c => c.id === po.container_id);
                   return (
-                    <tr key={container.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style={{borderBottom:"0.9px solid #E2E8F0"}}>
-                      {/* PO Details */}
-                      <td className="px-6 py-6" data-label="PO Details">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Hash className="w-3.5 h-3.5 text-gray-400" />
-                            <p className="text-sm font-black text-gray-900 dark:text-white">{container.po_id}</p>
+                    <tr key={po.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                      <td className="px-6 py-6" data-label="Order ID">
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Hash className="w-5 h-5 text-red-600 dark:text-red-400" />
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 ml-5">
-                            Supplier ID: {container.supplier_id}
-                          </p>
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
+                              {po.po_id}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[150px]">
+                              {po.notes || 'No notes'}
+                            </p>
+                          </div>
                         </div>
                       </td>
 
-                      {/* Container */}
                       <td className="px-6 py-6" data-label="Container">
-                        <div className="space-y-1">
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">{container.container_code}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{container.container_number}</p>
-                          <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                            <Package className="w-3 h-3" />
-                            <span>{container.items_in_stock} items</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Arrival */}
-                      <td className="px-6 py-6" data-label="Arrival">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                            <Calendar className="w-3.5 h-3.5" />
-                            <span className="text-sm font-medium">
-                              {container.arrival_date ? new Date(container.arrival_date).toLocaleDateString() : "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                            <Building2 className="w-3.5 h-3.5" />
-                            <span className="text-xs">Branch: {container.arrival_branch_id}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Financial */}
-                      <td className="px-6 py-6" data-label="Financial">
-                        <div className="text-green-600 dark:text-green-400">
-                          <span className="text-sm font-bold">
-                            AED {parseFloat(container.total_container_revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <div className="flex items-center gap-2">
+                          <Package className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                            {container ? container.container_code : `ID: ${po.container_id}`}
                           </span>
                         </div>
                       </td>
 
-                      {/* Status */}
-                      <td className="px-6 py-6" data-label="Status">
-                        {getStatusBadge(container.status)}
+                      <td className="px-6 py-6" data-label="Revenue">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm font-black dark:text-white">
+                            {parseFloat(po.total_container_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
                       </td>
 
-                      {/* Actions */}
+                      <td className="px-6 py-6" data-label="Stock Qty">
+                        <span className="text-sm font-bold text-gray-600 dark:text-zinc-400">
+                          {po.items_in_stock} units
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-6" data-label="Status">
+                        {getStatusBadge(po.status)}
+                      </td>
+
                       <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
-                              onClick={() => toggleMenu(container.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                menuOpenId === container.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                              onClick={() => toggleMenu(po.id)}
+                              className={`p-2 rounded-xl transition-all ${
+                                menuOpenId === po.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
                               }`}
                             >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
-                            {menuOpenId === container.id && (
-                              <div className={`absolute right-0 w-[250px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                            {menuOpenId === po.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedPOs.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
-                                <button 
-                                  onClick={() => handleViewContainer(container)}
+                                <Link 
+                                  href={`/dashboard/inventory/purchase-orders/items/${po.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
                                   <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                <Link 
-                                  href={`/dashboard/inventory/purchase-orders/items/${container.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
-                                >
-                                  <Package className="w-4 h-4" />
-                                  View Container Items
+                                  View Items
                                 </Link>
                                 <Link 
-                                  href={`/dashboard/inventory/purchase-orders/edit/${container.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                  href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
                                 >
                                   <Pencil className="w-4 h-4" />
-                                  Edit PO
+                                  Edit Order
                                 </Link>
                                 <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
                                 <button 
-                                  onClick={() => handleDeleteClick(container)} 
+                                  onClick={() => {
+                                    setSelectedPO(po);
+                                    setDeleteModalOpen(true);
+                                    setMenuOpenId(null);
+                                  }} 
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                  Delete PO
+                                  Delete Order
                                 </button>
                               </div>
                             )}
@@ -359,11 +305,10 @@ export default function PurchaseOrdersPage() {
                     </tr>
                   );
                 })
-
               ) : (
                 <tr>
                   <td colSpan="6" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No purchase orders found</p>
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No purchase orders found</p>
                   </td>
                 </tr>
               )}
@@ -374,7 +319,7 @@ export default function PurchaseOrdersPage() {
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredContainers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredContainers.length}</span> entries
+            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredPOs.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredPOs.length}</span> entries
           </p>
           
           <div className="flex items-center gap-3">
@@ -386,6 +331,7 @@ export default function PurchaseOrdersPage() {
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
             </button>
+            
             <div className="hidden sm:flex items-center gap-1.5">
               {[...Array(totalPages)].map((_, i) => (
                 <button 
@@ -401,6 +347,7 @@ export default function PurchaseOrdersPage() {
                 </button>
               ))}
             </div>
+            
             <button 
               onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages === 0}
@@ -414,116 +361,57 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && selectedContainer && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Purchase Order</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete PO "{selectedContainer.po_id}"? This action cannot be undone.
-            </p>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDeleteConfirm}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-              <button
-                onClick={handleDeleteCancel}
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-bold rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <Trash2 className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Order?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">#{selectedPO?.po_id}</span>? This action cannot be undone.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div className="text-left space-y-2">
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200">
+                      {deleteError}
+                    </p>
+                    <Link
+                      href={`/dashboard/inventory/purchase-orders/items/${selectedPO?.id}`}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View & Delete Items First
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteError(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
               >
                 Cancel
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Modal */}
-      {viewModalOpen && selectedContainer && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase Order Details</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{selectedContainer.po_id}</p>
-              </div>
-              <button 
-                onClick={handleViewClose}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Container Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">PO ID</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.po_id}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Container Code</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.container_code}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Container Number</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.container_number}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
-                    <div className="mt-1">{getStatusBadge(selectedContainer.status)}</div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Supplier ID</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.supplier_id}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Arrival Branch ID</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.arrival_branch_id}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Arrival Date</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
-                      {selectedContainer.arrival_date ? new Date(selectedContainer.arrival_date).toLocaleDateString() : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Items in Stock</label>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.items_in_stock}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</label>
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">
-                      AED {parseFloat(selectedContainer.total_container_revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  {selectedContainer.notes && (
-                    <div className="md:col-span-2">
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Notes</label>
-                      <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedContainer.notes}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
-              <button 
-                onClick={handleViewClose}
-                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-              >
-                Close
-              </button>
-              <Link 
-                href={`/dashboard/inventory/purchase-orders/edit/${selectedContainer.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-900 dark:hover:bg-gray-100 transition-all"
-              >
-                Edit PO
-              </Link>
+              {!deleteError && (
+                <button 
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         </div>

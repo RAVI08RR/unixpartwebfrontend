@@ -1,879 +1,495 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, use } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { 
-  ArrowLeft, Package, Hash, Building2, FileText, 
+  ArrowLeft, Package, Building2, 
   Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar
 } from "lucide-react";
-import { containerItemService } from "../../../../../lib/services/containerItemService";
-import { containerService } from "../../../../../lib/services/containerService";
-import { useBranches } from "../../../../../lib/hooks/useBranches";
-import { useStockItems } from "../../../../../lib/hooks/useStockItems";
+import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
+import { poItemService } from "@/app/lib/services/poItemService";
+import { useBranches } from "@/app/lib/hooks/useBranches";
+import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 import ConfirmModal from "@/app/components/ConfirmModal";
 
-export default function ContainerItemsPage() {
-  const params = useParams();
-  const containerId = params.id;
-  const { success, error } = useToast();
+export default function PurchaseOrderItemsPage({ params }) {
+  const { id: poId } = use(params);
+  const { success, error: showError } = useToast();
   
   const [items, setItems] = useState([]);
-  const [container, setContainer] = useState(null);
+  const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [addModalOpen, setAddModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [dismantleModalOpen, setDismantleModalOpen] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
-  const [branchFilter, setBranchFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
   
-  // Fetch branches for dropdown
   const { branches: apiBranches } = useBranches();
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   
-  // Fetch stock items for dropdown
-  const { stockItems: apiStockItems, isLoading: stockItemsLoading, isError: stockItemsError } = useStockItems(0, 100);
+  const { stockItems: apiStockItems } = useStockItems(0, 100);
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
   }, [apiStockItems]);
-  
-  // Form state
-  const [formData, setFormData] = useState({
-    stock_number: "",
-    container_id: containerId,
-    item_id: "",
-    parent_item_id: 0,
-    po_description: "",
-    stock_notes: "",
-    current_branch_id: "",
-    status: "in_stock",
-    is_dismantled: false,
-    quantity: 1
-  });
-
-  // Handle click outside to close menu
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuOpenId !== null && !event.target.closest('.action-menu-container')) {
-        setMenuOpenId(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpenId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const containerData = await containerService.getById(containerId).catch(() => null);
-      setContainer(containerData);
+      const poData = await purchaseOrderService.getById(poId);
       
-      const itemsData = await containerItemService.getAll(0, 100, containerId);
+      if (!poData) {
+        console.warn("Purchase Order not found");
+        setPurchaseOrder(null);
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+      
+      setPurchaseOrder(poData);
+      
+      const itemsData = await poItemService.getAll(0, 100, poId);
+      console.log('📦 Fetched PO Items:', itemsData);
+      console.log('📦 Items count:', itemsData?.length || 0);
       setItems(itemsData || []);
     } catch (err) {
-      console.error("Failed to fetch container items:", err);
-      error("Failed to load container items: " + (err.message || "Server connection issue"));
+      console.error("Failed to fetch PO data:", err);
+      setPurchaseOrder(null);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (containerId) fetchData();
-  }, [containerId]);
+    if (poId) fetchData();
+  }, [poId]);
 
-  // Filter items based on search and filters
   const filteredItems = useMemo(() => {
     if (!items || !Array.isArray(items)) return [];
     return items.filter(item => {
-      const matchesSearch = 
-        (item.stock_number?.toString().toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (item.po_description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (item.stock_notes?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-      
+      const searchTarget = `${item.stock_number || ''} ${item.po_description || ''} ${item.stock_notes || ''}`.toLowerCase();
+      const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      const matchesBranch = branchFilter === "all" || 
-                           item.current_branch_id?.toString() === branchFilter.toString();
-      
-      return matchesSearch && matchesStatus && matchesBranch;
+      return matchesSearch && matchesStatus;
     });
-  }, [searchQuery, items, statusFilter, branchFilter]);
+  }, [items, searchQuery, statusFilter]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedItems = filteredItems.slice(startIndex, startIndex + itemsPerPage);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
-  
-  const toggleMenu = (id) => {
-    setMenuOpenId(prev => prev === id ? null : id);
-  };
-
-  const handleAddItem = () => {
-    setSelectedItem(null);
-    setFormData({
-      stock_number: "",
-      container_id: parseInt(containerId),
-      item_id: "",
-      parent_item_id: 0,
-      po_description: "",
-      stock_notes: "",
-      current_branch_id: container?.arrival_branch_id || container?.current_branch_id || "",
-      status: "in_stock",
-      is_dismantled: false,
-      quantity: 1
-    });
-    setAddModalOpen(true);
-  };
-
-  const handleEditItem = (item) => {
-    setSelectedItem(item);
-    setFormData({
-      stock_number: item.stock_number || "",
-      container_id: parseInt(containerId),
-      item_id: item.item_id || "",
-      parent_item_id: item.parent_item_id || 0,
-      po_description: item.po_description || "",
-      stock_notes: item.stock_notes || "",
-      current_branch_id: item.current_branch_id || "",
-      status: item.status || "in_stock",
-      is_dismantled: item.is_dismantled || false,
-      quantity: item.quantity || 1
-    });
-    setEditModalOpen(true);
-    setMenuOpenId(null);
-  };
-
-  const handleDismantle = async (item) => {
-    if (item.is_dismantled) {
-      error("Item is already dismantled");
-      return;
-    }
-    
+  const handleDelete = async () => {
     try {
-      await containerItemService.dismantle({ container_item_id: item.id });
-      success("Item dismantled successfully");
-      fetchData();
-    } catch (err) {
-      error(err.message || "Failed to dismantle item");
-    }
-  };
-
-  const handleViewItem = (item) => {
-    setSelectedItem(item);
-    setViewModalOpen(true);
-    setMenuOpenId(null);
-  };
-
-  const handleDeleteClick = (item) => {
-    setSelectedItem(item);
-    setDeleteModalOpen(true);
-    setMenuOpenId(null);
-  };
-  
-  const handleFormChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    
-    try {
-      if (selectedItem) {
-        const updateData = {
-          stock_number: formData.stock_number,
-          container_id: parseInt(containerId),
-          item_id: parseInt(formData.item_id),
-          po_description: formData.po_description,
-          stock_notes: formData.stock_notes,
-          current_branch_id: parseInt(formData.current_branch_id),
-          status: formData.status,
-          is_dismantled: formData.is_dismantled,
-          quantity: parseInt(formData.quantity) || 1,
-        };
-        await containerItemService.update(selectedItem.id, updateData);
-        success("Container item updated successfully");
-        setEditModalOpen(false);
-      } else {
-        const createData = {
-          stock_number: formData.stock_number,
-          container_id: parseInt(containerId),
-          item_id: parseInt(formData.item_id),
-          parent_item_id: parseInt(formData.parent_item_id) || 0,
-          po_description: formData.po_description,
-          stock_notes: formData.stock_notes,
-          current_branch_id: parseInt(formData.current_branch_id),
-          status: formData.status,
-          is_dismantled: formData.is_dismantled,
-          quantity: parseInt(formData.quantity) || 1,
-        };
-        await containerItemService.create(createData);
-        success("Container item added successfully");
-        setAddModalOpen(false);
-      }
-      fetchData();
-    } catch (err) {
-      error(err.message || "Failed to save container item");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!selectedItem) return;
-    try {
-      await containerItemService.delete(selectedItem.id);
-      success("Container item deleted successfully");
+      await poItemService.delete(selectedItem.id);
+      success("Item removed from order");
       setDeleteModalOpen(false);
-      setSelectedItem(null);
       fetchData();
     } catch (err) {
-      error("Failed to delete container item");
+      showError(err.message);
     }
   };
 
-  const getStatusBadge = (status) => {
-    const statusMap = {
-      in_stock: { class: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400', label: 'In Stock' },
-      sold: { class: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400', label: 'Sold' },
-      reserved: { class: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400', label: 'Reserved' },
-      damaged: { class: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400', label: 'Damaged' },
-    };
-    const statusInfo = statusMap[status] || statusMap.in_stock;
-    return (
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${statusInfo.class}`}>
-        {statusInfo.label}
-      </span>
-    );
+  const handleDismantle = async () => {
+    try {
+      await poItemService.dismantle({ item_id: selectedItem.id });
+      success("Item dismantled successfully");
+      setDismantleModalOpen(false);
+      fetchData();
+    } catch (err) {
+      showError(err.message);
+    }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="text-gray-500 font-bold uppercase tracking-widest animate-pulse">Loading container items...</div>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-400 font-bold text-xs uppercase tracking-wider">Loading Items...</p>
+      </div>
+    );
+  }
+
+  if (!purchaseOrder) {
+    return (
+      <div className="max-w-[1600px] mx-auto space-y-8 pb-12 px-4 sm:px-6">
+        <div className="flex items-center gap-5">
+          <Link 
+            href="/dashboard/inventory/purchase-orders" 
+            className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-500" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold dark:text-white">Purchase Order Not Found</h1>
+            <p className="text-sm text-gray-500 dark:text-zinc-400">The requested purchase order does not exist or has been deleted</p>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-12 text-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
+              <Package className="w-10 h-10 text-gray-400" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Purchase Order #{poId} Not Found</p>
+              <p className="text-xs text-gray-500">This order may have been deleted or the ID is incorrect</p>
+            </div>
+            <Link 
+              href="/dashboard/inventory/purchase-orders"
+              className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all"
+            >
+              Back to Purchase Orders
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 px-4 sm:px-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link 
             href="/dashboard/inventory/purchase-orders" 
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+            className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-5 h-5 text-gray-500" />
           </Link>
           <div>
-            <h1 className="text-2xl font-black dark:text-white tracking-tight"> Purchase Orders Container Items</h1>
-            <p className="text-black dark:text-white text-sm font-normal">
-              {container ? `${container.po_id} - ${container.container_code}` : 'Loading...'}
+            <h1 className="text-2xl font-bold dark:text-white flex items-center gap-3">
+              ORDER ITEMS <span className="text-sm font-semibold text-red-600 px-3 py-1 bg-red-50 dark:bg-red-900/20 rounded-lg">#{purchaseOrder?.po_id || poId}</span>
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+              Collection of items registered under this procurement order
             </p>
           </div>
         </div>
-        
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Filters */}
-          <div className="relative w-full sm:w-auto">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 hover:shadow-black/20 active:scale-95 transition-all"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
-            
-            {isFilterOpen && (
-              <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
-                    <div className="space-y-1">
-                      {["all", "in_stock", "sold", "reserved", "damaged"].map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => {
-                            setStatusFilter(status);
-                            setIsFilterOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                            statusFilter === status 
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {status === "all" ? "All Status" : status.replace('_', ' ').toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
-                    <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                      <button
-                        onClick={() => {
-                          setBranchFilter("all");
-                          setIsFilterOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                          branchFilter === "all" 
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        ALL BRANCHES
-                      </button>
-                      {branches.map(b => (
-                        <button
-                          key={b.id}
-                          onClick={() => {
-                            setBranchFilter(b.id);
-                            setIsFilterOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                            branchFilter.toString() === b.id.toString()
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {b.branch_name.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
 
-          <div className="relative flex-1 sm:min-w-[300px] w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search items..."
-              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 shadow-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <button
-            onClick={handleAddItem}
-            className="flex items-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-95 btn-add-po"
-            style={{ cursor: "pointer", width: "100%", maxWidth: "19rem", textAlign: "center", display: "flex", justifyContent: "center" }}
+        <Link 
+          href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
+          className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
+        >
+          <Plus className="w-4 h-4" />
+          ADD ITEM TO ORDER
+        </Link>
+      </div>
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard label="Total Items" value={items.length} icon={<Package className="w-5 h-5 text-red-600" />} />
+        <StatCard label="In Stock" value={items.filter(i => i.status === 'in_stock').length} icon={<Box className="w-5 h-5 text-emerald-600" />} />
+        <StatCard label="Order Revenue" value={`$${parseFloat(purchaseOrder?.total_container_revenue || 0).toLocaleString()}`} icon={<DollarSign className="w-5 h-5 text-blue-600" />} />
+        <StatCard label="Creation Date" value={purchaseOrder?.created_at ? new Date(purchaseOrder.created_at).toLocaleDateString() : 'N/A'} icon={<Calendar className="w-5 h-5 text-amber-600" />} />
+      </div>
+
+      {/* Filters & Search */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Search items by stock number or description..."
+            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="relative">
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="h-full px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl font-semibold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
           >
-            <Plus className="w-4 h-4" />
-            Add Item
+            <Filter className="w-4 h-4" />
+            {statusFilter === 'all' ? 'All Status' : statusFilter.replace('_', ' ')}
           </button>
+          {isFilterOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 p-1 overflow-hidden">
+              {['all', 'in_stock', 'sold', 'shipped'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => { setStatusFilter(s); setIsFilterOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
+                    statusFilter === s ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {s.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-4 mb-6">
-        {paginatedItems.length > 0 ? (
-          paginatedItems.map((item) => (
-            <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between p-4 border-b border-gray-50 dark:border-zinc-800 bg-gray-50/30 dark:bg-zinc-800/30">
-                <span className="font-black text-gray-900 dark:text-white text-sm">Id : {item.stock_number}</span>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => handleEditItem(item)} 
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteClick(item)} 
-                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="p-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Stock Item</span>
-                  <span className="text-gray-900 dark:text-white font-bold text-sm text-right truncate max-w-[150px]">
-                    {stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Branch</span>
-                  <span className="text-gray-900 dark:text-white font-bold text-sm text-right">
-                    {branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Status</span>
-                  <div>{getStatusBadge(item.status)}</div>
-                </div>
-              </div>
-
-              <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 border-t border-blue-100/50 dark:border-blue-900/20">
-                <button 
-                  onClick={() => handleViewItem(item)} 
-                  className="w-full py-2 flex items-center justify-center gap-2 bg-blue-100/50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                >
-                  <Eye className="w-4 h-4" /> View Details
-                </button>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-xs border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl">
-            No items found
-          </div>
-        )}
-        
-        {/* Mobile Pagination */}
-        {filteredItems.length > 0 && (
-          <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm mt-4">
-             <button 
-               onClick={handlePrevPage}
-               disabled={currentPage === 1}
-               className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
-             >
-               Prev
-             </button>
-             <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
-               Page {currentPage} of {totalPages}
-             </span>
-             <button 
-               onClick={handleNextPage}
-               disabled={currentPage === totalPages || totalPages === 0}
-               className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
-             >
-               Next
-             </button>
-          </div>
-        )}
-      </div>
-
       {/* Items Table */}
-      <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full responsive-table-container">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full text-left border-collapse">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+        <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Stock Number</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Item</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">PO Description</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Stock Notes</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Supplier</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Qty</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Branch</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Status</th>
-                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10">Dismantled</th>
-                <th className="px-6 py-4 text-right text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-widest bg-gray-50/10 whitespace-nowrap">Actions</th>
-              </tr>
+                <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Item Details</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Category</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Quantity</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Branch</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"></th>
+                </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedItems.length > 0 ? (
-                paginatedItems.map((item, idx) => (
-                  <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all border-b border-gray-100 dark:border-zinc-800 last:border-0">
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Stock Number"><span className="text-sm font-black text-gray-900 dark:text-white">{item.stock_number}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Item"><span className="text-sm font-bold text-gray-600 dark:text-gray-400">{stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}</span></td>
-                    <td className="px-6 py-4 max-w-xs truncate" data-label="PO Description"><span className="text-sm text-gray-500">{item.po_description}</span></td>
-                    <td className="px-6 py-4 max-w-xs truncate" data-label="Stock Notes"><span className="text-sm text-gray-500">{item.stock_notes || '-'}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Supplier"><span className="text-sm text-gray-500">{container?.supplier_name || '-'}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Qty"><span className="text-sm font-black text-gray-900 dark:text-white">{item.quantity}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Branch"><span className="text-sm text-gray-500">{branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Status">{getStatusBadge(item.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap" data-label="Dismantled"><span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${item.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>{item.is_dismantled ? "Yes" : "No"}</span></td>
-                    <td className="px-6 py-4 text-right relative" data-label="Actions">
-                      <div className="relative flex justify-end action-menu-container">
-                        <button 
-                          onClick={() => toggleMenu(item.id)}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                            menuOpenId === item.id 
-                              ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                          }`}
-                        >
-                          <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-
-                        {menuOpenId === item.id && (
-                          <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                            idx > paginatedItems.length - 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
-                          }`}>
-                            <button 
-                              onClick={() => handleViewItem(item)}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                            >
-                              <Eye className="w-4 h-4" /> 
-                              View Details
-                            </button>
-                            
-                            <button 
-                              onClick={() => handleEditItem(item)}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                            >
-                              <Pencil className="w-4 h-4" /> 
-                              Edit Item
-                            </button>
-
-                            {!item.is_dismantled && (
-                              <button 
-                                onClick={() => {
-                                  handleDismantle(item);
-                                  setMenuOpenId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                              >
-                                <Box className="w-4 h-4" /> 
-                                Dismantle Item
-                              </button>
-                            )}
-                            
-                            <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                            
-                            <button 
-                              onClick={() => handleDeleteClick(item)}
-                              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" /> 
-                              Delete Item
-                            </button>
-                          </div>
+            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {paginatedItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
+                          <Package className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">No Items Found</p>
+                          <p className="text-xs text-gray-500">
+                            {searchQuery || statusFilter !== 'all' 
+                              ? 'Try adjusting your filters or search query' 
+                              : 'Add items to this purchase order to get started'}
+                          </p>
+                        </div>
+                        {!searchQuery && statusFilter === 'all' && (
+                          <Link 
+                            href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
+                            className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add First Item
+                          </Link>
                         )}
                       </div>
                     </td>
                   </tr>
-                ))
-
-              ) : (
-                <tr>
-                  <td colSpan="13" className="py-24 text-center">
-                    <p className="text-gray-400 font-bold uppercase tracking-widest animate-pulse">No items found for this container</p>
-                  </td>
-                </tr>
-              )}
+                ) : paginatedItems.map((item, idx) => {
+                    const stockItem = stockItems.find(si => si.id === item.item_id);
+                    const branch = branches.find(b => b.id === item.current_branch_id);
+                    return (
+                        <tr key={item.id} className="group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                            <td className="px-6 py-4" data-label="Item Details">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center font-semibold text-red-600 text-xs">
+                                        #{idx + 1 + (currentPage-1)*itemsPerPage}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.stock_number}</p>
+                                        <p className="text-xs text-gray-500 max-w-[250px] truncate">{item.po_description}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4" data-label="Category">
+                                <span className="text-sm text-gray-700 dark:text-zinc-300">{stockItem?.name || `ID: ${item.item_id}`}</span>
+                            </td>
+                            <td className="px-6 py-4" data-label="Quantity">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.quantity} units</span>
+                            </td>
+                            <td className="px-6 py-4" data-label="Branch">
+                                <div className="flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-gray-400" />
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">{branch?.branch_name || `Branch ${item.current_branch_id}`}</span>
+                                </div>
+                            </td>
+                            <td className="px-6 py-4" data-label="Status">
+                                <div className="flex flex-col gap-1.5">
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide w-fit ${
+                                        item.status === 'in_stock' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
+                                    }`}>
+                                        {item.status.replace('_', ' ')}
+                                    </span>
+                                    {item.is_dismantled && (
+                                        <span className="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 w-fit">
+                                            Dismantled
+                                        </span>
+                                    )}
+                                </div>
+                            </td>
+                            <td className="px-6 py-4 text-right relative">
+                                <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                        onClick={() => { setSelectedItem(item); setViewModalOpen(true); }}
+                                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </button>
+                                    <div className="relative">
+                                        <button 
+                                            onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
+                                            className={`p-2 rounded-lg transition-all ${
+                                                menuOpenId === item.id 
+                                                ? 'bg-gray-900 text-white dark:bg-white dark:text-black' 
+                                                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                            }`}
+                                        >
+                                            <MoreVertical className="w-4 h-4" />
+                                        </button>
+                                        {menuOpenId === item.id && (
+                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 p-1">
+                                                {!item.is_dismantled && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedItem(item);
+                                                            setDismantleModalOpen(true);
+                                                            setMenuOpenId(null);
+                                                        }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors"
+                                                    >
+                                                        <Box className="w-4 h-4" /> Dismantle Item
+                                                    </button>
+                                                )}
+                                                <Link 
+                                                    href={`/dashboard/inventory/purchase-orders/items/edit/${item.id}`}
+                                                    onClick={() => setMenuOpenId(null)}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                                                >
+                                                    <Pencil className="w-4 h-4" /> Edit Item
+                                                </Link>
+                                                <div className="h-px bg-gray-200 dark:bg-zinc-800 my-1" />
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedItem(item);
+                                                        setDeleteModalOpen(true);
+                                                        setMenuOpenId(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" /> Remove
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    );
+                })}
             </tbody>
-          </table>
-        </div>
+        </table>
 
-        {/* Pagination Footer */}
-        {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white">{Math.min(startIndex + itemsPerPage, filteredItems.length)}</span> of <span className="text-gray-900 dark:text-white">{filteredItems.length}</span>
+        {/* PAGINATION */}
+        <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 dark:border-zinc-800">
+          <p className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredItems.length}</span> items
           </p>
-          
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button 
-              onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              className="p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="uppercase tracking-widest text-[10px]">Prev</span>
             </button>
-
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 px-3">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Page</span>
+                <span className="min-w-[32px] h-8 flex items-center justify-center bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-semibold">
+                    {currentPage}
+                </span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">of {totalPages || 1}</span>
             </div>
-
             <button 
-              onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-xs font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              className="p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
             >
-              <span className="uppercase tracking-widest text-[10px]">Next</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Keep existing modals logic but clean them up for the new fields if needed */}
-      {/* (Skipping detailed modal JSX for brevity but it's there in the full file) */}
-      
-      {/* Confirm Delete Modal */}
+      {/* Modals */}
       <ConfirmModal 
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Item"
-        message={`Are you sure you want to delete ${selectedItem?.stock_number}? This action cannot be undone.`}
+        onConfirm={handleDelete}
+        title="Remove Item?"
+        message={`Are you sure you want to remove item #${selectedItem?.stock_number} from this purchase order?`}
+        confirmText="Remove Now"
+        type="danger"
       />
 
-      {/* Modals for Add/Edit as previously defined... */}
-      {addModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Add Item</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">To {container?.container_code}</p>
-              </div>
-              <button onClick={() => setAddModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100"><X className="w-5 h-5" /></button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Number</label>
-                   <input type="text" name="stock_number" value={formData.stock_number} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</label>
-                   <select name="item_id" value={formData.item_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
-                     <option value="">Select Item</option>
-                     {stockItems.map(si => <option key={si.id} value={si.id}>{si.name || si.item_name}</option>)}
-                   </select>
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</label>
-                   <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
-                   <select name="current_branch_id" value={formData.current_branch_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
-                     <option value="">Select Branch</option>
-                     {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
-                   </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">PO Description</label>
-                <textarea name="po_description" value={formData.po_description} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="3" />
-              </div>
-              <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex gap-4">
-                <button type="button" onClick={() => setAddModalOpen(false)} className="flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-600 font-black uppercase text-xs tracking-widest rounded-2xl">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all">{submitting ? 'Adding...' : 'Add Item'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ConfirmModal 
+        isOpen={dismantleModalOpen}
+        onClose={() => setDismantleModalOpen(false)}
+        onConfirm={handleDismantle}
+        title="Dismantle Part?"
+        message={`This will mark item ${selectedItem?.stock_number} as dismantled and available for part-by-part recovery. Continue?`}
+        confirmText="Confirm Dismantle"
+        type="warning"
+      />
 
-      {editModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">Edit Item</h2>
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">{selectedItem?.stock_number}</p>
-              </div>
-              <button onClick={() => setEditModalOpen(false)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100"><X className="w-5 h-5" /></button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Number</label>
-                   <input type="text" name="stock_number" value={formData.stock_number} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</label>
-                   <select name="item_id" value={formData.item_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
-                     <option value="">Select Item</option>
-                     {stockItems.map(si => <option key={si.id} value={si.id}>{si.name || si.item_name}</option>)}
-                   </select>
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</label>
-                   <input type="number" name="quantity" value={formData.quantity} onChange={handleFormChange} required min="1" className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" />
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</label>
-                   <select name="current_branch_id" value={formData.current_branch_id} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
-                     <option value="">Select Branch</option>
-                     {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
-                   </select>
-                </div>
-                <div>
-                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</label>
-                   <select name="status" value={formData.status} onChange={handleFormChange} required className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20">
-                     <option value="in_stock">In Stock</option>
-                     <option value="sold">Sold</option>
-                     <option value="reserved">Reserved</option>
-                     <option value="damaged">Damaged</option>
-                   </select>
-                </div>
-                <div className="flex items-end pb-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="is_dismantled" checked={formData.is_dismantled} onChange={handleFormChange} className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-600" />
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dismantled</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">PO Description</label>
-                <textarea name="po_description" value={formData.po_description} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="3" />
-              </div>
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Notes</label>
-                <textarea name="stock_notes" value={formData.stock_notes} onChange={handleFormChange} className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-red-600/20" rows="2" />
-              </div>
-              <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex gap-4">
-                <button type="button" onClick={() => setEditModalOpen(false)} className="flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-600 font-black uppercase text-xs tracking-widest rounded-2xl">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl active:scale-95 transition-all">{submitting ? 'Saving...' : 'Save Changes'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      {/* View Details Modal */}
       {viewModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[110] p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-white/20 dark:border-zinc-800">
-            <div className="p-8 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/50">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-black dark:bg-white rounded-2xl flex items-center justify-center shadow-xl">
-                  <Box className="w-7 h-7 text-white dark:text-black" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tight">{selectedItem.stock_number}</h2>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Item Details Overview</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setViewModalOpen(false)} 
-                className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all shadow-sm border border-gray-100 dark:border-zinc-800"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-10 space-y-10">
-              {/* Main Info Section */}
-              <div className="grid grid-cols-2 gap-10">
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Stock Item</p>
-                    <p className="text-base font-black text-gray-900 dark:text-white">{stockItems.find(si => si.id.toString() === selectedItem.item_id?.toString())?.name || "Item " + selectedItem.item_id}</p>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-100 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-2xl overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                    <Box className="w-6 h-6 text-red-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Quantity</p>
-                    <p className="text-base font-black text-gray-900 dark:text-white">{selectedItem.quantity}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Branch</p>
-                    <p className="text-base font-black text-gray-900 dark:text-white">{branches.find(b => b.id.toString() === selectedItem.current_branch_id?.toString())?.branch_name || "B-" + selectedItem.current_branch_id}</p>
+                    <h2 className="text-xl font-bold dark:text-white">{selectedItem.stock_number}</h2>
+                    <span className="text-xs text-gray-500">Item Details</span>
                   </div>
                 </div>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status</p>
-                    <div className="mt-1">{getStatusBadge(selectedItem.status)}</div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Dismantled</p>
-                    <span className={`text-[10px] uppercase font-black px-3 py-1 rounded-full ${selectedItem.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
-                      {selectedItem.is_dismantled ? "Yes" : "No"}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Supplier</p>
-                    <p className="text-base font-black text-gray-900 dark:text-white">{container?.supplier_name || '-'}</p>
-                  </div>
-                </div>
+                <button onClick={() => setViewModalOpen(false)} className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
 
-              <div className="h-px bg-gray-100 dark:bg-zinc-800" />
-
-              {/* Financial Section (Moved from table) */}
-              <div className="grid grid-cols-3 gap-8">
-                <div className="bg-green-50/50 dark:bg-green-900/10 p-6 rounded-3xl border border-green-100/50 dark:border-green-900/20">
-                  <p className="text-[10px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <DollarSign className="w-3 h-3" /> Sale Amount
-                  </p>
-                  <p className="text-xl font-black text-green-700 dark:text-green-300">
-                    {selectedItem.sale_amount ? `AED ${selectedItem.sale_amount}` : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-blue-50/50 dark:bg-blue-900/10 p-6 rounded-3xl border border-blue-100/50 dark:border-blue-900/20">
-                  <p className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <FileText className="w-3 h-3" /> Invoice #
-                  </p>
-                  <p className="text-xl font-black text-blue-700 dark:text-blue-300 uppercase tracking-wider">
-                    {selectedItem.invoice_number || 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-purple-50/50 dark:bg-purple-900/10 p-6 rounded-3xl border border-purple-100/50 dark:border-purple-900/20">
-                  <p className="text-[10px] font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <Calendar className="w-3 h-3" /> Sale Date
-                  </p>
-                  <p className="text-xl font-black text-purple-700 dark:text-purple-300">
-                    {selectedItem.sale_date ? new Date(selectedItem.sale_date).toLocaleDateString() : 'N/A'}
-                  </p>
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <DetailBox label="PO Description" value={selectedItem.po_description} />
+                <DetailBox label="Category" value={stockItems.find(si => si.id === selectedItem.item_id)?.name || selectedItem.item_id} />
+                <DetailBox label="Current Branch" value={branches.find(b => b.id === selectedItem.current_branch_id)?.branch_name || selectedItem.current_branch_id} />
+                <DetailBox label="Status" value={selectedItem.status.toUpperCase()} />
+                <DetailBox label="Quantity" value={`${selectedItem.quantity} units`} />
+                <DetailBox label="Is Dismantled" value={selectedItem.is_dismantled ? "YES" : "NO"} />
               </div>
 
-              <div className="h-px bg-gray-100 dark:bg-zinc-800" />
-
-              {/* Notes Section */}
-              <div className="space-y-8">
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">PO Description</p>
-                  <div className="p-6 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed italic">"{selectedItem.po_description || 'No description provided'}"</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Stock Notes</p>
-                  <div className="p-6 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300 leading-relaxed italic">"{selectedItem.stock_notes || 'No notes available'}"</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-              <button 
-                onClick={() => {
-                  handleEditItem(selectedItem);
-                  setViewModalOpen(false);
-                }} 
-                className="w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black uppercase text-sm tracking-widest rounded-[24px] shadow-2xl hover:shadow-black/20 active:scale-95 transition-all flex items-center justify-center gap-3"
-              >
-                <Pencil className="w-5 h-5" /> Edit This Item
-              </button>
+              {selectedItem.stock_notes && (
+                 <div className="p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl space-y-1 border border-gray-200 dark:border-zinc-800">
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stock Notes</span>
+                    <p className="text-sm text-gray-700 dark:text-zinc-300">"{selectedItem.stock_notes}"</p>
+                 </div>
+              )}
             </div>
           </div>
         </div>
       )}
+
+
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon }) {
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 p-5 rounded-xl flex items-center justify-between hover:border-gray-300 dark:hover:border-zinc-700 transition-colors">
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</p>
+        <p className="text-lg font-bold dark:text-white">{value}</p>
+      </div>
+      <div className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center">
+        {icon}
+      </div>
+    </div>
+  );
+}
+
+function DetailBox({ label, value }) {
+  return (
+    <div className="space-y-1">
+      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+      <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-lg text-sm font-medium dark:text-white border border-gray-200 dark:border-zinc-800">
+        {value || 'N/A'}
+      </div>
     </div>
   );
 }
