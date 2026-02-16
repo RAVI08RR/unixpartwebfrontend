@@ -263,9 +263,9 @@ export default function BranchManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
@@ -286,7 +286,7 @@ export default function BranchManagementPage() {
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Branch Name */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Branch">
                         <div className="flex items-center gap-4">
                           <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                             <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -309,7 +309,7 @@ export default function BranchManagementPage() {
                       </td>
 
                       {/* Branch Code */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Code">
                         {isEditing ? (
                           <input 
                             type="text"
@@ -326,7 +326,7 @@ export default function BranchManagementPage() {
                       </td>
 
                       {/* Revenue */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Revenue">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 text-green-500" />
                           {isEditing ? (
@@ -346,7 +346,7 @@ export default function BranchManagementPage() {
                       </td>
 
                       {/* Outstanding */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Outstanding">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-orange-500" />
                           {isEditing ? (
@@ -366,7 +366,7 @@ export default function BranchManagementPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Status">
                         {isEditing ? (
                            <label className="flex items-center gap-2">
                              <input
@@ -393,7 +393,7 @@ export default function BranchManagementPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                            {isEditing ? (
                               <div className="flex items-center gap-2">
@@ -418,13 +418,14 @@ export default function BranchManagementPage() {
                               <div className="relative">
                                 <button 
                                   onClick={() => toggleMenu(branch.id)}
-                                  className={`p-2.5 rounded-xl transition-all duration-200 ${
+                                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 ${
                                     menuOpenId === branch.id 
                                       ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
-                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105'
+                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                                   }`}
                                   title="More Actions"
                                 >
+                                  <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                                   <MoreVertical className="w-5 h-5" />
                                 </button>
                                 

@@ -228,9 +228,9 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">PO Details</th>
@@ -248,7 +248,7 @@ export default function PurchaseOrdersPage() {
                     <tr key={container.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style={{borderBottom:"0.9px solid #E2E8F0"}}>
                       {/* PO Details */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="PO Details">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Hash className="w-3.5 h-3.5 text-gray-400" />
@@ -261,7 +261,7 @@ export default function PurchaseOrdersPage() {
                       </td>
 
                       {/* Container */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Container">
                         <div className="space-y-1">
                           <p className="text-sm font-bold text-gray-900 dark:text-white">{container.container_code}</p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">{container.container_number}</p>
@@ -273,7 +273,7 @@ export default function PurchaseOrdersPage() {
                       </td>
 
                       {/* Arrival */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Arrival">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
                             <Calendar className="w-3.5 h-3.5" />
@@ -289,7 +289,7 @@ export default function PurchaseOrdersPage() {
                       </td>
 
                       {/* Financial */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Financial">
                         <div className="text-green-600 dark:text-green-400">
                           <span className="text-sm font-bold">
                             AED {parseFloat(container.total_container_revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -298,22 +298,23 @@ export default function PurchaseOrdersPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Status">
                         {getStatusBadge(container.status)}
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
                               onClick={() => toggleMenu(container.id)}
-                              className={`p-2 rounded-xl transition-all ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
                                 menuOpenId === container.id 
                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                               }`}
                             >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
@@ -358,6 +359,7 @@ export default function PurchaseOrdersPage() {
                     </tr>
                   );
                 })
+
               ) : (
                 <tr>
                   <td colSpan="6" className="py-24 text-center">

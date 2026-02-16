@@ -387,8 +387,8 @@ export default function DashboardPage() {
             <button className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400">Others</button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto lg:overflow-x-visible responsive-table-container">
+          <table className="w-full lg:min-w-[800px]">
             <thead className="text-left border-b border-gray-50 dark:border-zinc-800">
               <tr>
                 <th className="pb-4 text-xs font-medium text-gray-400 uppercase tracking-widest">#</th>
@@ -408,8 +408,8 @@ export default function DashboardPage() {
                 { id: 5, name: "POS / Invoicing System", budget: "$0.828", leader: "Isabelle", members: 2 },
               ].map((row, i) => (
                 <tr key={i} className="group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                  <td className="py-6 text-sm text-gray-400">{row.id}</td>
-                  <td className="py-6">
+                  <td className="py-6 text-sm text-gray-400" data-label="#">{row.id}</td>
+                  <td className="py-6" data-label="Name">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-red-600">
                          {i === 0 ? <ShoppingBag className="w-5 h-5" /> : i === 1 ? <Box className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
@@ -417,8 +417,8 @@ export default function DashboardPage() {
                       <span className="text-sm font-bold dark:text-white">{row.name}</span>
                     </div>
                   </td>
-                  <td className="py-6 text-sm font-medium dark:text-gray-300">{row.budget}</td>
-                  <td className="py-6">
+                  <td className="py-6 text-sm font-medium dark:text-gray-300" data-label="Budget">{row.budget}</td>
+                  <td className="py-6" data-label="Team">
                     <div className="flex -space-x-2">
                        {Array.from({ length: Math.min(row.members, 3) }).map((_, j) => (
                          <div key={j} className="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 border-2 border-white dark:border-zinc-900 group-hover:border-gray-50 transition-colors"></div>
@@ -428,8 +428,8 @@ export default function DashboardPage() {
                        )}
                     </div>
                   </td>
-                  <td className="py-6 text-sm font-medium text-gray-600 dark:text-gray-400">{row.leader}</td>
-                  <td className="py-6 text-right">
+                  <td className="py-6 text-sm font-medium text-gray-600 dark:text-gray-400" data-label="Leader">{row.leader}</td>
+                  <td className="py-6 text-right" data-label="Activity Log">
                      <div className="inline-block w-24 h-4 bg-gray-100 dark:bg-zinc-800 rounded relative overflow-hidden">
                         <div className="absolute inset-0 bg-red-600 scale-x-50 origin-left"></div>
                      </div>

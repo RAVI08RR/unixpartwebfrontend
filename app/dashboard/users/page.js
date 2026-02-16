@@ -242,9 +242,9 @@ export default function UserManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
@@ -266,7 +266,7 @@ export default function UserManagementPage() {
                    
                     >
                       {/* Name / User */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="User">
                         <div className="flex items-center gap-4">
                           <img 
                             src={user.profile_image ? userService.getProfileImageUrl(user.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
@@ -284,8 +284,8 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Contact */}
-                      <td className="px-6 py-6">
-                        <div className="space-y-1.5 min-w-[180px]">
+                      <td className="px-6 py-6" data-label="Contact">
+                        <div className="space-y-1.5 sm:min-w-[180px] w-full">
                           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
                             <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
                             <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
@@ -300,7 +300,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Role */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Role">
                         <div className={`role-badge ${
                           user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
                           user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
@@ -315,7 +315,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Branch */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Branch">
                         <div className="flex flex-col gap-1">
                           <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
                              {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
@@ -329,7 +329,7 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Status">
                         <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
                           <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
                           {user.status ? "Active" : "Inactive"}
@@ -337,24 +337,25 @@ export default function UserManagementPage() {
                       </td>
 
                       {/* Last Active */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Last Active">
                         <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
                             {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
                         </span>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
                               onClick={() => toggleMenu(user.id)}
-                              className={`p-2 rounded-xl transition-all menu-button ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
                                 menuOpenId === user.id 
                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                               }`}
                             >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
@@ -392,6 +393,7 @@ export default function UserManagementPage() {
                     </tr>
                   );
                 })
+
               ) : (
                 <tr>
                   <td colSpan="7" className="py-24 text-center">

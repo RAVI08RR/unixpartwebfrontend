@@ -371,7 +371,7 @@ export default function ContainerItemsPage() {
             )}
           </div>
 
-          <div className="relative flex-1 min-w-[300px]">
+          <div className="relative flex-1 sm:min-w-[300px] w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
@@ -385,7 +385,7 @@ export default function ContainerItemsPage() {
           <button
             onClick={handleAddItem}
             className="flex items-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl active:scale-95 btn-add-po"
-            style={{ cursor: "pointer", width: "19rem", textAlign: "center", display: "flex", justifyContent: "center" }}
+            style={{ cursor: "pointer", width: "100%", maxWidth: "19rem", textAlign: "center", display: "flex", justifyContent: "center" }}
           >
             <Plus className="w-4 h-4" />
             Add Item
@@ -393,8 +393,90 @@ export default function ContainerItemsPage() {
         </div>
       </div>
 
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4 mb-6">
+        {paginatedItems.length > 0 ? (
+          paginatedItems.map((item) => (
+            <div key={item.id} className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between p-4 border-b border-gray-50 dark:border-zinc-800 bg-gray-50/30 dark:bg-zinc-800/30">
+                <span className="font-black text-gray-900 dark:text-white text-sm">Id : {item.stock_number}</span>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => handleEditItem(item)} 
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteClick(item)} 
+                    className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Stock Item</span>
+                  <span className="text-gray-900 dark:text-white font-bold text-sm text-right truncate max-w-[150px]">
+                    {stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Branch</span>
+                  <span className="text-gray-900 dark:text-white font-bold text-sm text-right">
+                    {branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase tracking-wider">Status</span>
+                  <div>{getStatusBadge(item.status)}</div>
+                </div>
+              </div>
+
+              <div className="bg-blue-50/50 dark:bg-blue-900/10 p-3 border-t border-blue-100/50 dark:border-blue-900/20">
+                <button 
+                  onClick={() => handleViewItem(item)} 
+                  className="w-full py-2 flex items-center justify-center gap-2 bg-blue-100/50 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400 font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  <Eye className="w-4 h-4" /> View Details
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-12 text-gray-400 font-bold uppercase tracking-widest text-xs border border-dashed border-gray-200 dark:border-zinc-800 rounded-xl">
+            No items found
+          </div>
+        )}
+        
+        {/* Mobile Pagination */}
+        {filteredItems.length > 0 && (
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm mt-4">
+             <button 
+               onClick={handlePrevPage}
+               disabled={currentPage === 1}
+               className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
+             >
+               Prev
+             </button>
+             <span className="text-[10px] font-black text-gray-900 dark:text-white uppercase tracking-widest">
+               Page {currentPage} of {totalPages}
+             </span>
+             <button 
+               onClick={handleNextPage}
+               disabled={currentPage === totalPages || totalPages === 0}
+               className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-lg text-xs font-black uppercase tracking-widest disabled:opacity-50 active:scale-95 transition-transform shadow-sm"
+             >
+               Next
+             </button>
+          </div>
+        )}
+      </div>
+
       {/* Items Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full">
+      <div className="hidden md:block bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full responsive-table-container">
         <div className="overflow-x-auto w-full scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -415,25 +497,26 @@ export default function ContainerItemsPage() {
               {paginatedItems.length > 0 ? (
                 paginatedItems.map((item, idx) => (
                   <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all border-b border-gray-100 dark:border-zinc-800 last:border-0">
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-black text-gray-900 dark:text-white">{item.stock_number}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-bold text-gray-600 dark:text-gray-400">{stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}</span></td>
-                    <td className="px-6 py-4 max-w-xs truncate"><span className="text-sm text-gray-500">{item.po_description}</span></td>
-                    <td className="px-6 py-4 max-w-xs truncate"><span className="text-sm text-gray-500">{item.stock_notes || '-'}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm text-gray-500">{container?.supplier_name || '-'}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm font-black text-gray-900 dark:text-white">{item.quantity}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap"><span className="text-sm text-gray-500">{branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}</span></td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(item.status)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap"><span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${item.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>{item.is_dismantled ? "Yes" : "No"}</span></td>
-                    <td className="px-6 py-4 text-right relative">
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Stock Number"><span className="text-sm font-black text-gray-900 dark:text-white">{item.stock_number}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Item"><span className="text-sm font-bold text-gray-600 dark:text-gray-400">{stockItems.find(si => si.id.toString() === item.item_id?.toString())?.name || "Item " + item.item_id}</span></td>
+                    <td className="px-6 py-4 max-w-xs truncate" data-label="PO Description"><span className="text-sm text-gray-500">{item.po_description}</span></td>
+                    <td className="px-6 py-4 max-w-xs truncate" data-label="Stock Notes"><span className="text-sm text-gray-500">{item.stock_notes || '-'}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Supplier"><span className="text-sm text-gray-500">{container?.supplier_name || '-'}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Qty"><span className="text-sm font-black text-gray-900 dark:text-white">{item.quantity}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Branch"><span className="text-sm text-gray-500">{branches.find(b => b.id.toString() === item.current_branch_id?.toString())?.branch_name || "B-" + item.current_branch_id}</span></td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Status">{getStatusBadge(item.status)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap" data-label="Dismantled"><span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${item.is_dismantled ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>{item.is_dismantled ? "Yes" : "No"}</span></td>
+                    <td className="px-6 py-4 text-right relative" data-label="Actions">
                       <div className="relative flex justify-end action-menu-container">
                         <button 
                           onClick={() => toggleMenu(item.id)}
-                          className={`p-2 rounded-xl transition-all ${
+                          className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
                             menuOpenId === item.id 
                               ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                           }`}
                         >
+                          <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                           <MoreVertical className="w-5 h-5" />
                         </button>
 
@@ -485,6 +568,7 @@ export default function ContainerItemsPage() {
                     </td>
                   </tr>
                 ))
+
               ) : (
                 <tr>
                   <td colSpan="13" className="py-24 text-center">

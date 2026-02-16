@@ -176,9 +176,9 @@ export default function RolesPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
@@ -203,7 +203,7 @@ export default function RolesPage() {
                       borderBottom:'1px solid  #E2E8F0'
                     }}
                     >
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Role Name">
                         <div className="flex items-center gap-4">
                           <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                             <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -215,36 +215,37 @@ export default function RolesPage() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Assigned Users">
                         <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${roleDisplay.badgeColor}`}>
                           <IconComponent className="w-3.5 h-3.5" />
                           {role.name}
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Access Level">
                         <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                           {role.permissions ? `${role.permissions.length} permissions` : 'View Access Level'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Last Updated">
                         <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
                           {role.updated_at ? new Date(role.updated_at).toLocaleDateString() : 'Recently'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
                               onClick={() => toggleMenu(role.id)}
-                              className={`p-2 rounded-xl transition-all ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
                                 menuOpenId === role.id 
                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                               }`}
                             >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             

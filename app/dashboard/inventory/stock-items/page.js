@@ -239,9 +239,9 @@ export default function StockItemsManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Item</th>
@@ -260,7 +260,7 @@ export default function StockItemsManagementPage() {
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Item Name */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Item">
                         <div className="flex items-center gap-4">
                           <div className="w-11 h-11 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                             <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -273,7 +273,7 @@ export default function StockItemsManagementPage() {
                       </td>
 
                       {/* Description */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Description">
                         <div className="max-w-xs">
                           <div className="flex items-start gap-2">
                             <FileText className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
@@ -285,7 +285,7 @@ export default function StockItemsManagementPage() {
                       </td>
 
                       {/* Category */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Category">
                         <div className="flex items-center gap-2">
                           <Tag className="w-4 h-4 text-gray-400" />
                           <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
@@ -295,7 +295,7 @@ export default function StockItemsManagementPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Status">
                         <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
                           <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
                           {item.status ? "Active" : "Inactive"}
@@ -303,7 +303,7 @@ export default function StockItemsManagementPage() {
                       </td>
 
                       {/* Created Date */}
-                      <td className="px-6 py-6">
+                      <td className="px-6 py-6" data-label="Created">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
@@ -313,17 +313,18 @@ export default function StockItemsManagementPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative">
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
                               onClick={() => toggleMenu(item.id)}
-                              className={`p-2 rounded-xl transition-all menu-button ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
                                 menuOpenId === item.id 
                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                               }`}
                             >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
