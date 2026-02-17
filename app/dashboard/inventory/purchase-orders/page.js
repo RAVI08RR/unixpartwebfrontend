@@ -238,7 +238,7 @@ export default function PurchaseOrdersPage() {
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-black dark:text-white">
-                            {parseFloat(po.total_container_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            AED {parseFloat(po.total_container_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       </td>

@@ -186,7 +186,7 @@ export default function PurchaseOrderItemsPage({ params }) {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Total Items" value={items.length} icon={<Package className="w-5 h-5 text-red-600" />} />
         <StatCard label="In Stock" value={items.filter(i => i.status === 'in_stock').length} icon={<Box className="w-5 h-5 text-emerald-600" />} />
-        <StatCard label="Order Revenue" value={`$${parseFloat(purchaseOrder?.total_container_revenue || 0).toLocaleString()}`} icon={<DollarSign className="w-5 h-5 text-blue-600" />} />
+        <StatCard label="Order Revenue" value={`AED ${parseFloat(purchaseOrder?.total_container_revenue || 0).toLocaleString()}`} icon={<DollarSign className="w-5 h-5 text-blue-600" />} />
         <StatCard label="Creation Date" value={purchaseOrder?.created_at ? new Date(purchaseOrder.created_at).toLocaleDateString() : 'N/A'} icon={<Calendar className="w-5 h-5 text-amber-600" />} />
       </div>
 

@@ -31,12 +31,12 @@ export default function AddInvoicePage() {
 
   // Helper function to format currency for customer details
   const formatCurrency = (amount) => {
-    if (!amount) return "₹0.00";
+    if (!amount) return "AED 0.00";
     const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return "₹0.00";
-    return new Intl.NumberFormat('en-IN', {
+    if (isNaN(numAmount)) return "AED 0.00";
+    return new Intl.NumberFormat('en-AE', {
       style: 'currency',
-      currency: 'INR',
+      currency: 'AED',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(numAmount);
