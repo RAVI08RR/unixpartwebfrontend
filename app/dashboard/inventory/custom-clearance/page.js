@@ -275,6 +275,13 @@ export default function CustomClearancePage() {
                             <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                               index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                             }`}>
+                              <Link 
+                                href={`/dashboard/inventory/custom-clearance/items/${container.id}`}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                              >
+                                <Package className="w-4 h-4" />
+                                View Items
+                              </Link>
                               <button 
                                 onClick={() => {
                                   setSelectedContainer(container);
@@ -368,7 +375,7 @@ export default function CustomClearancePage() {
       {/* View Details Modal */}
       {viewModalOpen && selectedContainer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
+          <div className="bg-white dark:bg-zinc-900 rounded-[15px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
             <div className="p-8 space-y-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">

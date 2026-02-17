@@ -80,7 +80,7 @@ export default function AddClearancePage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
           {/* Main Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
