@@ -43,18 +43,20 @@ export default function EditPOItemPage() {
       try {
         setLoading(true);
         const item = await poItemService.getById(itemId);
+        console.log("📦 Loaded PO Item:", item);
         setFormData({
           stock_number: item.stock_number || "",
-          item_id: item.item_id || "",
+          item_id: item.item_id ? String(item.item_id) : "",
           po_description: item.po_description || "",
           stock_notes: item.stock_notes || "",
-          current_branch_id: item.current_branch_id || "",
+          current_branch_id: item.current_branch_id ? String(item.current_branch_id) : "",
           status: item.status || "in_stock",
           quantity: item.quantity || 1,
           po_id: item.po_id || ""
         });
       } catch (err) {
-        showError("Failed to load item details");
+        console.error("Failed to load item:", err);
+        showError("Failed to load item details: " + err.message);
       } finally {
         setLoading(false);
       }
@@ -100,12 +102,12 @@ export default function EditPOItemPage() {
     <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
-          href={`/dashboard/inventory/purchase-orders/items/${formData.po_id}`}
+        <button
+          onClick={() => router.back()}
           className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
+        </button>
         <div>
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Edit PO Item</h1>
           <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Update item details</p>
@@ -228,12 +230,13 @@ export default function EditPOItemPage() {
               <span>{submitting ? 'Updating...' : 'Update Item'}</span>
             </button>
 
-            <Link 
-              href={`/dashboard/inventory/purchase-orders/items/${formData.po_id}`}
+            <button 
+              type="button"
+              onClick={() => router.back()}
               className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
             >
               Cancel
-            </Link>
+            </button>
           </div>
         </form>
       </div>

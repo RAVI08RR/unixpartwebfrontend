@@ -227,18 +227,18 @@ export default function EditPurchaseOrderPage() {
       </div>
 
       {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-4">
         {/* PO ID */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             PO ID <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               type="text"
               placeholder="e.g., PO-2024-001"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
               value={formData.po_id}
               onChange={(e) => setFormData({...formData, po_id: e.target.value})}
             />
@@ -246,14 +246,14 @@ export default function EditPurchaseOrderPage() {
         </div>
 
         {/* Container Code */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Container Code <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full pl-9 pr-8 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.container_id}
               onChange={(e) => setFormData({...formData, container_id: e.target.value})}
             >
@@ -262,19 +262,19 @@ export default function EditPurchaseOrderPage() {
                 <option key={c.id} value={c.id}>{c.container_code}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Supplier */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Supplier <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full pl-9 pr-8 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.supplier_id}
               onChange={(e) => setFormData({...formData, supplier_id: e.target.value})}
             >
@@ -283,20 +283,20 @@ export default function EditPurchaseOrderPage() {
                 <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Arrival Date */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Arrival Date <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               type="date"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               value={formData.arrival_date}
               onChange={(e) => setFormData({...formData, arrival_date: e.target.value})}
             />
@@ -304,14 +304,14 @@ export default function EditPurchaseOrderPage() {
         </div>
 
         {/* Arrival Branch */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Arrival Branch <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full pl-9 pr-8 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.arrival_branch_id}
               onChange={(e) => setFormData({...formData, arrival_branch_id: e.target.value})}
             >
@@ -320,22 +320,22 @@ export default function EditPurchaseOrderPage() {
                 <option key={branch.id} value={branch.id}>{branch.branch_name}</option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Total Container Revenue */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Total Container Revenue (AED)
           </label>
           <div className="relative">
-            <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               type="number"
               step="0.01"
               placeholder="0.00"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
               value={formData.total_container_revenue}
               onChange={(e) => setFormData({...formData, total_container_revenue: e.target.value})}
             />
@@ -343,16 +343,16 @@ export default function EditPurchaseOrderPage() {
         </div>
 
         {/* Items in Stock */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Items in Stock
           </label>
           <div className="relative">
-            <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               type="number"
               placeholder="0"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
               value={formData.items_in_stock}
               onChange={(e) => setFormData({...formData, items_in_stock: e.target.value})}
             />
@@ -360,13 +360,13 @@ export default function EditPurchaseOrderPage() {
         </div>
 
         {/* Status */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Status <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <select 
-              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full pl-3 pr-8 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.status}
               onChange={(e) => setFormData({...formData, status: e.target.value})}
             >
@@ -375,21 +375,21 @@ export default function EditPurchaseOrderPage() {
               <option value="arrived">Arrived</option>
               <option value="completed">Completed</option>
             </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Notes */}
-        <div className="space-y-1.5 lg:col-span-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="space-y-1 lg:col-span-2">
+          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
             Notes <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
           <div className="relative">
-            <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+            <FileText className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
             <textarea 
               placeholder="Additional notes about this purchase order"
               rows={3}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
+              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
             />
@@ -398,16 +398,16 @@ export default function EditPurchaseOrderPage() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-6">
         <button 
           onClick={handleSubmit} 
           disabled={loading}
-          className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
+          className="px-4 py-2 bg-black dark:bg-zinc-800 text-white text-xs font-medium rounded-lg flex items-center justify-center gap-1.5 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
         >
-          <Check className="w-4 h-4" />
+          <Check className="w-3.5 h-3.5" />
           <span>{loading ? "Updating..." : "Update Purchase Order"}</span>
         </button>
-        <Link href="/dashboard/inventory/purchase-orders" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
+        <Link href="/dashboard/inventory/purchase-orders" className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
           Cancel
         </Link>
       </div>

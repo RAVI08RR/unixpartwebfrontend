@@ -81,16 +81,17 @@ export default function AddClearancePage() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[32px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-8 sm:p-12 space-y-12">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
           {/* Main Form Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <FormField label="Container Code" required>
               <div className="relative group">
-                <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. CON-001"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.container_code}
                   onChange={(e) => setFormData({...formData, container_code: e.target.value})}
                   required
@@ -100,11 +101,12 @@ export default function AddClearancePage() {
 
             <FormField label="Container Number" required>
               <div className="relative">
-                <Package className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. CNTR-A123456"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.container_number}
                   onChange={(e) => setFormData({...formData, container_number: e.target.value})}
                   required
@@ -114,11 +116,12 @@ export default function AddClearancePage() {
 
             <FormField label="Vessel Name" required>
               <div className="relative">
-                <Ship className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Ship className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. MSC MARINA"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.vessel_name}
                   onChange={(e) => setFormData({...formData, vessel_name: e.target.value})}
                   required
@@ -128,11 +131,12 @@ export default function AddClearancePage() {
 
             <FormField label="Voyage Number" required>
               <div className="relative">
-                <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Navigation className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. VOY-2023-101"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.voyage_number}
                   onChange={(e) => setFormData({...formData, voyage_number: e.target.value})}
                   required
@@ -142,9 +146,10 @@ export default function AddClearancePage() {
 
             <FormField label="Supplier" required>
               <div className="relative">
-                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <select 
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white appearance-none cursor-pointer"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
                   value={formData.supplier_id}
                   onChange={(e) => setFormData({...formData, supplier_id: e.target.value})}
                   required
@@ -159,9 +164,10 @@ export default function AddClearancePage() {
 
             <FormField label="Destination Branch" required>
               <div className="relative">
-                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <select 
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white appearance-none cursor-pointer"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
                   value={formData.destination_branch_id}
                   onChange={(e) => setFormData({...formData, destination_branch_id: e.target.value})}
                   required
@@ -176,11 +182,12 @@ export default function AddClearancePage() {
 
             <FormField label="Port of Loading">
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. Port of Singapore"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.port_of_loading}
                   onChange={(e) => setFormData({...formData, port_of_loading: e.target.value})}
                 />
@@ -189,11 +196,12 @@ export default function AddClearancePage() {
 
             <FormField label="Port of Discharging">
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. Port of Jebel Ali"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.port_of_discharging}
                   onChange={(e) => setFormData({...formData, port_of_discharging: e.target.value})}
                 />
@@ -202,11 +210,12 @@ export default function AddClearancePage() {
 
             <FormField label="Shipping Agent">
               <div className="relative">
-                <Anchor className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Anchor className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="e.g. Maersk"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.shipping_agent}
                   onChange={(e) => setFormData({...formData, shipping_agent: e.target.value})}
                 />
@@ -215,10 +224,11 @@ export default function AddClearancePage() {
 
             <FormField label="Invoice Date">
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input 
                   type="date"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.invoice_date}
                   onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
                 />
@@ -227,7 +237,8 @@ export default function AddClearancePage() {
 
             <FormField label="Container Size">
                 <select 
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white appearance-none cursor-pointer"
+                  className="w-full px-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
                   value={formData.container_size}
                   onChange={(e) => setFormData({...formData, container_size: e.target.value})}
                 >
@@ -240,7 +251,8 @@ export default function AddClearancePage() {
             <FormField label="Total Packages">
                 <input 
                   type="number" 
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full px-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
                   value={formData.total_packages}
                   onChange={(e) => setFormData({...formData, total_packages: e.target.value})}
                 />
@@ -248,7 +260,8 @@ export default function AddClearancePage() {
 
             <FormField label="Current Status">
                 <select 
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white appearance-none cursor-pointer"
+                  className="w-full px-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
                 >
@@ -261,17 +274,19 @@ export default function AddClearancePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 pt-8 border-t border-gray-100 dark:border-zinc-800">
+          <div className="flex flex-col sm:flex-row items-center gap-2 pt-6 border-t border-gray-100 dark:border-zinc-800">
             <button 
               type="submit"
               disabled={loading}
-              className="w-full sm:flex-1 py-4.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-black/10 hover:-translate-y-1 active:scale-95 transition-all"
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium shadow-sm hover:bg-gray-900 active:scale-95 transition-all disabled:opacity-50"
+              style={{ fontSize: '15px' }}
             >
-              {loading ? 'Registering Record...' : 'Confirm Registration'}
+              {loading ? 'Creating...' : 'Create Clearance'}
             </button>
             <Link 
               href="/dashboard/inventory/custom-clearance"
-              className="w-full sm:w-48 py-4.5 bg-gray-50 dark:bg-zinc-800 text-gray-500 rounded-2xl font-bold text-sm text-center hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              className="px-6 py-3 bg-gray-50 dark:bg-zinc-800 text-gray-500 rounded-lg font-medium text-center hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              style={{ fontSize: '15px' }}
             >
               Cancel
             </Link>
@@ -284,9 +299,9 @@ export default function AddClearancePage() {
 
 function FormField({ label, children, required }) {
   return (
-    <div className="space-y-3">
-      <label className="block text-xs font-black uppercase tracking-[0.2em] text-gray-400 dark:text-zinc-500 px-1">
-        {label} {required ? <span className="text-red-500 font-black">*</span> : <span className="text-gray-400 font-normal text-[10px] ml-1 tracking-normal">(Optional)</span>}
+    <div className="space-y-1">
+      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+        {label} {required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
       </label>
       {children}
     </div>
