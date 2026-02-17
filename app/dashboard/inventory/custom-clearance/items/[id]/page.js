@@ -119,7 +119,7 @@ export default function ContainerItemsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <StatCard label="Total Items" value={items.length} icon={<Package className="w-5 h-5 text-red-600" />} />
         <StatCard label="Total Quantity" value={items.reduce((sum, item) => sum + (item.quantity || 0), 0)} icon={<Box className="w-5 h-5 text-emerald-600" />} />
-        <StatCard label="Total Value" value={`AED ${items.reduce((sum, item) => sum + parseFloat(item.subtotal || 0), 0).toLocaleString()}`} icon={<DollarSign className="w-5 h-5 text-blue-600" />} />
+        <StatCard label="Total Value" value={`AED ${items.reduce((sum, item) => sum + (parseFloat(item.unit_price || 0) * parseInt(item.quantity || 0)), 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} icon={<DollarSign className="w-5 h-5 text-blue-600" />} />
         <StatCard label="Container" value={container?.container_code || 'N/A'} icon={<Package className="w-5 h-5 text-amber-600" />} />
       </div>
 
@@ -185,7 +185,7 @@ export default function ContainerItemsPage() {
                       </td>
                       <td className="px-6 py-4" data-label="Subtotal">
                         <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                          AED {parseFloat(item.subtotal || 0).toFixed(2)}
+                          AED {(parseFloat(item.unit_price || 0) * parseInt(item.quantity || 0)).toFixed(2)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right relative" data-label="Actions">
