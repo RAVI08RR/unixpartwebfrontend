@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   Building2, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  Pencil, Trash2, Check, X, Eye, Calendar,
+  Pencil, Trash2, X, Eye, Calendar,
   MapPin, DollarSign, TrendingUp, AlertCircle
 } from "lucide-react";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -21,6 +21,12 @@ export default function BranchManagementPage() {
   // Data Fetching
   const itemsPerPage = 8;
   const { branches: apiBranches, isLoading, isError, mutate } = useBranches(0, 100);
+
+  // Menu state and modals
+  const [menuOpenId, setMenuOpenId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState(null);
 
   // Handle Data Selection (API only) - Fixed for hydration
   const branches = useMemo(() => {
@@ -65,10 +71,45 @@ export default function BranchManagementPage() {
     setCurrentPage(1);
   }, [branches.length]);
 
-  // Inline Editing State
-  const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
-  const [menuOpenId, setMenuOpenId] = useState(null);
+  const toggleMenu = (id) => {
+    setMenuOpenId(prev => prev === id ? null : id);
+  };
+
+  const handleViewBranch = (branch) => {
+    setSelectedBranch(branch);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeleteClick = (branch) => {
+    setSelectedBranch(branch);
+    setDeleteModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedBranch) return;
+    
+    try {
+      await branchService.delete(selectedBranch.id);
+      mutate();
+      setDeleteModalOpen(false);
+      setSelectedBranch(null);
+    } catch (error) {
+      console.error("Failed to delete branch", error);
+      alert("Failed to delete branch");
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setSelectedBranch(null);
+  };
+
+  const handleViewClose = () => {
+    setViewModalOpen(false);
+    setSelectedBranch(null);
+  };
 
   // Filter and search logic
   const filteredBranches = useMemo(() => {
@@ -99,71 +140,6 @@ export default function BranchManagementPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
-  // Inline Editing Handlers
-  const handleEdit = (branch) => {
-    setEditingId(branch.id);
-    setEditForm({ ...branch });
-    setMenuOpenId(null);
-  };
-
-  const toggleMenu = (id) => {
-    setMenuOpenId(prev => prev === id ? null : id);
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    setEditForm({});
-  };
-
-  const handleSave = async () => {
-    try {
-        // Construct a clean payload for branch update
-        const payload = {
-            branch_name: editForm.branch_name || undefined,
-            branch_code: editForm.branch_code || undefined,
-            status: editForm.status !== undefined ? editForm.status : undefined,
-            total_revenue: editForm.total_revenue || undefined,
-            total_outstanding: editForm.total_outstanding || undefined,
-        };
-
-        // Clean up undefined fields
-        Object.keys(payload).forEach(key => payload[key] === undefined && delete payload[key]);
-
-        console.log("Saving Branch Update:", { id: editingId, payload });
-
-        await branchService.update(editingId, payload);
-        
-        // Success: Refresh and clean up
-        mutate(); 
-        setEditingId(null);
-        setEditForm({});
-        setMenuOpenId(null);
-    } catch (error) {
-        console.error("Update Error Details:", error);
-        alert(`Update Failed: ${error.message}`);
-    }
-  };
-
-  const handleDelete = async (id) => {
-      if(confirm("Are you sure you want to delete this branch?")) {
-          try {
-              await branchService.delete(id);
-              mutate();
-          } catch (error) {
-              console.error("Failed to delete branch", error);
-              alert("Failed to delete branch");
-          }
-      }
-  }
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditForm(prev => ({ 
-      ...prev, 
-      [name]: type === 'checkbox' ? checked : value 
-    }));
-  };
-
   // Format currency
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -172,6 +148,16 @@ export default function BranchManagementPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount || 0);
+  };
+
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   // Show loading state only after component is mounted to prevent hydration mismatch
@@ -279,10 +265,8 @@ export default function BranchManagementPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedBranches.length > 0 ? (
                 paginatedBranches.map((branch, index) => {
-                  const isEditing = editingId === branch.id;
-                  
                   return (
-                    <tr key={branch.id} className={`group transition-all ${isEditing ? 'bg-blue-50/50 dark:bg-blue-900/10' : 'hover:bg-gray-50/50 dark:hover:bg-zinc-800/30'}`}
+                    <tr key={branch.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Branch Name */}
@@ -292,17 +276,7 @@ export default function BranchManagementPage() {
                             <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div>
-                            {isEditing ? (
-                              <input 
-                                type="text"
-                                name="branch_name"
-                                value={editForm.branch_name || ''}
-                                onChange={handleChange}
-                                className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                              />
-                            ) : (
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
-                            )}
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
                             <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {branch.id}</p>
                           </div>
                         </div>
@@ -310,38 +284,18 @@ export default function BranchManagementPage() {
 
                       {/* Branch Code */}
                       <td className="px-6 py-6" data-label="Code">
-                        {isEditing ? (
-                          <input 
-                            type="text"
-                            name="branch_code"
-                            value={editForm.branch_code || ''}
-                            onChange={handleChange}
-                            className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                          />
-                        ) : (
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
-                            <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
-                          </div>
-                        )}
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
+                          <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
+                        </div>
                       </td>
 
                       {/* Revenue */}
                       <td className="px-6 py-6" data-label="Revenue">
                         <div className="flex items-center gap-2">
                           <TrendingUp className="w-4 h-4 text-green-500" />
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              name="total_revenue"
-                              value={editForm.total_revenue || ''}
-                              onChange={handleChange}
-                              className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                              {formatCurrency(branch.total_revenue)}
-                            </span>
-                          )}
+                          <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                            {formatCurrency(branch.total_revenue)}
+                          </span>
                         </div>
                       </td>
 
@@ -349,119 +303,65 @@ export default function BranchManagementPage() {
                       <td className="px-6 py-6" data-label="Outstanding">
                         <div className="flex items-center gap-2">
                           <AlertCircle className="w-4 h-4 text-orange-500" />
-                          {isEditing ? (
-                            <input 
-                              type="number"
-                              name="total_outstanding"
-                              value={editForm.total_outstanding || ''}
-                              onChange={handleChange}
-                              className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1 text-sm font-bold focus:ring-2 focus:ring-blue-500"
-                            />
-                          ) : (
-                            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                              {formatCurrency(branch.total_outstanding)}
-                            </span>
-                          )}
+                          <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                            {formatCurrency(branch.total_outstanding)}
+                          </span>
                         </div>
                       </td>
 
                       {/* Status */}
                       <td className="px-6 py-6" data-label="Status">
-                        {isEditing ? (
-                           <label className="flex items-center gap-2">
-                             <input
-                               type="checkbox"
-                               name="status"
-                               checked={editForm.status || false}
-                               onChange={handleChange}
-                               className="checkbox-black"
-                             />
-                             <span className="text-sm font-medium">Active</span>
-                           </label>
-                        ) : (
-                          <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                            branch.status
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${
-                              branch.status ? 'bg-green-600' : 'bg-red-600'
-                            }`}></div>
-                            {branch.status ? "Active" : "Inactive"}
-                          </div>
-                        )}
+                        <div className={branch.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                          <div className={branch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                          {branch.status ? "Active" : "Inactive"}
+                        </div>
                       </td>
 
                       {/* Actions */}
                       <td className="px-6 py-6 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
-                           {isEditing ? (
-                              <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(branch.id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
+                                menuOpenId === branch.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                              }`}
+                            >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === branch.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
                                 <button 
-                                  onClick={handleSave} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 active:scale-95 font-semibold text-sm" 
-                                  title="Save Changes"
+                                  onClick={() => handleViewBranch(branch)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
-                                  <Check className="w-4 h-4" />
-                                  <span>Save</span>
+                                  <Eye className="w-4 h-4" />
+                                  View Details
                                 </button>
-                                <button 
-                                  onClick={handleCancel} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-sm active:scale-95 font-semibold text-sm" 
-                                  title="Cancel"
+                                <Link 
+                                  href={`/dashboard/administration/branches/edit/${branch.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
-                                  <X className="w-4 h-4" />
-                                  <span>Cancel</span>
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Branch
+                                </Link>
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                <button 
+                                  onClick={() => handleDeleteClick(branch)} 
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Branch
                                 </button>
                               </div>
-                           ) : (
-                              <div className="relative">
-                                <button 
-                                  onClick={() => toggleMenu(branch.id)}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 ${
-                                    menuOpenId === branch.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
-                                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800 hover:scale-105 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                                  }`}
-                                  title="More Actions"
-                                >
-                                  <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
-                                
-                                {menuOpenId === branch.id && (
-                                  <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in zoom-in-95 duration-200 ${
-                                    index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                    <button className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group">
-                                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors">
-                                        <Eye className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                      </div>
-                                      <span>View Details</span>
-                                    </button>
-                                    <button 
-                                      onClick={() => handleEdit(branch)}
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-all duration-200 group"
-                                    >
-                                      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                                        <Pencil className="w-4 h-4 text-green-600 dark:text-green-400" />
-                                      </div>
-                                      <span>Edit Branch</span>
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-2" />
-                                    <button 
-                                      onClick={() => handleDelete(branch.id)} 
-                                      className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-all duration-200 group"
-                                    >
-                                      <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center group-hover:bg-red-200 dark:group-hover:bg-red-900/50 transition-colors">
-                                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                                      </div>
-                                      <span>Delete Branch</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                           )}
+                            )}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -519,6 +419,162 @@ export default function BranchManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* View Branch Modal */}
+      {viewModalOpen && selectedBranch && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                  <Building2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedBranch.branch_name}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">ID: {selectedBranch.id}</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleViewClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Branch Name</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedBranch.branch_name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Branch Code</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">{selectedBranch.branch_code || "Not assigned"}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</label>
+                    <div className={`inline-flex mt-1 ${selectedBranch.status ? 'status-badge-active' : 'status-badge-inactive'}`}>
+                      <div className={selectedBranch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                      {selectedBranch.status ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Revenue</label>
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400 mt-1">
+                      {formatCurrency(selectedBranch.total_revenue)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Outstanding</label>
+                    <p className="text-sm font-bold text-orange-600 dark:text-orange-400 mt-1">
+                      {formatCurrency(selectedBranch.total_outstanding)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Activity</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedBranch.created_at ? new Date(selectedBranch.created_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</label>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white mt-1">
+                      {selectedBranch.updated_at ? new Date(selectedBranch.updated_at).toLocaleString() : "Not available"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleViewClose}
+                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+              <Link 
+                href={`/dashboard/administration/branches/edit/${selectedBranch.id}`}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
+                onClick={handleViewClose}
+              >
+                Edit Branch
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && selectedBranch && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete Branch</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Are you sure you want to delete <span className="font-semibold text-gray-900 dark:text-white">{selectedBranch.branch_name}</span>? 
+                This action cannot be undone.
+              </p>
+              
+              {/* Branch Info */}
+              <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-gray-900 dark:text-white">{selectedBranch.branch_name}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedBranch.branch_code || 'No code'}</p>
+                    <p className="text-xs text-gray-400 dark:text-white">ID: {selectedBranch.id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center gap-3 p-6 border-t border-gray-200 dark:border-zinc-700">
+              <button 
+                onClick={handleDeleteCancel}
+                className="flex-1 px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                className="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Branch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

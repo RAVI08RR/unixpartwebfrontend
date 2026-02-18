@@ -6,7 +6,7 @@ import {
   Package, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, X, Eye, Calendar,
-  Tag, FileText
+  Tag, FileText, ChevronDown, ChevronUp, Wrench
 } from "lucide-react";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { stockItemService } from "@/app/lib/services/stockItemService";
@@ -17,10 +17,26 @@ export default function StockItemsManagementPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [categories, setCategories] = useState([]);
   
   // Data Fetching
   const itemsPerPage = 8;
   const { stockItems: apiStockItems, isLoading, isError, mutate } = useStockItems(0, 100);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const cats = await stockItemService.getCategories();
+        setCategories(cats || []);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Handle Data Selection (API only) - Fixed for hydration
   const stockItems = useMemo(() => {
@@ -71,7 +87,68 @@ export default function StockItemsManagementPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState(null);
 
-  // Filter and search logic
+  // Group items by category
+  const categorizedItems = useMemo(() => {
+    if (!stockItems) return {};
+    
+    const filtered = stockItems.filter(item => {
+      const matchesSearch = 
+        (item.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (item.description?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "All" || 
+        (statusFilter === "Active" && item.status === true) ||
+        (statusFilter === "Inactive" && item.status === false);
+      
+      return matchesSearch && matchesStatus;
+    });
+
+    // Group by parent_category_id
+    const grouped = {};
+    filtered.forEach(item => {
+      const categoryId = item.parent_category_id || 'uncategorized';
+      if (!grouped[categoryId]) {
+        grouped[categoryId] = [];
+      }
+      grouped[categoryId].push(item);
+    });
+
+    return grouped;
+  }, [searchQuery, statusFilter, stockItems]);
+
+  // Get category names from fetched categories
+  const getCategoryName = (categoryId) => {
+    if (categoryId === 'uncategorized') return "Uncategorized";
+    const category = categories.find(cat => cat.id === parseInt(categoryId));
+    return category ? category.name : `Category ${categoryId}`;
+  };
+
+  // Get category description
+  const getCategoryDescription = (categoryId) => {
+    if (categoryId === 'uncategorized') return "Items without a category";
+    const category = categories.find(cat => cat.id === parseInt(categoryId));
+    return category ? category.description : "";
+  };
+
+  // Toggle category expansion
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  // Expand all categories
+  useEffect(() => {
+    const allCategories = Object.keys(categorizedItems);
+    const expanded = {};
+    allCategories.forEach(cat => {
+      expanded[cat] = true;
+    });
+    setExpandedCategories(expanded);
+  }, [categorizedItems]);
+
+  // Filter and search logic (kept for compatibility)
   const filteredStockItems = useMemo(() => {
     if (!stockItems) return [];
     return stockItems.filter(item => {
@@ -86,11 +163,6 @@ export default function StockItemsManagementPage() {
       return matchesSearch && matchesStatus;
     });
   }, [searchQuery, statusFilter, stockItems]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredStockItems.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedStockItems = filteredStockItems.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -238,100 +310,103 @@ export default function StockItemsManagementPage() {
         </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Item</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Created</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedStockItems.length > 0 ? (
-                paginatedStockItems.map((item, index) => {
-                  return (
-                    <tr key={item.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style= {{borderBottom :"0.9px solid #E2E8F0"}}
-                    >
-                      {/* Item Name */}
-                      <td className="px-6 py-6" data-label="Item">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Package className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{item.name || 'N/A'}</p>
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {item.id}</p>
-                          </div>
-                        </div>
-                      </td>
+      {/* Main Content - Category-wise Display */}
+      <div className="space-y-4">
+        {Object.keys(categorizedItems).length > 0 ? (
+          Object.keys(categorizedItems).sort().map((categoryId) => {
+            const items = categorizedItems[categoryId];
+            const isExpanded = expandedCategories[categoryId];
+            
+            return (
+              <div 
+                key={categoryId}
+                className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden"
+              >
+                {/* Category Header */}
+                <button
+                  onClick={() => toggleCategory(categoryId)}
+                  className="w-full flex items-center justify-between p-6 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-600 dark:from-red-600 dark:to-red-700 flex items-center justify-center shadow-lg">
+                      <Wrench className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                        {getCategoryName(categoryId)}
+                      </h3>
+                      <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">
+                        {categoryId !== 'uncategorized' ? `cat-${categoryId}` : 'No category'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-xl">
+                      {items.length} {items.length === 1 ? 'item' : 'items'}
+                    </span>
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                </button>
 
-                      {/* Description */}
-                      <td className="px-6 py-6" data-label="Description">
-                        <div className="max-w-xs">
-                          <div className="flex items-start gap-2">
-                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                {/* Category Items */}
+                {isExpanded && (
+                  <div className="border-t border-gray-100 dark:border-zinc-800">
+                    {items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="group px-6 py-5 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
+                        style={{ borderBottom: index < items.length - 1 ? "0.9px solid #E2E8F0" : "none" }}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          {/* Item Info */}
+                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0">
+                              <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors truncate">
+                                {item.name || 'N/A'}
+                              </p>
+                              <p className="text-xs text-gray-400 mt-0.5 font-medium">
+                                item-{categoryId}-{items.indexOf(item) + 1}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <div className="hidden lg:block flex-1 min-w-0 max-w-md">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                               {item.description || 'No description'}
-                            </span>
+                            </p>
                           </div>
-                        </div>
-                      </td>
 
-                      {/* Category */}
-                      <td className="px-6 py-6" data-label="Category">
-                        <div className="flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                            Category {item.parent_category_id || 'N/A'}
-                          </span>
-                        </div>
-                      </td>
+                          {/* Status */}
+                          <div className="shrink-0">
+                            <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                              <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                              {item.status ? "Active" : "Inactive"}
+                            </div>
+                          </div>
 
-                      {/* Status */}
-                      <td className="px-6 py-6" data-label="Status">
-                        <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                          <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                          {item.status ? "Active" : "Inactive"}
-                        </div>
-                      </td>
-
-                      {/* Created Date */}
-                      <td className="px-6 py-6" data-label="Created">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                            {formatDate(item.created_at)}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
+                          {/* Actions */}
+                          <div className="relative shrink-0">
                             <button 
                               onClick={() => toggleMenu(item.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
                                 menuOpenId === item.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50'
                               }`}
                             >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
                             {menuOpenId === item.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedStockItems.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
+                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
                                 <button 
                                   onClick={() => handleViewStockItem(item)}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
@@ -358,61 +433,18 @@ export default function StockItemsManagementPage() {
                             )}
                           </div>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No stock items found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredStockItems.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredStockItems.length}</span> entries
-          </p>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all pagination-button ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10 pagination-active' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button 
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        ) : (
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm p-24 text-center">
+            <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No stock items found</p>
           </div>
-        </div>
+        )}
       </div>
 
       {/* View Stock Item Modal */}

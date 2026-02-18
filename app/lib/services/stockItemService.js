@@ -29,18 +29,23 @@ export const stockItemService = {
 
   // Get categories
   getCategories: async () => {
-    // Return fallback categories since the backend categories endpoint 
-    // doesn't exist or requires different parameters
-    return [
-      { id: 1, name: "Engine Parts" },
-      { id: 2, name: "Transmission Parts" },
-      { id: 3, name: "Brake Parts" },
-      { id: 4, name: "Electrical Parts" },
-      { id: 5, name: "Body Parts" },
-      { id: 6, name: "Interior Parts" },
-      { id: 7, name: "Suspension Parts" },
-      { id: 8, name: "Exhaust Parts" }
-    ];
+    try {
+      const response = await fetchApi('/api/stock-items/categories');
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+      // Return fallback categories if API fails
+      return [
+        { id: 1, name: "Engine Parts", description: "All engine related components" },
+        { id: 2, name: "Body Parts", description: "Exterior and interior body components" },
+        { id: 3, name: "Electrical", description: "Electrical components and systems" },
+        { id: 4, name: "Transmission", description: "Transmission and drivetrain parts" },
+        { id: 5, name: "Suspension", description: "Suspension and steering components" },
+        { id: 6, name: "Brakes", description: "Brake system components" },
+        { id: 7, name: "Cooling System", description: "Radiators, fans, and cooling parts" },
+        { id: 8, name: "Exhaust System", description: "Exhaust pipes, mufflers, and catalytic converters" }
+      ];
+    }
   },
 
   // Get sub items by parent ID
