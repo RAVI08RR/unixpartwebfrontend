@@ -5,11 +5,25 @@
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    // Await params in Next.js 15+
+    const { id } = await params;
+    
+    // Convert ID to integer to match backend expectations
+    const branchId = parseInt(id, 10);
+    
+    if (isNaN(branchId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid branch ID' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
     
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    const backendUrl = `${apiBaseUrl}/api/branches/${id}`;
+    const backendUrl = `${apiBaseUrl}/api/branches/${branchId}`;
     
     console.log('Branch by ID proxy - Backend URL:', backendUrl);
     
@@ -59,12 +73,26 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    // Await params in Next.js 15+
+    const { id } = await params;
     const branchData = await request.json();
+    
+    // Convert ID to integer to match backend expectations
+    const branchId = parseInt(id, 10);
+    
+    if (isNaN(branchId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid branch ID' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
     
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    const backendUrl = `${apiBaseUrl}/api/branches/${id}`;
+    const backendUrl = `${apiBaseUrl}/api/branches/${branchId}`;
     
     console.log('Branch update proxy - Backend URL:', backendUrl);
     console.log('Branch update proxy - Data:', branchData);
@@ -116,11 +144,25 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    // Await params in Next.js 15+
+    const { id } = await params;
+    
+    // Convert ID to integer to match backend expectations
+    const branchId = parseInt(id, 10);
+    
+    if (isNaN(branchId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid branch ID' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
     
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    const backendUrl = `${apiBaseUrl}/api/branches/${id}`;
+    const backendUrl = `${apiBaseUrl}/api/branches/${branchId}`;
     
     console.log('Branch delete proxy - Backend URL:', backendUrl);
     
