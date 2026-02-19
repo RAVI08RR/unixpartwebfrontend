@@ -76,11 +76,12 @@ export default function PurchaseOrdersPage() {
       await purchaseOrderService.delete(selectedPO.id);
       success("Purchase order deleted successfully!");
       setDeleteModalOpen(false);
+      setSelectedPO(null);
       refetch();
     } catch (err) {
       const errorMsg = err.message || "Unknown error";
       if (errorMsg.includes("Cannot delete purchase order with items")) {
-        setDeleteError("This purchase order has items. Please delete all items first.");
+        setDeleteError("This purchase order has items. Please delete all items first before deleting the purchase order.");
       } else {
         setDeleteError(errorMsg);
         error("Failed to delete purchase order: " + errorMsg);
@@ -399,6 +400,7 @@ export default function PurchaseOrdersPage() {
                 onClick={() => {
                   setDeleteModalOpen(false);
                   setDeleteError(null);
+                  setSelectedPO(null);
                 }}
                 className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
               >

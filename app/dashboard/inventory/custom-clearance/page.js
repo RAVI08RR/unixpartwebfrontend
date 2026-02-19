@@ -42,6 +42,7 @@ export default function CustomClearancePage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
 
   // Filter and search logic
   const filteredContainers = useMemo(() => {
@@ -73,13 +74,22 @@ export default function CustomClearancePage() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedContainer) return;
+    setDeleteError(null);
     try {
       await containerService.delete(selectedContainer.id);
       showSuccess("Clearance record deleted successfully!");
       setDeleteModalOpen(false);
+      setSelectedContainer(null);
       refetch();
     } catch (err) {
-      showError("Failed to delete clearance: " + err.message);
+      const errorMsg = err.message || "Unknown error";
+      console.warn("📦 Container deletion failed:", errorMsg);
+      if (errorMsg.includes("Cannot delete container with items")) {
+        setDeleteError("This container has items. Please delete all items first before deleting the container.");
+      } else {
+        setDeleteError(errorMsg);
+        showError("Failed to delete clearance: " + errorMsg);
+      }
     }
   };
 
@@ -438,19 +448,46 @@ export default function CustomClearancePage() {
                 Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedContainer?.container_code}</span>? This action cannot be undone.
               </p>
             </div>
+
+            {deleteError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                  <div className="text-left space-y-2">
+                    <p className="text-sm font-bold text-red-900 dark:text-red-200">
+                      {deleteError}
+                    </p>
+                    <Link
+                      href={`/dashboard/inventory/custom-clearance/items/${selectedContainer?.id}`}
+                      className="inline-flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400 hover:underline"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      View & Delete Items First
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4">
               <button 
-                onClick={() => setDeleteModalOpen(false)}
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteError(null);
+                  setSelectedContainer(null);
+                }}
                 className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleDeleteConfirm}
-                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
-              >
-                Delete
-              </button>
+              {!deleteError && (
+                <button 
+                  onClick={handleDeleteConfirm}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         </div>
