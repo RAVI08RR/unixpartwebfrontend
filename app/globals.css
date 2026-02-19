@@ -1975,6 +1975,11 @@ a.bg-black svg,
     box-shadow: none !important;
   }
 
+  .btn-mobile-arrange {
+    display: flex;
+    flex-wrap: wrap;
+}
+
   .responsive-table-container table, 
   .responsive-table-container thead, 
   .responsive-table-container tbody, 
