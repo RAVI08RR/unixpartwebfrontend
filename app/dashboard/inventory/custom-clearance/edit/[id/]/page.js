@@ -32,7 +32,7 @@ export default function EditClearancePage({ params }) {
     shipping_agent: "",
     port_of_loading: "",
     port_of_discharging: "",
-    container_size: "40ft",
+    container_size: "1 × 40FT",
     total_packages: 1,
     notify_user_id: 1,
     status: "draft",
@@ -56,7 +56,7 @@ export default function EditClearancePage({ params }) {
             shipping_agent: data.shipping_agent || "",
             port_of_loading: data.port_of_loading || "",
             port_of_discharging: data.port_of_discharging || "",
-            container_size: data.container_size || "40ft",
+            container_size: data.container_size || "1 × 40FT",
             total_packages: data.total_packages || 1,
             notify_user_id: data.notify_user_id || 1,
             status: data.status || "draft",
@@ -276,9 +276,9 @@ export default function EditClearancePage({ params }) {
                   value={formData.container_size}
                   onChange={(e) => setFormData({...formData, container_size: e.target.value})}
                 >
-                  <option value="20ft">20ft Standard</option>
-                  <option value="40ft">40ft Standard</option>
-                  <option value="40ft HC">40ft High Cube</option>
+                  <option value="1 × 40FT">1 × 40FT</option>
+                  <option value="1 × 20FT">1 × 20FT</option>
+                  <option value="2 × 20FT">2 × 20FT</option>
                 </select>
             </FormField>
 
@@ -289,19 +289,6 @@ export default function EditClearancePage({ params }) {
                   value={formData.total_packages}
                   onChange={(e) => setFormData({...formData, total_packages: e.target.value})}
                 />
-            </FormField>
-
-            <FormField label="Current Status">
-                <select 
-                  className="w-full px-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white appearance-none cursor-pointer"
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="arrived">Arrived</option>
-                  <option value="cleared">Cleared</option>
-                </select>
             </FormField>
           </div>
 

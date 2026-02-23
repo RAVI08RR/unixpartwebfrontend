@@ -41,7 +41,7 @@ export default function AddClearancePage() {
     shipping_agent: "",
     port_of_loading: "",
     port_of_discharging: "",
-    container_size: "40ft",
+    container_size: "1 × 40FT",
     total_packages: 1,
     notify_user_id: 1,
     status: "",
@@ -290,9 +290,9 @@ export default function AddClearancePage() {
                   value={formData.container_size}
                   onChange={(e) => setFormData({...formData, container_size: e.target.value})}
                 >
-                  <option value="20ft">20ft Standard</option>
-                  <option value="40ft">40ft Standard</option>
-                  <option value="40ft HC">40ft High Cube</option>
+                  <option value="1 × 40FT">1 × 40FT</option>
+                  <option value="1 × 20FT">1 × 20FT</option>
+                  <option value="2 × 20FT">2 × 20FT</option>
                 </select>
             </FormField>
 
@@ -304,19 +304,6 @@ export default function AddClearancePage() {
                   value={formData.total_packages}
                   onChange={(e) => setFormData({...formData, total_packages: e.target.value})}
                 />
-            </FormField>
-
-            <FormField label="Current Status">
-                <select 
-                  className="w-full px-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
-                  style={{ height: '45px' }}
-                  value={formData.status}
-                  onChange={(e) => setFormData({...formData, status: e.target.value})}
-                >
-                  <option value="">Select Status</option>
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                </select>
             </FormField>
           </div>
 
