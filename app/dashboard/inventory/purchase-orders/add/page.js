@@ -34,7 +34,7 @@ export default function AddPurchaseOrderPage() {
     container_id: "",
     total_container_revenue: "0.00",
     items_in_stock: 0,
-    status: "pending",
+    status: "",
     notes: ""
   });
 
@@ -187,12 +187,14 @@ export default function AddPurchaseOrderPage() {
               </div>
             </FormField>
 
-            <FormField label="Status" required>
+            <FormField label="Status">
               <select 
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                 value={formData.status}
                 onChange={(e) => setFormData({...formData, status: e.target.value})}
               >
+                <option value="">Select Status</option>
+                <option value="draft">Draft</option>
                 <option value="pending">Pending</option>
                 <option value="active">Active</option>
                 <option value="in_stock">In Stock</option>

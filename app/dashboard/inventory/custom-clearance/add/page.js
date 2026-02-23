@@ -1,24 +1,35 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Ship, Hash, Navigation, Anchor, MapPin, 
-  Package, Calendar, Building2, User as UserIcon, Shield,
-  Receipt, Truck, Info, AlertCircle, Save, X
+  Package, Calendar, Building2, User as UserIcon,
+  Save, X, Tag
 } from "lucide-react";
 import { containerService } from "@/app/lib/services/containerService";
+import { containerItemService } from "@/app/lib/services/containerItemService";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
+import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 
 export default function AddClearancePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [createdContainer, setCreatedContainer] = useState(null);
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [submittingItem, setSubmittingItem] = useState(false);
   const { success: showSuccess, error: showError } = useToast();
   const { suppliers } = useSuppliers();
   const { branches } = useBranches();
+  const { stockItems: apiStockItems } = useStockItems(0, 100);
+
+  const stockItems = useMemo(() => {
+    if (!apiStockItems) return [];
+    return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
+  }, [apiStockItems]);
   
   const [formData, setFormData] = useState({
     container_code: "",
@@ -33,11 +44,18 @@ export default function AddClearancePage() {
     container_size: "40ft",
     total_packages: 1,
     notify_user_id: 1,
-    status: "draft",
+    status: "",
     invoice_date: new Date().toISOString().split('T')[0]
   });
 
-  const handleSubmit = async (e) => {
+  const [itemFormData, setItemFormData] = useState({
+    item_id: "",
+    item_description: "",
+    quantity: 1,
+    unit_price: "0.00"
+  });
+
+  const handleSubmit = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
     
     if(!formData.container_code || !formData.container_number || !formData.vessel_name || !formData.supplier_id || !formData.destination_branch_id) {
@@ -54,13 +72,43 @@ export default function AddClearancePage() {
             total_packages: parseInt(formData.total_packages)
         };
 
-        await containerService.create(payload);
+        const result = await containerService.create(payload);
+        setCreatedContainer(result);
         showSuccess("Custom clearance record created successfully!");
-        router.push("/dashboard/inventory/custom-clearance");
+        
+        if (shouldAddItems) {
+            setItemModalOpen(true);
+        } else {
+            router.push("/dashboard/inventory/custom-clearance");
+        }
     } catch (err) {
         showError(`Failed to create clearance: ${err.message}`);
     } finally {
         setLoading(false);
+    }
+  };
+
+  const handleCreateItem = async (e) => {
+    if (e) e.preventDefault();
+    if (!createdContainer) return;
+
+    setSubmittingItem(true);
+    try {
+        const payload = {
+            container_id: parseInt(createdContainer.id),
+            item_id: parseInt(itemFormData.item_id),
+            item_description: itemFormData.item_description || null,
+            quantity: parseInt(itemFormData.quantity),
+            unit_price: parseFloat(itemFormData.unit_price)
+        };
+
+        await containerItemService.create(payload);
+        showSuccess("Item added successfully!");
+        router.push(`/dashboard/inventory/custom-clearance/items/${createdContainer.id}`);
+    } catch (err) {
+        showError(`Failed to add item: ${err.message}`);
+    } finally {
+        setSubmittingItem(false);
     }
   };
 
@@ -81,7 +129,7 @@ export default function AddClearancePage() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-8">
+        <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 sm:p-8 space-y-8">
           {/* Main Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
             <FormField label="Container Code" required>
@@ -265,10 +313,9 @@ export default function AddClearancePage() {
                   value={formData.status}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
                 >
+                  <option value="">Select Status</option>
                   <option value="draft">Draft</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="arrived">Arrived</option>
-                  <option value="cleared">Cleared</option>
+                  <option value="active">Active</option>
                 </select>
             </FormField>
           </div>
@@ -276,9 +323,19 @@ export default function AddClearancePage() {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center gap-2 pt-6 border-t border-gray-100 dark:border-zinc-800">
             <button 
+              type="button"
+              onClick={(e) => handleSubmit(e, true)}
+              disabled={loading}
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium shadow-sm hover:bg-gray-900 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+              style={{ fontSize: '15px' }}
+            >
+              <Save className="w-4 h-4" />
+              <span>{loading ? 'Saving...' : 'Save and Add Items'}</span>
+            </button>
+            <button 
               type="submit"
               disabled={loading}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium shadow-sm hover:bg-gray-900 active:scale-95 transition-all disabled:opacity-50"
+              className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all disabled:opacity-50"
               style={{ fontSize: '15px' }}
             >
               {loading ? 'Creating...' : 'Create Clearance'}
@@ -293,6 +350,105 @@ export default function AddClearancePage() {
           </div>
         </form>
       </div>
+
+      {/* Add Item Modal */}
+      {itemModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-zinc-800">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add Item to Container</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Container: {createdContainer?.container_code}</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setItemModalOpen(false);
+                  router.push(`/dashboard/inventory/custom-clearance/items/${createdContainer.id}`);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleCreateItem} className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Category" required>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                    <select 
+                      required
+                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                      value={itemFormData.item_id}
+                      onChange={e => setItemFormData({...itemFormData, item_id: e.target.value})}
+                    >
+                      <option value="">Select Item Category</option>
+                      {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
+                    </select>
+                  </div>
+                </FormField>
+
+                <FormField label="Quantity" required>
+                  <input 
+                    type="number"
+                    required
+                    min="1"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    placeholder="1"
+                    value={itemFormData.quantity}
+                    onChange={e => setItemFormData({...itemFormData, quantity: e.target.value})}
+                  />
+                </FormField>
+              </div>
+
+              <FormField label="Item Description" required>
+                <input 
+                  required
+                  placeholder="e.g. Engine Block - High quality part"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                  value={itemFormData.item_description}
+                  onChange={e => setItemFormData({...itemFormData, item_description: e.target.value})}
+                />
+              </FormField>
+
+              <FormField label="Unit Price (AED)">
+                <input 
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                  value={itemFormData.unit_price}
+                  onChange={e => setItemFormData({...itemFormData, unit_price: e.target.value})}
+                />
+              </FormField>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setItemModalOpen(false);
+                    router.push(`/dashboard/inventory/custom-clearance/items/${createdContainer.id}`);
+                  }}
+                  className="px-6 py-3 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={submittingItem}
+                  className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50"
+                >
+                  {submittingItem ? 'Adding Item...' : 'Add Item'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

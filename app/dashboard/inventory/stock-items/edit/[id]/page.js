@@ -15,6 +15,7 @@ export default function EditStockItemPage() {
   
   const [loading, setLoading] = useState(false);
   const [stockItemLoading, setStockItemLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +23,16 @@ export default function EditStockItemPage() {
     parent_category_id: "",
     status: true
   });
+
+  // Load categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      const categoriesData = await stockItemService.getCategories();
+      setCategories(categoriesData);
+    };
+    
+    loadCategories();
+  }, []);
 
   // Fetch stock item data
   useEffect(() => {
@@ -167,20 +178,25 @@ export default function EditStockItemPage() {
           </div>
         </div>
 
-        {/* Category ID */}
+        {/* Parent Category */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Category ID
+            Parent Category
           </label>
           <div className="relative">
-            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="number"
-              placeholder="Enter category ID"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+            <select 
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.parent_category_id}
               onChange={(e) => setFormData({...formData, parent_category_id: e.target.value})}
-            />
+            >
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
