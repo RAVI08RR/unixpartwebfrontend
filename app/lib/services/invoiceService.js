@@ -175,4 +175,42 @@ export const invoiceService = {
       throw new Error('Cannot add payment: Backend server is unavailable. Please try again later.');
     }
   },
+
+  // Save invoice (alternative endpoint)
+  save: async (invoiceData) => {
+    try {
+      return await fetchApi('/api/invoices/save', {
+        method: 'POST',
+        body: JSON.stringify(invoiceData),
+      });
+    } catch (error) {
+      console.warn('📋 Save invoice failed, backend unavailable:', error.message);
+      throw new Error('Cannot save invoice: Backend server is unavailable. Please try again later.');
+    }
+  },
+
+  // Get all payments across all invoices
+  getAllPayments: async () => {
+    try {
+      return await fetchApi('/api/invoices/payments/all');
+    } catch (error) {
+      console.warn('📋 Get all payments service falling back to empty array:', error.message);
+      return []; // Return empty array as fallback
+    }
+  },
+
+  // Get outstanding balance with different view types
+  // view_type: 'customer', 'branch', 'supplier', 'invoice', 'stock_number'
+  getOutstandingBalance: async (viewType, filterValue = null) => {
+    try {
+      let url = `/api/invoices/outstanding-balance/${viewType}`;
+      if (filterValue) {
+        url += `?filter_value=${encodeURIComponent(filterValue)}`;
+      }
+      return await fetchApi(url);
+    } catch (error) {
+      console.warn('📋 Get outstanding balance service falling back to empty array:', error.message);
+      return []; // Return empty array as fallback
+    }
+  },
 };
