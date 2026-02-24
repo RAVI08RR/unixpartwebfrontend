@@ -1,35 +1,60 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  Receipt, User, Calendar, FileText, 
-  Check, X, Hash, Building2, ArrowLeft
+  Receipt, User, Calendar, FileText, Check, X, Hash, 
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
+import { useToast } from "@/app/components/Toast";
 
 export default function AddInvoicePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const { success, error: showError } = useToast();
   
   const [formData, setFormData] = useState({
     invoice_number: "",
     customer_id: "",
-    invoice_date: new Date().toISOString().split('T')[0], // Today's date
+    invoice_date: new Date().toISOString().split('T')[0],
+    invoice_by: 1, // Current user ID
     invoice_status: "pending",
-    overall_load_status: "pending",
+    overall_load_status: "not_loaded",
     invoice_notes: "",
-    items: []
+    items: [],
+    payments: []
   });
 
   // Selected customer details
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-  // Helper function to format currency for customer details
+  // Calculate totals
+  const totals = useMemo(() => {
+    const itemsTotal = formData.items.reduce((sum, item) => {
+      const saleAmt = parseFloat(item.sale_amount) || 0;
+      const discount = parseFloat(item.discount) || 0;
+      return sum + (saleAmt - discount);
+    }, 0);
+
+    const totalPaid = formData.payments.reduce((sum, payment) => {
+      return sum + (parseFloat(payment.amount) || 0);
+    }, 0);
+
+    const balanceDue = itemsTotal - totalPaid;
+
+    return {
+      itemsTotal,
+      totalPaid,
+      balanceDue
+    };
+  }, [formData.items, formData.payments]);
+
+  // Format currency
   const formatCurrency = (amount) => {
     if (!amount) return "AED 0.00";
     const numAmount = parseFloat(amount);
@@ -42,11 +67,9 @@ export default function AddInvoicePage() {
     }).format(numAmount);
   };
 
-  // Handle customer selection change
+  // Handle customer selection
   const handleCustomerChange = (customerId) => {
     setFormData({...formData, customer_id: customerId});
-    
-    // Find and set selected customer details
     if (customerId) {
       const customer = customers.find(c => c.id === parseInt(customerId));
       setSelectedCustomer(customer);
@@ -55,190 +78,188 @@ export default function AddInvoicePage() {
     }
   };
 
+  // Fetch customers
   useEffect(() => {
     const fetchCustomers = async () => {
       setCustomersLoading(true);
       try {
-        console.log('🔄 Starting to fetch customers...');
         const customersData = await customerService.getAll();
-        
-        console.log('📊 Fetched customers:', customersData?.length || 0);
-        
         if (customersData && customersData.length > 0) {
           setCustomers(customersData);
-          console.log('✅ Customers set:', customersData);
-        } else {
-          console.log('❌ No customers data from API');
-          setCustomers([]);
         }
-        
       } catch (error) {
-        console.error("❌ Failed to fetch customers:", error);
-        setCustomers([]);
+        console.error("Failed to fetch customers:", error);
       } finally {
         setCustomersLoading(false);
       }
     };
-    
     fetchCustomers();
   }, []);
 
+  // Add invoice item
+  const addItem = () => {
+    setFormData({
+      ...formData,
+      items: [
+        ...formData.items,
+        {
+          stock_number: "",
+          item_description: "",
+          sale_description: "",
+          sale_amount: "",
+          discount: "",
+          discount_details: "",
+          paid_amount: 0,
+          load_status: "not_loaded",
+          load_datetime: ""
+        }
+      ]
+    });
+  };
+
+  // Remove invoice item
+  const removeItem = (index) => {
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData({...formData, items: newItems});
+  };
+
+  // Update invoice item
+  const updateItem = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index][field] = value;
+    setFormData({...formData, items: newItems});
+  };
+
+  // Add payment row
+  const addPayment = () => {
+    setFormData({
+      ...formData,
+      payments: [
+        ...formData.payments,
+        {
+          payment_type: "cash",
+          payment_date: new Date().toISOString().split('T')[0],
+          received_by: "",
+          amount: "",
+          payment_notes: ""
+        }
+      ]
+    });
+  };
+
+  // Remove payment row
+  const removePayment = (index) => {
+    const newPayments = formData.payments.filter((_, i) => i !== index);
+    setFormData({...formData, payments: newPayments});
+  };
+
+  // Update payment
+  const updatePayment = (index, field, value) => {
+    const newPayments = [...formData.payments];
+    newPayments[index][field] = value;
+    setFormData({...formData, payments: newPayments});
+  };
+
+  // Distribute payment across items based on formula
+  // paid amount of item = (item sale amount / total invoice sale amount) * current payment
+  const distributePayment = () => {
+    if (formData.items.length === 0 || totals.totalPaid === 0) return;
+
+    const newItems = formData.items.map(item => {
+      const itemAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+      const itemPaidAmount = (itemAmount / totals.itemsTotal) * totals.totalPaid;
+      return {
+        ...item,
+        paid_amount: itemPaidAmount.toFixed(2)
+      };
+    });
+
+    setFormData({...formData, items: newItems});
+  };
+
+  // Auto-distribute when payments change
+  useEffect(() => {
+    if (formData.items.length > 0 && formData.payments.length > 0) {
+      distributePayment();
+    }
+  }, [formData.payments]);
+
+  // Submit form
   const handleSubmit = async () => {
-      // Basic validation
-      if(!formData.invoice_number || !formData.customer_id || !formData.invoice_date) {
-          alert("Please fill in all required fields (Invoice Number, Customer, and Date)");
-          return;
-      }
+    if(!formData.invoice_number || !formData.customer_id || !formData.invoice_date) {
+      showError("Please fill in all required fields");
+      return;
+    }
 
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-          alert("Your session has expired or you are not logged in. Please log in again.");
-          router.push("/");
-          return;
-      }
+    setLoading(true);
+    try {
+      const payload = {
+        invoice_number: formData.invoice_number.trim(),
+        customer_id: parseInt(formData.customer_id),
+        invoice_date: formData.invoice_date,
+        invoice_by: formData.invoice_by,
+        invoice_status: formData.invoice_status,
+        overall_load_status: formData.overall_load_status,
+        invoice_notes: formData.invoice_notes?.trim() || null,
+        invoice_total: totals.itemsTotal.toString(),
+        paid_amount: totals.totalPaid.toString(),
+        outstanding_amount: totals.balanceDue.toString(),
+        items: formData.items,
+        payments: formData.payments
+      };
 
-      setLoading(true);
-      try {
-          // Prepare payload matching InvoiceCreate schema
-          const payload = {
-              invoice_number: formData.invoice_number.trim(),
-              customer_id: parseInt(formData.customer_id),
-              invoice_date: formData.invoice_date,
-              invoice_status: formData.invoice_status || "pending",
-              overall_load_status: formData.overall_load_status || "pending",
-              invoice_notes: formData.invoice_notes?.trim() || null,
-              items: formData.items || []
-          };
-
-          // Final check for valid numeric IDs
-          if (isNaN(payload.customer_id)) {
-            alert("Error: The selected Customer has an invalid ID. Please try selecting it again.");
-            setLoading(false);
-            return;
-          }
-
-          console.log("🚀 SUBMITTING NEW INVOICE:", {
-            token: !!token,
-            payload
-          });
-
-          const result = await invoiceService.create(payload);
-          console.log("✅ Invoice creation successful:", result);
-          alert("✅ Invoice created successfully!");
-          router.push("/dashboard/sales/invoices");
-      } catch (error) {
-          console.error("❌ CREATE INVOICE FAILED:", error);
-          
-          // Try to show the most helpful error message
-          let detailedMsg = error.message;
-          if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: Please check if the Invoice Number is already taken, or if required fields are missing.";
-          } else if (detailedMsg.includes("400")) {
-            detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
-          } else if (detailedMsg.includes("401")) {
-            detailedMsg = "Authentication Error: Please log in again.";
-          } else if (detailedMsg.includes("500")) {
-            detailedMsg = "Server Error: Please try again later or contact support.";
-          }
-          
-          alert(`Failed to create invoice: ${detailedMsg}`);
-      } finally {
-          setLoading(false);
-      }
+      await invoiceService.create(payload);
+      success("Invoice created successfully!");
+      router.push("/dashboard/sales/invoices");
+    } catch (error) {
+      showError("Failed to create invoice: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/dashboard/sales/invoices" 
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Invoice</h1>
-            <p className="text-gray-500 text-sm">Create a new sales invoice</p>
-          </div>
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/dashboard/sales/invoices" 
+          className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-black dark:text-white tracking-tight">Create New Invoice</h1>
+          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Fill in the details below to create an invoice</p>
         </div>
       </div>
 
-      {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-        {/* Invoice Number */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Invoice Number <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      {/* Main Form */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-6">
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField label="Invoice Number" required>
             <input 
               type="text"
-              placeholder="e.g. INV-001"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              placeholder="INV-001"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.invoice_number}
               onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
             />
-          </div>
-        </div>
+          </FormField>
 
-        {/* Customer */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Customer <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-              value={formData.customer_id}
-              onChange={(e) => handleCustomerChange(e.target.value)}
-              disabled={customersLoading}
-            >
-              <option value="">
-                {customersLoading 
-                  ? "Loading customers..." 
-                  : customers.length === 0 
-                    ? "No customers available" 
-                    : "Select Customer"
-                }
-              </option>
-              {customers.map(customer => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.full_name} - {customer.business_name || customer.customer_code}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Invoice Date */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Invoice Date <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <FormField label="Date & Time" required>
             <input 
               type="date"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.invoice_date}
               onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
             />
-          </div>
-        </div>
+          </FormField>
 
-        {/* Invoice Status */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Invoice Status
-          </label>
-          <div className="relative">
-            <Receipt className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <FormField label="Invoice Status" required>
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.invoice_status}
               onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
             >
@@ -247,143 +268,346 @@ export default function AddInvoicePage() {
               <option value="overdue">Overdue</option>
               <option value="cancelled">Cancelled</option>
             </select>
-          </div>
+          </FormField>
         </div>
 
-        {/* Overall Load Status */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Load Status
-          </label>
-          <div className="relative">
-            <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Overall Load Status" required>
             <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.overall_load_status}
               onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
             >
-              <option value="pending">Pending</option>
+              <option value="not_loaded">Not Loaded</option>
               <option value="loaded">Loaded</option>
               <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
             </select>
-          </div>
+          </FormField>
+
+          <FormField label="Customer" required>
+            <select 
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.customer_id}
+              onChange={(e) => handleCustomerChange(e.target.value)}
+              disabled={customersLoading}
+            >
+              <option value="">Select a customer...</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.full_name} - {customer.customer_code}
+                </option>
+              ))}
+            </select>
+          </FormField>
         </div>
 
-        {/* Invoice Notes - Full Width */}
-        <div className="space-y-1.5 lg:col-span-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Invoice Notes <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
-          <div className="relative">
-            <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-            <textarea 
-              placeholder="Add any notes or comments about this invoice..."
-              rows={4}
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
-              value={formData.invoice_notes}
-              onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Customer Details Section - Show when customer is selected */}
-      {selectedCustomer && (
-        <div className="lg:col-span-2 mt-6">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                <User className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        {/* Customer Details */}
+        {selectedCustomer && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Customer Details</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Name</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.full_name}</p>
               </div>
-              <div className="flex-1">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  {/* Customer Basic Info */}
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                      {selectedCustomer.full_name}
-                    </h3>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Code:</span> {selectedCustomer.customer_code}
-                      </p>
-                      {selectedCustomer.business_name && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Business:</span> {selectedCustomer.business_name}
-                        </p>
-                      )}
-                      {selectedCustomer.phone && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          <span className="font-medium">Phone:</span> {selectedCustomer.phone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Customer Financial Info */}
-                  <div className="grid grid-cols-2 gap-4 lg:gap-6">
-                    <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 border border-gray-200 dark:border-zinc-700">
-                      <div className="text-center">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                          Total Purchase
-                        </p>
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                          {formatCurrency(selectedCustomer.total_purchase)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white dark:bg-zinc-800 rounded-lg p-4 border border-gray-200 dark:border-zinc-700">
-                      <div className="text-center">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
-                          Outstanding
-                        </p>
-                        <p className={`text-lg font-bold ${
-                          parseFloat(selectedCustomer.outstanding_balance || 0) > 0 
-                            ? 'text-red-600 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400'
-                        }`}>
-                          {formatCurrency(selectedCustomer.outstanding_balance)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Customer Address & Notes */}
-                {(selectedCustomer.address || selectedCustomer.notes) && (
-                  <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-800">
-                    {selectedCustomer.address && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        <span className="font-medium">Address:</span> {selectedCustomer.address}
-                      </p>
-                    )}
-                    {selectedCustomer.notes && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        <span className="font-medium">Notes:</span> {selectedCustomer.notes}
-                      </p>
-                    )}
-                  </div>
-                )}
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Code</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.customer_code}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Phone</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Outstanding</p>
+                <p className="font-bold text-red-600 dark:text-red-400">{formatCurrency(selectedCustomer.outstanding_balance)}</p>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8 lg:col-span-2">
-        <button 
-            onClick={handleSubmit} 
+        {/* Invoice Items */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice Items</h3>
+            <button
+              type="button"
+              onClick={addItem}
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Item
+            </button>
+          </div>
+
+          {formData.items.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-zinc-800">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.items.map((item, index) => (
+                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                      <td className="px-4 py-3">
+                        <input 
+                          type="text"
+                          placeholder="STK-001"
+                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.stock_number}
+                          onChange={(e) => updateItem(index, 'stock_number', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="text"
+                          placeholder="Item description"
+                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.item_description}
+                          onChange={(e) => updateItem(index, 'item_description', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="text"
+                          placeholder="Sale description"
+                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.sale_description}
+                          onChange={(e) => updateItem(index, 'sale_description', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.sale_amount}
+                          onChange={(e) => updateItem(index, 'sale_amount', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.discount}
+                          onChange={(e) => updateItem(index, 'discount', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-bold text-green-600">{formatCurrency(item.paid_amount)}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select 
+                          className="w-28 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={item.load_status}
+                          onChange={(e) => updateItem(index, 'load_status', e.target.value)}
+                        >
+                          <option value="not_loaded">Not Loaded</option>
+                          <option value="loaded">Loaded</option>
+                          <option value="delivered">Delivered</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No items added yet.</p>
+              <button
+                type="button"
+                onClick={addItem}
+                className="mt-4 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add First Item
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Payments */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payments</h3>
+            <button
+              type="button"
+              onClick={addPayment}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Payment Row
+            </button>
+          </div>
+
+          {formData.payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-zinc-800">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date & Time</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Payment Notes</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.payments.map((payment, index) => (
+                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                      <td className="px-4 py-3">
+                        <select 
+                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={payment.payment_type}
+                          onChange={(e) => updatePayment(index, 'payment_type', e.target.value)}
+                        >
+                          <option value="cash">Cash</option>
+                          <option value="bank_transfer">Bank Transfer</option>
+                          <option value="credit_card">Credit Card</option>
+                          <option value="cheque">Cheque</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="date"
+                          className="w-36 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={payment.payment_date}
+                          onChange={(e) => updatePayment(index, 'payment_date', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="text"
+                          placeholder="Received by"
+                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={payment.received_by}
+                          onChange={(e) => updatePayment(index, 'received_by', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className="w-28 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={payment.amount}
+                          onChange={(e) => updatePayment(index, 'amount', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <input 
+                          type="text"
+                          placeholder="Notes"
+                          className="w-40 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
+                          value={payment.payment_notes}
+                          onChange={(e) => updatePayment(index, 'payment_notes', e.target.value)}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => removePayment(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
+              <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No payments added yet.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Totals */}
+        <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Amount</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Paid</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totals.totalPaid)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance Due</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Notes */}
+        <FormField label="Invoice Notes">
+          <textarea 
+            rows="4"
+            placeholder="Add any notes or comments..."
+            className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all resize-none"
+            value={formData.invoice_notes}
+            onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
+          />
+        </FormField>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+          <button 
+            type="button"
+            onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
-        >
-          <Check className="w-4 h-4" />
-          <span>{loading ? "Creating..." : "Create Invoice"}</span>
-        </button>
-        <Link href="/dashboard/sales/invoices" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
-          Cancel
-        </Link>
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            <Check className="w-4 h-4" />
+            {loading ? 'Creating...' : 'Create Invoice'}
+          </button>
+          <Link 
+            href="/dashboard/sales/invoices"
+            className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+          >
+            Cancel
+          </Link>
+        </div>
       </div>
+    </div>
+  );
+}
+
+function FormField({ label, children, required }) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
     </div>
   );
 }
