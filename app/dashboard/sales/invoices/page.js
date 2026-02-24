@@ -539,6 +539,13 @@ function InvoiceManagementContent() {
                                       <Eye className="w-4 h-4" />
                                       View Details
                                     </button>
+                                    <Link
+                                      href={`/dashboard/sales/invoices/${invoice.id}/payments`}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                    >
+                                      <DollarSign className="w-4 h-4" />
+                                      View Payments
+                                    </Link>
                                     <button 
                                       onClick={() => handleEdit(invoice)}
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
@@ -546,7 +553,7 @@ function InvoiceManagementContent() {
                                       <Pencil className="w-4 h-4" />
                                       Edit Invoice
                                     </button>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
                                     <button 
                                       onClick={() => handleDeleteClick(invoice)} 
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
