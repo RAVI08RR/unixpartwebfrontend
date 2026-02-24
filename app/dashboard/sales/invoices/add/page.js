@@ -254,14 +254,12 @@ export default function AddInvoicePage() {
     setLoading(true);
     try {
       const payload = {
-        create_invoice: {
-          invoice_number: formData.invoice_number.trim(),
-          customer_id: parseInt(formData.customer_id),
-          invoice_date: formData.invoice_date,
-          invoice_status: formData.invoice_status,
-          overall_load_status: formData.overall_load_status,
-          invoice_notes: formData.invoice_notes?.trim() || null
-        },
+        invoice_number: formData.invoice_number.trim(),
+        customer_id: parseInt(formData.customer_id),
+        invoice_date: formData.invoice_date,
+        invoice_status: formData.invoice_status,
+        overall_load_status: formData.overall_load_status,
+        invoice_notes: formData.invoice_notes?.trim() || null,
         create_items: formData.items.map(item => ({
           po_item_id: parseInt(item.stock_item_id), // Using stock_item_id as po_item_id
           sale_description: item.sale_description || null,
