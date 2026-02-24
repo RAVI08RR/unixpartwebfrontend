@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
+import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 
 export default function AddInvoicePage() {
@@ -19,6 +20,15 @@ export default function AddInvoicePage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
+  
+  // Use the stock items hook
+  const { stockItems: apiStockItems, isLoading: stockItemsLoading } = useStockItems(0, 100);
+  
+  // Process stock items data
+  const stockItems = useMemo(() => {
+    if (!apiStockItems) return [];
+    return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
+  }, [apiStockItems]);
   
   const [formData, setFormData] = useState({
     invoice_number: "",
@@ -37,13 +47,16 @@ export default function AddInvoicePage() {
 
   // Item form for modal
   const [itemForm, setItemForm] = useState({
-    po_item_id: "",
+    stock_item_id: "",
+    stock_item_name: "",
+    stock_number: "",
+    item_description: "",
     sale_description: "",
     sale_amount: "",
     discount: "",
     discount_details: "",
     load_status: "pending",
-    load_date: null
+    load_date: ""
   });
 
   // Payment form for modal
@@ -121,20 +134,45 @@ export default function AddInvoicePage() {
   const addItem = () => {
     setItemModalOpen(true);
     setItemForm({
-      po_item_id: "",
+      stock_item_id: "",
+      stock_item_name: "",
+      stock_number: "",
+      item_description: "",
       sale_description: "",
       sale_amount: "",
       discount: "",
       discount_details: "",
       load_status: "pending",
-      load_date: null
+      load_date: ""
     });
+  };
+
+  // Handle Stock Item selection
+  const handleStockItemSelect = (stockItemId) => {
+    const selectedStockItem = stockItems.find(item => item.id === parseInt(stockItemId));
+    if (selectedStockItem) {
+      setItemForm({
+        ...itemForm,
+        stock_item_id: stockItemId,
+        stock_item_name: selectedStockItem.name || "",
+        item_description: selectedStockItem.name || "",
+        sale_description: selectedStockItem.description || ""
+      });
+    } else {
+      setItemForm({
+        ...itemForm,
+        stock_item_id: stockItemId,
+        stock_item_name: "",
+        item_description: "",
+        sale_description: ""
+      });
+    }
   };
 
   // Save item from modal
   const saveItem = () => {
-    if (!itemForm.po_item_id || !itemForm.sale_amount) {
-      showError("Please fill in PO Item ID and Sale Amount");
+    if (!itemForm.stock_item_id || !itemForm.sale_amount) {
+      showError("Please select a Stock Item and enter Sale Amount");
       return;
     }
 
@@ -225,7 +263,7 @@ export default function AddInvoicePage() {
           invoice_notes: formData.invoice_notes?.trim() || null
         },
         create_items: formData.items.map(item => ({
-          po_item_id: parseInt(item.po_item_id),
+          po_item_id: parseInt(item.stock_item_id), // Using stock_item_id as po_item_id
           sale_description: item.sale_description || null,
           sale_amount: parseFloat(item.sale_amount) || 0,
           discount: parseFloat(item.discount) || 0,
@@ -382,12 +420,15 @@ export default function AddInvoicePage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">PO Item ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Net Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount Details</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Date & Time</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -397,7 +438,10 @@ export default function AddInvoicePage() {
                     return (
                       <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
                         <td className="px-4 py-3">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.po_item_id}</span>
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.stock_number || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_description || '-'}</span>
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
@@ -407,6 +451,9 @@ export default function AddInvoicePage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm text-red-600 dark:text-red-400">{formatCurrency(item.discount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.discount_details || '-'}</span>
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(netAmount)}</span>
@@ -420,6 +467,17 @@ export default function AddInvoicePage() {
                               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                           }`}>
                             {item.load_status === 'pending' ? 'Pending' : item.load_status === 'loaded' ? 'Loaded' : 'Delivered'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : '-'}
                           </span>
                         </td>
                         <td className="px-4 py-3">
@@ -595,17 +653,54 @@ export default function AddInvoicePage() {
               </div>
 
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="PO Item ID" required>
-                    <input 
-                      type="number"
-                      placeholder="5"
-                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                      value={itemForm.po_item_id}
-                      onChange={(e) => setItemForm({...itemForm, po_item_id: e.target.value})}
-                    />
-                  </FormField>
+                <FormField label="Select Stock Item" required>
+                  <select 
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={itemForm.stock_item_id}
+                    onChange={(e) => handleStockItemSelect(e.target.value)}
+                    disabled={stockItemsLoading}
+                  >
+                    <option value="">
+                      {stockItemsLoading ? 'Loading items...' : stockItems.length === 0 ? 'No items available' : 'Select a Stock Item...'}
+                    </option>
+                    {stockItems.map(stockItem => (
+                      <option key={stockItem.id} value={stockItem.id}>
+                        {stockItem.name}
+                      </option>
+                    ))}
+                  </select>
+                  {stockItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
+                  {!stockItemsLoading && stockItems.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">No stock items found. Please add stock items first.</p>
+                  )}
+                  {!stockItemsLoading && stockItems.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">{stockItems.length} items available</p>
+                  )}
+                </FormField>
 
+                {itemForm.stock_item_id && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Selected Item Details</p>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Item Name</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{itemForm.stock_item_name || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <FormField label="Stock Number">
+                  <input 
+                    type="text"
+                    placeholder="e.g. DXB-001-000001"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.stock_number}
+                    onChange={(e) => setItemForm({...itemForm, stock_number: e.target.value})}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Sale Amount" required>
                     <input 
                       type="number"
@@ -614,6 +709,17 @@ export default function AddInvoicePage() {
                       className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                       value={itemForm.sale_amount}
                       onChange={(e) => setItemForm({...itemForm, sale_amount: e.target.value})}
+                    />
+                  </FormField>
+
+                  <FormField label="Discount">
+                    <input 
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.discount}
+                      onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
                     />
                   </FormField>
                 </div>
@@ -629,14 +735,13 @@ export default function AddInvoicePage() {
                 </FormField>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Discount">
+                  <FormField label="Discount Details">
                     <input 
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
+                      type="text"
+                      placeholder="Optional discount details"
                       className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                      value={itemForm.discount}
-                      onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
+                      value={itemForm.discount_details}
+                      onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
                     />
                   </FormField>
 
@@ -653,13 +758,12 @@ export default function AddInvoicePage() {
                   </FormField>
                 </div>
 
-                <FormField label="Discount Details">
+                <FormField label="Load Date & Time">
                   <input 
-                    type="text"
-                    placeholder="Optional discount details"
+                    type="datetime-local"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemForm.discount_details}
-                    onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
+                    value={itemForm.load_date}
+                    onChange={(e) => setItemForm({...itemForm, load_date: e.target.value})}
                   />
                 </FormField>
               </div>
