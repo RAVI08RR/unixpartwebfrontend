@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -16,6 +16,8 @@ export default function AddInvoicePage() {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
   
   const [formData, setFormData] = useState({
@@ -32,6 +34,25 @@ export default function AddInvoicePage() {
 
   // Selected customer details
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Item form for modal
+  const [itemForm, setItemForm] = useState({
+    po_item_id: "",
+    sale_description: "",
+    sale_amount: "",
+    discount: "",
+    discount_details: "",
+    load_status: "pending",
+    load_date: null
+  });
+
+  // Payment form for modal
+  const [paymentForm, setPaymentForm] = useState({
+    payment_method: "cash",
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_amount: "",
+    payment_notes: ""
+  });
 
   // Calculate totals
   const totals = useMemo(() => {
@@ -98,23 +119,30 @@ export default function AddInvoicePage() {
 
   // Add invoice item
   const addItem = () => {
+    setItemModalOpen(true);
+    setItemForm({
+      po_item_id: "",
+      sale_description: "",
+      sale_amount: "",
+      discount: "",
+      discount_details: "",
+      load_status: "pending",
+      load_date: null
+    });
+  };
+
+  // Save item from modal
+  const saveItem = () => {
+    if (!itemForm.po_item_id || !itemForm.sale_amount) {
+      showError("Please fill in PO Item ID and Sale Amount");
+      return;
+    }
+
     setFormData({
       ...formData,
-      items: [
-        ...formData.items,
-        {
-          stock_number: "",
-          item_description: "",
-          sale_description: "",
-          sale_amount: "",
-          discount: "",
-          discount_details: "",
-          paid_amount: 0,
-          load_status: "not_loaded",
-          load_datetime: ""
-        }
-      ]
+      items: [...formData.items, { ...itemForm }]
     });
+    setItemModalOpen(false);
   };
 
   // Remove invoice item
@@ -123,41 +151,34 @@ export default function AddInvoicePage() {
     setFormData({...formData, items: newItems});
   };
 
-  // Update invoice item
-  const updateItem = (index, field, value) => {
-    const newItems = [...formData.items];
-    newItems[index][field] = value;
-    setFormData({...formData, items: newItems});
-  };
-
   // Add payment row
   const addPayment = () => {
+    setPaymentModalOpen(true);
+    setPaymentForm({
+      payment_method: "cash",
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_amount: "",
+      payment_notes: ""
+    });
+  };
+
+  // Save payment from modal
+  const savePayment = () => {
+    if (!paymentForm.payment_amount || parseFloat(paymentForm.payment_amount) <= 0) {
+      showError("Please enter a valid payment amount");
+      return;
+    }
+
     setFormData({
       ...formData,
-      payments: [
-        ...formData.payments,
-        {
-          payment_method: "cash",
-          payment_date: new Date().toISOString().split('T')[0],
-          payment_amount: "",
-          payment_notes: "",
-          branch_id: null,
-          supplier_id: null
-        }
-      ]
+      payments: [...formData.payments, { ...paymentForm }]
     });
+    setPaymentModalOpen(false);
   };
 
   // Remove payment row
   const removePayment = (index) => {
     const newPayments = formData.payments.filter((_, i) => i !== index);
-    setFormData({...formData, payments: newPayments});
-  };
-
-  // Update payment
-  const updatePayment = (index, field, value) => {
-    const newPayments = [...formData.payments];
-    newPayments[index][field] = value;
     setFormData({...formData, payments: newPayments});
   };
 
@@ -171,7 +192,7 @@ export default function AddInvoicePage() {
       const itemPaidAmount = (itemAmount / totals.itemsTotal) * totals.totalPaid;
       return {
         ...item,
-        paid_amount: itemPaidAmount.toFixed(2)
+        paid_amount_calculated: itemPaidAmount.toFixed(2) // For display only, not sent to API
       };
     });
 
@@ -195,18 +216,33 @@ export default function AddInvoicePage() {
     setLoading(true);
     try {
       const payload = {
-        invoice_number: formData.invoice_number.trim(),
-        customer_id: parseInt(formData.customer_id),
-        invoice_date: formData.invoice_date,
-        invoice_by: formData.invoice_by,
-        invoice_status: formData.invoice_status,
-        overall_load_status: formData.overall_load_status,
-        invoice_notes: formData.invoice_notes?.trim() || null,
-        invoice_total: totals.itemsTotal.toString(),
-        paid_amount: totals.totalPaid.toString(),
-        outstanding_amount: totals.balanceDue.toString(),
-        items: formData.items,
-        payments: formData.payments
+        create_invoice: {
+          invoice_number: formData.invoice_number.trim(),
+          customer_id: parseInt(formData.customer_id),
+          invoice_date: formData.invoice_date,
+          invoice_status: formData.invoice_status,
+          overall_load_status: formData.overall_load_status,
+          invoice_notes: formData.invoice_notes?.trim() || null
+        },
+        create_items: formData.items.map(item => ({
+          po_item_id: parseInt(item.po_item_id),
+          sale_description: item.sale_description || null,
+          sale_amount: parseFloat(item.sale_amount) || 0,
+          discount: parseFloat(item.discount) || 0,
+          discount_details: item.discount_details || null,
+          load_status: item.load_status,
+          load_date: item.load_date || null
+        })),
+        create_payments: formData.payments.map(payment => ({
+          payment_date: payment.payment_date,
+          payment_amount: parseFloat(payment.payment_amount) || 0,
+          payment_method: payment.payment_method,
+          payment_notes: payment.payment_notes || null
+        })),
+        update_items: [],
+        delete_item_ids: [],
+        update_payments: [],
+        delete_payment_ids: []
       };
 
       await invoiceService.create(payload);
@@ -346,91 +382,58 @@ export default function AddInvoicePage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">PO Item ID</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Net Amount</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.items.map((item, index) => (
-                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
-                      <td className="px-4 py-3">
-                        <input 
-                          type="text"
-                          placeholder="STK-001"
-                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.stock_number}
-                          onChange={(e) => updateItem(index, 'stock_number', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input 
-                          type="text"
-                          placeholder="Item description"
-                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.item_description}
-                          onChange={(e) => updateItem(index, 'item_description', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input 
-                          type="text"
-                          placeholder="Sale description"
-                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.sale_description}
-                          onChange={(e) => updateItem(index, 'sale_description', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input 
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.sale_amount}
-                          onChange={(e) => updateItem(index, 'sale_amount', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input 
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          className="w-24 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.discount}
-                          onChange={(e) => updateItem(index, 'discount', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold text-green-600">{formatCurrency(item.paid_amount)}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <select 
-                          className="w-28 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={item.load_status}
-                          onChange={(e) => updateItem(index, 'load_status', e.target.value)}
-                        >
-                          <option value="not_loaded">Not Loaded</option>
-                          <option value="loaded">Loaded</option>
-                          <option value="delivered">Delivered</option>
-                        </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {formData.items.map((item, index) => {
+                    const netAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+                    return (
+                      <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.po_item_id}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.sale_amount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-red-600 dark:text-red-400">{formatCurrency(item.discount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(netAmount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                            item.load_status === 'delivered' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : item.load_status === 'loaded'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {item.load_status === 'pending' ? 'Pending' : item.load_status === 'loaded' ? 'Loaded' : 'Delivered'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -480,43 +483,27 @@ export default function AddInvoicePage() {
                   {formData.payments.map((payment, index) => (
                     <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
                       <td className="px-4 py-3">
-                        <select 
-                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.payment_method}
-                          onChange={(e) => updatePayment(index, 'payment_method', e.target.value)}
-                        >
-                          <option value="cash">Cash</option>
-                          <option value="bank_transfer">Bank Transfer</option>
-                          <option value="credit_card">Credit Card</option>
-                          <option value="cheque">Cheque</option>
-                        </select>
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
+                          <CreditCard className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
+                            {payment.payment_method.replace('_', ' ')}
+                          </span>
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <input 
-                          type="date"
-                          className="w-36 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.payment_date}
-                          onChange={(e) => updatePayment(index, 'payment_date', e.target.value)}
-                        />
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                          {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <input 
-                          type="number"
-                          step="0.01"
-                          placeholder="0.00"
-                          className="w-28 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.payment_amount}
-                          onChange={(e) => updatePayment(index, 'payment_amount', e.target.value)}
-                        />
+                        <span className="text-sm font-black text-green-600 dark:text-green-400">
+                          {formatCurrency(payment.payment_amount)}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
-                        <input 
-                          type="text"
-                          placeholder="Notes"
-                          className="w-40 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.payment_notes}
-                          onChange={(e) => updatePayment(index, 'payment_notes', e.target.value)}
-                        />
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {payment.payment_notes || '-'}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <button
@@ -588,6 +575,199 @@ export default function AddInvoicePage() {
           </Link>
         </div>
       </div>
+
+      {/* Add Item Modal */}
+      {itemModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Add Invoice Item</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the item details</p>
+                </div>
+                <button
+                  onClick={() => setItemModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="PO Item ID" required>
+                    <input 
+                      type="number"
+                      placeholder="5"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.po_item_id}
+                      onChange={(e) => setItemForm({...itemForm, po_item_id: e.target.value})}
+                    />
+                  </FormField>
+
+                  <FormField label="Sale Amount" required>
+                    <input 
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.sale_amount}
+                      onChange={(e) => setItemForm({...itemForm, sale_amount: e.target.value})}
+                    />
+                  </FormField>
+                </div>
+
+                <FormField label="Sale Description">
+                  <input 
+                    type="text"
+                    placeholder="Item sale description"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.sale_description}
+                    onChange={(e) => setItemForm({...itemForm, sale_description: e.target.value})}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Discount">
+                    <input 
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.discount}
+                      onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
+                    />
+                  </FormField>
+
+                  <FormField label="Load Status">
+                    <select 
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                      value={itemForm.load_status}
+                      onChange={(e) => setItemForm({...itemForm, load_status: e.target.value})}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="loaded">Loaded</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </FormField>
+                </div>
+
+                <FormField label="Discount Details">
+                  <input 
+                    type="text"
+                    placeholder="Optional discount details"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.discount_details}
+                    onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
+                  />
+                </FormField>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={saveItem}
+                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Add Item
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setItemModalOpen(false)}
+                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Payment Modal */}
+      {paymentModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Add Payment</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Record a payment for this invoice</p>
+                </div>
+                <button
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <FormField label="Payment Date" required>
+                  <input 
+                    type="date"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={paymentForm.payment_date}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_date: e.target.value})}
+                  />
+                </FormField>
+
+                <FormField label="Amount (AED)" required>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={paymentForm.payment_amount}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_amount: e.target.value})}
+                  />
+                </FormField>
+
+                <FormField label="Payment Method" required>
+                  <select 
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={paymentForm.payment_method}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_method: e.target.value})}
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="cheque">Cheque</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Notes">
+                  <textarea 
+                    rows="3"
+                    placeholder="Optional payment notes..."
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                    value={paymentForm.payment_notes}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_notes: e.target.value})}
+                  />
+                </FormField>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={savePayment}
+                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Add Payment
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
