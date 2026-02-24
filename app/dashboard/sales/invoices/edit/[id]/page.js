@@ -1,41 +1,99 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  Receipt, User, Calendar, FileText, 
-  Check, X, Hash, Building2, ChevronLeft
+  Receipt, User, Calendar, FileText, Check, X, Hash, 
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
+import { useStockItems } from "@/app/lib/hooks/useStockItems";
+import { useToast } from "@/app/components/Toast";
 
 export default function EditInvoicePage({ params }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [updateProgress, setUpdateProgress] = useState('');
-  const [pageLoading, setPageLoading] = useState(true);
+  const [fetching, setFetching] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const { success, error: showError } = useToast();
   
-  // Unwrap params using React.use()
-  const resolvedParams = use(params);
+  // Unwrap params
+  const resolvedParams = React.use(params);
   const invoiceId = resolvedParams.id;
+  
+  // Use the stock items hook
+  const { stockItems: apiStockItems, isLoading: stockItemsLoading } = useStockItems(0, 100);
+  
+  // Process stock items data
+  const stockItems = useMemo(() => {
+    if (!apiStockItems) return [];
+    return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
+  }, [apiStockItems]);
   
   const [formData, setFormData] = useState({
     invoice_number: "",
     customer_id: "",
-    invoice_date: "",
+    invoice_date: new Date().toISOString().split('T')[0],
+    invoice_by: 1, // Current user ID
     invoice_status: "pending",
-    overall_load_status: "pending",
+    overall_load_status: "not_loaded",
     invoice_notes: "",
-    items: []
+    items: [],
+    payments: []
   });
 
   // Selected customer details
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
-  // Helper function to format currency for customer details
+  // Item form for modal
+  const [itemForm, setItemForm] = useState({
+    stock_item_id: "",
+    stock_item_name: "",
+    stock_number: "",
+    item_description: "",
+    sale_description: "",
+    sale_amount: "",
+    discount: "",
+    discount_details: "",
+    load_status: "pending",
+    load_date: ""
+  });
+
+  // Payment form for modal
+  const [paymentForm, setPaymentForm] = useState({
+    payment_method: "cash",
+    payment_date: new Date().toISOString().split('T')[0],
+    payment_amount: "",
+    payment_notes: ""
+  });
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    const itemsTotal = formData.items.reduce((sum, item) => {
+      const saleAmt = parseFloat(item.sale_amount) || 0;
+      const discount = parseFloat(item.discount) || 0;
+      return sum + (saleAmt - discount);
+    }, 0);
+
+    const totalPaid = formData.payments.reduce((sum, payment) => {
+      return sum + (parseFloat(payment.payment_amount) || 0);
+    }, 0);
+
+    const balanceDue = itemsTotal - totalPaid;
+
+    return {
+      itemsTotal,
+      totalPaid,
+      balanceDue
+    };
+  }, [formData.items, formData.payments]);
+
+  // Format currency
   const formatCurrency = (amount) => {
     if (!amount) return "AED 0.00";
     const numAmount = parseFloat(amount);
@@ -48,11 +106,9 @@ export default function EditInvoicePage({ params }) {
     }).format(numAmount);
   };
 
-  // Handle customer selection change
+  // Handle customer selection
   const handleCustomerChange = (customerId) => {
     setFormData({...formData, customer_id: customerId});
-    
-    // Find and set selected customer details
     if (customerId) {
       const customer = customers.find(c => c.id === parseInt(customerId));
       setSelectedCustomer(customer);
@@ -61,380 +117,838 @@ export default function EditInvoicePage({ params }) {
     }
   };
 
-  // Fetch invoice data and customers
+  // Fetch customers
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCustomers = async () => {
+      setCustomersLoading(true);
       try {
-        // Validate invoice ID
-        if (!invoiceId || invoiceId === 'undefined') {
-          throw new Error('Invalid invoice ID');
-        }
-
-        // Fetch customers and invoice data in parallel
-        const [customersData, invoiceData] = await Promise.all([
-          customerService.getAll().catch(err => {
-            console.error('Failed to fetch customers:', err);
-            return [];
-          }),
-          invoiceService.getById(invoiceId).catch(err => {
-            console.error('Failed to fetch invoice:', err);
-            throw err;
-          })
-        ]);
-
-        // Set customers
+        const customersData = await customerService.getAll();
         if (customersData && customersData.length > 0) {
           setCustomers(customersData);
         }
+      } catch (error) {
+        console.error("Failed to fetch customers:", error);
+      } finally {
+        setCustomersLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
-        // Set invoice data
+  // Fetch invoice data
+  useEffect(() => {
+    const fetchInvoice = async () => {
+      if (!invoiceId) return;
+      
+      setFetching(true);
+      try {
+        const invoiceData = await invoiceService.getById(invoiceId);
         if (invoiceData) {
           setFormData({
             invoice_number: invoiceData.invoice_number || "",
             customer_id: invoiceData.customer_id || "",
             invoice_date: invoiceData.invoice_date || "",
+            invoice_by: invoiceData.invoice_by || 1,
             invoice_status: invoiceData.invoice_status || "pending",
-            overall_load_status: invoiceData.overall_load_status || "pending",
+            overall_load_status: invoiceData.overall_load_status || "not_loaded",
             invoice_notes: invoiceData.invoice_notes || "",
-            items: invoiceData.items || []
+            items: invoiceData.items || [],
+            payments: invoiceData.payments || []
           });
-
+          
           // Set selected customer
-          if (invoiceData.customer_id && customersData) {
-            const customer = customersData.find(c => c.id === parseInt(invoiceData.customer_id));
+          if (invoiceData.customer_id && customers.length > 0) {
+            const customer = customers.find(c => c.id === parseInt(invoiceData.customer_id));
             setSelectedCustomer(customer);
           }
         }
-
       } catch (error) {
-        console.error("❌ Failed to fetch data:", error);
-        alert("Failed to load invoice data. Redirecting to invoice list.");
+        showError("Failed to load invoice: " + error.message);
         router.push("/dashboard/sales/invoices");
       } finally {
-        setPageLoading(false);
+        setFetching(false);
       }
     };
     
-    fetchData();
-  }, [invoiceId, router]);
+    if (customers.length > 0) {
+      fetchInvoice();
+    }
+  }, [invoiceId, customers]);
 
-  const handleSubmit = async () => {
-      // Basic validation
-      if(!formData.invoice_number || !formData.customer_id || !formData.invoice_date) {
-          alert("Please fill in all required fields (Invoice Number, Customer, and Date)");
-          return;
-      }
-
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-          alert("Your session has expired or you are not logged in. Please log in again.");
-          router.push("/");
-          return;
-      }
-
-      setLoading(true);
-      setUpdateProgress('Validating data...');
-      
-      try {
-          // Prepare payload matching InvoiceUpdate schema
-          const payload = {
-              invoice_number: formData.invoice_number.trim(),
-              customer_id: parseInt(formData.customer_id),
-              invoice_date: formData.invoice_date,
-              invoice_status: formData.invoice_status,
-              overall_load_status: formData.overall_load_status,
-              invoice_notes: formData.invoice_notes.trim()
-          };
-
-          console.log("🚀 UPDATING INVOICE:", {
-            id: invoiceId,
-            payload
-          });
-
-          setUpdateProgress('Updating invoice...');
-          const result = await invoiceService.update(invoiceId, payload);
-          
-          console.log("✅ Invoice update successful:", result);
-          setUpdateProgress('Update successful! Redirecting...');
-          
-          // Show success message
-          alert("✅ Invoice updated successfully!");
-          
-          // Use window.location for more reliable navigation
-          window.location.href = "/dashboard/sales/invoices";
-      } catch (error) {
-          console.error("❌ UPDATE INVOICE FAILED:", error);
-          setUpdateProgress('');
-          
-          // Try to show the most helpful error message
-          let detailedMsg = error.message;
-          if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: Please check if the Invoice Number is already taken, or if required fields are missing.";
-          } else if (detailedMsg.includes("400")) {
-            detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
-          } else if (detailedMsg.includes("401")) {
-            detailedMsg = "Authentication Error: Please log in again.";
-          } else if (detailedMsg.includes("500")) {
-            detailedMsg = "Server Error: Please try again later or contact support.";
-          }
-          
-          alert(`Failed to update invoice: ${detailedMsg}`);
-      } finally {
-          setLoading(false);
-          setUpdateProgress('');
-      }
+  // Add invoice item
+  const addItem = () => {
+    setItemModalOpen(true);
+    setItemForm({
+      stock_item_id: "",
+      stock_item_name: "",
+      stock_number: "",
+      item_description: "",
+      sale_description: "",
+      sale_amount: "",
+      discount: "",
+      discount_details: "",
+      load_status: "pending",
+      load_date: ""
+    });
   };
 
-  if (pageLoading) {
+  // Handle Stock Item selection
+  const handleStockItemSelect = (stockItemId) => {
+    const selectedStockItem = stockItems.find(item => item.id === parseInt(stockItemId));
+    if (selectedStockItem) {
+      setItemForm({
+        ...itemForm,
+        stock_item_id: stockItemId,
+        stock_item_name: selectedStockItem.name || "",
+        item_description: selectedStockItem.name || "",
+        sale_description: selectedStockItem.description || ""
+      });
+    } else {
+      setItemForm({
+        ...itemForm,
+        stock_item_id: stockItemId,
+        stock_item_name: "",
+        item_description: "",
+        sale_description: ""
+      });
+    }
+  };
+
+  // Save item from modal
+  const saveItem = () => {
+    if (!itemForm.stock_item_id || !itemForm.sale_amount) {
+      showError("Please select a Stock Item and enter Sale Amount");
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      items: [...formData.items, { ...itemForm }]
+    });
+    setItemModalOpen(false);
+  };
+
+  // Remove invoice item
+  const removeItem = (index) => {
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData({...formData, items: newItems});
+  };
+
+  // Add payment row
+  const addPayment = () => {
+    setPaymentModalOpen(true);
+    setPaymentForm({
+      payment_method: "cash",
+      payment_date: new Date().toISOString().split('T')[0],
+      payment_amount: "",
+      payment_notes: ""
+    });
+  };
+
+  // Save payment from modal
+  const savePayment = () => {
+    if (!paymentForm.payment_amount || parseFloat(paymentForm.payment_amount) <= 0) {
+      showError("Please enter a valid payment amount");
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      payments: [...formData.payments, { ...paymentForm }]
+    });
+    setPaymentModalOpen(false);
+  };
+
+  // Remove payment row
+  const removePayment = (index) => {
+    const newPayments = formData.payments.filter((_, i) => i !== index);
+    setFormData({...formData, payments: newPayments});
+  };
+
+  // Distribute payment across items based on formula
+  // paid amount of item = (item sale amount / total invoice sale amount) * current payment
+  const distributePayment = () => {
+    if (formData.items.length === 0 || totals.totalPaid === 0) return;
+
+    const newItems = formData.items.map(item => {
+      const itemAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+      const itemPaidAmount = (itemAmount / totals.itemsTotal) * totals.totalPaid;
+      return {
+        ...item,
+        paid_amount_calculated: itemPaidAmount.toFixed(2) // For display only, not sent to API
+      };
+    });
+
+    setFormData({...formData, items: newItems});
+  };
+
+  // Auto-distribute when payments change
+  useEffect(() => {
+    if (formData.items.length > 0 && formData.payments.length > 0) {
+      distributePayment();
+    }
+  }, [formData.payments]);
+
+  // Submit form
+  const handleSubmit = async () => {
+    if(!formData.invoice_number || !formData.customer_id || !formData.invoice_date) {
+      showError("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        invoice_number: formData.invoice_number.trim(),
+        customer_id: parseInt(formData.customer_id),
+        invoice_date: formData.invoice_date,
+        invoice_status: formData.invoice_status,
+        overall_load_status: formData.overall_load_status,
+        invoice_notes: formData.invoice_notes?.trim() || null,
+        create_items: formData.items.filter(item => !item.id).map(item => ({
+          po_item_id: parseInt(item.stock_item_id),
+          sale_description: item.sale_description || null,
+          sale_amount: parseFloat(item.sale_amount) || 0,
+          discount: parseFloat(item.discount) || 0,
+          discount_details: item.discount_details || null,
+          load_status: item.load_status,
+          load_date: item.load_date || null
+        })),
+        update_items: formData.items.filter(item => item.id).map(item => ({
+          id: item.id,
+          po_item_id: parseInt(item.stock_item_id || item.po_item_id),
+          sale_description: item.sale_description || null,
+          sale_amount: parseFloat(item.sale_amount) || 0,
+          discount: parseFloat(item.discount) || 0,
+          discount_details: item.discount_details || null,
+          load_status: item.load_status,
+          load_date: item.load_date || null
+        })),
+        delete_item_ids: [],
+        create_payments: formData.payments.filter(payment => !payment.id).map(payment => ({
+          payment_date: payment.payment_date,
+          payment_amount: parseFloat(payment.payment_amount) || 0,
+          payment_method: payment.payment_method,
+          payment_notes: payment.payment_notes || null
+        })),
+        update_payments: formData.payments.filter(payment => payment.id).map(payment => ({
+          id: payment.id,
+          payment_date: payment.payment_date,
+          payment_amount: parseFloat(payment.payment_amount) || 0,
+          payment_method: payment.payment_method,
+          payment_notes: payment.payment_notes || null
+        })),
+        delete_payment_ids: []
+      };
+
+      await invoiceService.update(invoiceId, payload);
+      success("Invoice updated successfully!");
+      router.push("/dashboard/sales/invoices");
+    } catch (error) {
+      showError("Failed to update invoice: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
     return (
-      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Invoice</h1>
-            <p className="text-gray-500 text-sm">Loading invoice data...</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading...</div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Loading invoice...</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/dashboard/sales/invoices" 
+          className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600" />
+        </Link>
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Link 
-              href="/dashboard/sales/invoices"
-              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Edit Invoice</h1>
-          </div>
-          <p className="text-gray-500 text-sm">Update invoice information and details</p>
+          <h1 className="text-2xl font-black dark:text-white tracking-tight">Edit Invoice</h1>
+          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Update the invoice details</p>
         </div>
       </div>
 
-      {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Invoice Form */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Invoice Information</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Invoice Number */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Invoice Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="text"
-                    placeholder="e.g. INV-001"
-                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-                    value={formData.invoice_number}
-                    onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
-                  />
+      {/* Main Form */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-6">
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField label="Invoice Number" required>
+            <input 
+              type="text"
+              placeholder="INV-001"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.invoice_number}
+              onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
+            />
+          </FormField>
+
+          <FormField label="Date & Time" required>
+            <input 
+              type="date"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.invoice_date}
+              onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
+            />
+          </FormField>
+
+          <FormField label="Invoice Status" required>
+            <select 
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.invoice_status}
+              onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
+            >
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </FormField>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField label="Overall Load Status" required>
+            <select 
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.overall_load_status}
+              onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
+            >
+              <option value="not_loaded">Not Loaded</option>
+              <option value="loaded">Loaded</option>
+              <option value="delivered">Delivered</option>
+            </select>
+          </FormField>
+
+          <FormField label="Customer" required>
+            <select 
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.customer_id}
+              onChange={(e) => handleCustomerChange(e.target.value)}
+              disabled={customersLoading}
+            >
+              <option value="">Select a customer...</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id}>
+                  {customer.full_name} - {customer.customer_code}
+                </option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+
+        {/* Customer Details */}
+        {selectedCustomer && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Customer Details</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Name</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.full_name}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Code</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.customer_code}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Phone</p>
+                <p className="font-bold text-gray-900 dark:text-white">{selectedCustomer.phone || '-'}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Outstanding</p>
+                <p className="font-bold text-red-600 dark:text-red-400">{formatCurrency(selectedCustomer.outstanding_balance)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Invoice Items */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice Items</h3>
+            <button
+              type="button"
+              onClick={addItem}
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Item
+            </button>
+          </div>
+
+          {formData.items.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-zinc-800">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount Details</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Date & Time</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.items.map((item, index) => {
+                    const netAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+                    return (
+                      <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.stock_number || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_description || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.sale_amount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-red-600 dark:text-red-400">{formatCurrency(item.discount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.discount_details || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(netAmount)}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                            item.load_status === 'delivered' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : item.load_status === 'loaded'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {item.load_status === 'pending' ? 'Pending' : item.load_status === 'loaded' ? 'Loaded' : 'Delivered'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
+              <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No items added yet.</p>
+              <button
+                type="button"
+                onClick={addItem}
+                className="mt-4 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add First Item
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Payments */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payments</h3>
+            <button
+              type="button"
+              onClick={addPayment}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Payment Row
+            </button>
+          </div>
+
+          {formData.payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-zinc-800">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.payments.map((payment, index) => (
+                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
+                          <CreditCard className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
+                            {payment.payment_method.replace('_', ' ')}
+                          </span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                          {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-black text-green-600 dark:text-green-400">
+                          {formatCurrency(payment.payment_amount)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {payment.payment_notes || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => removePayment(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
+              <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No payments added yet.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Totals */}
+        <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Amount</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Paid</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totals.totalPaid)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance Due</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Invoice Notes */}
+        <FormField label="Invoice Notes">
+          <textarea 
+            rows="4"
+            placeholder="Add any notes or comments..."
+            className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all resize-none"
+            value={formData.invoice_notes}
+            onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
+          />
+        </FormField>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+          <button 
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            <Check className="w-4 h-4" />
+            {loading ? 'Updating...' : 'Update Invoice'}
+          </button>
+          <Link 
+            href="/dashboard/sales/invoices"
+            className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+          >
+            Cancel
+          </Link>
+        </div>
+      </div>
+
+      {/* Add Item Modal */}
+      {itemModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-2xl border border-gray-100 dark:border-zinc-800 shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Edit Invoice Item</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the item details</p>
                 </div>
+                <button
+                  onClick={() => setItemModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
 
-              {/* Invoice Date */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Invoice Date <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="date"
-                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-                    value={formData.invoice_date}
-                    onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              {/* Customer Selection */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Customer <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="space-y-4">
+                <FormField label="Select Stock Item" required>
                   <select 
-                    className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-                    value={formData.customer_id}
-                    onChange={(e) => handleCustomerChange(e.target.value)}
-                    disabled={customersLoading}
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={itemForm.stock_item_id}
+                    onChange={(e) => handleStockItemSelect(e.target.value)}
+                    disabled={stockItemsLoading}
                   >
                     <option value="">
-                      {customersLoading ? "Loading customers..." : "Select Customer"}
+                      {stockItemsLoading ? 'Loading items...' : stockItems.length === 0 ? 'No items available' : 'Select a Stock Item...'}
                     </option>
-                    {customers.map(customer => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.full_name}
+                    {stockItems.map(stockItem => (
+                      <option key={stockItem.id} value={stockItem.id}>
+                        {stockItem.name}
                       </option>
                     ))}
                   </select>
-                </div>
-              </div>
+                  {stockItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
+                  {!stockItemsLoading && stockItems.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">No stock items found. Please add stock items first.</p>
+                  )}
+                  {!stockItemsLoading && stockItems.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">{stockItems.length} items available</p>
+                  )}
+                </FormField>
 
-              {/* Invoice Status */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Invoice Status
-                </label>
-                <div className="relative">
-                  <Receipt className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select 
-                    className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-                    value={formData.invoice_status}
-                    onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="overdue">Overdue</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
+                {itemForm.stock_item_id && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Selected Item Details</p>
+                    <div className="grid grid-cols-1 gap-2 text-sm">
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Item Name</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{itemForm.stock_item_name || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-              {/* Overall Load Status */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Overall Load Status
-                </label>
-                <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select 
-                    className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-                    value={formData.overall_load_status}
-                    onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Invoice Notes */}
-              <div className="space-y-1.5 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Invoice Notes
-                </label>
-                <div className="relative">
-                  <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-                  <textarea 
-                    placeholder="Add any additional notes or comments..."
-                    rows={4}
-                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
-                    value={formData.invoice_notes}
-                    onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
+                <FormField label="Stock Number">
+                  <input 
+                    type="text"
+                    placeholder="e.g. DXB-001-000001"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.stock_number}
+                    onChange={(e) => setItemForm({...itemForm, stock_number: e.target.value})}
                   />
+                </FormField>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Sale Amount" required>
+                    <input 
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.sale_amount}
+                      onChange={(e) => setItemForm({...itemForm, sale_amount: e.target.value})}
+                    />
+                  </FormField>
+
+                  <FormField label="Discount">
+                    <input 
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.discount}
+                      onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
+                    />
+                  </FormField>
                 </div>
+
+                <FormField label="Sale Description">
+                  <input 
+                    type="text"
+                    placeholder="Item sale description"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.sale_description}
+                    onChange={(e) => setItemForm({...itemForm, sale_description: e.target.value})}
+                  />
+                </FormField>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Discount Details">
+                    <input 
+                      type="text"
+                      placeholder="Optional discount details"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.discount_details}
+                      onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
+                    />
+                  </FormField>
+
+                  <FormField label="Load Status">
+                    <select 
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                      value={itemForm.load_status}
+                      onChange={(e) => setItemForm({...itemForm, load_status: e.target.value})}
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="loaded">Loaded</option>
+                      <option value="delivered">Delivered</option>
+                    </select>
+                  </FormField>
+                </div>
+
+                <FormField label="Load Date & Time">
+                  <input 
+                    type="datetime-local"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.load_date}
+                    onChange={(e) => setItemForm({...itemForm, load_date: e.target.value})}
+                  />
+                </FormField>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={saveItem}
+                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Add Item
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setItemModalOpen(false)}
+                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Right Column - Customer Details */}
-        <div className="space-y-6">
-          {selectedCustomer && (
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Customer Details</h3>
-              
+      {/* Add Payment Modal */}
+      {paymentModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Add Payment</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Record a payment for this invoice</p>
+                </div>
+                <button
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
               <div className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Customer Name</p>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white mt-1">{selectedCustomer.full_name}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</p>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1">{selectedCustomer.email || "Not provided"}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</p>
-                  <p className="text-sm text-gray-900 dark:text-white mt-1">{selectedCustomer.phone || "Not provided"}</p>
-                </div>
-                
-                {selectedCustomer.address && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Address</p>
-                    <p className="text-sm text-gray-900 dark:text-white mt-1">{selectedCustomer.address}</p>
-                  </div>
-                )}
-                
-                {selectedCustomer.outstanding_balance && (
-                  <div className="pt-3 border-t border-gray-200 dark:border-zinc-700">
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding Balance</p>
-                    <p className="text-sm font-semibold text-red-600 dark:text-red-400 mt-1">
-                      {formatCurrency(selectedCustomer.outstanding_balance)}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                <FormField label="Payment Date" required>
+                  <input 
+                    type="date"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={paymentForm.payment_date}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_date: e.target.value})}
+                  />
+                </FormField>
 
-          {/* Invoice Summary */}
-          <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-200 dark:border-zinc-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Invoice Summary</h3>
-            
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
-                <span className={`text-sm font-medium px-2 py-1 rounded-full ${
-                  formData.invoice_status === 'paid' ? 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400' :
-                  formData.invoice_status === 'overdue' ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400' :
-                  formData.invoice_status === 'cancelled' ? 'bg-gray-100 text-gray-600 dark:bg-gray-900/20 dark:text-gray-400' :
-                  'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400'
-                }`}>
-                  {formData.invoice_status.charAt(0).toUpperCase() + formData.invoice_status.slice(1)}
-                </span>
+                <FormField label="Amount (AED)" required>
+                  <input 
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={paymentForm.payment_amount}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_amount: e.target.value})}
+                  />
+                </FormField>
+
+                <FormField label="Payment Method" required>
+                  <select 
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={paymentForm.payment_method}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_method: e.target.value})}
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Bank Transfer</option>
+                    <option value="credit_card">Credit Card</option>
+                    <option value="cheque">Cheque</option>
+                  </select>
+                </FormField>
+
+                <FormField label="Notes">
+                  <textarea 
+                    rows="3"
+                    placeholder="Optional payment notes..."
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                    value={paymentForm.payment_notes}
+                    onChange={(e) => setPaymentForm({...paymentForm, payment_notes: e.target.value})}
+                  />
+                </FormField>
               </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Load Status</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formData.overall_load_status.charAt(0).toUpperCase() + formData.overall_load_status.slice(1).replace('_', ' ')}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Date</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formData.invoice_date ? new Date(formData.invoice_date).toLocaleDateString() : "Not set"}
-                </span>
+
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={savePayment}
+                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Add Payment
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
+    </div>
+  );
+}
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
-        <button 
-            onClick={handleSubmit} 
-            disabled={loading}
-            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
-        >
-          <Check className="w-4 h-4" />
-          <span>{loading ? (updateProgress || "Updating...") : "Update Invoice"}</span>
-        </button>
-        <Link href="/dashboard/sales/invoices" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
-          Cancel
-        </Link>
-      </div>
+function FormField({ label, children, required }) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
     </div>
   );
 }
