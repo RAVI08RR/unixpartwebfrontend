@@ -42,7 +42,7 @@ export default function AddInvoicePage() {
     }, 0);
 
     const totalPaid = formData.payments.reduce((sum, payment) => {
-      return sum + (parseFloat(payment.amount) || 0);
+      return sum + (parseFloat(payment.payment_amount) || 0);
     }, 0);
 
     const balanceDue = itemsTotal - totalPaid;
@@ -137,11 +137,12 @@ export default function AddInvoicePage() {
       payments: [
         ...formData.payments,
         {
-          payment_type: "cash",
+          payment_method: "cash",
           payment_date: new Date().toISOString().split('T')[0],
-          received_by: "",
-          amount: "",
-          payment_notes: ""
+          payment_amount: "",
+          payment_notes: "",
+          branch_id: null,
+          supplier_id: null
         }
       ]
     });
@@ -468,11 +469,10 @@ export default function AddInvoicePage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date & Time</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Payment Notes</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
                     <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
@@ -482,8 +482,8 @@ export default function AddInvoicePage() {
                       <td className="px-4 py-3">
                         <select 
                           className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.payment_type}
-                          onChange={(e) => updatePayment(index, 'payment_type', e.target.value)}
+                          value={payment.payment_method}
+                          onChange={(e) => updatePayment(index, 'payment_method', e.target.value)}
                         >
                           <option value="cash">Cash</option>
                           <option value="bank_transfer">Bank Transfer</option>
@@ -501,21 +501,12 @@ export default function AddInvoicePage() {
                       </td>
                       <td className="px-4 py-3">
                         <input 
-                          type="text"
-                          placeholder="Received by"
-                          className="w-32 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.received_by}
-                          onChange={(e) => updatePayment(index, 'received_by', e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input 
                           type="number"
                           step="0.01"
                           placeholder="0.00"
                           className="w-28 px-2 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded text-sm"
-                          value={payment.amount}
-                          onChange={(e) => updatePayment(index, 'amount', e.target.value)}
+                          value={payment.payment_amount}
+                          onChange={(e) => updatePayment(index, 'payment_amount', e.target.value)}
                         />
                       </td>
                       <td className="px-4 py-3">

@@ -66,9 +66,11 @@ export default function InvoicePaymentsPage() {
     try {
       const payload = {
         payment_date: paymentForm.payment_date,
-        amount: parseFloat(paymentForm.amount),
+        payment_amount: parseFloat(paymentForm.amount), // Changed from 'amount' to 'payment_amount'
         payment_method: paymentForm.payment_method,
-        notes: paymentForm.notes || null
+        payment_notes: paymentForm.notes || null,
+        branch_id: null, // Optional
+        supplier_id: null // Optional
       };
 
       await invoiceService.addPayment(invoiceId, payload);
@@ -294,8 +296,6 @@ export default function InvoicePaymentsPage() {
                   <input 
                     type="number"
                     step="0.01"
-                    min="0.01"
-                    max={invoice.outstanding_amount}
                     placeholder="0.00"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={paymentForm.amount}

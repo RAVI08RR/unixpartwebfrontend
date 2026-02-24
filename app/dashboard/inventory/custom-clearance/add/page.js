@@ -32,7 +32,6 @@ export default function AddClearancePage() {
   }, [apiStockItems]);
   
   const [formData, setFormData] = useState({
-    container_code: "",
     container_number: "",
     supplier_id: "",
     destination_branch_id: "",
@@ -58,7 +57,7 @@ export default function AddClearancePage() {
   const handleSubmit = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
     
-    if(!formData.container_code || !formData.container_number || !formData.vessel_name || !formData.supplier_id || !formData.destination_branch_id) {
+    if(!formData.container_number || !formData.vessel_name || !formData.supplier_id || !formData.destination_branch_id) {
         showError("Please fill in all required fields (marked with *)");
         return;
     }
@@ -132,21 +131,6 @@ export default function AddClearancePage() {
         <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 sm:p-8 space-y-8">
           {/* Main Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <FormField label="Container Code" required>
-              <div className="relative group">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="e.g. CON-001"
-                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
-                  style={{ height: '45px' }}
-                  value={formData.container_code}
-                  onChange={(e) => setFormData({...formData, container_code: e.target.value})}
-                  required
-                />
-              </div>
-            </FormField>
-
             <FormField label="Container Number" required>
               <div className="relative">
                 <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />

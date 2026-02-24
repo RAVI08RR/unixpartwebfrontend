@@ -76,15 +76,17 @@ export default function EditClearancePage({ params }) {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     
-    if(!formData.container_code || !formData.container_number || !formData.vessel_name || !formData.supplier_id || !formData.destination_branch_id) {
+    if(!formData.container_number || !formData.vessel_name || !formData.supplier_id || !formData.destination_branch_id) {
         showError("Please fill in all required fields (marked with *)");
         return;
     }
 
     setLoading(true);
     try {
+        // Don't include container_code in the payload - it's auto-generated and read-only
+        const { container_code, ...payloadData } = formData;
         const payload = {
-            ...formData,
+            ...payloadData,
             supplier_id: parseInt(formData.supplier_id),
             destination_branch_id: parseInt(formData.destination_branch_id),
             total_packages: parseInt(formData.total_packages)
@@ -135,11 +137,12 @@ export default function EditClearancePage({ params }) {
                 <input 
                   type="text" 
                   placeholder="e.g. CON-001"
-                  className="w-full pl-11 pr-4 py-4 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-2xl text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-600/5 transition-all dark:text-white"
+                  className="w-full pl-11 pr-4 py-4 bg-gray-100 dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-2xl text-sm font-bold dark:text-gray-400 cursor-not-allowed"
                   value={formData.container_code}
-                  onChange={(e) => setFormData({...formData, container_code: e.target.value})}
-                  required
+                  readOnly
+                  disabled
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">Auto-generated, cannot be edited</p>
               </div>
             </FormField>
 
