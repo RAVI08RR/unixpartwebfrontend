@@ -294,7 +294,7 @@ export default function InvoicePaymentsPage() {
                   <input 
                     type="number"
                     step="0.01"
-                    min="0"
+                    min="0.01"
                     max={invoice.outstanding_amount}
                     placeholder="0.00"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
