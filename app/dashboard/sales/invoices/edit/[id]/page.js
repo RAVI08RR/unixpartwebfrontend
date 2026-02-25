@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
+import { poItemService } from "@/app/lib/services/poItemService";
 import { useToast } from "@/app/components/Toast";
 
 export default function EditInvoicePage({ params }) {
@@ -132,16 +133,12 @@ export default function EditInvoicePage({ params }) {
     const fetchPoItems = async () => {
       setPoItemsLoading(true);
       try {
-        const response = await fetch('/api/po-items?skip=0&limit=100');
-        if (response.ok) {
-          const data = await response.json();
-          console.log('PO Items fetched:', data);
-          setPoItems(Array.isArray(data) ? data : []);
-        } else {
-          console.error('Failed to fetch PO items:', response.status);
-        }
+        const data = await poItemService.getAll(0, 100);
+        console.log('PO Items fetched:', data?.length, 'items');
+        setPoItems(Array.isArray(data) ? data : []);
       } catch (error) {
         console.error("Failed to fetch PO items:", error);
+        setPoItems([]);
       } finally {
         setPoItemsLoading(false);
       }
