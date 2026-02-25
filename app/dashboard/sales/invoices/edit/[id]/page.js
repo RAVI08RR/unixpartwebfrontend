@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
-import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 
 export default function EditInvoicePage({ params }) {
@@ -18,6 +17,8 @@ export default function EditInvoicePage({ params }) {
   const [fetching, setFetching] = useState(true);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
+  const [poItems, setPoItems] = useState([]);
+  const [poItemsLoading, setPoItemsLoading] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
@@ -25,15 +26,6 @@ export default function EditInvoicePage({ params }) {
   // Unwrap params
   const resolvedParams = React.use(params);
   const invoiceId = resolvedParams.id;
-  
-  // Use the stock items hook
-  const { stockItems: apiStockItems, isLoading: stockItemsLoading } = useStockItems(0, 100);
-  
-  // Process stock items data
-  const stockItems = useMemo(() => {
-    if (!apiStockItems) return [];
-    return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
-  }, [apiStockItems]);
   
   const [formData, setFormData] = useState({
     invoice_number: "",
@@ -52,10 +44,10 @@ export default function EditInvoicePage({ params }) {
 
   // Item form for modal
   const [itemForm, setItemForm] = useState({
-    stock_item_id: "",
-    stock_item_name: "",
+    po_item_id: "",
     stock_number: "",
-    item_description: "",
+    item_name: "",
+    po_description: "",
     sale_description: "",
     sale_amount: "",
     discount: "",
@@ -135,6 +127,28 @@ export default function EditInvoicePage({ params }) {
     fetchCustomers();
   }, []);
 
+  // Fetch PO Items
+  useEffect(() => {
+    const fetchPoItems = async () => {
+      setPoItemsLoading(true);
+      try {
+        const response = await fetch('/api/po-items?skip=0&limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('PO Items fetched:', data);
+          setPoItems(Array.isArray(data) ? data : []);
+        } else {
+          console.error('Failed to fetch PO items:', response.status);
+        }
+      } catch (error) {
+        console.error("Failed to fetch PO items:", error);
+      } finally {
+        setPoItemsLoading(false);
+      }
+    };
+    fetchPoItems();
+  }, []);
+
   // Fetch invoice data
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -179,10 +193,10 @@ export default function EditInvoicePage({ params }) {
   const addItem = () => {
     setItemModalOpen(true);
     setItemForm({
-      stock_item_id: "",
-      stock_item_name: "",
+      po_item_id: "",
       stock_number: "",
-      item_description: "",
+      item_name: "",
+      po_description: "",
       sale_description: "",
       sale_amount: "",
       discount: "",
@@ -192,23 +206,25 @@ export default function EditInvoicePage({ params }) {
     });
   };
 
-  // Handle Stock Item selection
-  const handleStockItemSelect = (stockItemId) => {
-    const selectedStockItem = stockItems.find(item => item.id === parseInt(stockItemId));
-    if (selectedStockItem) {
+  // Handle PO Item selection
+  const handlePoItemSelect = (poItemId) => {
+    const selectedPoItem = poItems.find(item => item.id === parseInt(poItemId));
+    if (selectedPoItem) {
       setItemForm({
         ...itemForm,
-        stock_item_id: stockItemId,
-        stock_item_name: selectedStockItem.name || "",
-        item_description: selectedStockItem.name || "",
-        sale_description: selectedStockItem.description || ""
+        po_item_id: poItemId,
+        stock_number: selectedPoItem.stock_number || "",
+        item_name: selectedPoItem.stock_item?.name || "",
+        po_description: selectedPoItem.po_description || "",
+        sale_description: selectedPoItem.po_description || ""
       });
     } else {
       setItemForm({
         ...itemForm,
-        stock_item_id: stockItemId,
-        stock_item_name: "",
-        item_description: "",
+        po_item_id: poItemId,
+        stock_number: "",
+        item_name: "",
+        po_description: "",
         sale_description: ""
       });
     }
@@ -216,8 +232,8 @@ export default function EditInvoicePage({ params }) {
 
   // Save item from modal
   const saveItem = () => {
-    if (!itemForm.stock_item_id || !itemForm.sale_amount) {
-      showError("Please select a Stock Item and enter Sale Amount");
+    if (!itemForm.po_item_id || !itemForm.sale_amount) {
+      showError("Please select a PO Item and enter Sale Amount");
       return;
     }
 
@@ -306,7 +322,7 @@ export default function EditInvoicePage({ params }) {
         overall_load_status: formData.overall_load_status,
         invoice_notes: formData.invoice_notes?.trim() || null,
         create_items: formData.items.filter(item => !item.id).map(item => ({
-          po_item_id: parseInt(item.stock_item_id),
+          po_item_id: parseInt(item.po_item_id),
           sale_description: item.sale_description || null,
           sale_amount: parseFloat(item.sale_amount) || 0,
           discount: parseFloat(item.discount) || 0,
@@ -316,7 +332,7 @@ export default function EditInvoicePage({ params }) {
         })),
         update_items: formData.items.filter(item => item.id).map(item => ({
           id: item.id,
-          po_item_id: parseInt(item.stock_item_id || item.po_item_id),
+          po_item_id: parseInt(item.po_item_id || item.stock_item_id),
           sale_description: item.sale_description || null,
           sale_amount: parseFloat(item.sale_amount) || 0,
           discount: parseFloat(item.discount) || 0,
@@ -507,7 +523,7 @@ export default function EditInvoicePage({ params }) {
                           <span className="text-sm font-bold text-gray-900 dark:text-white">{item.stock_number || '-'}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_description || '-'}</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_name || item.item_description || '-'}</span>
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
@@ -719,52 +735,46 @@ export default function EditInvoicePage({ params }) {
               </div>
 
               <div className="space-y-4">
-                <FormField label="Select Stock Item" required>
+                <FormField label="Select PO Item" required>
                   <select 
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
-                    value={itemForm.stock_item_id}
-                    onChange={(e) => handleStockItemSelect(e.target.value)}
-                    disabled={stockItemsLoading}
+                    value={itemForm.po_item_id}
+                    onChange={(e) => handlePoItemSelect(e.target.value)}
+                    disabled={poItemsLoading}
                   >
                     <option value="">
-                      {stockItemsLoading ? 'Loading items...' : stockItems.length === 0 ? 'No items available' : 'Select a Stock Item...'}
+                      {poItemsLoading ? 'Loading items...' : poItems.length === 0 ? 'No items available' : 'Select a PO Item...'}
                     </option>
-                    {stockItems.map(stockItem => (
-                      <option key={stockItem.id} value={stockItem.id}>
-                        {stockItem.name}
+                    {poItems.map(poItem => (
+                      <option key={poItem.id} value={poItem.id}>
+                        {poItem.po_description} - {poItem.stock_number}
                       </option>
                     ))}
                   </select>
-                  {stockItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
-                  {!stockItemsLoading && stockItems.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">No stock items found. Please add stock items first.</p>
+                  {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
+                  {!poItemsLoading && poItems.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">No PO items found. Please add items to purchase orders first.</p>
                   )}
-                  {!stockItemsLoading && stockItems.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{stockItems.length} items available</p>
+                  {!poItemsLoading && poItems.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">{poItems.length} items available</p>
                   )}
                 </FormField>
 
-                {itemForm.stock_item_id && (
+                {itemForm.po_item_id && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                     <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">Selected Item Details</p>
-                    <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <p className="text-gray-500 dark:text-gray-400">Item Name</p>
-                        <p className="font-bold text-gray-900 dark:text-white">{itemForm.stock_item_name || '-'}</p>
+                        <p className="text-gray-500 dark:text-gray-400">Stock #</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{itemForm.stock_number || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 dark:text-gray-400">Item</p>
+                        <p className="font-bold text-gray-900 dark:text-white">{itemForm.item_name || '-'}</p>
                       </div>
                     </div>
                   </div>
                 )}
-
-                <FormField label="Stock Number">
-                  <input 
-                    type="text"
-                    placeholder="e.g. DXB-001-000001"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemForm.stock_number}
-                    onChange={(e) => setItemForm({...itemForm, stock_number: e.target.value})}
-                  />
-                </FormField>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField label="Sale Amount" required>
