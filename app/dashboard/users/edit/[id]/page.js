@@ -187,11 +187,11 @@ export default function EditUserPage() {
             console.error('Roles API failed:', err);
             return null;
           }),
-          branchService.getAll().catch(err => {
+          branchService.getDropdown().catch(err => {
             console.error('Branches API failed:', err);
             return null;
           }),
-          supplierService.getAll().catch(err => {
+          supplierService.getDropdown().catch(err => {
             console.error('Suppliers API failed:', err);
             return null;
           })
@@ -607,7 +607,7 @@ export default function EditUserPage() {
             >
               <option value="">Select Role</option>
               {roles.map(role => (
-                <option key={role.id} value={role.id}>{role.name}</option>
+                <option key={role.id} value={role.id}>{role.label || role.name}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />

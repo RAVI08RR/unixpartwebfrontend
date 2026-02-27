@@ -25,7 +25,7 @@ export default function EditPurchaseOrderPage() {
   
   const [suppliers, setSuppliers] = useState([]);
   const [branches, setBranches] = useState([]);
-  const { containers } = useContainers();
+  const { containers } = useContainers(0, 100, null, null, null, true);
   
   const [formData, setFormData] = useState({
     po_id: "",
@@ -259,7 +259,7 @@ export default function EditPurchaseOrderPage() {
             >
               <option value="">Select Container</option>
               {containers?.map(c => (
-                <option key={c.id} value={c.id}>{c.container_code}</option>
+                <option key={c.id} value={c.id}>{c.label || c.container_code}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -280,7 +280,7 @@ export default function EditPurchaseOrderPage() {
             >
               <option value="">Select Supplier</option>
               {suppliers.map(supplier => (
-                <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                <option key={supplier.id} value={supplier.id}>{supplier.label || supplier.name}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -317,7 +317,7 @@ export default function EditPurchaseOrderPage() {
             >
               <option value="">Select Branch</option>
               {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>{branch.branch_name}</option>
+                <option key={branch.id} value={branch.id}>{branch.label || branch.branch_name}</option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />

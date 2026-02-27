@@ -24,8 +24,8 @@ export default function CustomClearancePage() {
   // Data Fetching
   const itemsPerPage = 8;
   const { containers, loading, refetch } = useContainers(0, 100);
-  const { suppliers } = useSuppliers();
-  const { branches } = useBranches();
+  const { suppliers } = useSuppliers(0, 100, null, true);
+  const { branches } = useBranches(0, 100, true);
 
   const [isMounted, setIsMounted] = useState(false);
   

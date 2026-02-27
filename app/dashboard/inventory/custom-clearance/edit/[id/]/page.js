@@ -19,8 +19,8 @@ export default function EditClearancePage({ params }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const { success: showSuccess, error: showError } = useToast();
-  const { suppliers } = useSuppliers();
-  const { branches } = useBranches();
+  const { suppliers } = useSuppliers(0, 100, null, true);
+  const { branches } = useBranches(0, 100, true);
   
   const [formData, setFormData] = useState({
     container_code: "",

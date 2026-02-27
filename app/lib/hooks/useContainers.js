@@ -2,7 +2,12 @@ import useSWR from 'swr';
 import { containerService } from '../services/containerService';
 
 const fetcher = async (url) => {
-  const [, skip, limit, supplier_id, branch_id, status] = url.split('|');
+  const [, skip, limit, supplier_id, branch_id, status, isDropdown] = url.split('|');
+  
+  if (isDropdown === 'true') {
+    return containerService.getDropdown();
+  }
+  
   return containerService.getAll(
     parseInt(skip) || 0,
     parseInt(limit) || 100,
@@ -12,9 +17,9 @@ const fetcher = async (url) => {
   );
 };
 
-export function useContainers(skip = 0, limit = 100, supplier_id = null, branch_id = null, status = null) {
+export function useContainers(skip = 0, limit = 100, supplier_id = null, branch_id = null, status = null, isDropdown = false) {
   const { data, error, isLoading, mutate } = useSWR(
-    `containers|${skip}|${limit}|${supplier_id}|${branch_id}|${status}`,
+    `containers|${skip}|${limit}|${supplier_id}|${branch_id}|${status}|${isDropdown}`,
     fetcher,
     {
       revalidateOnFocus: false,

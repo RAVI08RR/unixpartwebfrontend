@@ -100,11 +100,17 @@ export default function EditInvoicePage({ params }) {
   };
 
   // Handle customer selection
-  const handleCustomerChange = (customerId) => {
+  const handleCustomerChange = async (customerId) => {
     setFormData({...formData, customer_id: customerId});
     if (customerId) {
-      const customer = customers.find(c => c.id === parseInt(customerId));
-      setSelectedCustomer(customer);
+      try {
+        const customer = await customerService.getById(customerId);
+        setSelectedCustomer(customer);
+      } catch (error) {
+        console.error("Failed to fetch full customer details:", error);
+        const minimalCustomer = customers.find(c => c.id === parseInt(customerId));
+        setSelectedCustomer(minimalCustomer);
+      }
     } else {
       setSelectedCustomer(null);
     }
@@ -115,7 +121,7 @@ export default function EditInvoicePage({ params }) {
     const fetchCustomers = async () => {
       setCustomersLoading(true);
       try {
-        const customersData = await customerService.getAll();
+        const customersData = await customerService.getDropdown();
         if (customersData && customersData.length > 0) {
           setCustomers(customersData);
         }
@@ -133,7 +139,7 @@ export default function EditInvoicePage({ params }) {
     const fetchPoItems = async () => {
       setPoItemsLoading(true);
       try {
-        const data = await poItemService.getAll(0, 100);
+        const data = await poItemService.getDropdown();
         console.log('PO Items fetched:', data?.length, 'items');
         setPoItems(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -155,22 +161,57 @@ export default function EditInvoicePage({ params }) {
       try {
         const invoiceData = await invoiceService.getById(invoiceId);
         if (invoiceData) {
+          // Try to get items and payments from the main object first, 
+          // then fallback to separate API calls if they're empty
+          let items = invoiceData.items || invoiceData.invoice_items || [];
+          let payments = invoiceData.payments || invoiceData.invoice_payments || [];
+          
+          if (items.length === 0) {
+            try {
+              const fetchedItems = await invoiceService.getItems(invoiceId);
+              if (Array.isArray(fetchedItems) && fetchedItems.length > 0) {
+                items = fetchedItems;
+              }
+            } catch (e) { console.error("Failed to fetch items separately", e); }
+          }
+          
+          if (payments.length === 0) {
+            try {
+              const fetchedPayments = await invoiceService.getPayments(invoiceId);
+              if (Array.isArray(fetchedPayments) && fetchedPayments.length > 0) {
+                payments = fetchedPayments;
+              }
+            } catch (e) { console.error("Failed to fetch payments separately", e); }
+          }
+
+          // Map items to ensure they have stock_number and item_name for display
+          const mappedItems = items.map(item => ({
+            ...item,
+            stock_number: item.stock_number || item.po_item?.stock_number || "",
+            item_name: item.item_name || item.po_item?.item_name || item.po_item?.stock_item?.name || item.item_description || ""
+          }));
+
           setFormData({
             invoice_number: invoiceData.invoice_number || "",
-            customer_id: invoiceData.customer_id || "",
+            customer_id: invoiceData.customer_id ? String(invoiceData.customer_id) : "",
             invoice_date: invoiceData.invoice_date || "",
             invoice_by: invoiceData.invoice_by || 1,
             invoice_status: invoiceData.invoice_status || "pending",
             overall_load_status: invoiceData.overall_load_status || "not_loaded",
             invoice_notes: invoiceData.invoice_notes || "",
-            items: invoiceData.items || [],
-            payments: invoiceData.payments || []
+            items: mappedItems,
+            payments: payments
           });
           
-          // Set selected customer
-          if (invoiceData.customer_id && customers.length > 0) {
-            const customer = customers.find(c => c.id === parseInt(invoiceData.customer_id));
-            setSelectedCustomer(customer);
+          // Set selected customer with full details
+          if (invoiceData.customer_id) {
+            try {
+              const fullCustomer = await customerService.getById(invoiceData.customer_id);
+              setSelectedCustomer(fullCustomer);
+            } catch (e) {
+              const customer = customers.find(c => c.id === parseInt(invoiceData.customer_id));
+              setSelectedCustomer(customer);
+            }
           }
         }
       } catch (error) {
@@ -203,6 +244,10 @@ export default function EditInvoicePage({ params }) {
     });
   };
 
+  // Track deleted items and payments
+  const [deletedItemIds, setDeletedItemIds] = useState([]);
+  const [deletedPaymentIds, setDeletedPaymentIds] = useState([]);
+
   // Handle PO Item selection
   const handlePoItemSelect = (poItemId) => {
     const selectedPoItem = poItems.find(item => item.id === parseInt(poItemId));
@@ -211,9 +256,9 @@ export default function EditInvoicePage({ params }) {
         ...itemForm,
         po_item_id: poItemId,
         stock_number: selectedPoItem.stock_number || "",
-        item_name: selectedPoItem.stock_item?.name || "",
-        po_description: selectedPoItem.po_description || "",
-        sale_description: selectedPoItem.po_description || ""
+        item_name: selectedPoItem.item_name || selectedPoItem.stock_item?.name || "",
+        po_description: selectedPoItem.po_description || selectedPoItem.item_name || "",
+        sale_description: selectedPoItem.po_description || selectedPoItem.item_name || ""
       });
     } else {
       setItemForm({
@@ -243,6 +288,10 @@ export default function EditInvoicePage({ params }) {
 
   // Remove invoice item
   const removeItem = (index) => {
+    const itemToRemove = formData.items[index];
+    if (itemToRemove && itemToRemove.id) {
+      setDeletedItemIds([...deletedItemIds, itemToRemove.id]);
+    }
     const newItems = formData.items.filter((_, i) => i !== index);
     setFormData({...formData, items: newItems});
   };
@@ -274,6 +323,10 @@ export default function EditInvoicePage({ params }) {
 
   // Remove payment row
   const removePayment = (index) => {
+    const paymentToRemove = formData.payments[index];
+    if (paymentToRemove && paymentToRemove.id) {
+      setDeletedPaymentIds([...deletedPaymentIds, paymentToRemove.id]);
+    }
     const newPayments = formData.payments.filter((_, i) => i !== index);
     setFormData({...formData, payments: newPayments});
   };
@@ -312,12 +365,15 @@ export default function EditInvoicePage({ params }) {
     setLoading(true);
     try {
       const payload = {
-        invoice_number: formData.invoice_number.trim(),
-        customer_id: parseInt(formData.customer_id),
-        invoice_date: formData.invoice_date,
-        invoice_status: formData.invoice_status,
-        overall_load_status: formData.overall_load_status,
-        invoice_notes: formData.invoice_notes?.trim() || null,
+        update_invoice: {
+          id: parseInt(invoiceId),
+          invoice_number: formData.invoice_number.trim(),
+          customer_id: parseInt(formData.customer_id),
+          invoice_date: formData.invoice_date,
+          invoice_status: formData.invoice_status,
+          overall_load_status: formData.overall_load_status,
+          invoice_notes: formData.invoice_notes?.trim() || null
+        },
         create_items: formData.items.filter(item => !item.id).map(item => ({
           po_item_id: parseInt(item.po_item_id),
           sale_description: item.sale_description || null,
@@ -325,7 +381,7 @@ export default function EditInvoicePage({ params }) {
           discount: parseFloat(item.discount) || 0,
           discount_details: item.discount_details || null,
           load_status: item.load_status,
-          load_date: item.load_date || null
+          load_date: item.load_date ? item.load_date.split('T')[0] : null
         })),
         update_items: formData.items.filter(item => item.id).map(item => ({
           id: item.id,
@@ -335,9 +391,9 @@ export default function EditInvoicePage({ params }) {
           discount: parseFloat(item.discount) || 0,
           discount_details: item.discount_details || null,
           load_status: item.load_status,
-          load_date: item.load_date || null
+          load_date: item.load_date ? item.load_date.split('T')[0] : null
         })),
-        delete_item_ids: [],
+        delete_item_ids: deletedItemIds,
         create_payments: formData.payments.filter(payment => !payment.id).map(payment => ({
           payment_date: payment.payment_date,
           payment_amount: parseFloat(payment.payment_amount) || 0,
@@ -351,10 +407,10 @@ export default function EditInvoicePage({ params }) {
           payment_method: payment.payment_method,
           payment_notes: payment.payment_notes || null
         })),
-        delete_payment_ids: []
+        delete_payment_ids: deletedPaymentIds
       };
 
-      await invoiceService.update(invoiceId, payload);
+      await invoiceService.saveGranular(payload);
       success("Invoice updated successfully!");
       router.push("/dashboard/sales/invoices");
     } catch (error) {
@@ -448,7 +504,7 @@ export default function EditInvoicePage({ params }) {
               <option value="">Select a customer...</option>
               {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.full_name} - {customer.customer_code}
+                  {customer.label || customer.full_name || customer.name}
                 </option>
               ))}
             </select>
@@ -456,7 +512,7 @@ export default function EditInvoicePage({ params }) {
         </div>
 
         {/* Customer Details */}
-        {selectedCustomer && (
+        {selectedCustomer && (selectedCustomer.full_name || selectedCustomer.customer_code) && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Customer Details</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -744,7 +800,7 @@ export default function EditInvoicePage({ params }) {
                     </option>
                     {poItems.map(poItem => (
                       <option key={poItem.id} value={poItem.id}>
-                        {poItem.po_description} - {poItem.stock_number}
+                        {poItem.item_name || poItem.label || poItem.po_description} - {poItem.stock_number}
                       </option>
                     ))}
                   </select>

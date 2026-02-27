@@ -15,6 +15,16 @@ export const poItemService = {
     }
   },
 
+  // Get dropdown PO items
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/po-items');
+    } catch (error) {
+      console.error("📦 PO Items Dropdown API failed:", error.message);
+      return poItemService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get in-stock/available items
   getAvailable: async () => {
     try {

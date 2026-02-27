@@ -95,11 +95,17 @@ export default function AddInvoicePage() {
   };
 
   // Handle customer selection
-  const handleCustomerChange = (customerId) => {
+  const handleCustomerChange = async (customerId) => {
     setFormData({...formData, customer_id: customerId});
     if (customerId) {
-      const customer = customers.find(c => c.id === parseInt(customerId));
-      setSelectedCustomer(customer);
+      try {
+        const customer = await customerService.getById(customerId);
+        setSelectedCustomer(customer);
+      } catch (error) {
+        console.error("Failed to fetch full customer details:", error);
+        const minimalCustomer = customers.find(c => c.id === parseInt(customerId));
+        setSelectedCustomer(minimalCustomer);
+      }
     } else {
       setSelectedCustomer(null);
     }
@@ -110,7 +116,7 @@ export default function AddInvoicePage() {
     const fetchCustomers = async () => {
       setCustomersLoading(true);
       try {
-        const customersData = await customerService.getAll();
+        const customersData = await customerService.getDropdown();
         if (customersData && customersData.length > 0) {
           setCustomers(customersData);
         }
@@ -128,7 +134,7 @@ export default function AddInvoicePage() {
     const fetchPoItems = async () => {
       setPoItemsLoading(true);
       try {
-        const data = await poItemService.getAll(0, 100);
+        const data = await poItemService.getDropdown();
         console.log('PO Items fetched:', data?.length, 'items');
         setPoItems(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -166,9 +172,9 @@ export default function AddInvoicePage() {
         ...itemForm,
         po_item_id: poItemId,
         stock_number: selectedPoItem.stock_number || "",
-        item_name: selectedPoItem.stock_item?.name || "",
-        po_description: selectedPoItem.po_description || "",
-        sale_description: selectedPoItem.po_description || ""
+        item_name: selectedPoItem.item_name || selectedPoItem.stock_item?.name || "",
+        po_description: selectedPoItem.po_description || selectedPoItem.item_name || "",
+        sale_description: selectedPoItem.po_description || selectedPoItem.item_name || ""
       });
     } else {
       setItemForm({
@@ -267,12 +273,14 @@ export default function AddInvoicePage() {
     setLoading(true);
     try {
       const payload = {
-        invoice_number: formData.invoice_number.trim(),
-        customer_id: parseInt(formData.customer_id),
-        invoice_date: formData.invoice_date,
-        invoice_status: formData.invoice_status,
-        overall_load_status: formData.overall_load_status,
-        invoice_notes: formData.invoice_notes?.trim() || null,
+        create_invoice: {
+          invoice_number: formData.invoice_number.trim(),
+          customer_id: parseInt(formData.customer_id),
+          invoice_date: formData.invoice_date,
+          invoice_status: formData.invoice_status,
+          overall_load_status: formData.overall_load_status,
+          invoice_notes: formData.invoice_notes?.trim() || null,
+        },
         create_items: formData.items.map(item => ({
           po_item_id: parseInt(item.po_item_id),
           sale_description: item.sale_description || null,
@@ -280,7 +288,7 @@ export default function AddInvoicePage() {
           discount: parseFloat(item.discount) || 0,
           discount_details: item.discount_details || null,
           load_status: item.load_status,
-          load_date: item.load_date || null
+          load_date: item.load_date ? item.load_date.split('T')[0] : null
         })),
         create_payments: formData.payments.map(payment => ({
           payment_date: payment.payment_date,
@@ -294,7 +302,7 @@ export default function AddInvoicePage() {
         delete_payment_ids: []
       };
 
-      await invoiceService.create(payload);
+      await invoiceService.saveGranular(payload);
       success("Invoice created successfully!");
       router.push("/dashboard/sales/invoices");
     } catch (error) {
@@ -369,7 +377,6 @@ export default function AddInvoicePage() {
               <option value="delivered">Delivered</option>
             </select>
           </FormField>
-
           <FormField label="Customer" required>
             <select 
               className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
@@ -380,7 +387,7 @@ export default function AddInvoicePage() {
               <option value="">Select a customer...</option>
               {customers.map(customer => (
                 <option key={customer.id} value={customer.id}>
-                  {customer.full_name} - {customer.customer_code}
+                  {customer.label || customer.full_name || customer.name}
                 </option>
               ))}
             </select>
@@ -388,7 +395,7 @@ export default function AddInvoicePage() {
         </div>
 
         {/* Customer Details */}
-        {selectedCustomer && (
+        {selectedCustomer && (selectedCustomer.full_name || selectedCustomer.customer_code) && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2">Customer Details</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -676,7 +683,7 @@ export default function AddInvoicePage() {
                     </option>
                     {poItems.map(poItem => (
                       <option key={poItem.id} value={poItem.id}>
-                        {poItem.po_description} - {poItem.stock_number}
+                        {poItem.item_name || poItem.label || poItem.po_description} - {poItem.stock_number}
                       </option>
                     ))}
                   </select>

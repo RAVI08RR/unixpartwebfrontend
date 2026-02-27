@@ -29,6 +29,16 @@ export const containerService = {
     }
   },
 
+  // Get dropdown containers
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/containers');
+    } catch (error) {
+      console.error("📦 Containers Dropdown API failed:", error.message);
+      return containerService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get single container by ID
   getById: async (id) => {
     try {

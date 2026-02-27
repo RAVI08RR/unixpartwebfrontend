@@ -189,6 +189,19 @@ export const invoiceService = {
     }
   },
 
+  // Save granular (new endpoint for add/edit)
+  saveGranular: async (payload) => {
+    try {
+      return await fetchApi('/api/invoices/save-granular', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      console.error("📋 Granular save failed:", error.message);
+      throw error;
+    }
+  },
+
   // Get all payments across all invoices
   getAllPayments: async () => {
     try {

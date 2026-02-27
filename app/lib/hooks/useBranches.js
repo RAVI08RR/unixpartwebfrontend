@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { branchService } from '../services/branchService';
 
-export function useBranches(skip = 0, limit = 100) {
+export function useBranches(skip = 0, limit = 100, isDropdown = false) {
   const [branches, setBranches] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -13,7 +13,9 @@ export function useBranches(skip = 0, limit = 100) {
       setIsError(false);
       setError(null);
       
-      const data = await branchService.getAll(skip, limit);
+      const data = isDropdown 
+        ? await branchService.getDropdown()
+        : await branchService.getAll(skip, limit);
       setBranches(data);
     } catch (err) {
       console.error('useBranches fetch error:', err);
@@ -27,7 +29,7 @@ export function useBranches(skip = 0, limit = 100) {
 
   useEffect(() => {
     fetchBranches();
-  }, [skip, limit]);
+  }, [skip, limit, isDropdown]);
 
   // Mutate function to refresh data
   const mutate = () => {

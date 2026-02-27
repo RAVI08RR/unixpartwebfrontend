@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { customerService } from '../services/customerService';
 
-export function useCustomers(skip = 0, limit = 100, status = null) {
+export function useCustomers(skip = 0, limit = 100, status = null, isDropdown = false) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,7 +10,9 @@ export function useCustomers(skip = 0, limit = 100, status = null) {
     try {
       setLoading(true);
       setError(null);
-      const data = await customerService.getAll(skip, limit, status);
+      const data = isDropdown 
+        ? await customerService.getDropdown()
+        : await customerService.getAll(skip, limit, status);
       setCustomers(data);
     } catch (err) {
       console.error('Failed to fetch customers:', err);
@@ -22,7 +24,7 @@ export function useCustomers(skip = 0, limit = 100, status = null) {
 
   useEffect(() => {
     fetchCustomers();
-  }, [skip, limit, status]);
+  }, [skip, limit, status, isDropdown]);
 
   const refetch = () => {
     fetchCustomers();

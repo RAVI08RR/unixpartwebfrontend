@@ -22,9 +22,9 @@ export default function AddClearancePage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [submittingItem, setSubmittingItem] = useState(false);
   const { success: showSuccess, error: showError } = useToast();
-  const { suppliers } = useSuppliers();
-  const { branches } = useBranches();
-  const { stockItems: apiStockItems } = useStockItems(0, 100);
+  const { suppliers } = useSuppliers(0, 500, null, true);
+  const { branches } = useBranches(0, 500, true);
+  const { stockItems: apiStockItems } = useStockItems(0, 500, null, true);
 
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
@@ -188,7 +188,7 @@ export default function AddClearancePage() {
                 >
                   <option value="">Select Supplier</option>
                   {suppliers?.map(s => (
-                    <option key={s.id} value={s.id}>{s.company || s.name}</option>
+                    <option key={s.id} value={s.id}>{s.label || s.company || s.name}</option>
                   ))}
                 </select>
               </div>
@@ -206,7 +206,7 @@ export default function AddClearancePage() {
                 >
                   <option value="">Select Branch</option>
                   {branches?.map(b => (
-                    <option key={b.id} value={b.id}>{b.branch_name}</option>
+                    <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>
                   ))}
                 </select>
               </div>
@@ -356,7 +356,7 @@ export default function AddClearancePage() {
                       onChange={e => setItemFormData({...itemFormData, item_id: e.target.value})}
                     >
                       <option value="">Select Item Category</option>
-                      {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
+                      {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
                     </select>
                   </div>
                 </FormField>

@@ -34,10 +34,13 @@ const DropdownSearch = ({
   }, []);
 
   // Filter items based on search term
-  const filteredItems = items.filter(item => 
-    item[displayField]?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (secondaryField && item[secondaryField]?.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredItems = items.filter(item => {
+    const mainValue = item[displayField] || item.label || "";
+    const secValue = secondaryField ? (item[secondaryField] || "") : "";
+    
+    return mainValue.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+           secValue.toString().toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const handleItemToggle = (item) => {
     const itemValue = item[valueField];
@@ -58,7 +61,7 @@ const DropdownSearch = ({
     if (selectedItems.length === 0) return buttonText;
     if (selectedItems.length === 1) {
       const item = items.find(item => item[valueField] === selectedItems[0]);
-      return item ? item[displayField] : `${selectedItems.length} selected`;
+      return item ? (item[displayField] || item.label || item[valueField]) : `${selectedItems.length} selected`;
     }
     return `${selectedItems.length} selected`;
   };
@@ -117,17 +120,17 @@ const DropdownSearch = ({
                         onChange={() => handleItemToggle(item)}
                         className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
                       />
-                      <label 
-                        onClick={() => handleItemToggle(item)}
-                        className="w-full ml-2 text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
-                      >
-                        <div>{item[displayField]}</div>
-                        {secondaryField && item[secondaryField] && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {item[secondaryField]}
-                          </div>
-                        )}
-                      </label>
+                        <label 
+                          onClick={() => handleItemToggle(item)}
+                          className="w-full ml-2 text-sm font-medium text-gray-900 dark:text-white cursor-pointer"
+                        >
+                          <div>{item[displayField] || item.label}</div>
+                          {secondaryField && item[secondaryField] && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {item[secondaryField]}
+                            </div>
+                          )}
+                        </label>
                     </div>
                   </li>
                 );

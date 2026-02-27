@@ -31,7 +31,7 @@ export default function PurchaseOrderItemsPage({ params }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const itemsPerPage = 8;
   
-  const { branches: apiBranches } = useBranches();
+  const { branches: apiBranches } = useBranches(0, 100, true);
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   
   const { stockItems: apiStockItems } = useStockItems(0, 100);

@@ -18,8 +18,8 @@ export default function EditClearancePage({ params }) {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const { success: showSuccess, error: showError } = useToast();
-  const { suppliers } = useSuppliers();
-  const { branches } = useBranches();
+  const { suppliers } = useSuppliers(0, 500, null, true);
+  const { branches } = useBranches(0, 500, true);
   
   const [formData, setFormData] = useState({
     container_code: "",
@@ -200,7 +200,7 @@ export default function EditClearancePage({ params }) {
                 >
                   <option value="">Select Supplier</option>
                   {suppliers?.map(s => (
-                    <option key={s.id} value={s.id}>{s.company || s.name}</option>
+                    <option key={s.id} value={s.id}>{s.label || s.company || s.name}</option>
                   ))}
                 </select>
               </div>
@@ -218,7 +218,7 @@ export default function EditClearancePage({ params }) {
                 >
                   <option value="">Select Branch</option>
                   {branches?.map(b => (
-                    <option key={b.id} value={b.id}>{b.branch_name}</option>
+                    <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>
                   ))}
                 </select>
               </div>

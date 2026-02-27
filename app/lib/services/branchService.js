@@ -12,6 +12,16 @@ export const branchService = {
     }
   },
 
+  // Get dropdown branches
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/branches');
+    } catch (error) {
+      console.error("🏢 Branches Dropdown API failed:", error.message);
+      return branchService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get branch by ID
   getById: async (id) => {
     try {

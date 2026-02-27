@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { stockItemService } from '../services/stockItemService';
 
-export function useStockItems(skip = 0, limit = 100, parent_id = null) {
+export function useStockItems(skip = 0, limit = 100, parent_id = null, isDropdown = false) {
   const [stockItems, setStockItems] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -13,7 +13,9 @@ export function useStockItems(skip = 0, limit = 100, parent_id = null) {
       setIsError(false);
       setError(null);
       
-      const data = await stockItemService.getAll(skip, limit, parent_id);
+      const data = isDropdown 
+        ? await stockItemService.getDropdown()
+        : await stockItemService.getAll(skip, limit, parent_id);
       setStockItems(data);
     } catch (err) {
       console.error('useStockItems fetch error:', err);
@@ -27,7 +29,7 @@ export function useStockItems(skip = 0, limit = 100, parent_id = null) {
 
   useEffect(() => {
     fetchStockItems();
-  }, [skip, limit, parent_id]);
+  }, [skip, limit, parent_id, isDropdown]);
 
   // Mutate function to refresh data
   const mutate = () => {

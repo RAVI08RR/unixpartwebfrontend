@@ -26,6 +26,16 @@ export const supplierService = {
     }
   },
 
+  // Get dropdown suppliers
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/suppliers');
+    } catch (error) {
+      console.error("🏭 Suppliers Dropdown API failed:", error.message);
+      return supplierService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get single supplier by ID
   getById: async (id) => {
     return fetchApi(`/api/suppliers/${id}`);

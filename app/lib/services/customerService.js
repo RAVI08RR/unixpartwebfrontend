@@ -31,6 +31,16 @@ export const customerService = {
     }
   },
 
+  // Get dropdown customers
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/customers');
+    } catch (error) {
+      console.error("🏢 Customers Dropdown API failed:", error.message);
+      return customerService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get single customer by ID
   getById: async (id) => {
     try {

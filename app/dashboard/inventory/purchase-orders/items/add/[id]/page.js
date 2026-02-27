@@ -16,8 +16,8 @@ export default function AddPOItemPage({ params }) {
   const [submitting, setSubmitting] = useState(false);
   const { success, error: showError } = useToast();
   
-  const { branches: apiBranches } = useBranches();
-  const { stockItems: apiStockItems } = useStockItems(0, 100);
+  const { branches: apiBranches } = useBranches(0, 100, true);
+  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   const stockItems = useMemo(() => {
@@ -103,7 +103,7 @@ export default function AddPOItemPage({ params }) {
                   required
                 >
                   <option value="">Select Item Category</option>
-                  {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
+                  {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
                 </select>
               </div>
             </FormField>
@@ -118,7 +118,7 @@ export default function AddPOItemPage({ params }) {
                   required
                 >
                   <option value="">Select Branch</option>
-                  {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+                  {branches.map(b => <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>)}
                 </select>
               </div>
             </FormField>

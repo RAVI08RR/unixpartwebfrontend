@@ -38,6 +38,16 @@ export const userService = {
     return response;
   },
 
+  // Get dropdown users
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/users');
+    } catch (error) {
+      console.error("👤 Users Dropdown API failed:", error.message);
+      return userService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get single user by ID
   getById: async (id) => {
     const response = await fetchApi(`/api/users/${id}`);

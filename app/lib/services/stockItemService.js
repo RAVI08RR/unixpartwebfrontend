@@ -16,6 +16,16 @@ export const stockItemService = {
     }
   },
 
+  // Get dropdown stock items
+  getDropdown: async () => {
+    try {
+      return await fetchApi('/api/dropdown/stock-items');
+    } catch (error) {
+      console.error("📦 Stock Items Dropdown API failed:", error.message);
+      return stockItemService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+    }
+  },
+
   // Get stock item by ID
   getById: async (id) => {
     try {

@@ -17,8 +17,8 @@ export default function ViewClearancePage({ params }) {
   const { id } = use(params);
   const [fetching, setFetching] = useState(true);
   const { error: showError } = useToast();
-  const { suppliers } = useSuppliers();
-  const { branches } = useBranches();
+  const { suppliers } = useSuppliers(0, 100, null, true);
+  const { branches } = useBranches(0, 100, true);
   const [container, setContainer] = useState(null);
 
   useEffect(() => {

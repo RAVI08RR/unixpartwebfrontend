@@ -19,9 +19,9 @@ export default function AddPurchaseOrderPage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [submittingItem, setSubmittingItem] = useState(false);
   const { success: showSuccess, error: showError } = useToast();
-  const { containers } = useContainers();
-  const { branches: apiBranches } = useBranches();
-  const { stockItems: apiStockItems } = useStockItems(0, 100);
+  const { containers } = useContainers(0, 100, null, null, null, true);
+  const { branches: apiBranches } = useBranches(0, 100, true);
+  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   const stockItems = useMemo(() => {
@@ -154,7 +154,7 @@ export default function AddPurchaseOrderPage() {
                 >
                   <option value="">Select Container Code</option>
                   {containers?.map(c => (
-                    <option key={c.id} value={c.id}>{c.container_code}</option>
+                    <option key={c.id} value={c.id}>{c.label || c.container_code}</option>
                   ))}
                 </select>
               </div>
@@ -269,7 +269,7 @@ export default function AddPurchaseOrderPage() {
                     onChange={e => setItemFormData({...itemFormData, item_id: e.target.value})}
                   >
                     <option value="">Select Item Category</option>
-                    {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
+                    {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
                   </select>
                 </FormField>
 
@@ -281,7 +281,7 @@ export default function AddPurchaseOrderPage() {
                     onChange={e => setItemFormData({...itemFormData, current_branch_id: e.target.value})}
                   >
                     <option value="">Select Branch</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.branch_name}</option>)}
+                    {branches.map(b => <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>)}
                   </select>
                 </FormField>
 
