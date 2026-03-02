@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, use } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { 
   ArrowLeft, Package, Building2, 
@@ -14,8 +14,14 @@ import { useToast } from "@/app/components/Toast";
 import ConfirmModal from "@/app/components/ConfirmModal";
 
 export default function PurchaseOrderItemsPage({ params }) {
-  const { id: poId } = use(params);
+  const [poId, setPoId] = useState(null);
   const { success, error: showError } = useToast();
+  
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      setPoId(resolvedParams.id);
+    });
+  }, [params]);
   
   const [items, setItems] = useState([]);
   const [purchaseOrder, setPurchaseOrder] = useState(null);

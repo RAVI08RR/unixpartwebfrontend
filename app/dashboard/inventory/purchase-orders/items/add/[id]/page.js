@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, use } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Package, Hash, FileText, Building2, Box } from "lucide-react";
@@ -10,8 +10,14 @@ import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 
 export default function AddPOItemPage({ params }) {
-  const { id: poId } = use(params);
+  const [poId, setPoId] = useState(null);
   const router = useRouter();
+  
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      setPoId(resolvedParams.id);
+    });
+  }, [params]);
   
   const [submitting, setSubmitting] = useState(false);
   const { success, error: showError } = useToast();

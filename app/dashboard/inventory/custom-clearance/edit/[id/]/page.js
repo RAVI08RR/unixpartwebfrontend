@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -14,8 +14,14 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useToast } from "@/app/components/Toast";
 
 export default function EditClearancePage({ params }) {
-  const { id } = use(params);
+  const [id, setId] = useState(null);
   const router = useRouter();
+  
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      setId(resolvedParams.id);
+    });
+  }, [params]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const { success: showSuccess, error: showError } = useToast();
