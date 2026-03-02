@@ -21,7 +21,7 @@ export const poItemService = {
       return await fetchApi('/api/dropdown/po-items');
     } catch (error) {
       console.error("📦 PO Items Dropdown API failed:", error.message);
-      return poItemService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      return poItemService.getAll(0, 100); // Fallback to getAll if dropdown endpoint fails
     }
   },
 

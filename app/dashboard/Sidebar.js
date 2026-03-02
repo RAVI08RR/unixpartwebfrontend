@@ -64,6 +64,7 @@ export function Sidebar() {
       customIcon: "/icons/Button-3.svg",
       label: "Inventory",
       items: [
+        { label: "All Inventory", href: "/dashboard/inventory/all-inventory", icon: Layers },
         { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart },
         { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield },
         { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck },
@@ -80,6 +81,7 @@ export function Sidebar() {
         { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck },
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText },
+        { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3 },
       ]
     },
     {

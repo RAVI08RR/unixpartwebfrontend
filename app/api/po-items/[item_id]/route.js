@@ -70,6 +70,7 @@ export async function PUT(request, { params }) {
     const backendUrl = `${apiBaseUrl}/api/po-items/${numericId}`;
     
     console.log('✏️ Updating PO Item:', backendUrl);
+    console.log('📦 Request body:', body);
     
     const headers = {
       'Content-Type': 'application/json',
@@ -81,6 +82,7 @@ export async function PUT(request, { params }) {
     const data = await response.text();
     
     console.log('📦 Update response status:', response.status);
+    console.log('📦 Update response body:', data);
     
     return new Response(data, {
       status: response.status,

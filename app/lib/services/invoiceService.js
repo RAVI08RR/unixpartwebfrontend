@@ -202,6 +202,16 @@ export const invoiceService = {
     }
   },
 
+  // Get sales data (consolidated sales items)
+  getSalesData: async (skip = 0, limit = 100) => {
+    try {
+      return await fetchApi(`/api/invoices/sales-data?skip=${skip}&limit=${limit}`);
+    } catch (error) {
+      console.error("📋 Get sales data failed:", error.message);
+      return [];
+    }
+  },
+
   // Get all payments across all invoices
   getAllPayments: async () => {
     try {

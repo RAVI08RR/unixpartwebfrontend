@@ -155,7 +155,10 @@ export default function EditInvoicePage({ params }) {
   // Fetch invoice data
   useEffect(() => {
     const fetchInvoice = async () => {
-      if (!invoiceId) return;
+      if (!invoiceId || invoiceId === "undefined") {
+        router.push("/dashboard/sales/invoices");
+        return;
+      }
       
       setFetching(true);
       try {
