@@ -10,10 +10,10 @@ const authRoutes = ['/', '/signup'];
 // Define protected routes that require authentication
 const protectedRoutes = ['/dashboard', '/profile', '/settings'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip middleware for static files, API routes, and Next.js internals
+  // Skip proxy for static files, API routes, and Next.js internals
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
@@ -31,7 +31,7 @@ export function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.includes(pathname);
   const isPublicRoute = publicRoutes.includes(pathname);
   
-  console.log('🔐 Middleware:', {
+  console.log('🔐 Proxy:', {
     pathname,
     hasToken: !!token,
     isProtectedRoute,
@@ -75,7 +75,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configure which routes the middleware should run on
+// Configure which routes the proxy should run on
 export const config = {
   matcher: [
     /*

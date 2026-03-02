@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Next.js application implements a secure authentication system using HttpOnly cookies and middleware-based route protection.
+This Next.js application implements a secure authentication system using HttpOnly cookies and proxy-based route protection.
 
 ## Architecture
 
@@ -37,7 +37,7 @@ This Next.js application implements a secure authentication system using HttpOnl
 #### Session Persistence
 ```
 1. User visits any page
-2. Middleware checks for auth_token cookie
+2. Proxy checks for auth_token cookie
 3. If cookie exists:
    → User is authenticated
    → Access granted to protected routes
@@ -56,9 +56,9 @@ This Next.js application implements a secure authentication system using HttpOnl
 5. User redirected to /login
 ```
 
-### 3. Middleware Protection
+### 3. Proxy Protection
 
-**File:** `middleware.ts`
+**File:** `proxy.ts`
 
 **Protected Routes:**
 - `/dashboard/*` - Main application
@@ -69,7 +69,7 @@ This Next.js application implements a secure authentication system using HttpOnl
 - `/` - Login page
 - `/signup` - Registration page
 
-**Middleware Logic:**
+**Proxy Logic:**
 ```typescript
 if (hasToken && isAuthRoute) {
   // Authenticated user trying to access login
@@ -108,7 +108,7 @@ const cookieOptions = [
 ```
 
 #### Token Validation
-- Middleware checks cookie presence on every request
+- Proxy checks cookie presence on every request
 - Client-side checks localStorage for immediate feedback
 - Invalid/expired tokens trigger automatic logout
 - 401 responses clear tokens and redirect to login
@@ -122,7 +122,7 @@ const cookieOptions = [
 
 ```
 /
-├── middleware.ts                    # Route protection
+├── proxy.ts                         # Route protection
 ├── app/
 │   ├── page.js                      # Login page (/)
 │   ├── signup/
@@ -280,7 +280,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # For development with self-signed certs
 - [ ] Test login/logout flow
 - [ ] Test protected route access
 - [ ] Test redirect after login
-- [ ] Verify no infinite redirect loops
+- [ ] Verify no infinite redirect loops (proxy config)
 
 #### Local Development
 - [ ] Copy `.env.example` to `.env.local`
@@ -291,8 +291,8 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # For development with self-signed certs
 ### 10. Troubleshooting
 
 #### Issue: Infinite redirect loop
-**Cause:** Middleware and client-side auth checks conflicting
-**Solution:** Ensure middleware only checks cookie, not localStorage
+**Cause:** Proxy and client-side auth checks conflicting
+**Solution:** Ensure proxy only checks cookie, not localStorage
 
 #### Issue: Cookie not being set
 **Cause:** CORS or SameSite issues
@@ -309,11 +309,11 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # For development with self-signed certs
 - Verify backend is not rejecting token
 
 #### Issue: Protected routes accessible without login
-**Cause:** Middleware not running or misconfigured
+**Cause:** Proxy not running or misconfigured
 **Solution:**
-- Check `middleware.ts` matcher configuration
-- Verify middleware is in root directory
-- Check console logs for middleware execution
+- Check `proxy.ts` matcher configuration
+- Verify proxy is in root directory
+- Check console logs for proxy execution
 
 ### 11. Best Practices
 
@@ -344,6 +344,6 @@ NODE_TLS_REJECT_UNAUTHORIZED=0  # For development with self-signed certs
 ## Support
 
 For issues or questions, contact the development team or refer to:
-- Next.js Middleware: https://nextjs.org/docs/app/building-your-application/routing/middleware
+- Next.js Proxy: https://nextjs.org/docs/messages/middleware-to-proxy
 - HTTP Cookies: https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
 - JWT Best Practices: https://tools.ietf.org/html/rfc8725

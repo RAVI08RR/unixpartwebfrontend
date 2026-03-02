@@ -2,7 +2,7 @@
 
 ## ✅ What Was Implemented
 
-### 1. Middleware Protection (`middleware.ts`)
+### 1. Proxy Protection (`proxy.ts`)
 - ✅ Route protection for `/dashboard`, `/profile`, `/settings`
 - ✅ Automatic redirect to `/login` for unauthenticated users
 - ✅ Automatic redirect to `/dashboard` for authenticated users on auth pages
@@ -33,7 +33,7 @@
 
 ### 5. Session Persistence
 - ✅ Token checked on every page load
-- ✅ Middleware validates cookie presence
+- ✅ Proxy validates cookie presence
 - ✅ Works across page refreshes
 - ✅ Works with manual URL changes
 - ✅ Maintains session for 24 hours
@@ -57,7 +57,7 @@
 ## 📁 Files Created/Modified
 
 ### New Files
-1. `middleware.ts` - Route protection middleware
+1. `proxy.ts` - Route protection proxy
 2. `app/api/auth/logout/route.js` - Logout endpoint
 3. `app/components/AuthProvider.js` - Auth context provider
 4. `docs/AUTHENTICATION.md` - Full documentation
@@ -77,17 +77,17 @@
 | HttpOnly cookie storage | ✅ | Set in `/api/auth/login` |
 | localStorage fallback | ✅ | Set in login page |
 | Redirect to /dashboard after login | ✅ | Login page handles redirect |
-| Persistent session on refresh | ✅ | Middleware checks cookie |
-| Auto-redirect authenticated users | ✅ | Middleware + login page |
-| Auto-redirect unauthenticated users | ✅ | Middleware |
-| Middleware protection | ✅ | `middleware.ts` |
-| Token validation | ✅ | Middleware + API client |
+| Persistent session on refresh | ✅ | Proxy checks cookie |
+| Auto-redirect authenticated users | ✅ | Proxy + login page |
+| Auto-redirect unauthenticated users | ✅ | Proxy |
+| Proxy protection | ✅ | `proxy.ts` |
+| Token validation | ✅ | Proxy + API client |
 | Clear token on expiration | ✅ | 401 handler in API client |
-| No flicker | ✅ | Loading states + middleware |
+| No flicker | ✅ | Loading states + proxy |
 | No infinite loops | ✅ | Proper redirect logic |
 | Works on localhost | ✅ | Tested |
 | Works in production | ✅ | Ready for deployment |
-| Manual URL changes | ✅ | Middleware handles all routes |
+| Manual URL changes | ✅ | Proxy handles all routes |
 | Environment variables | ✅ | NEXT_PUBLIC_API_URL |
 
 ## 🔄 Authentication Flow Diagram
@@ -99,7 +99,7 @@
                       │
                       ▼
          ┌────────────────────────┐
-         │   Middleware Checks    │
+         │     Proxy Checks      │
          │   auth_token Cookie    │
          └────────┬───────────────┘
                   │
@@ -176,7 +176,7 @@ Yes       No
 - [x] Token not in URL → No token exposure
 - [x] Token cleared on logout → Cookie deleted
 - [x] 401 response clears token → Auto-logout
-- [x] Middleware runs on all routes → Protection active
+- [x] Proxy runs on all routes → Protection active
 
 ## 🚀 Deployment Instructions
 
@@ -202,11 +202,11 @@ NODE_TLS_REJECT_UNAUTHORIZED=0
 
 ## 📊 Performance Considerations
 
-- **Middleware overhead**: Minimal (~1-2ms per request)
+- **Proxy overhead**: Minimal (~1-2ms per request)
 - **Cookie size**: ~500 bytes (JWT token)
 - **localStorage**: Used for client-side checks only
-- **No additional API calls**: Token validated by middleware
-- **Caching**: Middleware runs on every request (by design)
+- **No additional API calls**: Token validated by proxy
+- **Caching**: Proxy runs on every request (by design)
 
 ## 🔮 Future Enhancements
 
@@ -237,7 +237,7 @@ For questions or issues:
 
 A complete, secure authentication system has been implemented with:
 - ✅ HttpOnly cookie storage (secure)
-- ✅ Middleware-based route protection
+- ✅ Proxy-based route protection
 - ✅ Automatic redirects based on auth state
 - ✅ No flicker or infinite loops
 - ✅ Works on localhost and production

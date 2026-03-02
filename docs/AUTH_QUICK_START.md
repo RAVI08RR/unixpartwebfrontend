@@ -32,7 +32,7 @@ npm run dev
 
 ### Protect a New Route
 ```typescript
-// middleware.ts
+// proxy.ts
 const protectedRoutes = [
   '/dashboard', 
   '/profile', 
@@ -82,7 +82,7 @@ function LogoutButton() {
 ## 🔒 Security Checklist
 
 - [x] HttpOnly cookies for token storage
-- [x] Middleware protection for routes
+- [x] Proxy protection for routes
 - [x] Automatic redirect on auth state change
 - [x] Token cleared on logout
 - [x] CORS headers configured
@@ -103,12 +103,12 @@ function LogoutButton() {
 ### Problem: Redirected to login after successful login
 **Check:**
 1. Is cookie being set? Check Application > Cookies in DevTools
-2. Is middleware running? Check console logs
+2. Is proxy running? Check console logs
 3. Is token valid? Try decoding JWT at jwt.io
 
 ### Problem: Can access protected routes without login
 **Check:**
-1. Is middleware.ts in root directory?
+1. Is proxy.ts in root directory?
 2. Is matcher configuration correct?
 3. Clear cookies and try again
 4. Check that login page is at / (root), not /login
@@ -117,7 +117,7 @@ function LogoutButton() {
 
 | File | Purpose |
 |------|---------|
-| `middleware.ts` | Route protection |
+| `proxy.ts` | Route protection |
 | `app/api/auth/login/route.js` | Login + set cookie |
 | `app/api/auth/logout/route.js` | Logout + clear cookie |
 | `app/lib/api.js` | API client + token management |
@@ -146,7 +146,7 @@ function LogoutButton() {
 ## 💡 Pro Tips
 
 1. **Check cookies in DevTools**: Application > Cookies > localhost
-2. **Monitor middleware**: Check console for middleware logs
+2. **Monitor proxy**: Check console for proxy logs
 3. **Test in incognito**: Ensures clean state
 4. **Use React DevTools**: Inspect AuthProvider state
 5. **Check Network tab**: Verify API calls and responses
@@ -155,4 +155,4 @@ function LogoutButton() {
 
 - [Full Authentication Docs](./AUTHENTICATION.md)
 - [API Client Usage](./api-client-usage.md)
-- [Next.js Middleware Docs](https://nextjs.org/docs/app/building-your-application/routing/middleware)
+- [Next.js Proxy Docs](https://nextjs.org/docs/messages/middleware-to-proxy)

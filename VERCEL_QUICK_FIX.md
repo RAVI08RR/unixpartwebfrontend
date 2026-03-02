@@ -6,7 +6,7 @@ All fixes have been pushed. Vercel will automatically redeploy if connected to G
 
 ## 🔧 What Was Fixed
 
-1. **Middleware Configuration** - Better handling of routes on Vercel
+1. **Proxy Configuration** - Better handling of routes on Vercel
 2. **vercel.json** - Added proper CORS and routing configuration
 3. **Documentation** - Comprehensive troubleshooting guide
 4. **Deployment Script** - Easy deployment helper
@@ -80,9 +80,9 @@ vercel --prod --force
 If still having issues:
 
 1. Go to: Deployments > [Latest] > Functions
-2. Look for middleware logs:
+2. Look for proxy logs:
    ```
-   🔐 Middleware: { pathname: '/', hasToken: false, ... }
+   🔐 Proxy: { pathname: '/', hasToken: false, ... }
    ```
 3. Look for API errors:
    ```
@@ -107,7 +107,7 @@ vercel --prod --force
 **Solution:**
 1. Clear all cookies in browser
 2. Try in incognito mode
-3. Check Vercel function logs for middleware behavior
+3. Check Vercel function logs for proxy behavior
 
 ### Issue: Login doesn't work
 
@@ -170,7 +170,7 @@ For more detailed troubleshooting:
 5. **Check Vercel Logs**
    ```
    Deployments > [Latest] > Functions
-   Look for errors or middleware logs
+   Look for errors or proxy logs
    ```
 
 ### Get More Help
@@ -205,7 +205,7 @@ curl -X POST https://your-app.vercel.app/api/auth/login \
 
 The main issue was likely:
 1. Missing environment variable in Vercel
-2. Middleware configuration not optimized for Vercel
+2. Proxy configuration not optimized for Vercel
 3. Missing vercel.json configuration
 
 All of these have been fixed and pushed to GitHub. Just make sure to:

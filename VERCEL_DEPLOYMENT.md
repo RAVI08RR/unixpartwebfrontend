@@ -10,7 +10,7 @@ This project has been updated to work correctly on both **local development** an
 4. ✅ CORS-aware fetch implementation
 5. ✅ Next.js App Router compatibility
 6. ✅ Secure authentication with HttpOnly cookies
-7. ✅ Middleware-based route protection
+7. ✅ Proxy-based route protection
 
 ## 🚀 Deploying to Vercel
 
@@ -78,7 +78,7 @@ After deployment:
 3. **Check Function Logs**
    - Go to **Deployments** > Select your deployment
    - Click **Functions** tab
-   - Look for middleware logs and API route logs
+   - Look for proxy logs and API route logs
 
 4. **Test Cookie Setting**
    - Open browser DevTools > Application > Cookies
@@ -113,14 +113,14 @@ npm run dev
 ### Issue: "404 - This page could not be found" on Vercel
 
 **Possible Causes:**
-1. Middleware is blocking the route
+1. Proxy is blocking the route
 2. Route doesn't exist in the app directory
 3. Build failed to generate the page
 
 **Solutions:**
 1. Check Vercel build logs for errors
 2. Verify the page exists in your `app/` directory
-3. Check middleware.ts matcher configuration
+3. Check proxy.ts matcher configuration
 4. Clear Vercel cache and redeploy:
    ```bash
    vercel --prod --force
@@ -130,12 +130,12 @@ npm run dev
 
 **Possible Causes:**
 1. Cookie not being set properly
-2. Middleware logic conflict
+2. Proxy logic conflict
 3. Domain mismatch for cookies
 
 **Solutions:**
 1. Check if cookies are being set (DevTools > Application > Cookies)
-2. Verify middleware logs in Vercel Functions
+2. Verify proxy logs in Vercel Functions
 3. Ensure cookie domain matches Vercel domain
 4. Check if `Secure` flag is causing issues (should only be set in production with HTTPS)
 
@@ -216,7 +216,7 @@ npm run dev
 ### Authentication System
 
 - **Cookies**: HttpOnly cookies for secure token storage
-- **Middleware**: Protects routes at the edge (before page loads)
+- **Proxy**: Protects routes at the edge (before page loads)
 - **Redirects**: Automatic based on authentication state
 - **Session**: 24-hour cookie expiration
 
@@ -242,9 +242,9 @@ Secure: true   // HTTPS required
 - Should include trailing slash for consistency
 - For production: Use stable URL (not ngrok free tier)
 
-### Middleware Behavior
+### Proxy Behavior
 
-- Runs on **every request** before page loads
+- Runs on **every request** before proxying or page loads
 - Checks for `auth_token` cookie
 - Redirects based on authentication state:
   - Unauthenticated + Protected Route → Redirect to `/`
@@ -268,7 +268,7 @@ Secure: true   // HTTPS required
 1. Go to your deployment
 2. Click **Functions** tab
 3. Look for:
-   - Middleware execution logs
+   - Proxy execution logs
    - API route logs
    - Error messages
 
@@ -281,7 +281,7 @@ Secure: true   // HTTPS required
 ### Common Log Messages
 
 ```
-🔐 Middleware: { pathname: '/dashboard', hasToken: false, ... }
+🔐 Proxy: { pathname: '/dashboard', hasToken: false, ... }
 ❌ Unauthenticated user accessing protected route, redirecting to login
 ✅ Authenticated user accessing protected route
 🍪 Auth token set as HttpOnly cookie
@@ -295,7 +295,7 @@ Before deploying to Vercel:
 - [ ] Backend API is accessible and running
 - [ ] CORS configured on backend for Vercel domain
 - [ ] Test authentication flow locally
-- [ ] Verify middleware logs show correct behavior
+- [ ] Verify proxy logs show correct behavior
 - [ ] Check cookies are being set properly
 - [ ] Test protected routes redirect correctly
 - [ ] Verify logout clears cookies
@@ -317,7 +317,7 @@ After deploying:
 
 - [Next.js Environment Variables](https://nextjs.org/docs/app/building-your-application/configuring/environment-variables)
 - [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
-- [Next.js Middleware](https://nextjs.org/docs/app/building-your-application/routing/middleware)
+- [Next.js Proxy Docs](https://nextjs.org/docs/messages/middleware-to-proxy)
 - [HTTP Cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
 - [FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)
 - [Authentication Documentation](./docs/AUTHENTICATION.md)
@@ -326,7 +326,7 @@ After deploying:
 
 If you're still experiencing issues:
 
-1. Check Vercel function logs for detailed errors
+1. Check Vercel function logs for proxy logs
 2. Review browser console for client-side errors
 3. Verify environment variables are set correctly
 4. Test backend API directly with curl or Postman

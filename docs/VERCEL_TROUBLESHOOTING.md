@@ -11,7 +11,7 @@
 
 **Possible Causes:**
 1. Build failed to generate the page
-2. Middleware is blocking the route
+2. Proxy is blocking the route
 3. Route configuration issue
 
 **Solutions:**
@@ -33,9 +33,9 @@ ls -la app/page.js
 # Should show: app/page.js (login page)
 ```
 
-#### Solution C: Check Middleware Configuration
+#### Solution C: Check Proxy Configuration
 ```typescript
-// middleware.ts should have:
+// proxy.ts should have:
 const publicRoutes = ['/', '/signup'];
 
 // And matcher should exclude API routes:
@@ -61,7 +61,7 @@ vercel --prod --force
 
 **Possible Causes:**
 1. Cookie not being set properly
-2. Middleware logic conflict
+2. Proxy logic conflict
 3. Client-side and server-side auth state mismatch
 
 **Solutions:**
@@ -91,10 +91,10 @@ const cookieOptions = [
    - Secure: ✓ (on Vercel)
    - Path: /
 
-#### Solution C: Check Middleware Logs
+#### Solution C: Check Proxy Logs
 ```bash
 # In Vercel function logs, look for:
-🔐 Middleware: { pathname: '/', hasToken: true/false, ... }
+🔐 Proxy: { pathname: '/', hasToken: true/false, ... }
 
 # If hasToken keeps changing, cookie isn't persisting
 ```
@@ -291,35 +291,35 @@ console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
 
 **Symptoms:**
 - Can access /dashboard without logging in
-- Middleware not blocking routes
+- Proxy not blocking routes
 - No redirects happening
 
 **Possible Causes:**
-1. Middleware not running
+1. Proxy not running
 2. Matcher configuration wrong
 3. Cookie check failing silently
 
 **Solutions:**
 
-#### Solution A: Check Middleware Logs
+#### Solution A: Check Proxy Logs
 ```bash
 # In Vercel function logs:
-# Should see: 🔐 Middleware: { pathname: '/dashboard', ... }
+# Should see: 🔐 Proxy: { pathname: '/dashboard', ... }
 
-# If missing, middleware isn't running
+# If missing, proxy isn't running
 ```
 
-#### Solution B: Verify Middleware File Location
+#### Solution B: Verify Proxy File Location
 ```bash
 # Must be in root directory:
-ls -la middleware.ts
+ls -la proxy.ts
 
 # Not in app/ or src/
 ```
 
 #### Solution C: Check Matcher Configuration
 ```typescript
-// middleware.ts config should be:
+// proxy.ts config should be:
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$|api/).*)',
@@ -327,13 +327,13 @@ export const config = {
 };
 ```
 
-#### Solution D: Test Middleware Locally
+#### Solution D: Test Proxy Locally
 ```bash
 # Run locally and check console:
 npm run dev
 
 # Visit /dashboard without login
-# Should see middleware logs and redirect
+# Should see proxy logs and redirect
 ```
 
 ---
@@ -392,7 +392,7 @@ Before deploying to Vercel:
 - [ ] Backend API is accessible from internet
 - [ ] CORS configured on backend for Vercel domain
 - [ ] Tested authentication locally
-- [ ] Middleware logs show correct behavior
+- [ ] Proxy logs show correct behavior
 - [ ] Cookies being set properly locally
 - [ ] No build errors: `npm run build`
 - [ ] No TypeScript errors: `npm run type-check` (if applicable)
@@ -439,7 +439,7 @@ curl http://srv1029267.hstgr.cloud:8000/
 
 ### Step 4: Enable Debug Mode
 ```javascript
-// Add to middleware.ts temporarily:
+// Add to proxy.ts temporarily:
 console.log('🔍 Debug:', {
   pathname: request.nextUrl.pathname,
   cookies: request.cookies.getAll(),
@@ -453,7 +453,7 @@ console.log('🔍 Debug:', {
 
 ## 📞 Support Resources
 
-- [Next.js Middleware Docs](https://nextjs.org/docs/app/building-your-application/routing/middleware)
+- [Next.js Proxy Docs](https://nextjs.org/docs/messages/middleware-to-proxy)
 - [Vercel Deployment Docs](https://vercel.com/docs)
 - [HTTP Cookies MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
 - [Vercel Support](https://vercel.com/support)
@@ -478,7 +478,7 @@ Path: /
 Max-Age: 86400
 ```
 
-**Middleware Routes:**
+**Proxy Routes:**
 ```typescript
 Public: ['/', '/signup']
 Protected: ['/dashboard', '/profile', '/settings']
