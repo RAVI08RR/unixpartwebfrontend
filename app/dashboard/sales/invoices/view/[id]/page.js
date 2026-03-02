@@ -1,17 +1,25 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function ViewInvoicePage({ params }) {
   const router = useRouter();
-  const resolvedParams = React.use(params);
-  const invoiceId = resolvedParams.id;
+  const [invoiceId, setInvoiceId] = useState(null);
 
   useEffect(() => {
-    // For now, redirect to edit page
-    // TODO: Create a proper read-only view page
-    router.replace(`/dashboard/sales/invoices/edit/${invoiceId}`);
+    // Unwrap params promise
+    Promise.resolve(params).then((resolvedParams) => {
+      setInvoiceId(resolvedParams.id);
+    });
+  }, [params]);
+
+  useEffect(() => {
+    if (invoiceId) {
+      // For now, redirect to edit page
+      // TODO: Create a proper read-only view page
+      router.replace(`/dashboard/sales/invoices/edit/${invoiceId}`);
+    }
   }, [invoiceId, router]);
 
   return (

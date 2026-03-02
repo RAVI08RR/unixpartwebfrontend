@@ -22,11 +22,15 @@ export default function EditInvoicePage({ params }) {
   const [poItemsLoading, setPoItemsLoading] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [invoiceId, setInvoiceId] = useState(null);
   const { success, error: showError } = useToast();
   
-  // Unwrap params
-  const resolvedParams = React.use(params);
-  const invoiceId = resolvedParams.id;
+  // Unwrap params promise
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      setInvoiceId(resolvedParams.id);
+    });
+  }, [params]);
   
   const [formData, setFormData] = useState({
     invoice_number: "",
