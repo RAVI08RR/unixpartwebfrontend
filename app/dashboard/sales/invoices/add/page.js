@@ -599,19 +599,19 @@ export default function AddInvoicePage() {
         </div>
 
         {/* Totals */}
-        <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Amount</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</p>
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-800/50 dark:to-zinc-800/30 rounded-lg p-6 border border-gray-200 dark:border-zinc-700">
+          <div className="flex flex-wrap items-center justify-center gap-8 text-center">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Total Amount:</span>
+              <span className="text-xl font-black text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</span>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Paid</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(totals.totalPaid)}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Total Paid:</span>
+              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.totalPaid)}</span>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Balance Due</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Balance Due:</span>
+              <span className="text-xl font-black text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</span>
             </div>
           </div>
         </div>
