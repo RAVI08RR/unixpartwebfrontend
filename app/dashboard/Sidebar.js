@@ -81,6 +81,7 @@ export function Sidebar() {
         { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck },
         { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText },
+        { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign },
         { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3 },
       ]
     },
