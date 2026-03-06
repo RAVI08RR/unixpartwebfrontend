@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, 
   Eye, Calendar, DollarSign, FileText,
-  AlertCircle, Receipt
+  AlertCircle, Receipt, Truck, X
 } from "lucide-react";
 import { useExpenses } from "@/app/lib/hooks/useExpenses";
 import { expenseService } from "@/app/lib/services/expenseService";
@@ -38,6 +38,7 @@ export default function ExpensesPage() {
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
 
@@ -121,6 +122,21 @@ export default function ExpensesPage() {
 
   const formatCurrency = (amount) => {
     return `AED ${parseFloat(amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  const handleViewExpense = (expense) => {
+    setSelectedExpense(expense);
+    setViewModalOpen(true);
+    setMenuOpenId(null);
   };
 
   if (!isMounted) return null;
@@ -362,13 +378,13 @@ export default function ExpensesPage() {
                               <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedExpenses.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
-                                <Link 
-                                  href={`/dashboard/finance/expenses/view/${expense.id}`}
+                                <button 
+                                  onClick={() => handleViewExpense(expense)}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
                                   <Eye className="w-4 h-4" />
                                   View Details
-                                </Link>
+                                </button>
                                 <Link 
                                   href={`/dashboard/finance/expenses/edit/${expense.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
@@ -497,6 +513,148 @@ export default function ExpensesPage() {
                   Delete
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Expense Modal */}
+      {viewModalOpen && selectedExpense && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl my-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                  <Receipt className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Expense Details</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedExpense.expense_id || `EXP-${selectedExpense.id}`}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setViewModalOpen(false);
+                  setSelectedExpense(null);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-6">
+              {/* Expense ID */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <Receipt className="w-3.5 h-3.5" />
+                  Expense ID
+                </label>
+                <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                  {selectedExpense.expense_id || `EXP-${selectedExpense.id}`}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Date */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Calendar className="w-3.5 h-3.5" />
+                    Date
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                    {formatDate(selectedExpense.date)}
+                  </div>
+                </div>
+
+                {/* Amount */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <DollarSign className="w-3.5 h-3.5" />
+                    Amount
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-black text-gray-900 dark:text-white">
+                    {formatCurrency(selectedExpense.amount)}
+                  </div>
+                </div>
+
+                {/* Type */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                    Type
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                    {selectedExpense.type || '-'}
+                  </div>
+                </div>
+
+                {/* Category */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
+                    Category
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                    {selectedExpense.category || '-'}
+                  </div>
+                </div>
+
+                {/* Supplier */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Truck className="w-3.5 h-3.5" />
+                    Supplier Code
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                    {selectedExpense.supplier_code || 'N/A'}
+                  </div>
+                </div>
+
+                {/* Document */}
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" />
+                    Document
+                  </label>
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
+                    {selectedExpense.document || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5" />
+                  Description
+                </label>
+                <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold min-h-[80px] whitespace-pre-wrap">
+                  {selectedExpense.description || '-'}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
+              <Link
+                href={`/dashboard/finance/expenses/edit/${selectedExpense.id}`}
+                className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>Edit Expense</span>
+              </Link>
+              
+              <button
+                onClick={() => {
+                  setViewModalOpen(false);
+                  setSelectedExpense(null);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
+              >
+                <X className="w-4 h-4" />
+                <span>Close</span>
+              </button>
             </div>
           </div>
         </div>
