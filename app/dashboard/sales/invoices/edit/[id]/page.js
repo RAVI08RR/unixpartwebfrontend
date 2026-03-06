@@ -69,7 +69,7 @@ export default function EditInvoicePage({ params }) {
     payment_notes: ""
   });
 
-  // Calculate totals
+  // Calculate totals and distributed paid amounts
   const totals = useMemo(() => {
     const itemsTotal = formData.items.reduce((sum, item) => {
       const saleAmt = parseFloat(item.sale_amount) || 0;
@@ -83,10 +83,23 @@ export default function EditInvoicePage({ params }) {
 
     const balanceDue = itemsTotal - totalPaid;
 
+    // Calculate distributed paid amounts for each item
+    const itemsWithPaidAmounts = formData.items.map(item => {
+      const itemAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+      const itemPaidAmount = itemsTotal > 0 && totalPaid > 0 
+        ? (itemAmount / itemsTotal) * totalPaid 
+        : 0;
+      return {
+        ...item,
+        paid_amount_calculated: itemPaidAmount.toFixed(2)
+      };
+    });
+
     return {
       itemsTotal,
       totalPaid,
-      balanceDue
+      balanceDue,
+      itemsWithPaidAmounts
     };
   }, [formData.items, formData.payments]);
 
@@ -338,30 +351,6 @@ export default function EditInvoicePage({ params }) {
     setFormData({...formData, payments: newPayments});
   };
 
-  // Distribute payment across items based on formula
-  // paid amount of item = (item sale amount / total invoice sale amount) * current payment
-  const distributePayment = () => {
-    if (formData.items.length === 0 || totals.totalPaid === 0) return;
-
-    const newItems = formData.items.map(item => {
-      const itemAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
-      const itemPaidAmount = (itemAmount / totals.itemsTotal) * totals.totalPaid;
-      return {
-        ...item,
-        paid_amount_calculated: itemPaidAmount.toFixed(2) // For display only, not sent to API
-      };
-    });
-
-    setFormData({...formData, items: newItems});
-  };
-
-  // Auto-distribute when payments change
-  useEffect(() => {
-    if (formData.items.length > 0 && formData.payments.length > 0) {
-      distributePayment();
-    }
-  }, [formData.payments]);
-
   // Submit form
   const handleSubmit = async () => {
     if(!formData.invoice_number || !formData.customer_id || !formData.invoice_date) {
@@ -575,7 +564,7 @@ export default function EditInvoicePage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {formData.items.map((item, index) => {
+                  {totals.itemsWithPaidAmounts.map((item, index) => {
                     const netAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
                     return (
                       <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
@@ -598,7 +587,9 @@ export default function EditInvoicePage({ params }) {
                           <span className="text-sm text-gray-600 dark:text-gray-400">{item.discount_details || '-'}</span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-sm font-bold text-green-600 dark:text-green-400">{formatCurrency(netAmount)}</span>
+                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                            {item.paid_amount_calculated ? formatCurrency(item.paid_amount_calculated) : formatCurrency(0)}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
