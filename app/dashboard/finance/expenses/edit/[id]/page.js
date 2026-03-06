@@ -162,16 +162,16 @@ export default function EditExpensePage({ params }) {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  Date <span className="text-red-500">*</span>
+                  Date
                 </label>
                 <input
                   type="date"
                   name="date"
                   value={formData.date}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm"
-                  required
+                  disabled
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-500 dark:text-gray-400 cursor-not-allowed"
                 />
+                <p className="text-xs text-gray-500 dark:text-gray-400">Date cannot be modified after creation</p>
               </div>
 
               <div className="space-y-2">
