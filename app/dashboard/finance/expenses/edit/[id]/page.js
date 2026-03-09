@@ -158,6 +158,7 @@ export default function EditExpensePage({ params }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Row 1: Date and Amount */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
@@ -191,7 +192,10 @@ export default function EditExpensePage({ params }) {
                   required
                 />
               </div>
+            </div>
 
+            {/* Row 2: Type and Category */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
                   Type <span className="text-red-500">*</span>
@@ -227,7 +231,10 @@ export default function EditExpensePage({ params }) {
                   <option value="Other Exp">Other Exp</option>
                 </select>
               </div>
+            </div>
 
+            {/* Row 3: Supplier and Document */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <Truck className="w-4 h-4" />
@@ -249,8 +256,23 @@ export default function EditExpensePage({ params }) {
                   ))}
                 </select>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  Document Reference
+                </label>
+                <input
+                  type="text"
+                  name="document_path"
+                  value={formData.document_path}
+                  onChange={handleChange}
+                  placeholder="e.g., Receipt number, invoice reference"
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm"
+                />
+              </div>
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
