@@ -54,8 +54,15 @@ export default function ExpensesPage() {
   }, [expenses]);
 
   const uniqueSuppliers = useMemo(() => {
-    const suppliers = new Set(expenses.map(exp => exp.supplier_code).filter(Boolean));
-    return ['All', ...Array.from(suppliers)];
+    const suppliers = new Set(
+      expenses
+        .filter(exp => exp.supplier)
+        .map(exp => JSON.stringify({ 
+          code: exp.supplier.supplier_code, 
+          name: exp.supplier.name 
+        }))
+    );
+    return ['All', ...Array.from(suppliers).map(s => JSON.parse(s))];
   }, [expenses]);
 
   // Filter and search logic
@@ -66,7 +73,11 @@ export default function ExpensesPage() {
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === "All" || expense.type === typeFilter;
       const matchesCategory = categoryFilter === "All" || expense.category === categoryFilter;
-      const matchesSupplier = supplierFilter === "All" || expense.supplier_code === supplierFilter;
+      const matchesSupplier = supplierFilter === "All" || 
+        (expense.supplier && (
+          expense.supplier.supplier_code === supplierFilter ||
+          expense.supplier.name === supplierFilter
+        ));
       return matchesSearch && matchesType && matchesCategory && matchesSupplier;
     });
   }, [searchQuery, typeFilter, categoryFilter, supplierFilter, expenses]);
@@ -220,17 +231,27 @@ export default function ExpensesPage() {
                   <div>
                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Supplier</label>
                     <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {uniqueSuppliers.map((supplier) => (
+                      <button
+                        onClick={() => setSupplierFilter('All')}
+                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                          supplierFilter === 'All' 
+                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {uniqueSuppliers.filter(s => s !== 'All').map((supplier) => (
                         <button
-                          key={supplier}
-                          onClick={() => setSupplierFilter(supplier)}
+                          key={supplier.code}
+                          onClick={() => setSupplierFilter(supplier.code)}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            supplierFilter === supplier 
+                            supplierFilter === supplier.code 
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                           }`}
                         >
-                          {supplier}
+                          {supplier.name} ({supplier.code})
                         </button>
                       ))}
                     </div>
@@ -269,18 +290,18 @@ export default function ExpensesPage() {
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[1400px]">
+          <table className="w-full min-w-[1200px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Expense ID</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Document</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Expense ID</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Document</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky right-0 bg-white dark:bg-zinc-900 z-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -297,10 +318,10 @@ export default function ExpensesPage() {
                 paginatedExpenses.map((expense, index) => {
                   return (
                     <tr key={expense.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-6" data-label="Expense ID">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Receipt className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Expense ID">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div>
                             <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
@@ -310,10 +331,10 @@ export default function ExpensesPage() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Date">
+                      <td className="px-4 py-4" data-label="Date">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 whitespace-nowrap">
                             {expense.date ? new Date(expense.date).toLocaleDateString('en-GB', { 
                               day: '2-digit', 
                               month: 'short', 
@@ -323,44 +344,53 @@ export default function ExpensesPage() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Description">
+                      <td className="px-4 py-4" data-label="Description">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
                           {expense.description || '-'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Type">
+                      <td className="px-4 py-4" data-label="Type">
                         {getTypeBadge(expense.type)}
                       </td>
 
-                      <td className="px-6 py-6" data-label="Category">
+                      <td className="px-4 py-4" data-label="Category">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {expense.category || '-'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Supplier">
+                      <td className="px-4 py-4" data-label="Supplier">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {expense.supplier_code || 'N/A'}
+                          {expense.supplier ? (
+                            <>
+                              {expense.supplier.name || 'Unnamed'}
+                              {expense.supplier.supplier_code && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                                  ({expense.supplier.supplier_code})
+                                </span>
+                              )}
+                            </>
+                          ) : 'N/A'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Document">
+                      <td className="px-4 py-4" data-label="Document">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {expense.document || 'N/A'}
+                          {expense.document_path || 'N/A'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6" data-label="Amount">
+                      <td className="px-4 py-4" data-label="Amount">
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-sm font-black dark:text-white">
+                          <span className="text-sm font-black dark:text-white whitespace-nowrap">
                             {formatCurrency(expense.amount)}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
+                      <td className="px-4 py-4 text-right relative sticky right-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
@@ -604,10 +634,19 @@ export default function ExpensesPage() {
                 <div className="space-y-2">
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                     <Truck className="w-3.5 h-3.5" />
-                    Supplier Code
+                    Supplier
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.supplier_code || 'N/A'}
+                    {selectedExpense.supplier ? (
+                      <>
+                        {selectedExpense.supplier.name || 'Unnamed'}
+                        {selectedExpense.supplier.supplier_code && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                            ({selectedExpense.supplier.supplier_code})
+                          </span>
+                        )}
+                      </>
+                    ) : 'N/A'}
                   </div>
                 </div>
 
@@ -618,7 +657,7 @@ export default function ExpensesPage() {
                     Document
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.document || 'N/A'}
+                    {selectedExpense.document_path || 'N/A'}
                   </div>
                 </div>
               </div>
