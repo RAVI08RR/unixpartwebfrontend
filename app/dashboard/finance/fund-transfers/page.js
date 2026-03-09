@@ -66,7 +66,7 @@ export default function FundTransfersPage() {
   }, [transfers]);
 
   // Filter and search logic
-  const filteredFund Transfers = useMemo(() => {
+  const filteredTransfers = useMemo(() => {
     if (!transfers) return [];
     return transfers.filter(transfer => {
       const searchTarget = `${transfer.transfer_id || ''} ${transfer.description || ''}`.toLowerCase();
@@ -83,9 +83,9 @@ export default function FundTransfersPage() {
   }, [searchQuery, methodFilter, branchFilter, supplierFilter, transfers]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredFund Transfers.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredTransfers.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedFund Transfers = filteredFund Transfers.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedTransfers = filteredTransfers.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -314,8 +314,8 @@ export default function FundTransfersPage() {
                     </div>
                   </td>
                 </tr>
-              ) : paginatedFund Transfers.length > 0 ? (
-                paginatedFund Transfers.map((transfer, index) => {
+              ) : paginatedTransfers.length > 0 ? (
+                paginatedTransfers.map((transfer, index) => {
                   return (
                     <tr key={transfer.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
                       <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Transfer ID">
@@ -406,7 +406,7 @@ export default function FundTransfersPage() {
                             
                             {menuOpenId === transfer.id && (
                               <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedFund Transfers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                index > paginatedTransfers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
                                   onClick={() => handleViewTransfer(transfer)}
@@ -456,7 +456,7 @@ export default function FundTransfersPage() {
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredFund Transfers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredFund Transfers.length}</span> entries
+            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredTransfers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredTransfers.length}</span> entries
           </p>
           
           <div className="flex items-center gap-3">
