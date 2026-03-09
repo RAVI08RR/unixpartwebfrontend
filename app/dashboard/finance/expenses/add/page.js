@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Receipt, Save, X, Calendar, FileText, DollarSign, Truck } from "lucide-react";
+import { ArrowLeft, Receipt, Save, X, Calendar, FileText, DollarSign, Truck, Upload, File } from "lucide-react";
 import Link from "next/link";
 import { expenseService } from "@/app/lib/services/expenseService";
 import { supplierService } from "@/app/lib/services/supplierService";
@@ -16,6 +16,8 @@ export default function AddExpensePage() {
   
   const [suppliers, setSuppliers] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
   
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -51,6 +53,39 @@ export default function AddExpensePage() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setUploadedFile(file);
+      
+      // Create preview for images
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setUploadPreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setUploadPreview(null);
+      }
+      
+      // Set the file name in the document_path field
+      setFormData(prev => ({
+        ...prev,
+        document_path: file.name
+      }));
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setUploadPreview(null);
+    setFormData(prev => ({
+      ...prev,
+      document_path: ""
     }));
   };
 
@@ -217,7 +252,8 @@ export default function AddExpensePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
                   Document Reference
                 </label>
                 <input
@@ -229,6 +265,67 @@ export default function AddExpensePage() {
                   className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm"
                 />
               </div>
+            </div>
+
+            {/* Document Upload */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <Upload className="w-4 h-4" />
+                Upload Document
+              </label>
+              
+              {!uploadedFile ? (
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="document-upload"
+                    onChange={handleFileChange}
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="document-upload"
+                    className="flex flex-col items-center justify-center w-full px-4 py-8 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl cursor-pointer hover:border-red-500 dark:hover:border-red-500 transition-all bg-gray-50 dark:bg-zinc-800/50"
+                  >
+                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                      Click to upload document
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      PDF, JPG, PNG, DOC, XLS (Max 10MB)
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl">
+                  {uploadPreview ? (
+                    <img 
+                      src={uploadPreview} 
+                      alt="Preview" 
+                      className="w-16 h-16 object-cover rounded-lg border border-gray-200 dark:border-zinc-700"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+                      <File className="w-8 h-8 text-red-600 dark:text-red-400" />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      {uploadedFile.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(uploadedFile.size / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveFile}
+                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                  >
+                    <X className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Description */}
