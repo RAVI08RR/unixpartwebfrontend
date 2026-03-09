@@ -9,10 +9,12 @@ import { supplierService } from "@/app/lib/services/supplierService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
 
-export default function AddFundTransferPage() {
+export default function EditFundTransferPage({ params }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [transferId, setTransferId] = useState(null);
   const { success, error: showError } = useToast();
   
   const [suppliers, setSuppliers] = useState([]);
@@ -20,7 +22,7 @@ export default function AddFundTransferPage() {
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
   
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: "",
     amount: "",
     method: "bank_transfer",
     reference: "",
@@ -28,6 +30,12 @@ export default function AddFundTransferPage() {
     supplier_id: "",
     branch_id: "",
   });
+
+  useEffect(() => {
+    Promise.resolve(params).then((resolvedParams) => {
+      setTransferId(resolvedParams.id);
+    });
+  }, [params]);
 
   useEffect(() => {
     const fetchDropdowns = async () => {
@@ -56,6 +64,34 @@ export default function AddFundTransferPage() {
 
     fetchDropdowns();
   }, []);
+
+  useEffect(() => {
+    if (!transferId) return;
+
+    const fetchTransfer = async () => {
+      try {
+        setFetching(true);
+        const data = await fundTransferService.getById(transferId);
+        
+        setFormData({
+          date: data.date ? data.date.split('T')[0] : "",
+          amount: data.amount || "",
+          method: data.method || "bank_transfer",
+          reference: data.reference || "",
+          notes: data.notes || "",
+          supplier_id: data.supplier_id || "",
+          branch_id: data.branch_id || "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch fund transfer:", err);
+        showError("Failed to load fund transfer data");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchTransfer();
+  }, [transferId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -86,13 +122,13 @@ export default function AddFundTransferPage() {
         return;
       }
 
-      await fundTransferService.create(submitData);
-      success("Fund transfer created successfully!");
+      await fundTransferService.update(transferId, submitData);
+      success("Fund transfer updated successfully!");
       router.push("/dashboard/finance/fund-transfers");
       
     } catch (err) {
-      console.error("Failed to create fund transfer:", err);
-      const errorMsg = err.message || "Failed to create fund transfer. Please try again.";
+      console.error("Failed to update fund transfer:", err);
+      const errorMsg = err.message || "Failed to update fund transfer. Please try again.";
       setError(errorMsg);
       showError(errorMsg);
     } finally {
@@ -110,8 +146,8 @@ export default function AddFundTransferPage() {
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-black dark:text-white tracking-tight">Add New Fund Transfer</h1>
-          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Create a new fund transfer record</p>
+          <h1 className="text-2xl font-black dark:text-white tracking-tight">Edit Fund Transfer</h1>
+          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Update fund transfer record</p>
         </div>
       </div>
 
@@ -272,11 +308,11 @@ export default function AddFundTransferPage() {
             <div className="flex items-center gap-4 pt-6 border-t border-gray-100 dark:border-zinc-800">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || fetching}
                 className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
-                <span>{isLoading ? "Creating..." : "Create Fund Transfer"}</span>
+                <span>{isLoading ? "Updating..." : fetching ? "Loading..." : "Update Fund Transfer"}</span>
               </button>
               
               <Link

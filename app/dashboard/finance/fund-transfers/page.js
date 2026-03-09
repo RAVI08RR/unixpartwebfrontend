@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, 
   Eye, Calendar, DollarSign, FileText,
-  AlertCircle, Receipt, Truck, X
+  AlertCircle, ArrowLeftRight, Truck, X, Hash, Building2
 } from "lucide-react";
 import { useFundTransfers } from "@/app/lib/hooks/useFundTransfers";
 import { fundTransferService } from "@/app/lib/services/fundTransferService";
@@ -43,14 +43,21 @@ export default function FundTransfersPage() {
   const [deleteError, setDeleteError] = useState(null);
 
   // Extract unique values for filters
-  const uniqueTypes = useMemo(() => {
-    const types = new Set(transfers.map(exp => exp.type).filter(Boolean));
-    return ['All', ...Array.from(types)];
+  const uniqueMethods = useMemo(() => {
+    const methods = new Set(transfers.map(t => t.method).filter(Boolean));
+    return ['All', ...Array.from(methods)];
   }, [transfers]);
 
-  const uniqueCategories = useMemo(() => {
-    const categories = new Set(transfers.map(exp => exp.category).filter(Boolean));
-    return ['All', ...Array.from(categories)];
+  const uniqueBranches = useMemo(() => {
+    const branches = new Set(
+      transfers
+        .filter(t => t.branch)
+        .map(t => JSON.stringify({ 
+          code: t.branch.branch_code, 
+          name: t.branch.branch_name 
+        }))
+    );
+    return ['All', ...Array.from(branches).map(s => JSON.parse(s))];
   }, [transfers]);
 
   const uniqueSuppliers = useMemo(() => {
@@ -69,16 +76,20 @@ export default function FundTransfersPage() {
   const filteredTransfers = useMemo(() => {
     if (!transfers) return [];
     return transfers.filter(transfer => {
-      const searchTarget = `${transfer.transfer_id || ''} ${transfer.description || ''}`.toLowerCase();
+      const searchTarget = `${transfer.transfer_id || ''} ${transfer.reference || ''} ${transfer.notes || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
-      const matchesType = methodFilter === "All" || transfer.type === methodFilter;
-      const matchesCategory = branchFilter === "All" || transfer.category === branchFilter;
+      const matchesMethod = methodFilter === "All" || transfer.method === methodFilter;
+      const matchesBranch = branchFilter === "All" || 
+        (transfer.branch && (
+          transfer.branch.branch_code === branchFilter ||
+          transfer.branch.branch_name === branchFilter
+        ));
       const matchesSupplier = supplierFilter === "All" || 
         (transfer.supplier && (
           transfer.supplier.supplier_code === supplierFilter ||
           transfer.supplier.name === supplierFilter
         ));
-      return matchesSearch && matchesType && matchesCategory && matchesSupplier;
+      return matchesSearch && matchesMethod && matchesBranch && matchesSupplier;
     });
   }, [searchQuery, methodFilter, branchFilter, supplierFilter, transfers]);
 
@@ -115,18 +126,21 @@ export default function FundTransfersPage() {
     }
   };
 
-  const getTypeBadge = (type) => {
-    const t = type?.toLowerCase() || 'general';
+  const getMethodBadge = (method) => {
+    const m = method?.toLowerCase().replace('_', ' ') || 'other';
     const styles = {
-      general: 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50',
-      personal: 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50',
+      'bank transfer': 'bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50',
+      'cash': 'bg-green-100 text-green-600 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-900/50',
+      'cheque': 'bg-purple-100 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50',
+      'hawala': 'bg-orange-100 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50',
+      'exchange': 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50',
     };
     
-    const resolvedStyle = styles[t] || 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400 border border-gray-200 dark:border-zinc-700';
+    const resolvedStyle = styles[m] || 'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400 border border-gray-200 dark:border-zinc-700';
     
     return (
       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${resolvedStyle}`}>
-        {t}
+        {m}
       </span>
     );
   };
@@ -187,41 +201,51 @@ export default function FundTransfersPage() {
               
               {isFilterOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {/* Type Filter */}
+                  {/* Method Filter */}
                   <div className="mb-4">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Type</label>
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Method</label>
                     <div className="space-y-1">
-                      {uniqueTypes.map((type) => (
+                      {uniqueMethods.map((method) => (
                         <button
-                          key={type}
-                          onClick={() => setTypeFilter(type)}
+                          key={method}
+                          onClick={() => setMethodFilter(method)}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            methodFilter === type 
+                            methodFilter === method 
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                           }`}
                         >
-                          {type}
+                          {method}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Category Filter */}
+                  {/* Branch Filter */}
                   <div className="mb-4">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Category</label>
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Branch</label>
                     <div className="space-y-1 max-h-40 overflow-y-auto">
-                      {uniqueCategories.map((category) => (
+                      <button
+                        onClick={() => setBranchFilter('All')}
+                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                          branchFilter === 'All' 
+                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {uniqueBranches.filter(b => b !== 'All').map((branch) => (
                         <button
-                          key={category}
-                          onClick={() => setCategoryFilter(category)}
+                          key={branch.code}
+                          onClick={() => setBranchFilter(branch.code)}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            branchFilter === category 
+                            branchFilter === branch.code 
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                           }`}
                         >
-                          {category}
+                          {branch.name} ({branch.code})
                         </button>
                       ))}
                     </div>
@@ -259,8 +283,8 @@ export default function FundTransfersPage() {
 
                   <button
                     onClick={() => {
-                      setTypeFilter('All');
-                      setCategoryFilter('All');
+                      setMethodFilter('All');
+                      setBranchFilter('All');
                       setSupplierFilter('All');
                     }}
                     className="w-full mt-4 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
@@ -277,7 +301,7 @@ export default function FundTransfersPage() {
             </button>
 
             <Link 
-              href="/dashboard/finance/transfers/add"
+              href="/dashboard/finance/fund-transfers/add"
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
             >
               <Plus className="w-4 h-4" />
@@ -293,14 +317,14 @@ export default function FundTransfersPage() {
           <table className="w-full min-w-[1200px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Transfer ID</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Transfer Code</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Document</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Method</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Reference #</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Note</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky right-0 bg-white dark:bg-zinc-900 z-10"></th>
               </tr>
             </thead>
@@ -318,14 +342,14 @@ export default function FundTransfersPage() {
                 paginatedTransfers.map((transfer, index) => {
                   return (
                     <tr key={transfer.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Transfer ID">
+                      <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Transfer Code">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
+                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                              {transfer.transfer_id || `EXP-${transfer.id}`}
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
+                              {transfer.transfer_code || `TRF-${transfer.id}`}
                             </p>
                           </div>
                         </div>
@@ -344,22 +368,6 @@ export default function FundTransfersPage() {
                         </div>
                       </td>
 
-                      <td className="px-4 py-4" data-label="Description">
-                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
-                          {transfer.description || '-'}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-4" data-label="Type">
-                        {getTypeBadge(transfer.type)}
-                      </td>
-
-                      <td className="px-4 py-4" data-label="Category">
-                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {transfer.category || '-'}
-                        </span>
-                      </td>
-
                       <td className="px-4 py-4" data-label="Supplier">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {transfer.supplier ? (
@@ -375,12 +383,6 @@ export default function FundTransfersPage() {
                         </span>
                       </td>
 
-                      <td className="px-4 py-4" data-label="Document">
-                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {transfer.document_path || 'N/A'}
-                        </span>
-                      </td>
-
                       <td className="px-4 py-4" data-label="Amount">
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-3.5 h-3.5 text-gray-400" />
@@ -388,6 +390,37 @@ export default function FundTransfersPage() {
                             {formatCurrency(transfer.amount)}
                           </span>
                         </div>
+                      </td>
+
+                      <td className="px-4 py-4" data-label="Method">
+                        {getMethodBadge(transfer.method)}
+                      </td>
+
+                      <td className="px-4 py-4" data-label="Reference #">
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {transfer.reference || '-'}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4" data-label="Note">
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
+                          {transfer.notes || '-'}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-4" data-label="Branch">
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {transfer.branch ? (
+                            <>
+                              {transfer.branch.branch_name || transfer.branch.name || 'Unnamed'}
+                              {transfer.branch.branch_code && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                                  ({transfer.branch.branch_code})
+                                </span>
+                              )}
+                            </>
+                          ) : 'N/A'}
+                        </span>
                       </td>
 
                       <td className="px-4 py-4 text-right relative sticky right-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Actions">
@@ -416,7 +449,7 @@ export default function FundTransfersPage() {
                                   View Details
                                 </button>
                                 <Link 
-                                  href={`/dashboard/finance/transfers/edit/${transfer.id}`}
+                                  href={`/dashboard/finance/fund-transfers/edit/${transfer.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
                                 >
                                   <Pencil className="w-4 h-4" />
@@ -507,7 +540,7 @@ export default function FundTransfersPage() {
             <div className="space-y-2">
               <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Transfer?</h2>
               <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
-                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedTransfer?.transfer_id || `EXP-${selectedTransfer?.id}`}</span>? This action cannot be undone.
+                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedTransfer?.transfer_code || `TRF-${selectedTransfer?.id}`}</span>? This action cannot be undone.
               </p>
             </div>
 
@@ -555,12 +588,12 @@ export default function FundTransfersPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                  <Receipt className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                  <ArrowLeftRight className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
                   <h2 className="text-xl font-black dark:text-white">Transfer Details</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedTransfer.transfer_id || `EXP-${selectedTransfer.id}`}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedTransfer.transfer_code || `TRF-${selectedTransfer.id}`}</p>
                 </div>
               </div>
               <button 
@@ -576,14 +609,14 @@ export default function FundTransfersPage() {
 
             {/* Content */}
             <div className="space-y-6">
-              {/* Transfer ID */}
+              {/* Transfer Code */}
               <div className="space-y-2">
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Receipt className="w-3.5 h-3.5" />
-                  Transfer ID
+                  <ArrowLeftRight className="w-3.5 h-3.5" />
+                  Transfer Code
                 </label>
                 <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                  {selectedTransfer.transfer_id || `EXP-${selectedTransfer.id}`}
+                  {selectedTransfer.transfer_code || `TRF-${selectedTransfer.id}`}
                 </div>
               </div>
 
@@ -610,23 +643,24 @@ export default function FundTransfersPage() {
                   </div>
                 </div>
 
-                {/* Type */}
+                {/* Method */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                    Type
+                    Transfer Method
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedTransfer.type || '-'}
+                    {selectedTransfer.method ? selectedTransfer.method.replace('_', ' ').toUpperCase() : '-'}
                   </div>
                 </div>
 
-                {/* Category */}
+                {/* Reference */}
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest">
-                    Category
+                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                    <Hash className="w-3.5 h-3.5" />
+                    Reference Number
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedTransfer.category || '-'}
+                    {selectedTransfer.reference || '-'}
                   </div>
                 </div>
 
@@ -650,26 +684,35 @@ export default function FundTransfersPage() {
                   </div>
                 </div>
 
-                {/* Document */}
+                {/* Branch */}
                 <div className="space-y-2">
                   <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                    <FileText className="w-3.5 h-3.5" />
-                    Document
+                    <Building2 className="w-3.5 h-3.5" />
+                    Branch
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedTransfer.document_path || 'N/A'}
+                    {selectedTransfer.branch ? (
+                      <>
+                        {selectedTransfer.branch.branch_name || selectedTransfer.branch.name || 'Unnamed'}
+                        {selectedTransfer.branch.branch_code && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                            ({selectedTransfer.branch.branch_code})
+                          </span>
+                        )}
+                      </>
+                    ) : 'N/A'}
                   </div>
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Notes */}
               <div className="space-y-2">
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5" />
-                  Description
+                  Notes
                 </label>
                 <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold min-h-[80px] whitespace-pre-wrap">
-                  {selectedTransfer.description || '-'}
+                  {selectedTransfer.notes || '-'}
                 </div>
               </div>
             </div>
@@ -677,7 +720,7 @@ export default function FundTransfersPage() {
             {/* Footer Actions */}
             <div className="flex items-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
               <Link
-                href={`/dashboard/finance/transfers/edit/${selectedTransfer.id}`}
+                href={`/dashboard/finance/fund-transfers/edit/${selectedTransfer.id}`}
                 className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
               >
                 <Pencil className="w-4 h-4" />

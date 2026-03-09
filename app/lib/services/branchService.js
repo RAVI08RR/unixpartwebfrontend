@@ -15,10 +15,17 @@ export const branchService = {
   // Get dropdown branches
   getDropdown: async () => {
     try {
-      return await fetchApi('/api/dropdown/branches');
+      const data = await fetchApi('/api/dropdown/branches');
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("🏢 Branches Dropdown API failed:", error.message);
-      return branchService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      console.error("🏢 Branches Dropdown API failed, using fallback:", error.message);
+      // Fallback to getAll if dropdown endpoint fails
+      try {
+        return await branchService.getAll(0, 500);
+      } catch (fallbackError) {
+        console.error("🏢 Branches fallback also failed:", fallbackError.message);
+        return [];
+      }
     }
   },
 

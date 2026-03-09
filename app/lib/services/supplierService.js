@@ -29,10 +29,17 @@ export const supplierService = {
   // Get dropdown suppliers
   getDropdown: async () => {
     try {
-      return await fetchApi('/api/dropdown/suppliers');
+      const data = await fetchApi('/api/dropdown/suppliers');
+      return Array.isArray(data) ? data : [];
     } catch (error) {
-      console.error("🏭 Suppliers Dropdown API failed:", error.message);
-      return supplierService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      console.error("🏭 Suppliers Dropdown API failed, using fallback:", error.message);
+      // Fallback to getAll if dropdown endpoint fails
+      try {
+        return await supplierService.getAll(0, 500);
+      } catch (fallbackError) {
+        console.error("🏭 Suppliers fallback also failed:", fallbackError.message);
+        return [];
+      }
     }
   },
 
