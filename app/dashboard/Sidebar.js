@@ -114,6 +114,7 @@ export function Sidebar() {
       items: [
         { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign },
         { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText },
+        { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers },
         { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers },
       ]
     },
