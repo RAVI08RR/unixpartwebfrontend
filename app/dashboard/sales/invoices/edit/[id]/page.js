@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -22,6 +22,10 @@ export default function EditInvoicePage({ params }) {
   const [poItemsLoading, setPoItemsLoading] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [deleteItemModalOpen, setDeleteItemModalOpen] = useState(false);
+  const [deletePaymentModalOpen, setDeletePaymentModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
   const [invoiceId, setInvoiceId] = useState(null);
   const { success, error: showError } = useToast();
   
@@ -308,12 +312,21 @@ export default function EditInvoicePage({ params }) {
 
   // Remove invoice item
   const removeItem = (index) => {
-    const itemToRemove = formData.items[index];
-    if (itemToRemove && itemToRemove.id) {
-      setDeletedItemIds([...deletedItemIds, itemToRemove.id]);
+    setItemToDelete(index);
+    setDeleteItemModalOpen(true);
+  };
+
+  const confirmDeleteItem = () => {
+    if (itemToDelete !== null) {
+      const itemToRemove = formData.items[itemToDelete];
+      if (itemToRemove && itemToRemove.id) {
+        setDeletedItemIds([...deletedItemIds, itemToRemove.id]);
+      }
+      const newItems = formData.items.filter((_, i) => i !== itemToDelete);
+      setFormData({...formData, items: newItems});
     }
-    const newItems = formData.items.filter((_, i) => i !== index);
-    setFormData({...formData, items: newItems});
+    setDeleteItemModalOpen(false);
+    setItemToDelete(null);
   };
 
   // Add payment row
@@ -343,12 +356,21 @@ export default function EditInvoicePage({ params }) {
 
   // Remove payment row
   const removePayment = (index) => {
-    const paymentToRemove = formData.payments[index];
-    if (paymentToRemove && paymentToRemove.id) {
-      setDeletedPaymentIds([...deletedPaymentIds, paymentToRemove.id]);
+    setPaymentToDelete(index);
+    setDeletePaymentModalOpen(true);
+  };
+
+  const confirmDeletePayment = () => {
+    if (paymentToDelete !== null) {
+      const paymentToRemove = formData.payments[paymentToDelete];
+      if (paymentToRemove && paymentToRemove.id) {
+        setDeletedPaymentIds([...deletedPaymentIds, paymentToRemove.id]);
+      }
+      const newPayments = formData.payments.filter((_, i) => i !== paymentToDelete);
+      setFormData({...formData, payments: newPayments});
     }
-    const newPayments = formData.payments.filter((_, i) => i !== index);
-    setFormData({...formData, payments: newPayments});
+    setDeletePaymentModalOpen(false);
+    setPaymentToDelete(null);
   };
 
   // Submit form
@@ -995,6 +1017,76 @@ export default function EditInvoicePage({ params }) {
                   Cancel
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Item Confirmation Modal */}
+      {deleteItemModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Invoice Item?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete this item? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeleteItemModalOpen(false);
+                  setItemToDelete(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteItem}
+                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+              >
+                Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Payment Confirmation Modal */}
+      {deletePaymentModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Payment?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete this payment? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeletePaymentModalOpen(false);
+                  setPaymentToDelete(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeletePayment}
+                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+              >
+                Delete Payment
+              </button>
             </div>
           </div>
         </div>
