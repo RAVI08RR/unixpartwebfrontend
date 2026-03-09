@@ -44,18 +44,18 @@ export default function FundTransfersPage() {
 
   // Extract unique values for filters
   const uniqueTypes = useMemo(() => {
-    const types = new Set(expenses.map(exp => exp.type).filter(Boolean));
+    const types = new Set(transfers.map(exp => exp.type).filter(Boolean));
     return ['All', ...Array.from(types)];
-  }, [expenses]);
+  }, [transfers]);
 
   const uniqueCategories = useMemo(() => {
-    const categories = new Set(expenses.map(exp => exp.category).filter(Boolean));
+    const categories = new Set(transfers.map(exp => exp.category).filter(Boolean));
     return ['All', ...Array.from(categories)];
-  }, [expenses]);
+  }, [transfers]);
 
   const uniqueSuppliers = useMemo(() => {
     const suppliers = new Set(
-      expenses
+      transfers
         .filter(exp => exp.supplier)
         .map(exp => JSON.stringify({ 
           code: exp.supplier.supplier_code, 
@@ -63,29 +63,29 @@ export default function FundTransfersPage() {
         }))
     );
     return ['All', ...Array.from(suppliers).map(s => JSON.parse(s))];
-  }, [expenses]);
+  }, [transfers]);
 
   // Filter and search logic
-  const filteredExpenses = useMemo(() => {
-    if (!expenses) return [];
-    return expenses.filter(expense => {
-      const searchTarget = `${expense.expense_id || ''} ${expense.description || ''}`.toLowerCase();
+  const filteredFund Transfers = useMemo(() => {
+    if (!transfers) return [];
+    return transfers.filter(transfer => {
+      const searchTarget = `${transfer.transfer_id || ''} ${transfer.description || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
-      const matchesType = typeFilter === "All" || expense.type === typeFilter;
-      const matchesCategory = categoryFilter === "All" || expense.category === categoryFilter;
+      const matchesType = methodFilter === "All" || transfer.type === methodFilter;
+      const matchesCategory = branchFilter === "All" || transfer.category === branchFilter;
       const matchesSupplier = supplierFilter === "All" || 
-        (expense.supplier && (
-          expense.supplier.supplier_code === supplierFilter ||
-          expense.supplier.name === supplierFilter
+        (transfer.supplier && (
+          transfer.supplier.supplier_code === supplierFilter ||
+          transfer.supplier.name === supplierFilter
         ));
       return matchesSearch && matchesType && matchesCategory && matchesSupplier;
     });
-  }, [searchQuery, typeFilter, categoryFilter, supplierFilter, expenses]);
+  }, [searchQuery, methodFilter, branchFilter, supplierFilter, transfers]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredFund Transfers.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedExpenses = filteredExpenses.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedFund Transfers = filteredFund Transfers.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -100,18 +100,18 @@ export default function FundTransfersPage() {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!selectedExpense) return;
+    if (!selectedTransfer) return;
     setDeleteError(null);
     try {
-      await expenseService.delete(selectedExpense.id);
-      success("Expense deleted successfully!");
+      await fundTransferService.delete(selectedTransfer.id);
+      success("Transfer deleted successfully!");
       setDeleteModalOpen(false);
-      setSelectedExpense(null);
+      setSelectedTransfer(null);
       refetch();
     } catch (err) {
       const errorMsg = err.message || "Unknown error";
       setDeleteError(errorMsg);
-      error("Failed to delete expense: " + errorMsg);
+      error("Failed to delete transfer: " + errorMsg);
     }
   };
 
@@ -144,8 +144,8 @@ export default function FundTransfersPage() {
     });
   };
 
-  const handleViewExpense = (expense) => {
-    setSelectedExpense(expense);
+  const handleViewTransfer = (transfer) => {
+    setSelectedTransfer(transfer);
     setViewModalOpen(true);
     setMenuOpenId(null);
   };
@@ -157,8 +157,8 @@ export default function FundTransfersPage() {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
-          <h1 className="text-2xl font-black dark:text-white tracking-tight">Expenses</h1>
-          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Track and manage all company expenses</p>
+          <h1 className="text-2xl font-black dark:text-white tracking-tight">Fund Transfers</h1>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Track and manage all company transfers</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -167,7 +167,7 @@ export default function FundTransfersPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Search by Expense ID, description..."
+              placeholder="Search by Transfer ID, description..."
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -196,7 +196,7 @@ export default function FundTransfersPage() {
                           key={type}
                           onClick={() => setTypeFilter(type)}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            typeFilter === type 
+                            methodFilter === type 
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                           }`}
@@ -216,7 +216,7 @@ export default function FundTransfersPage() {
                           key={category}
                           onClick={() => setCategoryFilter(category)}
                           className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            categoryFilter === category 
+                            branchFilter === category 
                               ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
                               : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
                           }`}
@@ -277,11 +277,11 @@ export default function FundTransfersPage() {
             </button>
 
             <Link 
-              href="/dashboard/finance/expenses/add"
+              href="/dashboard/finance/transfers/add"
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
             >
               <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Expense</span>
+              <span className="whitespace-nowrap font-black">Add Transfer</span>
             </Link>
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function FundTransfersPage() {
           <table className="w-full min-w-[1200px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Expense ID</th>
+                <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Transfer ID</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
                 <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
@@ -310,22 +310,22 @@ export default function FundTransfersPage() {
                   <td colSpan="9" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Expenses...</p>
+                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Fund Transfers...</p>
                     </div>
                   </td>
                 </tr>
-              ) : paginatedExpenses.length > 0 ? (
-                paginatedExpenses.map((expense, index) => {
+              ) : paginatedFund Transfers.length > 0 ? (
+                paginatedFund Transfers.map((transfer, index) => {
                   return (
-                    <tr key={expense.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Expense ID">
+                    <tr key={transfer.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                      <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Transfer ID">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                             <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div>
                             <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                              {expense.expense_id || `EXP-${expense.id}`}
+                              {transfer.transfer_id || `EXP-${transfer.id}`}
                             </p>
                           </div>
                         </div>
@@ -335,7 +335,7 @@ export default function FundTransfersPage() {
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 whitespace-nowrap">
-                            {expense.date ? new Date(expense.date).toLocaleDateString('en-GB', { 
+                            {transfer.date ? new Date(transfer.date).toLocaleDateString('en-GB', { 
                               day: '2-digit', 
                               month: 'short', 
                               year: 'numeric' 
@@ -346,28 +346,28 @@ export default function FundTransfersPage() {
 
                       <td className="px-4 py-4" data-label="Description">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
-                          {expense.description || '-'}
+                          {transfer.description || '-'}
                         </span>
                       </td>
 
                       <td className="px-4 py-4" data-label="Type">
-                        {getTypeBadge(expense.type)}
+                        {getTypeBadge(transfer.type)}
                       </td>
 
                       <td className="px-4 py-4" data-label="Category">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {expense.category || '-'}
+                          {transfer.category || '-'}
                         </span>
                       </td>
 
                       <td className="px-4 py-4" data-label="Supplier">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {expense.supplier ? (
+                          {transfer.supplier ? (
                             <>
-                              {expense.supplier.name || 'Unnamed'}
-                              {expense.supplier.supplier_code && (
+                              {transfer.supplier.name || 'Unnamed'}
+                              {transfer.supplier.supplier_code && (
                                 <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                  ({expense.supplier.supplier_code})
+                                  ({transfer.supplier.supplier_code})
                                 </span>
                               )}
                             </>
@@ -377,7 +377,7 @@ export default function FundTransfersPage() {
 
                       <td className="px-4 py-4" data-label="Document">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {expense.document_path || 'N/A'}
+                          {transfer.document_path || 'N/A'}
                         </span>
                       </td>
 
@@ -385,7 +385,7 @@ export default function FundTransfersPage() {
                         <div className="flex items-center gap-2">
                           <DollarSign className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-black dark:text-white whitespace-nowrap">
-                            {formatCurrency(expense.amount)}
+                            {formatCurrency(transfer.amount)}
                           </span>
                         </div>
                       </td>
@@ -394,9 +394,9 @@ export default function FundTransfersPage() {
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
-                              onClick={() => toggleMenu(expense.id)}
+                              onClick={() => toggleMenu(transfer.id)}
                               className={`p-2 rounded-xl transition-all ${
-                                menuOpenId === expense.id 
+                                menuOpenId === transfer.id 
                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
                                   : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
                               }`}
@@ -404,35 +404,35 @@ export default function FundTransfersPage() {
                               <MoreVertical className="w-5 h-5" />
                             </button>
                             
-                            {menuOpenId === expense.id && (
+                            {menuOpenId === transfer.id && (
                               <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedExpenses.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                index > paginatedFund Transfers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
-                                  onClick={() => handleViewExpense(expense)}
+                                  onClick={() => handleViewTransfer(transfer)}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
                                 <Link 
-                                  href={`/dashboard/finance/expenses/edit/${expense.id}`}
+                                  href={`/dashboard/finance/transfers/edit/${transfer.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
                                 >
                                   <Pencil className="w-4 h-4" />
-                                  Edit Expense
+                                  Edit Transfer
                                 </Link>
                                 <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
                                 <button 
                                   onClick={() => {
-                                    setSelectedExpense(expense);
+                                    setSelectedTransfer(transfer);
                                     setDeleteModalOpen(true);
                                     setMenuOpenId(null);
                                   }} 
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                 >
                                   <Trash2 className="w-4 h-4" />
-                                  Delete Expense
+                                  Delete Transfer
                                 </button>
                               </div>
                             )}
@@ -445,7 +445,7 @@ export default function FundTransfersPage() {
               ) : (
                 <tr>
                   <td colSpan="9" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No expenses found</p>
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No transfers found</p>
                   </td>
                 </tr>
               )}
@@ -456,7 +456,7 @@ export default function FundTransfersPage() {
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredExpenses.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredExpenses.length}</span> entries
+            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredFund Transfers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredFund Transfers.length}</span> entries
           </p>
           
           <div className="flex items-center gap-3">
@@ -505,9 +505,9 @@ export default function FundTransfersPage() {
               <Trash2 className="w-10 h-10 text-red-600" />
             </div>
             <div className="space-y-2">
-              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Expense?</h2>
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Transfer?</h2>
               <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
-                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedExpense?.expense_id || `EXP-${selectedExpense?.id}`}</span>? This action cannot be undone.
+                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedTransfer?.transfer_id || `EXP-${selectedTransfer?.id}`}</span>? This action cannot be undone.
               </p>
             </div>
 
@@ -529,7 +529,7 @@ export default function FundTransfersPage() {
                 onClick={() => {
                   setDeleteModalOpen(false);
                   setDeleteError(null);
-                  setSelectedExpense(null);
+                  setSelectedTransfer(null);
                 }}
                 className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
               >
@@ -548,8 +548,8 @@ export default function FundTransfersPage() {
         </div>
       )}
 
-      {/* View Expense Modal */}
-      {viewModalOpen && selectedExpense && (
+      {/* View Transfer Modal */}
+      {viewModalOpen && selectedTransfer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200 overflow-y-auto">
           <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl my-8">
             {/* Header */}
@@ -559,14 +559,14 @@ export default function FundTransfersPage() {
                   <Receipt className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black dark:text-white">Expense Details</h2>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedExpense.expense_id || `EXP-${selectedExpense.id}`}</p>
+                  <h2 className="text-xl font-black dark:text-white">Transfer Details</h2>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{selectedTransfer.transfer_id || `EXP-${selectedTransfer.id}`}</p>
                 </div>
               </div>
               <button 
                 onClick={() => {
                   setViewModalOpen(false);
-                  setSelectedExpense(null);
+                  setSelectedTransfer(null);
                 }}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
               >
@@ -576,14 +576,14 @@ export default function FundTransfersPage() {
 
             {/* Content */}
             <div className="space-y-6">
-              {/* Expense ID */}
+              {/* Transfer ID */}
               <div className="space-y-2">
                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                   <Receipt className="w-3.5 h-3.5" />
-                  Expense ID
+                  Transfer ID
                 </label>
                 <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                  {selectedExpense.expense_id || `EXP-${selectedExpense.id}`}
+                  {selectedTransfer.transfer_id || `EXP-${selectedTransfer.id}`}
                 </div>
               </div>
 
@@ -595,7 +595,7 @@ export default function FundTransfersPage() {
                     Date
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {formatDate(selectedExpense.date)}
+                    {formatDate(selectedTransfer.date)}
                   </div>
                 </div>
 
@@ -606,7 +606,7 @@ export default function FundTransfersPage() {
                     Amount
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-black text-gray-900 dark:text-white">
-                    {formatCurrency(selectedExpense.amount)}
+                    {formatCurrency(selectedTransfer.amount)}
                   </div>
                 </div>
 
@@ -616,7 +616,7 @@ export default function FundTransfersPage() {
                     Type
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.type || '-'}
+                    {selectedTransfer.type || '-'}
                   </div>
                 </div>
 
@@ -626,7 +626,7 @@ export default function FundTransfersPage() {
                     Category
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.category || '-'}
+                    {selectedTransfer.category || '-'}
                   </div>
                 </div>
 
@@ -637,12 +637,12 @@ export default function FundTransfersPage() {
                     Supplier
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.supplier ? (
+                    {selectedTransfer.supplier ? (
                       <>
-                        {selectedExpense.supplier.name || 'Unnamed'}
-                        {selectedExpense.supplier.supplier_code && (
+                        {selectedTransfer.supplier.name || 'Unnamed'}
+                        {selectedTransfer.supplier.supplier_code && (
                           <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                            ({selectedExpense.supplier.supplier_code})
+                            ({selectedTransfer.supplier.supplier_code})
                           </span>
                         )}
                       </>
@@ -657,7 +657,7 @@ export default function FundTransfersPage() {
                     Document
                   </label>
                   <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold">
-                    {selectedExpense.document_path || 'N/A'}
+                    {selectedTransfer.document_path || 'N/A'}
                   </div>
                 </div>
               </div>
@@ -669,7 +669,7 @@ export default function FundTransfersPage() {
                   Description
                 </label>
                 <div className="px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-700 dark:text-gray-300 font-bold min-h-[80px] whitespace-pre-wrap">
-                  {selectedExpense.description || '-'}
+                  {selectedTransfer.description || '-'}
                 </div>
               </div>
             </div>
@@ -677,17 +677,17 @@ export default function FundTransfersPage() {
             {/* Footer Actions */}
             <div className="flex items-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
               <Link
-                href={`/dashboard/finance/expenses/edit/${selectedExpense.id}`}
+                href={`/dashboard/finance/transfers/edit/${selectedTransfer.id}`}
                 className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
               >
                 <Pencil className="w-4 h-4" />
-                <span>Edit Expense</span>
+                <span>Edit Transfer</span>
               </Link>
               
               <button
                 onClick={() => {
                   setViewModalOpen(false);
-                  setSelectedExpense(null);
+                  setSelectedTransfer(null);
                 }}
                 className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
               >
