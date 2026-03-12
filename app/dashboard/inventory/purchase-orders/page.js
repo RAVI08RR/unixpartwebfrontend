@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
-  AlertCircle, FileText, Upload, Trash
+  AlertCircle, FileText, Upload, Trash, ExternalLink
 } from "lucide-react";
 import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
@@ -42,6 +42,8 @@ export default function PurchaseOrdersPage() {
   const [documents, setDocuments] = useState([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
 
   // Filter and search logic
   const filteredPOs = useMemo(() => {
@@ -133,6 +135,8 @@ export default function PurchaseOrdersPage() {
       await purchaseOrderService.deleteDocument(selectedPO.id, documentId);
       success("Document deleted successfully!");
       await fetchDocuments(selectedPO.id);
+      setDeleteDocModalOpen(false);
+      setDocToDelete(null);
     } catch (err) {
       error("Failed to delete document: " + err.message);
     }
@@ -144,6 +148,34 @@ export default function PurchaseOrdersPage() {
       await purchaseOrderService.downloadDocument(selectedPO.id, documentId);
     } catch (err) {
       error("Failed to download document: " + err.message);
+    }
+  };
+
+  const handleViewDocument = async (documentId) => {
+    if (!selectedPO) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const url = `/api/purchase-orders/${selectedPO.id}/documents/${documentId}/download`;
+      
+      // Open in new tab with authorization
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load document');
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (err) {
+      error("Failed to view document: " + err.message);
     }
   };
 
@@ -574,15 +606,28 @@ export default function PurchaseOrdersPage() {
                         {existingDoc ? (
                           <>
                             <button
+                              onClick={() => handleViewDocument(existingDoc.id)}
+                              className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
+                              title="View in new tab"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              View
+                            </button>
+                            <button
                               onClick={() => handleDownloadDocument(existingDoc.id)}
                               className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                              title="Download file"
                             >
                               <Download className="w-3.5 h-3.5" />
                               Download
                             </button>
                             <button
-                              onClick={() => handleDeleteDocument(existingDoc.id)}
+                              onClick={() => {
+                                setDocToDelete(existingDoc);
+                                setDeleteDocModalOpen(true);
+                              }}
                               className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                              title="Delete document"
                             >
                               <Trash className="w-3.5 h-3.5" />
                               Delete
@@ -625,6 +670,41 @@ export default function PurchaseOrdersPage() {
                 className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Document Confirmation Modal */}
+      {deleteDocModalOpen && docToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Document?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete this document? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeleteDocModalOpen(false);
+                  setDocToDelete(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleDeleteDocument(docToDelete.id)}
+                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+              >
+                Delete Document
               </button>
             </div>
           </div>
