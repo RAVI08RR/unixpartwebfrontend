@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
-  AlertCircle
+  AlertCircle, FileText, Upload, Trash
 } from "lucide-react";
 import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
@@ -36,8 +36,12 @@ export default function PurchaseOrdersPage() {
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
 
   // Filter and search logic
   const filteredPOs = useMemo(() => {
@@ -84,6 +88,62 @@ export default function PurchaseOrdersPage() {
         setDeleteError(errorMsg);
         error("Failed to delete purchase order: " + errorMsg);
       }
+    }
+  };
+
+  // Handle documents modal
+  const handleOpenDocuments = async (po) => {
+    setSelectedPO(po);
+    setDocumentsModalOpen(true);
+    await fetchDocuments(po.id);
+  };
+
+  const fetchDocuments = async (poId) => {
+    setLoadingDocuments(true);
+    try {
+      const docs = await purchaseOrderService.getDocuments(poId);
+      setDocuments(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error("Failed to fetch documents:", err);
+      setDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleFileUpload = async (e, documentName) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedPO) return;
+
+    setUploadingDocument(true);
+    try {
+      await purchaseOrderService.uploadDocument(selectedPO.id, file, documentName);
+      success("Document uploaded successfully!");
+      await fetchDocuments(selectedPO.id);
+    } catch (err) {
+      error("Failed to upload document: " + err.message);
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId) => {
+    if (!selectedPO) return;
+    try {
+      await purchaseOrderService.deleteDocument(selectedPO.id, documentId);
+      success("Document deleted successfully!");
+      await fetchDocuments(selectedPO.id);
+    } catch (err) {
+      error("Failed to delete document: " + err.message);
+    }
+  };
+
+  const handleDownloadDocument = async (documentId) => {
+    if (!selectedPO) return;
+    try {
+      await purchaseOrderService.downloadDocument(selectedPO.id, documentId);
+    } catch (err) {
+      error("Failed to download document: " + err.message);
     }
   };
 
@@ -309,6 +369,16 @@ export default function PurchaseOrdersPage() {
                                   <Eye className="w-4 h-4" />
                                   View Items
                                 </Link>
+                                <button
+                                  onClick={() => {
+                                    handleOpenDocuments(po);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Documents
+                                </button>
                                 <Link 
                                   href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
@@ -444,6 +514,118 @@ export default function PurchaseOrdersPage() {
                   Delete
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Documents Modal */}
+      {documentsModalOpen && selectedPO && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black dark:text-white">Documents for {selectedPO.po_id}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage and view documents related to this purchase order.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedPO(null);
+                  setDocuments([]);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {loadingDocuments ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 text-sm font-bold">Loading documents...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Document Types */}
+                {[
+                  { name: "Customs INV and PACKLIST", key: "customs_inv_packlist" },
+                  { name: "Bill of Entry (BOE)", key: "bill_of_entry" },
+                  { name: "Bill of Lading (BL)", key: "bill_of_lading" },
+                  { name: "Supplier Packing List", key: "supplier_packing_list" }
+                ].map((docType) => {
+                  const existingDoc = documents.find(d => d.document_name === docType.key);
+                  
+                  return (
+                    <div key={docType.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{docType.name}</p>
+                          {existingDoc && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Uploaded {new Date(existingDoc.created_at).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {existingDoc ? (
+                          <>
+                            <button
+                              onClick={() => handleDownloadDocument(existingDoc.id)}
+                              className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Download
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDocument(existingDoc.id)}
+                              className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <Trash className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          </>
+                        ) : (
+                          <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-2">
+                            <Upload className="w-3.5 h-3.5" />
+                            Upload
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => handleFileUpload(e, docType.key)}
+                              disabled={uploadingDocument}
+                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {documents.length === 0 && !loadingDocuments && (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedPO(null);
+                  setDocuments([]);
+                }}
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
