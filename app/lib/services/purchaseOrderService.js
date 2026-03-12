@@ -92,7 +92,8 @@ export const purchaseOrderService = {
         formData.append('file', file);
         formData.append('document_name', documentName);
 
-        const token = localStorage.getItem('token');
+        // Get token using the correct key
+      const token = localStorage.getItem('access_token');
 
         // Use Next.js API proxy route
         const response = await fetch(`/api/purchase-orders/${id}/documents`, {
@@ -117,7 +118,8 @@ export const purchaseOrderService = {
   // Download document
   downloadDocument: async (poId, documentId) => {
       try {
-        const token = localStorage.getItem('token');
+        // Get token using the correct key
+      const token = localStorage.getItem('access_token');
 
         // Use Next.js API proxy route
         const response = await fetch(`/api/purchase-orders/${poId}/documents/${documentId}/download`, {

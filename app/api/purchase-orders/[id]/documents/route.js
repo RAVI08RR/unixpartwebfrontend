@@ -47,11 +47,15 @@ export async function POST(request, { params }) {
     
     const backendUrl = `${apiBaseUrl}/api/purchase-orders/${id}/documents/`;
     
+    // Create headers object - don't set Content-Type for FormData
     const headers = {
       'ngrok-skip-browser-warning': 'true',
     };
-    if (authHeader) headers['Authorization'] = authHeader;
+    if (authHeader) {
+      headers['Authorization'] = authHeader;
+    }
     
+    // Forward the request to backend
     const response = await fetch(backendUrl, { 
       method: 'POST', 
       headers,
@@ -68,6 +72,7 @@ export async function POST(request, { params }) {
       },
     });
   } catch (error) {
+    console.error('Document upload error:', error);
     return new Response(JSON.stringify({ error: error.message }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
