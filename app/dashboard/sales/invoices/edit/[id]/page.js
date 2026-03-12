@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle, Pencil
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -21,6 +21,7 @@ export default function EditInvoicePage({ params }) {
   const [poItems, setPoItems] = useState([]);
   const [poItemsLoading, setPoItemsLoading] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [deleteItemModalOpen, setDeleteItemModalOpen] = useState(false);
   const [deletePaymentModalOpen, setDeletePaymentModalOpen] = useState(false);
@@ -253,6 +254,7 @@ export default function EditInvoicePage({ params }) {
 
   // Add invoice item
   const addItem = () => {
+    setEditingItemIndex(null);
     setItemModalOpen(true);
     setItemForm({
       po_item_id: "",
@@ -265,6 +267,25 @@ export default function EditInvoicePage({ params }) {
       discount_details: "",
       load_status: "pending",
       load_date: ""
+    });
+  };
+
+  // Edit invoice item
+  const editItem = (index) => {
+    const item = formData.items[index];
+    setEditingItemIndex(index);
+    setItemModalOpen(true);
+    setItemForm({
+      po_item_id: item.po_item_id || "",
+      stock_number: item.stock_number || "",
+      item_name: item.item_name || item.item_description || "",
+      po_description: item.po_description || "",
+      sale_description: item.sale_description || "",
+      sale_amount: item.sale_amount || "",
+      discount: item.discount || "",
+      discount_details: item.discount_details || "",
+      load_status: item.load_status || "pending",
+      load_date: item.load_date || ""
     });
   };
 
@@ -303,11 +324,29 @@ export default function EditInvoicePage({ params }) {
       return;
     }
 
-    setFormData({
-      ...formData,
-      items: [...formData.items, { ...itemForm }]
-    });
+    if (editingItemIndex !== null) {
+      // Update existing item
+      const updatedItems = [...formData.items];
+      updatedItems[editingItemIndex] = { 
+        ...updatedItems[editingItemIndex],
+        ...itemForm 
+      };
+      setFormData({
+        ...formData,
+        items: updatedItems
+      });
+      success("Item updated successfully!");
+    } else {
+      // Add new item
+      setFormData({
+        ...formData,
+        items: [...formData.items, { ...itemForm }]
+      });
+      success("Item added successfully!");
+    }
+    
     setItemModalOpen(false);
+    setEditingItemIndex(null);
   };
 
   // Remove invoice item
@@ -636,13 +675,24 @@ export default function EditInvoicePage({ params }) {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => editItem(index)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                              title="Edit item"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                              title="Delete item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -796,11 +846,16 @@ export default function EditInvoicePage({ params }) {
             <div className="p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-black dark:text-white">Edit Invoice Item</h2>
+                  <h2 className="text-xl font-black dark:text-white">
+                    {editingItemIndex !== null ? 'Edit Invoice Item' : 'Add Invoice Item'}
+                  </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the item details</p>
                 </div>
                 <button
-                  onClick={() => setItemModalOpen(false)}
+                  onClick={() => {
+                    setItemModalOpen(false);
+                    setEditingItemIndex(null);
+                  }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -923,11 +978,14 @@ export default function EditInvoicePage({ params }) {
                   onClick={saveItem}
                   className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
                 >
-                  Add Item
+                  {editingItemIndex !== null ? 'Update Item' : 'Add Item'}
                 </button>
                 <button 
                   type="button"
-                  onClick={() => setItemModalOpen(false)}
+                  onClick={() => {
+                    setItemModalOpen(false);
+                    setEditingItemIndex(null);
+                  }}
                   className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
                 >
                   Cancel
