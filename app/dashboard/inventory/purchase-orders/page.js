@@ -592,10 +592,14 @@ export default function PurchaseOrdersPage() {
                     <div key={docType.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
                       <div className="flex items-center gap-3">
                         {existingDoc ? (
-                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0">
+                          <div 
+                            className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                            onClick={() => handleViewDocument(existingDoc.id)}
+                            title="Click to view full size"
+                          >
                             {existingDoc.document_path && (existingDoc.document_path.endsWith('.jpg') || existingDoc.document_path.endsWith('.jpeg') || existingDoc.document_path.endsWith('.png') || existingDoc.document_path.endsWith('.webp')) ? (
                               <img 
-                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000'}/${existingDoc.document_path}`}
+                                src={`/api/purchase-orders/${selectedPO.id}/documents/${existingDoc.id}/download`}
                                 alt={docType.name}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
