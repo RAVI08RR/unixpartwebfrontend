@@ -591,7 +591,26 @@ export default function PurchaseOrdersPage() {
                   return (
                     <div key={docType.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-gray-400" />
+                        {existingDoc ? (
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0">
+                            {existingDoc.document_path && (existingDoc.document_path.endsWith('.jpg') || existingDoc.document_path.endsWith('.jpeg') || existingDoc.document_path.endsWith('.png') || existingDoc.document_path.endsWith('.webp')) ? (
+                              <img 
+                                src={`${process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000'}/${existingDoc.document_path}`}
+                                alt={docType.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="w-full h-full flex items-center justify-center" style={{ display: existingDoc.document_path && (existingDoc.document_path.endsWith('.jpg') || existingDoc.document_path.endsWith('.jpeg') || existingDoc.document_path.endsWith('.png') || existingDoc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
+                              <FileText className="w-6 h-6 text-gray-400" />
+                            </div>
+                          </div>
+                        ) : (
+                          <FileText className="w-5 h-5 text-gray-400" />
+                        )}
                         <div>
                           <p className="text-sm font-bold text-gray-900 dark:text-white">{docType.name}</p>
                           {existingDoc && (
