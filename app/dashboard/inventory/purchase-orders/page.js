@@ -579,28 +579,30 @@ export default function PurchaseOrdersPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Document Types */}
-                {[
-                  { name: "Customs INV and PACKLIST", key: "customs_inv_packlist" },
-                  { name: "Bill of Entry (BOE)", key: "bill_of_entry" },
-                  { name: "Bill of Lading (BL)", key: "bill_of_lading" },
-                  { name: "Supplier Packing List", key: "supplier_packing_list" }
-                ].map((docType) => {
-                  const existingDoc = documents.find(d => d.document_name === docType.key);
-                  
-                  return (
-                    <div key={docType.key} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
-                      <div className="flex items-center gap-3">
-                        {existingDoc ? (
+                {/* Show all uploaded documents */}
+                {documents.length > 0 ? (
+                  documents.map((doc) => {
+                    // Get friendly name for known document types
+                    const docTypeNames = {
+                      'customs_inv_packlist': 'Customs INV and PACKLIST',
+                      'bill_of_entry': 'Bill of Entry (BOE)',
+                      'bill_of_lading': 'Bill of Lading (BL)',
+                      'supplier_packing_list': 'Supplier Packing List'
+                    };
+                    const displayName = docTypeNames[doc.document_name] || doc.document_name.replace(/_/g, ' ').toUpperCase();
+                    
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                        <div className="flex items-center gap-3">
                           <div 
                             className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                            onClick={() => handleViewDocument(existingDoc.id)}
+                            onClick={() => handleViewDocument(doc.id)}
                             title="Click to view full size"
                           >
-                            {existingDoc.document_path && (existingDoc.document_path.endsWith('.jpg') || existingDoc.document_path.endsWith('.jpeg') || existingDoc.document_path.endsWith('.png') || existingDoc.document_path.endsWith('.webp')) ? (
+                            {doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? (
                               <img 
-                                src={`/api/purchase-orders/${selectedPO.id}/documents/${existingDoc.id}/download`}
-                                alt={docType.name}
+                                src={`/api/purchase-orders/${selectedPO.id}/documents/${doc.id}/download`}
+                                alt={displayName}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   e.target.style.display = 'none';
@@ -608,66 +610,81 @@ export default function PurchaseOrdersPage() {
                                 }}
                               />
                             ) : null}
-                            <div className="w-full h-full flex items-center justify-center" style={{ display: existingDoc.document_path && (existingDoc.document_path.endsWith('.jpg') || existingDoc.document_path.endsWith('.jpeg') || existingDoc.document_path.endsWith('.png') || existingDoc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
+                            <div className="w-full h-full flex items-center justify-center" style={{ display: doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
                               <FileText className="w-6 h-6 text-gray-400" />
                             </div>
                           </div>
-                        ) : (
-                          <FileText className="w-5 h-5 text-gray-400" />
-                        )}
-                        <div>
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">{docType.name}</p>
-                          {existingDoc && (
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{displayName}</p>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Uploaded {new Date(existingDoc.created_at).toLocaleDateString()}
+                              Uploaded {new Date(doc.created_at).toLocaleDateString()} • {doc.document_path.split('.').pop().toUpperCase()}
                             </p>
-                          )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewDocument(doc.id)}
+                            className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="View in new tab"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(doc.id)}
+                            className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Download file"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDocToDelete(doc);
+                              setDeleteDocModalOpen(true);
+                            }}
+                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Delete document"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {existingDoc ? (
-                          <>
-                            <button
-                              onClick={() => handleViewDocument(existingDoc.id)}
-                              className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
-                              title="View in new tab"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              View
-                            </button>
-                            <button
-                              onClick={() => handleDownloadDocument(existingDoc.id)}
-                              className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
-                              title="Download file"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              Download
-                            </button>
-                            <button
-                              onClick={() => {
-                                setDocToDelete(existingDoc);
-                                setDeleteDocModalOpen(true);
-                              }}
-                              className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
-                              title="Delete document"
-                            >
-                              <Trash className="w-3.5 h-3.5" />
-                              Delete
-                            </button>
-                          </>
-                        ) : (
-                          <label className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-2">
-                            <Upload className="w-3.5 h-3.5" />
-                            Upload
-                            <input
-                              type="file"
-                              className="hidden"
-                              onChange={(e) => handleFileUpload(e, docType.key)}
-                              disabled={uploadingDocument}
-                              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
-                            />
-                          </label>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
+                  </div>
+                )}
+
+                {/* Upload new document section */}
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
+                  <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Upload New Document
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Use filename without extension as document_name
+                          const docName = file.name.split('.').slice(0, -1).join('.');
+                          handleFileUpload(e, docName);
+                        }
+                      }}
+                      disabled={uploadingDocument}
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                    Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                  </p>
+                </div>
                         )}
                       </div>
                     </div>
