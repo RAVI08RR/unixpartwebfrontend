@@ -685,18 +685,6 @@ export default function PurchaseOrdersPage() {
                     Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
                   </p>
                 </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {documents.length === 0 && !loadingDocuments && (
-                  <div className="text-center py-12">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
-                  </div>
-                )}
               </div>
             )}
 

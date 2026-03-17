@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, Ship, Hash, Truck, User as UserIcon,
-  Anchor, Navigation, MapPin, Shield
+  Anchor, Navigation, MapPin, Shield, FileText, Upload, Trash, ExternalLink, AlertCircle
 } from "lucide-react";
 import { useContainers } from "@/app/lib/hooks/useContainers";
 import { containerService } from "@/app/lib/services/containerService";
@@ -41,8 +41,14 @@ export default function CustomClearancePage() {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [selectedContainer, setSelectedContainer] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
 
   // Filter and search logic
   const filteredContainers = useMemo(() => {
@@ -90,6 +96,92 @@ export default function CustomClearancePage() {
         setDeleteError(errorMsg);
         showError("Failed to delete clearance: " + errorMsg);
       }
+    }
+  };
+
+  // Handle documents modal
+  const handleOpenDocuments = async (container) => {
+    setSelectedContainer(container);
+    setDocumentsModalOpen(true);
+    await fetchDocuments(container.id);
+  };
+
+  const fetchDocuments = async (containerId) => {
+    setLoadingDocuments(true);
+    try {
+      const docs = await containerService.getDocuments(containerId);
+      setDocuments(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error("Failed to fetch documents:", err);
+      setDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleFileUpload = async (e, documentName) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedContainer) return;
+
+    setUploadingDocument(true);
+    try {
+      await containerService.uploadDocument(selectedContainer.id, file, documentName);
+      showSuccess("Document uploaded successfully!");
+      await fetchDocuments(selectedContainer.id);
+    } catch (err) {
+      showError("Failed to upload document: " + err.message);
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId) => {
+    if (!selectedContainer) return;
+    try {
+      await containerService.deleteDocument(selectedContainer.id, documentId);
+      showSuccess("Document deleted successfully!");
+      await fetchDocuments(selectedContainer.id);
+      setDeleteDocModalOpen(false);
+      setDocToDelete(null);
+    } catch (err) {
+      showError("Failed to delete document: " + err.message);
+    }
+  };
+
+  const handleDownloadDocument = async (documentId) => {
+    if (!selectedContainer) return;
+    try {
+      await containerService.downloadDocument(selectedContainer.id, documentId);
+    } catch (err) {
+      showError("Failed to download document: " + err.message);
+    }
+  };
+
+  const handleViewDocument = async (documentId) => {
+    if (!selectedContainer) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const url = `/api/containers/${selectedContainer.id}/documents/${documentId}/download`;
+      
+      // Open in new tab with authorization
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load document');
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (err) {
+      showError("Failed to view document: " + err.message);
     }
   };
 
@@ -292,6 +384,16 @@ export default function CustomClearancePage() {
                                 <Package className="w-4 h-4" />
                                 View Items
                               </Link>
+                              <button
+                                onClick={() => {
+                                  handleOpenDocuments(container);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                              >
+                                <FileText className="w-4 h-4" />
+                                Documents
+                              </button>
                               <button 
                                 onClick={() => {
                                   setSelectedContainer(container);
@@ -488,6 +590,196 @@ export default function CustomClearancePage() {
                   Delete
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Documents Modal */}
+      {documentsModalOpen && selectedContainer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black dark:text-white">Documents for {selectedContainer.container_code}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage and view documents related to this container.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedContainer(null);
+                  setDocuments([]);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {loadingDocuments ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 text-sm font-bold">Loading documents...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Show all uploaded documents */}
+                {documents.length > 0 ? (
+                  documents.map((doc) => {
+                    // Get friendly name for known document types
+                    const docTypeNames = {
+                      'customs_inv_packlist': 'Customs INV and PACKLIST',
+                      'bill_of_entry': 'Bill of Entry (BOE)',
+                      'bill_of_lading': 'Bill of Lading (BL)',
+                      'supplier_packing_list': 'Supplier Packing List',
+                      'commercial_invoice': 'Commercial Invoice',
+                      'certificate_of_origin': 'Certificate of Origin'
+                    };
+                    const displayName = docTypeNames[doc.document_name] || doc.document_name.replace(/_/g, ' ').toUpperCase();
+                    
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                            onClick={() => handleViewDocument(doc.id)}
+                            title="Click to view full size"
+                          >
+                            {doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? (
+                              <img 
+                                src={`/api/containers/${selectedContainer.id}/documents/${doc.id}/download`}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="w-full h-full flex items-center justify-center" style={{ display: doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
+                              <FileText className="w-6 h-6 text-gray-400" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{displayName}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Uploaded {new Date(doc.created_at).toLocaleDateString()} • {doc.document_path.split('.').pop().toUpperCase()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewDocument(doc.id)}
+                            className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="View in new tab"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(doc.id)}
+                            className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Download file"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDocToDelete(doc);
+                              setDeleteDocModalOpen(true);
+                            }}
+                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Delete document"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
+                  </div>
+                )}
+
+                {/* Upload new document section */}
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
+                  <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                    <Upload className="w-4 h-4" />
+                    Upload New Document
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Use filename without extension as document_name
+                          const docName = file.name.split('.').slice(0, -1).join('.');
+                          handleFileUpload(e, docName);
+                        }
+                      }}
+                      disabled={uploadingDocument}
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                    Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedContainer(null);
+                  setDocuments([]);
+                }}
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Document Confirmation Modal */}
+      {deleteDocModalOpen && docToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Document?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete this document? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeleteDocModalOpen(false);
+                  setDocToDelete(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleDeleteDocument(docToDelete.id)}
+                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+              >
+                Delete Document
+              </button>
             </div>
           </div>
         </div>

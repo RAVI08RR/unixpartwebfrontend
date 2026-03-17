@@ -122,4 +122,92 @@ export const containerService = {
       throw new Error('Cannot delete container: ' + error.message);
     }
   },
+
+  // Get documents for a container
+  getDocuments: async (containerId) => {
+    try {
+      return await fetchApi(`/api/containers/${containerId}/documents`);
+    } catch (error) {
+      console.warn('📦 Container documents fetch failed:', error.message);
+      return [];
+    }
+  },
+
+  // Upload document for a container
+  uploadDocument: async (containerId, file, documentName) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('document_name', documentName);
+
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/containers/${containerId}/documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.warn('📦 Container document upload failed:', error.message);
+      throw new Error('Cannot upload document: ' + error.message);
+    }
+  },
+
+  // Delete document from a container
+  deleteDocument: async (containerId, documentId) => {
+    try {
+      return await fetchApi(`/api/containers/${containerId}/documents/${documentId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.warn('📦 Container document deletion failed:', error.message);
+      throw new Error('Cannot delete document: ' + error.message);
+    }
+  },
+
+  // Download document from a container
+  downloadDocument: async (containerId, documentId) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`/api/containers/${containerId}/documents/${documentId}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'document';
+      
+      if (contentDisposition) {
+        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+        if (matches != null && matches[1]) {
+          filename = matches[1].replace(/['"]/g, '');
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.warn('📦 Container document download failed:', error.message);
+      throw new Error('Cannot download document: ' + error.message);
+    }
+  },
 };
