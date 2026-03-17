@@ -69,6 +69,7 @@ export function Sidebar() {
         { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield },
         { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck },
         { label: "Stock Items", href: "/dashboard/inventory/stock-items", icon: Package },
+        { label: "Assets", href: "/dashboard/inventory/assets", icon: Box },
       ]
     },
 
