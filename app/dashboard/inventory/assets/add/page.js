@@ -183,7 +183,7 @@ export default function AddAssetPage() {
               className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-600/50 text-sm"
             >
               <option value="">Select Branch</option>
-              {branches.map(branch => (
+              {branches && branches.map(branch => (
                 <option key={branch.id} value={branch.id}>
                   {branch.branch_name}
                 </option>
