@@ -37,9 +37,9 @@ export default function AddAssetPage() {
     const fetchBranches = async () => {
       setBranchesLoading(true);
       try {
-        const data = await branchService.getDropdown();
-        console.log('Branches loaded:', data);
-        setBranches(Array.isArray(data) ? data : []);
+        const branchesData = await branchService.getDropdown();
+        console.log('Branches data loaded:', branchesData);
+        setBranches(Array.isArray(branchesData) ? branchesData : []);
       } catch (err) {
         console.error('Failed to fetch branches:', err);
         error('Failed to load branches');
@@ -214,9 +214,9 @@ export default function AddAssetPage() {
               disabled={branchesLoading}
             >
               <option value="">{branchesLoading ? 'Loading branches...' : 'Select Branch'}</option>
-              {branches && branches.map(branch => (
+              {branches.map(branch => (
                 <option key={branch.id} value={branch.id}>
-                  {branch.branch_name}
+                  {branch.label || branch.branch_name || branch.name || 'Unnamed Branch'}
                 </option>
               ))}
             </select>
