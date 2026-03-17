@@ -8,13 +8,15 @@ import {
   ChevronDown, Check, ArrowLeft, Tag, Layers
 } from "lucide-react";
 import { assetService } from "@/app/lib/services/assetService";
+import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
-import { useBranches } from "@/app/lib/hooks/useBranches";
 
 export default function AddAssetPage() {
   const router = useRouter();
   const { success, error } = useToast();
-  const { branches, loading: branchesLoading } = useBranches(0, 100, true);
+  
+  const [branches, setBranches] = useState([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -29,6 +31,26 @@ export default function AddAssetPage() {
   });
 
   const [loading, setLoading] = useState(false);
+
+  // Fetch branches on component mount
+  useEffect(() => {
+    const fetchBranches = async () => {
+      setBranchesLoading(true);
+      try {
+        const data = await branchService.getDropdown();
+        console.log('Branches loaded:', data);
+        setBranches(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch branches:', err);
+        error('Failed to load branches');
+        setBranches([]);
+      } finally {
+        setBranchesLoading(false);
+      }
+    };
+
+    fetchBranches();
+  }, []);
 
   const handleSubmit = async () => {
     if (!formData.asset_id || !formData.description || !formData.category || !formData.purchase_value || !formData.branch_id) {
@@ -189,8 +211,9 @@ export default function AddAssetPage() {
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.branch_id}
               onChange={(e) => setFormData({...formData, branch_id: e.target.value})}
+              disabled={branchesLoading}
             >
-              <option value="">Select Branch</option>
+              <option value="">{branchesLoading ? 'Loading branches...' : 'Select Branch'}</option>
               {branches && branches.map(branch => (
                 <option key={branch.id} value={branch.id}>
                   {branch.branch_name}
