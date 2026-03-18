@@ -159,6 +159,7 @@ export const assetService = {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('document_name', documentName);
+      formData.append('document_type', documentName); // Some backends might expect this
 
       const token = localStorage.getItem('access_token');
       const response = await fetch(`/api/assets/${assetId}/documents`, {
@@ -169,9 +170,20 @@ export const assetService = {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
-      return await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Upload error response:', errorText);
+        throw new Error(errorText || 'Upload failed');
+      }
+      
+      const responseText = await response.text();
+      try {
+        return JSON.parse(responseText);
+      } catch {
+        return responseText;
+      }
     } catch (error) {
+      console.error('Upload document error:', error);
       throw new Error('Cannot upload document: ' + error.message);
     }
   },
