@@ -162,7 +162,9 @@ export const assetService = {
       formData.append('document_type', documentName); // Some backends might expect this
 
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`/api/assets/${assetId}/documents`, {
+      
+      // Try the /upload endpoint first (as per API docs)
+      let response = await fetch(`/api/assets/${assetId}/documents/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -170,9 +172,22 @@ export const assetService = {
         body: formData,
       });
 
+      // If that fails with 404, try the regular documents endpoint
+      if (response.status === 404) {
+        console.log('Upload endpoint not found, trying documents endpoint');
+        response = await fetch(`/api/assets/${assetId}/documents`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Upload error response:', errorText);
+        console.error('Response status:', response.status);
         throw new Error(errorText || 'Upload failed');
       }
       

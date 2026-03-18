@@ -42,15 +42,30 @@ export async function POST(request, { params }) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     
-    console.log('Uploading document for asset:', asset_id);
+    console.log('=== Asset Document Upload ===');
+    console.log('Asset ID:', asset_id);
+    console.log('Backend URL:', apiBaseUrl);
+    console.log('Auth Header:', authHeader ? 'Present' : 'Missing');
     
     const formData = await request.formData();
     const file = formData.get('file');
     const documentName = formData.get('document_name');
+    const documentType = formData.get('document_type');
     
-    console.log('File:', file?.name, 'Document Name:', documentName);
+    console.log('File:', file?.name, 'Size:', file?.size, 'Type:', file?.type);
+    console.log('Document Name:', documentName);
+    console.log('Document Type:', documentType);
+    
+    if (!file) {
+      console.error('No file provided in form data');
+      return new Response(JSON.stringify({ error: 'No file provided' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     
     const backendUrl = `${apiBaseUrl}/api/assets/${asset_id}/documents`;
+    console.log('Sending to:', backendUrl);
     
     const headers = {
       'ngrok-skip-browser-warning': 'true',
@@ -61,12 +76,18 @@ export async function POST(request, { params }) {
       method: 'POST', 
       headers,
       body: formData,
-      signal: AbortSignal.timeout(30000), // 30 second timeout for file uploads
+      signal: AbortSignal.timeout(30000),
     });
     
-    const data = await response.text();
     console.log('Backend response status:', response.status);
-    console.log('Backend response:', data);
+    console.log('Backend response headers:', Object.fromEntries(response.headers.entries()));
+    
+    const data = await response.text();
+    console.log('Backend response body:', data);
+    
+    if (!response.ok) {
+      console.error('Backend returned error:', response.status, data);
+    }
     
     return new Response(data, {
       status: response.status,
@@ -76,8 +97,14 @@ export async function POST(request, { params }) {
       },
     });
   } catch (error) {
-    console.error('Document upload error:', error);
-    return new Response(JSON.stringify({ error: error.message, details: error.toString() }), { 
+    console.error('=== Document upload error ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    return new Response(JSON.stringify({ 
+      error: error.message, 
+      details: error.toString(),
+      stack: error.stack 
+    }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
