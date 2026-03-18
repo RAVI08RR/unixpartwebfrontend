@@ -101,7 +101,7 @@ export default function AddBranchPage() {
       const createdBranch = await branchService.create(submitData);
       const branchId = createdBranch.id;
 
-      // Create branch owners if any using bulk save
+      // Create branch owners if any
       if (owners.length > 0 && branchId) {
         console.log("Creating branch owners for branch ID:", branchId);
         
@@ -113,7 +113,7 @@ export default function AddBranchPage() {
           return;
         }
 
-        // Filter valid owners and prepare bulk data
+        // Filter valid owners
         const validOwners = owners
           .filter(owner => owner.supplier_id && owner.share_percent)
           .map(owner => ({
@@ -124,24 +124,29 @@ export default function AddBranchPage() {
           }));
 
         if (validOwners.length > 0) {
-          try {
-            // Try bulk save first
-            console.log("Attempting bulk save with data:", validOwners);
-            await branchOwnerService.bulkSave(validOwners);
-            console.log("All branch owners created successfully via bulk save");
-          } catch (ownerError) {
-            console.error("Bulk save failed, trying individual saves:", ownerError);
-            
-            // Fallback to individual saves
+          console.log("Creating branch owners with data:", validOwners);
+          
+          // Create owners one by one
+          let successCount = 0;
+          let failCount = 0;
+          
+          for (const owner of validOwners) {
             try {
-              for (const owner of validOwners) {
-                await branchOwnerService.create(owner);
-              }
-              console.log("All branch owners created successfully via individual saves");
+              await branchOwnerService.create(owner);
+              successCount++;
+              console.log(`Branch owner ${successCount}/${validOwners.length} created successfully`);
             } catch (individualError) {
-              console.error("Individual saves also failed:", individualError);
-              showError("Branch created but owners failed to save: " + individualError.message);
+              failCount++;
+              console.error(`Failed to create branch owner:`, individualError);
             }
+          }
+          
+          if (successCount > 0) {
+            console.log(`Successfully created ${successCount} branch owners`);
+          }
+          
+          if (failCount > 0) {
+            showError(`Branch created but ${failCount} owner(s) failed to save`);
           }
         }
       }
