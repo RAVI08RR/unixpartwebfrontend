@@ -125,11 +125,23 @@ export default function AddBranchPage() {
 
         if (validOwners.length > 0) {
           try {
+            // Try bulk save first
+            console.log("Attempting bulk save with data:", validOwners);
             await branchOwnerService.bulkSave(validOwners);
             console.log("All branch owners created successfully via bulk save");
           } catch (ownerError) {
-            console.error("Failed to create branch owners:", ownerError);
-            showError("Branch created but owners failed to save");
+            console.error("Bulk save failed, trying individual saves:", ownerError);
+            
+            // Fallback to individual saves
+            try {
+              for (const owner of validOwners) {
+                await branchOwnerService.create(owner);
+              }
+              console.log("All branch owners created successfully via individual saves");
+            } catch (individualError) {
+              console.error("Individual saves also failed:", individualError);
+              showError("Branch created but owners failed to save: " + individualError.message);
+            }
           }
         }
       }
