@@ -136,6 +136,7 @@ export function Sidebar() {
       label: "Administration",
       items: [
         { label: "Branches", href: "/dashboard/administration/branches", icon: Building2 },
+        { label: "Branch Owners", href: "/dashboard/administration/branch-owners", icon: Truck },
       ]
     },
     {
