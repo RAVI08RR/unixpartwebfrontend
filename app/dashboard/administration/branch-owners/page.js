@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { 
-  Truck, Search, Filter, Download, Plus, ChevronLeft, ChevronRight,
-  MoreVertical, Pencil, Trash2, Eye, Building2, Percent, ArrowLeft
+  Truck, Search, Download, Plus, ChevronLeft, ChevronRight,
+  Pencil, Trash2, Eye, Building2, Percent
 } from "lucide-react";
 import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { branchService } from "@/app/lib/services/branchService";
@@ -14,7 +14,6 @@ import { useToast } from "@/app/components/Toast";
 export default function BranchOwnersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
   
   const itemsPerPage = 10;
@@ -23,6 +22,8 @@ export default function BranchOwnersPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -94,14 +95,9 @@ export default function BranchOwnersPage() {
     }
   };
 
-  const getBranchName = (branchId) => {
-    const branch = branches.find(b => b.id === branchId);
-    return branch ? `${branch.branch_name} (${branch.branch_code})` : 'Unknown Branch';
-  };
-
-  const getSupplierName = (supplierId) => {
-    const supplier = suppliers.find(s => s.id === supplierId);
-    return supplier ? `${supplier.name} (${supplier.supplier_code || 'N/A'})` : 'Unknown Supplier';
+  const handleView = (owner) => {
+    setSelectedOwner(owner);
+    setViewModalOpen(true);
   };
 
   if (!isMounted) return null;
@@ -218,6 +214,13 @@ export default function BranchOwnersPage() {
 
                       <td className="px-6 py-6 text-center relative">
                         <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleView(owner)}
+                            className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group/view"
+                            title="View"
+                          >
+                            <Eye className="w-4 h-4 text-gray-400 group-hover/view:text-green-600" />
+                          </button>
                           <Link
                             href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
                             className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group/edit"
@@ -291,6 +294,119 @@ export default function BranchOwnersPage() {
           </div>
         </div>
       </div>
+
+      {/* View Modal */}
+      {viewModalOpen && selectedOwner && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white">Branch Owner Details</h2>
+                <button
+                  onClick={() => setViewModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Branch Info */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Branch</label>
+                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
+                  <Building2 className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <p className="text-sm font-black text-gray-900 dark:text-white">
+                      {branches.find(b => b.id === selectedOwner.branch_id)?.branch_name || 'Unknown Branch'}
+                    </p>
+                    <p className="text-xs text-gray-400 font-bold">
+                      {branches.find(b => b.id === selectedOwner.branch_id)?.branch_code || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Supplier Info */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Supplier</label>
+                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
+                  <Truck className="w-8 h-8 text-green-600 dark:text-green-400" />
+                  <div>
+                    <p className="text-sm font-black text-gray-900 dark:text-white">
+                      {suppliers.find(s => s.id === selectedOwner.supplier_id)?.name || 'Unknown Supplier'}
+                    </p>
+                    <p className="text-xs text-gray-400 font-bold">
+                      {suppliers.find(s => s.id === selectedOwner.supplier_id)?.supplier_code || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ownership Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Share Percentage</label>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-center gap-2">
+                      <Percent className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
+                        {selectedOwner.share_percent}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Share Amount</label>
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                    <p className="text-2xl font-black text-green-600 dark:text-green-400">
+                      AED {parseFloat(selectedOwner.share_amount || 0).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Record Info */}
+              <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="text-gray-500 dark:text-gray-400 font-bold">Record ID</p>
+                    <p className="text-gray-900 dark:text-white font-black mt-1">#{selectedOwner.id}</p>
+                  </div>
+                  {selectedOwner.created_at && (
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 font-bold">Created At</p>
+                      <p className="text-gray-900 dark:text-white font-black mt-1">
+                        {new Date(selectedOwner.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
+              <Link
+                href={`/dashboard/administration/branch-owners/edit/${selectedOwner.id}`}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                onClick={() => setViewModalOpen(false)}
+              >
+                Edit
+              </Link>
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
