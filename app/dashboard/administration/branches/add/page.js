@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Save, X, Plus, Trash2, Percent, Truck } from "lucide-react";
+import { ArrowLeft, Building2, Save, X } from "lucide-react";
 import Link from "next/link";
 import { branchService } from "@/app/lib/services/branchService";
-import { supplierService } from "@/app/lib/services/supplierService";
-import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { useToast } from "@/app/components/Toast";
 
 export default function AddBranchPage() {
@@ -14,8 +12,6 @@ export default function AddBranchPage() {
   const { success, error: showError } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [suppliers, setSuppliers] = useState([]);
-  const [suppliersLoading, setSuppliersLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     branch_name: "",
@@ -25,63 +21,12 @@ export default function AddBranchPage() {
     total_outstanding: "",
   });
 
-  // Branch owners (suppliers with percentage shares)
-  const [branchOwners, setBranchOwners] = useState([
-    { supplier_id: "", ownership_percentage: "" }
-  ]);
-
-  // Fetch suppliers on component mount
-  useEffect(() => {
-    const fetchSuppliers = async () => {
-      setSuppliersLoading(true);
-      try {
-        const suppliersData = await supplierService.getAll(0, 100);
-        const suppliersList = Array.isArray(suppliersData) ? suppliersData : (suppliersData?.suppliers || []);
-        setSuppliers(suppliersList);
-      } catch (err) {
-        console.error('Failed to fetch suppliers:', err);
-        setSuppliers([]);
-      } finally {
-        setSuppliersLoading(false);
-      }
-    };
-
-    fetchSuppliers();
-  }, []);
-
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-  };
-
-  // Add new branch owner row
-  const addBranchOwner = () => {
-    setBranchOwners([...branchOwners, { supplier_id: "", ownership_percentage: "" }]);
-  };
-
-  // Remove branch owner row
-  const removeBranchOwner = (index) => {
-    if (branchOwners.length > 1) {
-      setBranchOwners(branchOwners.filter((_, i) => i !== index));
-    }
-  };
-
-  // Update branch owner
-  const updateBranchOwner = (index, field, value) => {
-    const updated = [...branchOwners];
-    updated[index][field] = value;
-    setBranchOwners(updated);
-  };
-
-  // Calculate total percentage
-  const getTotalPercentage = () => {
-    return branchOwners.reduce((sum, owner) => {
-      const percentage = parseFloat(owner.ownership_percentage) || 0;
-      return sum + percentage;
-    }, 0);
   };
 
   const handleSubmit = async (e) => {
@@ -105,47 +50,10 @@ export default function AddBranchPage() {
         return;
       }
 
-      // Validate branch owners if any are filled
-      const filledOwners = branchOwners.filter(owner => owner.supplier_id || owner.ownership_percentage);
-      if (filledOwners.length > 0) {
-        // Check if all filled owners have both supplier and percentage
-        const invalidOwners = filledOwners.filter(owner => !owner.supplier_id || !owner.ownership_percentage);
-        if (invalidOwners.length > 0) {
-          setError("Please complete all branch owner entries or remove empty ones");
-          return;
-        }
-
-        // Check total percentage
-        const totalPercentage = getTotalPercentage();
-        if (totalPercentage > 100) {
-          setError(`Total ownership percentage cannot exceed 100% (currently ${totalPercentage}%)`);
-          return;
-        }
-      }
-
       console.log("Creating branch with data:", submitData);
       
-      // Create the branch first
-      const createdBranch = await branchService.create(submitData);
-      console.log("Branch created:", createdBranch);
-
-      // If branch owners are provided, create them
-      if (filledOwners.length > 0 && createdBranch.id) {
-        console.log("Creating branch owners...");
-        for (const owner of filledOwners) {
-          try {
-            await branchOwnerService.create({
-              branch_id: createdBranch.id,
-              supplier_id: parseInt(owner.supplier_id),
-              share_percent: parseFloat(owner.ownership_percentage),
-              share_amount: 0, // Can be calculated later based on branch revenue
-            });
-          } catch (ownerError) {
-            console.error("Failed to create branch owner:", ownerError);
-            // Continue with other owners even if one fails
-          }
-        }
-      }
+      // Create the branch
+      await branchService.create(submitData);
       
       // Success - redirect to branches list
       success("Branch created successfully!");
@@ -273,126 +181,6 @@ export default function AddBranchPage() {
                   <span className="text-sm text-gray-600 dark:text-gray-400">Active</span>
                 </label>
               </div>
-            </div>
-
-            {/* Branch Owners Section */}
-            <div className="col-span-full space-y-4 pt-6 border-t border-gray-200 dark:border-zinc-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-blue-600" />
-                    Branch Ownership
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    Add suppliers and their ownership percentage (Optional)
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={addBranchOwner}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm transition-all"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Owner
-                </button>
-              </div>
-
-              {/* Branch Owners List */}
-              <div className="space-y-3">
-                {branchOwners.map((owner, index) => (
-                  <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {/* Supplier Dropdown */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Supplier
-                        </label>
-                        <select
-                          value={owner.supplier_id}
-                          onChange={(e) => updateBranchOwner(index, 'supplier_id', e.target.value)}
-                          className="w-full px-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                          disabled={suppliersLoading}
-                        >
-                          <option value="">{suppliersLoading ? 'Loading...' : 'Select supplier...'}</option>
-                          {suppliers.map(supplier => (
-                            <option key={supplier.id} value={supplier.id}>
-                              {supplier.name} ({supplier.supplier_code || 'N/A'})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Ownership Percentage */}
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                          Ownership Share (%)
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            value={owner.ownership_percentage}
-                            onChange={(e) => updateBranchOwner(index, 'ownership_percentage', e.target.value)}
-                            placeholder="0"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            className="w-full pl-3 pr-10 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                          />
-                          <Percent className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Remove Button */}
-                    {branchOwners.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeBranchOwner(index)}
-                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Remove owner"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Total Percentage Display */}
-              {branchOwners.some(owner => owner.ownership_percentage) && (
-                <div className={`p-4 rounded-xl border-2 ${
-                  getTotalPercentage() > 100 
-                    ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800' 
-                    : getTotalPercentage() === 100
-                    ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-800'
-                    : 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-800'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                      Total Ownership:
-                    </span>
-                    <span className={`text-lg font-black ${
-                      getTotalPercentage() > 100 
-                        ? 'text-red-600 dark:text-red-400' 
-                        : getTotalPercentage() === 100
-                        ? 'text-green-600 dark:text-green-400'
-                        : 'text-blue-600 dark:text-blue-400'
-                    }`}>
-                      {getTotalPercentage().toFixed(2)}%
-                    </span>
-                  </div>
-                  {getTotalPercentage() > 100 && (
-                    <p className="text-xs text-red-600 dark:text-red-400 mt-2">
-                      ⚠️ Total percentage cannot exceed 100%
-                    </p>
-                  )}
-                  {getTotalPercentage() === 100 && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                      ✓ Perfect! Total ownership is 100%
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
 
             {/* Error Message */}
