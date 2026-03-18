@@ -101,7 +101,7 @@ export default function AddBranchPage() {
       const createdBranch = await branchService.create(submitData);
       const branchId = createdBranch.id;
 
-      // Create branch owners if any
+      // Create branch owners if any using bulk save API
       if (owners.length > 0 && branchId) {
         console.log("Creating branch owners for branch ID:", branchId);
         
@@ -113,24 +113,24 @@ export default function AddBranchPage() {
           return;
         }
 
-        // Create all owners in parallel
-        const ownerPromises = owners
+        // Filter valid owners and prepare bulk data
+        const validOwners = owners
           .filter(owner => owner.supplier_id && owner.share_percent)
-          .map(owner => 
-            branchOwnerService.create({
-              branch_id: branchId,
-              supplier_id: parseInt(owner.supplier_id),
-              share_percent: parseFloat(owner.share_percent),
-              share_amount: parseFloat(owner.share_amount) || 0,
-            })
-          );
+          .map(owner => ({
+            branch_id: branchId,
+            supplier_id: parseInt(owner.supplier_id),
+            share_percent: parseFloat(owner.share_percent),
+            share_amount: parseFloat(owner.share_amount) || 0,
+          }));
 
-        try {
-          await Promise.all(ownerPromises);
-          console.log("All branch owners created successfully");
-        } catch (ownerError) {
-          console.error("Failed to create some branch owners:", ownerError);
-          showError("Branch created but some owners failed to save");
+        if (validOwners.length > 0) {
+          try {
+            await branchOwnerService.saveAll(validOwners);
+            console.log("All branch owners created successfully via bulk save");
+          } catch (ownerError) {
+            console.error("Failed to create branch owners:", ownerError);
+            showError("Branch created but owners failed to save");
+          }
         }
       }
       

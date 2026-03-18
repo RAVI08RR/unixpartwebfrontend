@@ -81,4 +81,24 @@ export const branchOwnerService = {
       throw new Error('Cannot delete branch owner: ' + error.message);
     }
   },
+
+  // Bulk save branch owners
+  saveAll: async (branchOwnersArray) => {
+    try {
+      // Ensure all items have the correct field names
+      const payload = branchOwnersArray.map(owner => ({
+        branch_id: owner.branch_id,
+        supplier_id: owner.supplier_id,
+        share_percent: owner.share_percent || 0,
+        share_amount: owner.share_amount || 0,
+      }));
+      
+      return await fetchApi('/api/branch-owners/saveall', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      throw new Error('Cannot bulk save branch owners: ' + error.message);
+    }
+  },
 };
