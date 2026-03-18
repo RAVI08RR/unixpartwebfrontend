@@ -140,3 +140,69 @@ export async function OPTIONS() {
     },
   });
 }
+
+// Handle POST requests to create a new branch
+export async function POST(request) {
+  try {
+    // Get API base URL
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    
+    // Get auth token from request headers
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized - No token found' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Get request body
+    const body = await request.json();
+    
+    console.log('Branches proxy POST - Creating branch:', body);
+    
+    // Make the request to FastAPI backend
+    const backendUrl = `${apiBaseUrl}/api/branches/`;
+    console.log('Branches proxy POST - Backend URL:', backendUrl);
+    
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authHeader,
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: JSON.stringify(body),
+    });
+    
+    console.log('Branches proxy POST - Backend response status:', response.status);
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('Branches proxy POST - Backend error:', data);
+      return new Response(JSON.stringify(data), {
+        status: response.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    console.log('Branches proxy POST - Branch created successfully:', data);
+    
+    return new Response(JSON.stringify(data), {
+      status: response.status,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+    
+  } catch (error) {
+    console.error('Branches proxy POST error:', error);
+    return new Response(JSON.stringify({ error: 'Internal Server Error', details: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
