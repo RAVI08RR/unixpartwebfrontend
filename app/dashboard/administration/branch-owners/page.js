@@ -40,7 +40,7 @@ export default function BranchOwnersPage() {
     try {
       // Fetch all data in parallel
       const [ownersData, branchesData, suppliersData] = await Promise.all([
-        branchOwnerService.getAll(0, 1000),
+        branchOwnerService.getAll(0, 100),
         branchService.getAll(0, 100),
         supplierService.getAll(0, 100)
       ]);
