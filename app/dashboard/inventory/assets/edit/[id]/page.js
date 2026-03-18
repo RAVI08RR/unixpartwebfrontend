@@ -2,21 +2,23 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { 
   Package, Hash, FileText, DollarSign, Calendar, Building2, 
-  ChevronDown, Check, ArrowLeft, Tag, Layers
+  ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2
 } from "lucide-react";
 import { assetService } from "@/app/lib/services/assetService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
 
-export default function AddAssetPage() {
+export default function EditAssetPage() {
   const router = useRouter();
+  const params = useParams();
   const { success, error } = useToast();
   
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -34,25 +36,47 @@ export default function AddAssetPage() {
 
   const [loading, setLoading] = useState(false);
 
-  // Fetch branches on component mount
+  // Fetch asset data and branches on component mount
   useEffect(() => {
-    const fetchBranches = async () => {
-      setBranchesLoading(true);
+    const fetchData = async () => {
+      setPageLoading(true);
       try {
+        // Fetch branches
+        setBranchesLoading(true);
         const branchesData = await branchService.getDropdown();
         console.log('Branches data loaded:', branchesData);
         setBranches(Array.isArray(branchesData) ? branchesData : []);
-      } catch (err) {
-        console.error('Failed to fetch branches:', err);
-        error('Failed to load branches');
-        setBranches([]);
-      } finally {
         setBranchesLoading(false);
+
+        // Fetch asset data
+        const assetData = await assetService.getById(params.id);
+        console.log('Asset data loaded:', assetData);
+        
+        setFormData({
+          asset_id: assetData.asset_id || "",
+          asset_name: assetData.asset_name || "",
+          description: assetData.description || "",
+          category: assetData.category || "",
+          purchase_price: assetData.purchase_price || "",
+          current_value: assetData.current_value || "",
+          purchase_date: assetData.purchase_date || "",
+          purchase_branch_id: assetData.purchase_branch_id || "",
+          current_operating_branch_id: assetData.current_operating_branch_id || "",
+          status: assetData.status || "active",
+          notes: assetData.notes || ""
+        });
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+        error('Failed to load asset data');
+      } finally {
+        setPageLoading(false);
       }
     };
 
-    fetchBranches();
-  }, []);
+    if (params.id) {
+      fetchData();
+    }
+  }, [params.id]);
 
   const handleSubmit = async () => {
     if (!formData.asset_id || !formData.asset_name || !formData.category || !formData.purchase_price || !formData.purchase_branch_id || !formData.current_operating_branch_id) {
@@ -76,15 +100,26 @@ export default function AddAssetPage() {
         notes: formData.notes || null,
       };
 
-      await assetService.create(payload);
-      success("Asset created successfully!");
+      await assetService.update(params.id, payload);
+      success("Asset updated successfully!");
       router.push("/dashboard/inventory/assets");
     } catch (err) {
-      error("Failed to create asset: " + err.message);
+      error("Failed to update asset: " + err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <p className="text-sm text-gray-500">Loading asset data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
@@ -98,8 +133,8 @@ export default function AddAssetPage() {
             <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Add Asset</h1>
-            <p className="text-gray-500 text-sm">Create a new asset record</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Asset</h1>
+            <p className="text-gray-500 text-sm">Update asset information</p>
           </div>
         </div>
       </div>
@@ -321,7 +356,7 @@ export default function AddAssetPage() {
           className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 btn-primary"
         >
           <Check className="w-4 h-4" />
-          <span>{loading ? "Creating..." : "Create Asset"}</span>
+          <span>{loading ? "Updating..." : "Update Asset"}</span>
         </button>
         <Link 
           href="/dashboard/inventory/assets" 
