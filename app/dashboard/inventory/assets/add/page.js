@@ -72,10 +72,6 @@ export default function AddAssetPage() {
     };
 
     fetchData();
-      }
-    };
-
-    fetchBranches();
   }, []);
 
   const handleSubmit = async () => {
