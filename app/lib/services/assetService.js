@@ -218,15 +218,25 @@ export const assetService = {
   downloadDocument: async (assetId, documentId) => {
     try {
       const token = localStorage.getItem('access_token');
+      console.log('Downloading document:', { assetId, documentId });
+      
       const response = await fetch(`/api/assets/${assetId}/documents/${documentId}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) throw new Error('Download failed');
+      console.log('Download response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Download failed:', response.status, errorText);
+        throw new Error(`Download failed with status ${response.status}: ${errorText}`);
+      }
 
       const blob = await response.blob();
+      console.log('Blob received:', blob.size, 'bytes, type:', blob.type);
+      
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = 'document';
       
@@ -237,16 +247,25 @@ export const assetService = {
         }
       }
 
+      console.log('Downloading as:', filename);
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      // Clean up after a short delay
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
+      
+      return true;
     } catch (error) {
-      throw new Error('Cannot download document: ' + error.message);
+      console.error('Download document error:', error);
+      throw new Error(error.message || 'Failed to download document');
     }
   },
 };
