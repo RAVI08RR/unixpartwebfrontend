@@ -6,10 +6,12 @@ import {
   Building2, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, X, Eye, Calendar,
-  MapPin, DollarSign, TrendingUp, AlertCircle
+  MapPin, DollarSign, TrendingUp, AlertCircle, Truck, Percent, ChevronDown, ChevronUp
 } from "lucide-react";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { branchService } from "@/app/lib/services/branchService";
+import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
+import { supplierService } from "@/app/lib/services/supplierService";
 import { getAuthToken } from "@/app/lib/api";
 
 export default function BranchManagementPage() {
@@ -27,6 +29,11 @@ export default function BranchManagementPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  
+  // Branch owners state
+  const [branchOwners, setBranchOwners] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [expandedBranches, setExpandedBranches] = useState({});
 
   // Handle Data Selection (API only) - Fixed for hydration
   const branches = useMemo(() => {
@@ -66,6 +73,27 @@ export default function BranchManagementPage() {
     setIsMounted(true);
   }, []);
 
+  // Fetch branch owners and suppliers
+  useEffect(() => {
+    const fetchOwnersAndSuppliers = async () => {
+      try {
+        const [ownersData, suppliersData] = await Promise.all([
+          branchOwnerService.getAll(0, 100),
+          supplierService.getAll(0, 100)
+        ]);
+        
+        setBranchOwners(Array.isArray(ownersData) ? ownersData : []);
+        setSuppliers(Array.isArray(suppliersData) ? suppliersData : (suppliersData?.suppliers || []));
+      } catch (error) {
+        console.error('Failed to fetch branch owners:', error);
+      }
+    };
+
+    if (isMounted) {
+      fetchOwnersAndSuppliers();
+    }
+  }, [isMounted]);
+
   // Reset to first page when branches list changes
   useEffect(() => {
     setCurrentPage(1);
@@ -73,6 +101,27 @@ export default function BranchManagementPage() {
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
+  };
+
+  const toggleBranchOwners = (branchId) => {
+    setExpandedBranches(prev => ({
+      ...prev,
+      [branchId]: !prev[branchId]
+    }));
+  };
+
+  const getBranchOwners = (branchId) => {
+    return branchOwners.filter(owner => owner.branch_id === branchId);
+  };
+
+  const getSupplierName = (supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    return supplier ? supplier.name : 'Unknown Supplier';
+  };
+
+  const getTotalSharePercent = (branchId) => {
+    const owners = getBranchOwners(branchId);
+    return owners.reduce((sum, owner) => sum + (parseFloat(owner.share_percent) || 0), 0);
   };
 
   const handleViewBranch = (branch) => {
@@ -265,106 +314,183 @@ export default function BranchManagementPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedBranches.length > 0 ? (
                 paginatedBranches.map((branch, index) => {
+                  const owners = getBranchOwners(branch.id);
+                  const isExpanded = expandedBranches[branch.id];
+                  const totalPercent = getTotalSharePercent(branch.id);
+                  
                   return (
-                    <tr key={branch.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style= {{borderBottom :"0.9px solid #E2E8F0"}}
-                    >
-                      {/* Branch Name */}
-                      <td className="px-6 py-6" data-label="Branch">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <React.Fragment key={branch.id}>
+                      <tr className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
+                      style= {{borderBottom :"0.9px solid #E2E8F0"}}
+                      >
+                        {/* Branch Name */}
+                        <td className="px-6 py-6" data-label="Branch">
+                          <div className="flex items-center gap-4">
+                            <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                              <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
+                              <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {branch.id}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {branch.id}</p>
+                        </td>
+
+                        {/* Branch Code */}
+                        <td className="px-6 py-6" data-label="Code">
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
+                            <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Branch Code */}
-                      <td className="px-6 py-6" data-label="Code">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
-                          <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
-                        </div>
-                      </td>
+                        {/* Revenue */}
+                        <td className="px-6 py-6" data-label="Revenue">
+                          <div className="flex items-center gap-2">
+                            <TrendingUp className="w-4 h-4 text-green-500" />
+                            <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                              {formatCurrency(branch.total_revenue)}
+                            </span>
+                          </div>
+                        </td>
 
-                      {/* Revenue */}
-                      <td className="px-6 py-6" data-label="Revenue">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-green-500" />
-                          <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                            {formatCurrency(branch.total_revenue)}
-                          </span>
-                        </div>
-                      </td>
+                        {/* Outstanding */}
+                        <td className="px-6 py-6" data-label="Outstanding">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4 text-orange-500" />
+                            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                              {formatCurrency(branch.total_outstanding)}
+                            </span>
+                          </div>
+                        </td>
 
-                      {/* Outstanding */}
-                      <td className="px-6 py-6" data-label="Outstanding">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 text-orange-500" />
-                          <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                            {formatCurrency(branch.total_outstanding)}
-                          </span>
-                        </div>
-                      </td>
+                        {/* Status */}
+                        <td className="px-6 py-6" data-label="Status">
+                          <div className={branch.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                            <div className={branch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                            {branch.status ? "Active" : "Inactive"}
+                          </div>
+                        </td>
 
-                      {/* Status */}
-                      <td className="px-6 py-6" data-label="Status">
-                        <div className={branch.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                          <div className={branch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                          {branch.status ? "Active" : "Inactive"}
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(branch.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
-                                menuOpenId === branch.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                              }`}
-                            >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === branch.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
-                                <button 
-                                  onClick={() => handleViewBranch(branch)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                <Link 
-                                  href={`/dashboard/administration/branches/edit/${branch.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Branch
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(branch)} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Branch
-                                </button>
-                              </div>
+                        {/* Actions */}
+                        <td className="px-6 py-6 text-right relative" data-label="Actions">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Show owners button */}
+                            {owners.length > 0 && (
+                              <button
+                                onClick={() => toggleBranchOwners(branch.id)}
+                                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                                title={`${owners.length} owner(s)`}
+                              >
+                                <Truck className="w-4 h-4" />
+                                <span>{owners.length}</span>
+                                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                              </button>
                             )}
+                            
+                            <div className="relative">
+                              <button 
+                                onClick={() => toggleMenu(branch.id)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
+                                  menuOpenId === branch.id 
+                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                                }`}
+                              >
+                                <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                                <MoreVertical className="w-5 h-5" />
+                              </button>
+                              
+                              {menuOpenId === branch.id && (
+                                <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                  index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}>
+                                  <button 
+                                    onClick={() => handleViewBranch(branch)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                    View Details
+                                  </button>
+                                  <Link 
+                                    href={`/dashboard/administration/branches/edit/${branch.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Branch
+                                  </Link>
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                  <button 
+                                    onClick={() => handleDeleteClick(branch)} 
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Branch
+                                  </button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                      
+                      {/* Branch Owners Row */}
+                      {isExpanded && owners.length > 0 && (
+                        <tr className="bg-blue-50/50 dark:bg-blue-900/10">
+                          <td colSpan="6" className="px-6 py-4">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                  <Truck className="w-4 h-4 text-blue-600" />
+                                  Branch Owners ({owners.length})
+                                </h4>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-500">Total Share:</span>
+                                  <span className={`text-sm font-black ${
+                                    totalPercent === 100 
+                                      ? 'text-green-600 dark:text-green-400' 
+                                      : totalPercent > 100
+                                      ? 'text-red-600 dark:text-red-400'
+                                      : 'text-orange-600 dark:text-orange-400'
+                                  }`}>
+                                    {totalPercent.toFixed(2)}%
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {owners.map((owner) => (
+                                  <div key={owner.id} className="bg-white dark:bg-zinc-900 rounded-lg p-3 border border-gray-200 dark:border-zinc-800">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                          {getSupplierName(owner.supplier_id)}
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Percent className="w-3 h-3 text-blue-600" />
+                                          <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                                            {owner.share_percent}%
+                                          </span>
+                                          <span className="text-xs text-gray-400">
+                                            AED {parseFloat(owner.share_amount || 0).toFixed(2)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <Link
+                                        href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
+                                        className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                        title="Edit"
+                                      >
+                                        <Pencil className="w-3 h-3 text-gray-400 hover:text-blue-600" />
+                                      </Link>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })
               ) : (
