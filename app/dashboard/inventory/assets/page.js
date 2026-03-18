@@ -312,7 +312,10 @@ export default function AssetsPage() {
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {branches?.find(b => b.id === asset.branch_id)?.branch_name || 'N/A'}
+                          {asset.current_operating_branch?.branch_name || 
+                           branches?.find(b => b.id === asset.current_operating_branch_id)?.branch_name || 
+                           branches?.find(b => b.id === (asset.current_operating_branch_id || asset.branch_id))?.branch_name || 
+                           'N/A'}
                         </span>
                       </div>
                     </td>
@@ -473,7 +476,7 @@ export default function AssetsPage() {
                 <ViewField label="Category" value={selectedAsset.category} />
                 <ViewField label="Purchase Value" value={`AED ${parseFloat(selectedAsset.purchase_value || 0).toLocaleString()}`} />
                 <ViewField label="Current Value" value={`AED ${parseFloat(selectedAsset.current_value || 0).toLocaleString()}`} />
-                <ViewField label="Branch" value={branches?.find(b => b.id === selectedAsset.branch_id)?.branch_name || 'N/A'} />
+                <ViewField label="Current Branch" value={selectedAsset.current_operating_branch?.branch_name || branches?.find(b => b.id === selectedAsset.current_operating_branch_id)?.branch_name || 'N/A'} />
                 <ViewField label="Purchase Date" value={selectedAsset.purchase_date ? new Date(selectedAsset.purchase_date).toLocaleDateString() : 'N/A'} />
                 <ViewField label="Status" value={selectedAsset.status?.toUpperCase()} color="red" />
               </div>
