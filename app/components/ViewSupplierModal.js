@@ -164,6 +164,52 @@ const ViewSupplierModal = ({ supplier, isOpen, onClose }) => {
             </div>
           </div>
 
+          {/* Supplier Funds Summary */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10 rounded-xl p-6 border border-blue-200 dark:border-blue-800/30">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                <Truck className="w-4 h-4 text-white" />
+              </div>
+              Supplier Funds Summary
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white dark:bg-zinc-900/50 rounded-lg p-4 border border-blue-100 dark:border-blue-800/20">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Total Sales</p>
+                <p className="text-xl font-black text-gray-900 dark:text-white">
+                  AED 150,000.00
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-zinc-900/50 rounded-lg p-4 border border-blue-100 dark:border-blue-800/20">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Total Transferred</p>
+                <p className="text-xl font-black text-green-600 dark:text-green-400">
+                  AED 130,000.00
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-zinc-900/50 rounded-lg p-4 border border-blue-100 dark:border-blue-800/20">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Expenses</p>
+                <p className="text-xl font-black text-red-600 dark:text-red-400">
+                  - AED 8,000.00
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-zinc-900/50 rounded-lg p-4 border border-blue-100 dark:border-blue-800/20">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Outstanding Balance</p>
+                <p className="text-xl font-black text-orange-600 dark:text-orange-400">
+                  AED 12,000.00
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+              <p className="text-xs text-blue-800 dark:text-blue-300 font-medium">
+                💡 This is static data. API integration coming soon.
+              </p>
+            </div>
+          </div>
+
           {/* Notes Section */}
           {supplier.notes && (
             <div className="space-y-3">

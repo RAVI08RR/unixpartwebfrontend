@@ -147,13 +147,19 @@ export default function AddAssetPage() {
           </label>
           <div className="relative">
             <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text"
-              placeholder="e.g. Vehicle, Equipment, Furniture"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+            <select 
+              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.category}
               onChange={(e) => setFormData({...formData, category: e.target.value})}
-            />
+            >
+              <option value="">Select Category</option>
+              <option value="Hard Assets">Hard Assets</option>
+              <option value="Vehicle Assets">Vehicle Assets</option>
+              <option value="Office Equipment">Office Equipment</option>
+              <option value="Warehouse Equipment">Warehouse Equipment</option>
+              <option value="Others">Others</option>
+            </select>
+            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
