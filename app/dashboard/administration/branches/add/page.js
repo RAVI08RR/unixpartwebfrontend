@@ -137,7 +137,8 @@ export default function AddBranchPage() {
             await branchOwnerService.create({
               branch_id: createdBranch.id,
               supplier_id: parseInt(owner.supplier_id),
-              ownership_percentage: parseFloat(owner.ownership_percentage),
+              share_percent: parseFloat(owner.ownership_percentage),
+              share_amount: 0, // Can be calculated later based on branch revenue
             });
           } catch (ownerError) {
             console.error("Failed to create branch owner:", ownerError);

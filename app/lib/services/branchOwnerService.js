@@ -34,9 +34,17 @@ export const branchOwnerService = {
   // Create new branch owner
   create: async (branchOwnerData) => {
     try {
+      // Ensure the data matches backend schema
+      const payload = {
+        branch_id: branchOwnerData.branch_id,
+        supplier_id: branchOwnerData.supplier_id,
+        share_percent: branchOwnerData.share_percent || branchOwnerData.ownership_percentage || 0,
+        share_amount: branchOwnerData.share_amount || 0,
+      };
+      
       return await fetchApi('/api/branch-owners', {
         method: 'POST',
-        body: JSON.stringify(branchOwnerData),
+        body: JSON.stringify(payload),
       });
     } catch (error) {
       throw new Error('Cannot create branch owner: ' + error.message);
@@ -46,9 +54,17 @@ export const branchOwnerService = {
   // Update branch owner
   update: async (id, branchOwnerData) => {
     try {
+      // Ensure the data matches backend schema
+      const payload = {
+        branch_id: branchOwnerData.branch_id,
+        supplier_id: branchOwnerData.supplier_id,
+        share_percent: branchOwnerData.share_percent || branchOwnerData.ownership_percentage || 0,
+        share_amount: branchOwnerData.share_amount || 0,
+      };
+      
       return await fetchApi(`/api/branch-owners/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(branchOwnerData),
+        body: JSON.stringify(payload),
       });
     } catch (error) {
       throw new Error('Cannot update branch owner: ' + error.message);
