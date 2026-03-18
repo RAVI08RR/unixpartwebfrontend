@@ -10,7 +10,6 @@ import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
-import BranchOwnershipModal from "@/app/components/BranchOwnershipModal";
 
 export default function BranchOwnersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,11 +23,6 @@ export default function BranchOwnersPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
-  
-  // Modal states
-  const [menuOpenId, setMenuOpenId] = useState(null);
-  const [selectedBranch, setSelectedBranch] = useState(null);
-  const [ownershipModalOpen, setOwnershipModalOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -56,33 +50,26 @@ export default function BranchOwnersPage() {
     }
   };
 
-  // Group owners by branch
-  const groupedOwners = useMemo(() => {
-    const grouped = {};
-    branchOwners.forEach(owner => {
-      if (!grouped[owner.branch_id]) {
-        grouped[owner.branch_id] = [];
-      }
-      grouped[owner.branch_id].push(owner);
-    });
-    return grouped;
-  }, [branchOwners]);
-
-  // Filter branches
-  const filteredBranches = useMemo(() => {
-    return branches.filter(branch => {
-      const hasOwners = groupedOwners[branch.id] && groupedOwners[branch.id].length > 0;
+  // Filter branch owners
+  const filteredOwners = useMemo(() => {
+    return branchOwners.filter(owner => {
+      const branch = branches.find(b => b.id === owner.branch_id);
+      const supplier = suppliers.find(s => s.id === owner.supplier_id);
+      
       const matchesSearch = 
-        (branch.branch_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-        (branch.branch_code?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-      return hasOwners && matchesSearch;
+        (branch?.branch_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (branch?.branch_code?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (supplier?.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+        (supplier?.supplier_code?.toLowerCase() || "").includes(searchQuery.toLowerCase());
+      
+      return matchesSearch;
     });
-  }, [branches, groupedOwners, searchQuery]);
+  }, [branchOwners, branches, suppliers, searchQuery]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredBranches.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredOwners.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedBranches = filteredBranches.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedOwners = filteredOwners.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
@@ -92,24 +79,29 @@ export default function BranchOwnersPage() {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
 
-  const toggleMenu = (id) => {
-    setMenuOpenId(prev => prev === id ? null : id);
+  const handleDelete = async (ownerId) => {
+    if (!confirm('Are you sure you want to delete this branch owner record?')) {
+      return;
+    }
+
+    try {
+      await branchOwnerService.delete(ownerId);
+      success('Branch owner deleted successfully');
+      fetchData();
+    } catch (err) {
+      console.error('Failed to delete branch owner:', err);
+      error('Failed to delete branch owner');
+    }
   };
 
-  const handleManageOwnership = (branch) => {
-    setSelectedBranch(branch);
-    setOwnershipModalOpen(true);
-    setMenuOpenId(null);
+  const getBranchName = (branchId) => {
+    const branch = branches.find(b => b.id === branchId);
+    return branch ? `${branch.branch_name} (${branch.branch_code})` : 'Unknown Branch';
   };
 
   const getSupplierName = (supplierId) => {
     const supplier = suppliers.find(s => s.id === supplierId);
     return supplier ? `${supplier.name} (${supplier.supplier_code || 'N/A'})` : 'Unknown Supplier';
-  };
-
-  const getTotalPercentage = (branchId) => {
-    const owners = groupedOwners[branchId] || [];
-    return owners.reduce((sum, owner) => sum + (parseFloat(owner.share_percent) || 0), 0);
   };
 
   if (!isMounted) return null;
@@ -136,6 +128,13 @@ export default function BranchOwnersPage() {
           </div>
           
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+            <Link
+              href="/dashboard/administration/branch-owners/add"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Branch Owner</span>
+            </Link>
             <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
               <Download className="w-4 h-4" />
               <span>Export</span>
@@ -151,9 +150,9 @@ export default function BranchOwnersPage() {
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Owners</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Total Share</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Share</th>
+                <th className="px-6 py-6 text-center text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -166,13 +165,13 @@ export default function BranchOwnersPage() {
                     </div>
                   </td>
                 </tr>
-              ) : paginatedBranches.length > 0 ? (
-                paginatedBranches.map((branch) => {
-                  const owners = groupedOwners[branch.id] || [];
-                  const totalPercentage = getTotalPercentage(branch.id);
+              ) : paginatedOwners.length > 0 ? (
+                paginatedOwners.map((owner) => {
+                  const branch = branches.find(b => b.id === owner.branch_id);
+                  const supplier = suppliers.find(s => s.id === owner.supplier_id);
                   
                   return (
-                    <tr key={branch.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                    <tr key={owner.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-4">
                           <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
@@ -180,58 +179,58 @@ export default function BranchOwnersPage() {
                           </div>
                           <div>
                             <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
-                              {branch.branch_name}
+                              {branch?.branch_name || 'Unknown Branch'}
                             </p>
                             <p className="text-xs text-gray-400 mt-1 font-bold">
-                              {branch.branch_code}
+                              {branch?.branch_code || 'N/A'}
                             </p>
                           </div>
                         </div>
                       </td>
 
                       <td className="px-6 py-6">
-                        <div className="space-y-1">
-                          {owners.slice(0, 2).map((owner, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <Truck className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs font-bold text-gray-700 dark:text-zinc-300">
-                                {getSupplierName(owner.supplier_id)}
-                              </span>
-                              <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                                {owner.share_percent}%
-                              </span>
-                            </div>
-                          ))}
-                          {owners.length > 2 && (
-                            <p className="text-xs text-gray-400 font-bold">
-                              +{owners.length - 2} more
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                              {supplier?.name || 'Unknown Supplier'}
                             </p>
-                          )}
+                            <p className="text-xs text-gray-400 font-bold">
+                              {supplier?.supplier_code || 'N/A'}
+                            </p>
+                          </div>
                         </div>
                       </td>
 
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           <Percent className="w-4 h-4 text-gray-400" />
-                          <span className={`text-sm font-black ${
-                            totalPercentage === 100 
-                              ? 'text-green-600 dark:text-green-400' 
-                              : totalPercentage > 100
-                              ? 'text-red-600 dark:text-red-400'
-                              : 'text-orange-600 dark:text-orange-400'
-                          }`}>
-                            {totalPercentage.toFixed(2)}%
-                          </span>
+                          <div>
+                            <p className="text-sm font-black text-blue-600 dark:text-blue-400">
+                              {owner.share_percent}%
+                            </p>
+                            <p className="text-xs text-gray-400 font-bold">
+                              AED {parseFloat(owner.share_amount || 0).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6 text-right relative">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleManageOwnership(branch)}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-all"
+                      <td className="px-6 py-6 text-center relative">
+                        <div className="flex items-center justify-center gap-2">
+                          <Link
+                            href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
+                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group/edit"
+                            title="Edit"
                           >
-                            Manage Ownership
+                            <Pencil className="w-4 h-4 text-gray-400 group-hover/edit:text-blue-600" />
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(owner.id)}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 group-hover/delete:text-red-600" />
                           </button>
                         </div>
                       </td>
@@ -254,7 +253,7 @@ export default function BranchOwnersPage() {
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredBranches.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredBranches.length}</span> branches
+            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredOwners.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredOwners.length}</span> records
           </p>
           
           <div className="flex items-center gap-3">
@@ -292,17 +291,6 @@ export default function BranchOwnersPage() {
           </div>
         </div>
       </div>
-
-      {/* Branch Ownership Modal */}
-      <BranchOwnershipModal
-        branch={selectedBranch}
-        isOpen={ownershipModalOpen}
-        onClose={() => {
-          setOwnershipModalOpen(false);
-          setSelectedBranch(null);
-        }}
-        onSuccess={fetchData}
-      />
     </div>
   );
 }
