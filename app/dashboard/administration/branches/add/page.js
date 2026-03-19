@@ -110,6 +110,7 @@ export default function AddBranchPage() {
         if (totalPercent > 100) {
           showError("Total ownership percentage cannot exceed 100%");
           setError("Total ownership percentage cannot exceed 100%");
+          setIsLoading(false);
           return;
         }
 
@@ -129,15 +130,20 @@ export default function AddBranchPage() {
           // Create owners one by one
           let successCount = 0;
           let failCount = 0;
+          let lastError = null;
           
           for (const owner of validOwners) {
             try {
-              await branchOwnerService.create(owner);
+              console.log("Creating owner:", owner);
+              const result = await branchOwnerService.create(owner);
+              console.log("Owner created successfully:", result);
               successCount++;
               console.log(`Branch owner ${successCount}/${validOwners.length} created successfully`);
             } catch (individualError) {
               failCount++;
+              lastError = individualError;
               console.error(`Failed to create branch owner:`, individualError);
+              console.error(`Failed owner data:`, owner);
             }
           }
           
@@ -146,7 +152,12 @@ export default function AddBranchPage() {
           }
           
           if (failCount > 0) {
-            showError(`Branch created but ${failCount} owner(s) failed to save`);
+            const errorMsg = `Branch created but ${failCount} owner(s) failed to save. ${lastError?.message || ''}`;
+            showError(errorMsg);
+            setError(errorMsg);
+            setIsLoading(false);
+            // Don't redirect if owners failed
+            return;
           }
         }
       }

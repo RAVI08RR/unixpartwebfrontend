@@ -51,6 +51,8 @@ export async function POST(request) {
     const authHeader = request.headers.get('authorization');
     const body = await request.text();
     
+    console.log('Branch owners POST - Request body:', body);
+    
     const backendUrl = `${apiBaseUrl}/api/branch-owners/`;
     
     const headers = {
@@ -58,6 +60,8 @@ export async function POST(request) {
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
+    
+    console.log('Branch owners POST - Backend URL:', backendUrl);
     
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -67,6 +71,13 @@ export async function POST(request) {
     });
     
     const data = await response.text();
+    
+    console.log('Branch owners POST - Response status:', response.status);
+    console.log('Branch owners POST - Response data:', data);
+    
+    if (!response.ok) {
+      console.error('Branch owners POST - Backend error:', data);
+    }
     
     return new Response(data, {
       status: response.status,
