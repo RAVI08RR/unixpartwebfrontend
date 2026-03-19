@@ -10,6 +10,8 @@ import {
 import { assetService } from "@/app/lib/services/assetService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
+import OwnershipSection from "@/app/components/assets/OwnershipSection";
+import { supplierService } from "@/app/lib/services/supplierService";
 
 export default function EditAssetPage() {
   const router = useRouter();
@@ -19,6 +21,9 @@ export default function EditAssetPage() {
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [suppliers, setSuppliers] = useState([]);
+  const [suppliersLoading, setSuppliersLoading] = useState(false);
+  const [owners, setOwners] = useState([]);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -48,6 +53,14 @@ export default function EditAssetPage() {
         setBranches(Array.isArray(branchesData) ? branchesData : []);
         setBranchesLoading(false);
 
+        // Fetch suppliers
+        setSuppliersLoading(true);
+        const suppliersData = await supplierService.getAll(0, 100);
+        console.log('Suppliers data loaded:', suppliersData);
+        const suppliersList = Array.isArray(suppliersData) ? suppliersData : (suppliersData?.suppliers || []);
+        setSuppliers(suppliersList);
+        setSuppliersLoading(false);
+
         // Fetch asset data
         const assetData = await assetService.getById(params.id);
         console.log('Asset data loaded:', assetData);
@@ -65,6 +78,14 @@ export default function EditAssetPage() {
           status: assetData.status || "active",
           notes: assetData.notes || ""
         });
+
+        // Load existing ownership if available
+        if (assetData.ownership && Array.isArray(assetData.ownership)) {
+          setOwners(assetData.ownership.map(o => ({
+            supplier_id: o.supplier_id?.toString() || "",
+            ownership_percentage: o.ownership_percentage?.toString() || ""
+          })));
+        }
       } catch (err) {
         console.error('Failed to fetch data:', err);
         error('Failed to load asset data');
@@ -84,6 +105,30 @@ export default function EditAssetPage() {
       return;
     }
 
+    // Validate ownership if owners are added
+    if (owners.length > 0) {
+      const totalPercentage = owners.reduce((sum, owner) => sum + (parseFloat(owner.ownership_percentage) || 0), 0);
+      if (totalPercentage !== 100) {
+        error("Total ownership percentage must equal 100%");
+        return;
+      }
+
+      // Check for duplicate suppliers
+      const supplierIds = owners.map(o => o.supplier_id).filter(Boolean);
+      const hasDuplicates = supplierIds.length !== new Set(supplierIds).size;
+      if (hasDuplicates) {
+        error("Duplicate suppliers detected. Each supplier can only be added once.");
+        return;
+      }
+
+      // Check all owners have supplier selected
+      const hasEmptySupplier = owners.some(o => !o.supplier_id);
+      if (hasEmptySupplier) {
+        error("Please select a supplier for all owners");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -99,6 +144,14 @@ export default function EditAssetPage() {
         status: formData.status,
         notes: formData.notes || null,
       };
+
+      // Add ownership data if provided
+      if (owners.length > 0) {
+        payload.ownership = owners.map(owner => ({
+          supplier_id: parseInt(owner.supplier_id),
+          ownership_percentage: parseFloat(owner.ownership_percentage)
+        }));
+      }
 
       await assetService.update(params.id, payload);
       success("Asset updated successfully!");
@@ -351,6 +404,16 @@ export default function EditAssetPage() {
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
             />
           </div>
+        </div>
+
+        {/* Ownership Section */}
+        <div className="lg:col-span-2">
+          <OwnershipSection
+            owners={owners}
+            setOwners={setOwners}
+            suppliers={suppliers}
+            suppliersLoading={suppliersLoading}
+          />
         </div>
       </div>
 

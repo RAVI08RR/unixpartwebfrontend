@@ -11,6 +11,7 @@ import { assetService } from "@/app/lib/services/assetService";
 import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
+import OwnershipSection from "@/app/components/assets/OwnershipSection";
 
 export default function AddAssetPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function AddAssetPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [owners, setOwners] = useState([]);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -80,6 +82,30 @@ export default function AddAssetPage() {
       return;
     }
 
+    // Validate ownership if owners are added
+    if (owners.length > 0) {
+      const totalPercentage = owners.reduce((sum, owner) => sum + (parseFloat(owner.ownership_percentage) || 0), 0);
+      if (totalPercentage !== 100) {
+        error("Total ownership percentage must equal 100%");
+        return;
+      }
+
+      // Check for duplicate suppliers
+      const supplierIds = owners.map(o => o.supplier_id).filter(Boolean);
+      const hasDuplicates = supplierIds.length !== new Set(supplierIds).size;
+      if (hasDuplicates) {
+        error("Duplicate suppliers detected. Each supplier can only be added once.");
+        return;
+      }
+
+      // Check all owners have supplier selected
+      const hasEmptySupplier = owners.some(o => !o.supplier_id);
+      if (hasEmptySupplier) {
+        error("Please select a supplier for all owners");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -95,6 +121,14 @@ export default function AddAssetPage() {
         status: formData.status,
         notes: formData.notes || null,
       };
+
+      // Add ownership data if provided
+      if (owners.length > 0) {
+        payload.ownership = owners.map(owner => ({
+          supplier_id: parseInt(owner.supplier_id),
+          ownership_percentage: parseFloat(owner.ownership_percentage)
+        }));
+      }
 
       await assetService.create(payload);
       success("Asset created successfully!");
@@ -413,6 +447,16 @@ export default function AddAssetPage() {
             </div>
           </div>
         )}
+
+        {/* Ownership Section */}
+        <div className="lg:col-span-2">
+          <OwnershipSection
+            owners={owners}
+            setOwners={setOwners}
+            suppliers={suppliers}
+            suppliersLoading={suppliersLoading}
+          />
+        </div>
       </div>
 
       {/* Action Buttons */}
