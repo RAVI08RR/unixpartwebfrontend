@@ -9,7 +9,10 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
     sale_date: new Date().toISOString().split('T')[0],
     buyer_name: "",
     buyer_contact: "",
+    buyer_address: "",
     payment_method: "cash",
+    disposal_reason: "sold",
+    disposal_action: "sale",
     notes: ""
   });
 
@@ -42,11 +45,17 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
     }
 
     const saleData = {
-      sale_price: parseFloat(formData.sale_price),
+      disposal_reason: formData.disposal_reason,
+      disposal_action: formData.disposal_action,
+      estimated_value: parseFloat(asset?.current_value || asset?.purchase_price || 0),
       sale_date: formData.sale_date,
+      sale_price: parseFloat(formData.sale_price),
       buyer_name: formData.buyer_name.trim(),
       buyer_contact: formData.buyer_contact.trim() || null,
-      payment_method: formData.payment_method,
+      buyer_address: formData.buyer_address.trim() || null,
+      book_value: parseFloat(asset?.current_value || asset?.purchase_price || 0),
+      approved_by: null,
+      approval_date: formData.sale_date,
       notes: formData.notes.trim() || null
     };
 
@@ -58,7 +67,10 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
         sale_date: new Date().toISOString().split('T')[0],
         buyer_name: "",
         buyer_contact: "",
+        buyer_address: "",
         payment_method: "cash",
+        disposal_reason: "sold",
+        disposal_action: "sale",
         notes: ""
       });
       setErrors({});
@@ -74,7 +86,10 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
       sale_date: new Date().toISOString().split('T')[0],
       buyer_name: "",
       buyer_contact: "",
+      buyer_address: "",
       payment_method: "cash",
+      disposal_reason: "sold",
+      disposal_action: "sale",
       notes: ""
     });
     setErrors({});
@@ -89,7 +104,7 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
   const profitLossPercentage = purchasePrice > 0 ? ((profitLoss / purchasePrice) * 100).toFixed(2) : 0;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
         {/* Header */}
         <div className="p-6 border-b border-gray-100 dark:border-zinc-800">
@@ -220,6 +235,21 @@ export default function SellAssetModal({ isOpen, onClose, asset, onSell, isLoadi
                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                 value={formData.buyer_contact}
                 onChange={(e) => setFormData({ ...formData, buyer_contact: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Buyer Address */}
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                Buyer Address <span className="text-gray-400 font-normal">(Optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Enter buyer address"
+                className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                value={formData.buyer_address}
+                onChange={(e) => setFormData({ ...formData, buyer_address: e.target.value })}
                 disabled={isLoading}
               />
             </div>
