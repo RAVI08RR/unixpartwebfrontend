@@ -69,34 +69,37 @@ export default function AddEmployeePage() {
 
     setLoading(true);
     try {
+      // Build payload with only non-empty values
       const payload = {
         first_name: formData.first_name,
         last_name: formData.last_name,
-        nationality: formData.nationality || null,
-        mobile_number: formData.mobile_number || null,
-        emergency_contact: formData.emergency_contact || null,
-        personal_email: formData.personal_email || null,
-        work_email: formData.work_email || null,
-        passport_number: formData.passport_number || null,
-        passport_expiry: formData.passport_expiry || null,
-        visa_status: formData.visa_status || null,
-        actual_position: formData.actual_position || null,
-        visa_position: formData.visa_position || null,
-        visa_type: formData.visa_type || null,
-        branch_on_visa_id: formData.branch_on_visa_id ? parseInt(formData.branch_on_visa_id) : null,
-        current_branch_id: formData.current_branch_id ? parseInt(formData.current_branch_id) : null,
-        position_start_date: formData.position_start_date || null,
-        eid_number: formData.eid_number || null,
-        eid_expiry: formData.eid_expiry || null,
-        visa_number: formData.visa_number || null,
-        visa_expiry: formData.visa_expiry || null,
-        insurance_policy_number: formData.insurance_policy_number || null,
-        insurance_expiry: formData.insurance_expiry || null,
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
         status: formData.status
       };
+
+      // Only add optional fields if they have values
+      if (formData.nationality) payload.nationality = formData.nationality;
+      if (formData.mobile_number) payload.mobile_number = formData.mobile_number;
+      if (formData.emergency_contact) payload.emergency_contact = formData.emergency_contact;
+      if (formData.personal_email) payload.personal_email = formData.personal_email;
+      if (formData.work_email) payload.work_email = formData.work_email;
+      if (formData.passport_number) payload.passport_number = formData.passport_number;
+      if (formData.passport_expiry) payload.passport_expiry = formData.passport_expiry;
+      if (formData.visa_status) payload.visa_status = formData.visa_status;
+      if (formData.actual_position) payload.actual_position = formData.actual_position;
+      if (formData.visa_position) payload.visa_position = formData.visa_position;
+      if (formData.visa_type) payload.visa_type = formData.visa_type;
+      if (formData.branch_on_visa_id) payload.branch_on_visa_id = parseInt(formData.branch_on_visa_id);
+      if (formData.current_branch_id) payload.current_branch_id = parseInt(formData.current_branch_id);
+      if (formData.position_start_date) payload.position_start_date = formData.position_start_date;
+      if (formData.eid_number) payload.eid_number = formData.eid_number;
+      if (formData.eid_expiry) payload.eid_expiry = formData.eid_expiry;
+      if (formData.visa_number) payload.visa_number = formData.visa_number;
+      if (formData.visa_expiry) payload.visa_expiry = formData.visa_expiry;
+      if (formData.insurance_policy_number) payload.insurance_policy_number = formData.insurance_policy_number;
+      if (formData.insurance_expiry) payload.insurance_expiry = formData.insurance_expiry;
 
       await employeeService.create(payload);
       success("Employee created successfully!");
