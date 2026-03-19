@@ -56,6 +56,7 @@ export function Sidebar() {
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users },
         { label: "Role Management", href: "/dashboard/roles", icon: Shield },
+        { label: "Employees", href: "/dashboard/management/employees", icon: UserCheck },
       ]
     },
     {
