@@ -305,6 +305,7 @@ export default function BranchManagementPage() {
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Code</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Owners</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Revenue</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Outstanding</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
@@ -341,6 +342,48 @@ export default function BranchManagementPage() {
                           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
                             <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
                           </div>
+                        </td>
+
+                        {/* Owners */}
+                        <td className="px-6 py-6" data-label="Owners">
+                          {owners.length > 0 ? (
+                            <div className="space-y-1">
+                              {owners.slice(0, 2).map((owner, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Truck className="w-3 h-3 text-gray-400" />
+                                  <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[150px]">
+                                    {getSupplierName(owner.supplier_id)}
+                                  </span>
+                                  <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                                    {owner.share_percent}%
+                                  </span>
+                                </div>
+                              ))}
+                              {owners.length > 2 && (
+                                <button
+                                  onClick={() => toggleBranchOwners(branch.id)}
+                                  className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+                                >
+                                  +{owners.length - 2} more
+                                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </button>
+                              )}
+                              <div className="flex items-center gap-1 mt-1">
+                                <Percent className="w-3 h-3 text-gray-400" />
+                                <span className={`text-xs font-black ${
+                                  totalPercent === 100 
+                                    ? 'text-green-600 dark:text-green-400' 
+                                    : totalPercent > 100
+                                    ? 'text-red-600 dark:text-red-400'
+                                    : 'text-orange-600 dark:text-orange-400'
+                                }`}>
+                                  Total: {totalPercent.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400 italic">No owners</span>
+                          )}
                         </td>
 
                         {/* Revenue */}
@@ -436,7 +479,7 @@ export default function BranchManagementPage() {
                       {/* Branch Owners Row */}
                       {isExpanded && owners.length > 0 && (
                         <tr className="bg-blue-50/50 dark:bg-blue-900/10">
-                          <td colSpan="6" className="px-6 py-4">
+                          <td colSpan="7" className="px-6 py-4">
                             <div className="space-y-3">
                               <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
@@ -495,7 +538,7 @@ export default function BranchManagementPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="py-24 text-center">
+                  <td colSpan="7" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No branches found</p>
                   </td>
                 </tr>
@@ -543,125 +586,6 @@ export default function BranchManagementPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Branch Owners Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-black dark:text-white tracking-tight">Branch Owners</h2>
-            <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Manage branch ownership and supplier shares</p>
-          </div>
-          <Link
-            href="/dashboard/administration/branch-owners/add"
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Branch Owner</span>
-          </Link>
-        </div>
-
-        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto w-full scrollbar-hide">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Share</th>
-                  <th className="px-6 py-6 text-center text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {branchOwners.length > 0 ? (
-                  branchOwners.slice(0, 10).map((owner) => {
-                    const branch = branches.find(b => b.id === owner.branch_id);
-                    const supplier = suppliers.find(s => s.id === owner.supplier_id);
-                    
-                    return (
-                      <tr key={owner.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                        <td className="px-6 py-6">
-                          <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                              <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
-                                {branch?.branch_name || 'Unknown Branch'}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-1 font-bold">
-                                {branch?.branch_code || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-6">
-                          <div className="flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                                {supplier?.name || 'Unknown Supplier'}
-                              </p>
-                              <p className="text-xs text-gray-400 font-bold">
-                                {supplier?.supplier_code || 'N/A'}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-6">
-                          <div className="flex items-center gap-2">
-                            <Percent className="w-4 h-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-black text-blue-600 dark:text-blue-400">
-                                {owner.share_percent}%
-                              </p>
-                              <p className="text-xs text-gray-400 font-bold">
-                                AED {parseFloat(owner.share_amount || 0).toFixed(2)}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-6 text-center relative">
-                          <div className="flex items-center justify-center gap-2">
-                            <Link
-                              href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
-                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group/edit"
-                              title="Edit"
-                            >
-                              <Pencil className="w-4 h-4 text-gray-400 group-hover/edit:text-blue-600" />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="4" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">
-                        No branch owners found
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {branchOwners.length > 10 && (
-            <div className="px-8 py-4 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 text-center">
-              <Link
-                href="/dashboard/administration/branch-owners"
-                className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-              >
-                View All {branchOwners.length} Branch Owners →
-              </Link>
-            </div>
-          )}
         </div>
       </div>
 
