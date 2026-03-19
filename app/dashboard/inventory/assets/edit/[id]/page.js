@@ -87,45 +87,96 @@ export default function EditAssetPage() {
           notes: fetchedAssetData.notes || ""
         });
 
-        // Check if ownership data is in the asset response
+        // Try multiple ways to load ownership data
+        let ownersLoaded = false;
+
+        // Method 1: Check if ownership data is in the asset response
         if (fetchedAssetData.ownership && Array.isArray(fetchedAssetData.ownership) && fetchedAssetData.ownership.length > 0) {
-          console.log('Loading ownership from asset data:', fetchedAssetData.ownership);
+          console.log('✓ Loading ownership from asset.ownership:', fetchedAssetData.ownership);
           setOwners(fetchedAssetData.ownership.map(o => ({
             supplier_id: o.supplier_id?.toString() || "",
             ownership_percentage: o.ownership_percentage?.toString() || ""
           })));
-        } else {
-          // Fetch ownership history separately
+          ownersLoaded = true;
+        }
+
+        // Method 2: Check if ownership is in asset_ownerships field
+        if (!ownersLoaded && fetchedAssetData.asset_ownerships && Array.isArray(fetchedAssetData.asset_ownerships) && fetchedAssetData.asset_ownerships.length > 0) {
+          console.log('✓ Loading ownership from asset.asset_ownerships:', fetchedAssetData.asset_ownerships);
+          const activeOwnership = fetchedAssetData.asset_ownerships.filter(o => !o.to_date);
+          if (activeOwnership.length > 0) {
+            setOwners(activeOwnership.map(o => ({
+              supplier_id: o.supplier_id?.toString() || "",
+              ownership_percentage: o.ownership_percentage?.toString() || ""
+            })));
+            ownersLoaded = true;
+          }
+        }
+
+        // Method 3: Fetch ownership history separately
+        if (!ownersLoaded) {
           try {
             const ownershipHistory = await assetService.getOwnershipHistory(params.id);
-            console.log('Ownership history loaded:', ownershipHistory);
-            console.log('Ownership history type:', typeof ownershipHistory);
-            console.log('Is array:', Array.isArray(ownershipHistory));
+            console.log('📊 Ownership history API response:', ownershipHistory);
             
-            // Filter for active ownership (where to_date is null)
             if (ownershipHistory && Array.isArray(ownershipHistory) && ownershipHistory.length > 0) {
-              console.log('Total ownership records:', ownershipHistory.length);
+              console.log(`📋 Total ownership records: ${ownershipHistory.length}`);
+              
+              // Show all records for debugging
+              ownershipHistory.forEach((record, idx) => {
+                console.log(`  Record ${idx + 1}:`, {
+                  supplier_id: record.supplier_id,
+                  ownership_percentage: record.ownership_percentage,
+                  from_date: record.from_date,
+                  to_date: record.to_date,
+                  is_active: !record.to_date
+                });
+              });
+              
+              // Filter for active ownership (where to_date is null or undefined)
               const activeOwnership = ownershipHistory.filter(o => !o.to_date);
-              console.log('Active ownership records:', activeOwnership.length);
-              console.log('Active ownership data:', activeOwnership);
+              console.log(`✓ Active ownership records: ${activeOwnership.length}`);
               
               if (activeOwnership.length > 0) {
                 const mappedOwners = activeOwnership.map(o => ({
                   supplier_id: o.supplier_id?.toString() || "",
                   ownership_percentage: o.ownership_percentage?.toString() || ""
                 }));
-                console.log('Mapped owners:', mappedOwners);
+                console.log('✓ Mapped owners for display:', mappedOwners);
                 setOwners(mappedOwners);
+                ownersLoaded = true;
               } else {
-                console.log('No active ownership found (all have to_date)');
+                console.warn('⚠️ No active ownership found - all records have to_date set');
+                // If all records are historical, show the most recent ones
+                const sortedHistory = [...ownershipHistory].sort((a, b) => {
+                  const dateA = new Date(a.to_date || '9999-12-31');
+                  const dateB = new Date(b.to_date || '9999-12-31');
+                  return dateB - dateA;
+                });
+                
+                // Get the most recent ownership set (same to_date)
+                const mostRecentDate = sortedHistory[0]?.to_date;
+                const mostRecentOwnership = sortedHistory.filter(o => o.to_date === mostRecentDate);
+                
+                if (mostRecentOwnership.length > 0) {
+                  console.log('📌 Loading most recent historical ownership:', mostRecentOwnership);
+                  setOwners(mostRecentOwnership.map(o => ({
+                    supplier_id: o.supplier_id?.toString() || "",
+                    ownership_percentage: o.ownership_percentage?.toString() || ""
+                  })));
+                  ownersLoaded = true;
+                }
               }
             } else {
-              console.log('No ownership history data or not an array');
+              console.log('ℹ️ No ownership history data returned from API');
             }
           } catch (ownershipErr) {
-            console.error('Failed to fetch ownership history:', ownershipErr);
-            // Don't fail the whole page if ownership fetch fails
+            console.error('❌ Failed to fetch ownership history:', ownershipErr);
           }
+        }
+
+        if (!ownersLoaded) {
+          console.log('ℹ️ No ownership data loaded - starting with empty owners array');
         }
 
         // Fetch transfer history
