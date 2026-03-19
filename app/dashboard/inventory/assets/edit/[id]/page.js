@@ -310,21 +310,41 @@ export default function EditAssetPage() {
 
       // Add ownership data if provided
       if (owners.length > 0) {
-        // Use updateOwnershipWithHistory to track changes
-        const ownershipPayload = {
-          ownership: owners.map(owner => ({
-            supplier_id: parseInt(owner.supplier_id),
-            ownership_percentage: parseFloat(owner.ownership_percentage)
-          })),
-          effective_date: new Date().toISOString().split('T')[0], // Today's date
-          reason: "Ownership updated via edit form"
-        };
-        
         // First update the asset
         await assetService.update(params.id, payload);
         
-        // Then update ownership with history tracking
+        // Get current ownership to determine what changed
+        const currentOwnership = ownershipHistory.filter(o => !o.to_date);
+        
+        // Prepare ownership changes for history tracking
+        const newOwners = owners.map(owner => ({
+          supplier_id: parseInt(owner.supplier_id),
+          ownership_percentage: parseFloat(owner.ownership_percentage)
+        }));
+        
+        // Determine which suppliers to create, update, or delete
+        const currentSupplierIds = currentOwnership.map(o => o.supplier_id);
+        const newSupplierIds = newOwners.map(o => o.supplier_id);
+        
+        const create_ownerships = newOwners.filter(o => !currentSupplierIds.includes(o.supplier_id));
+        const update_ownerships = newOwners.filter(o => currentSupplierIds.includes(o.supplier_id));
+        const delete_supplier_ids = currentSupplierIds.filter(id => !newSupplierIds.includes(id));
+        
+        const ownershipPayload = {
+          create_ownerships,
+          update_ownerships,
+          delete_supplier_ids,
+          effective_date: new Date().toISOString().split('T')[0],
+          reason: "Ownership updated via edit form"
+        };
+        
+        console.log('📝 Ownership update payload:', ownershipPayload);
+        
+        // Update ownership with history tracking
         await assetService.updateOwnershipWithHistory(params.id, ownershipPayload);
+        
+        // Refresh ownership history
+        await fetchOwnershipHistory();
       } else {
         // Just update the asset without ownership
         await assetService.update(params.id, payload);
