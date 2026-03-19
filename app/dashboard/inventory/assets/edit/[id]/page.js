@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
   Package, Hash, FileText, DollarSign, Calendar, Building2, 
-  ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2, ArrowRightLeft, History, ChevronUp
+  ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2, ArrowRightLeft, History, ChevronUp, Users, Percent
 } from "lucide-react";
 import { assetService } from "@/app/lib/services/assetService";
 import { branchService } from "@/app/lib/services/branchService";
@@ -31,6 +31,9 @@ export default function EditAssetPage() {
   const [transferHistory, setTransferHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [showHistory, setShowHistory] = useState(true);
+  const [ownershipHistory, setOwnershipHistory] = useState([]);
+  const [loadingOwnershipHistory, setLoadingOwnershipHistory] = useState(false);
+  const [showOwnershipHistory, setShowOwnershipHistory] = useState(true);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -181,6 +184,9 @@ export default function EditAssetPage() {
 
         // Fetch transfer history
         await fetchTransferHistory();
+        
+        // Fetch ownership history
+        await fetchOwnershipHistory();
       } catch (err) {
         console.error('Failed to fetch data:', err);
         error('Failed to load asset data');
@@ -204,6 +210,20 @@ export default function EditAssetPage() {
       setTransferHistory([]);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const fetchOwnershipHistory = async () => {
+    setLoadingOwnershipHistory(true);
+    try {
+      const history = await assetService.getOwnershipHistory(params.id);
+      console.log('📊 Ownership history fetched:', history);
+      setOwnershipHistory(Array.isArray(history) ? history : []);
+    } catch (err) {
+      console.error("Failed to fetch ownership history:", err);
+      setOwnershipHistory([]);
+    } finally {
+      setLoadingOwnershipHistory(false);
     }
   };
 
@@ -235,6 +255,11 @@ export default function EditAssetPage() {
   const getBranchName = (branchId) => {
     const branch = branches.find(b => b.id === branchId);
     return branch ? (branch.branch_name || branch.label || branch.name) : 'Unknown';
+  };
+
+  const getSupplierName = (supplierId) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    return supplier ? `${supplier.name} (${supplier.supplier_code || 'N/A'})` : 'Unknown Supplier';
   };
 
   const handleSubmit = async () => {
@@ -684,6 +709,145 @@ export default function EditAssetPage() {
                 <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">No transfer history available</p>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
                   Transfer records will appear here once the asset is moved between branches
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Ownership History Section */}
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+        <button
+          onClick={() => setShowOwnershipHistory(!showOwnershipHistory)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+              <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ownership History</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {ownershipHistory.length} ownership record{ownershipHistory.length !== 1 ? 's' : ''} tracked
+              </p>
+            </div>
+          </div>
+          {showOwnershipHistory ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+
+        {showOwnershipHistory && (
+          <div className="border-t border-gray-200 dark:border-zinc-800">
+            {loadingOwnershipHistory ? (
+              <div className="p-12 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
+                <p className="text-sm text-gray-500">Loading ownership history...</p>
+              </div>
+            ) : ownershipHistory.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Supplier
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Ownership %
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        From Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        To Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Reason
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                    {ownershipHistory.map((ownership, index) => {
+                      const isActive = !ownership.to_date;
+                      return (
+                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10' : ''}`}>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {getSupplierName(ownership.supplier_id)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                {ownership.ownership_percentage}
+                              </span>
+                              <Percent className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {ownership.from_date ? new Date(ownership.from_date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : 'N/A'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {ownership.to_date ? new Date(ownership.to_date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : '-'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {isActive ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                Historical
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {ownership.reason || 'N/A'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">No ownership history available</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                  Ownership records will appear here when ownership changes are tracked
                 </p>
               </div>
             )}
