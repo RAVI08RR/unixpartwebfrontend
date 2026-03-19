@@ -68,8 +68,8 @@ export default function EditAssetPage() {
         setSuppliers(suppliersList);
         setSuppliersLoading(false);
 
-        // Fetch asset data with ownership
-        const fetchedAssetData = await assetService.getByIdWithOwnership(params.id);
+        // Fetch asset data
+        const fetchedAssetData = await assetService.getById(params.id);
         console.log('Asset data loaded:', fetchedAssetData);
         setAssetData(fetchedAssetData);
         
@@ -87,14 +87,24 @@ export default function EditAssetPage() {
           notes: fetchedAssetData.notes || ""
         });
 
-        // Load existing ownership if available (current ownership from asset_ownerships)
-        if (fetchedAssetData.asset_ownerships && Array.isArray(fetchedAssetData.asset_ownerships)) {
-          // Filter only active ownership (where to_date is null)
-          const activeOwnership = fetchedAssetData.asset_ownerships.filter(o => !o.to_date);
-          setOwners(activeOwnership.map(o => ({
-            supplier_id: o.supplier_id?.toString() || "",
-            ownership_percentage: o.ownership_percentage?.toString() || ""
-          })));
+        // Fetch ownership history separately
+        try {
+          const ownershipHistory = await assetService.getOwnershipHistory(params.id);
+          console.log('Ownership history loaded:', ownershipHistory);
+          
+          // Filter for active ownership (where to_date is null)
+          if (ownershipHistory && Array.isArray(ownershipHistory)) {
+            const activeOwnership = ownershipHistory.filter(o => !o.to_date);
+            if (activeOwnership.length > 0) {
+              setOwners(activeOwnership.map(o => ({
+                supplier_id: o.supplier_id?.toString() || "",
+                ownership_percentage: o.ownership_percentage?.toString() || ""
+              })));
+            }
+          }
+        } catch (ownershipErr) {
+          console.error('Failed to fetch ownership history:', ownershipErr);
+          // Don't fail the whole page if ownership fetch fails
         }
 
         // Fetch transfer history
@@ -132,8 +142,8 @@ export default function EditAssetPage() {
       success("Asset transferred successfully!");
       setTransferModalOpen(false);
       
-      // Refresh asset data with ownership
-      const updatedAsset = await assetService.getByIdWithOwnership(params.id);
+      // Refresh asset data
+      const updatedAsset = await assetService.getById(params.id);
       setAssetData(updatedAsset);
       setFormData({
         ...formData,
