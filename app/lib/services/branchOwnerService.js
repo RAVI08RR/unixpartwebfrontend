@@ -81,4 +81,26 @@ export const branchOwnerService = {
       throw new Error('Cannot delete branch owner: ' + error.message);
     }
   },
+
+  // Bulk create branch owners (send array)
+  bulkCreate: async (branchOwnersArray) => {
+    try {
+      // Ensure all items have the correct field names
+      const payload = branchOwnersArray.map(owner => ({
+        branch_id: owner.branch_id,
+        supplier_id: owner.supplier_id,
+        share_percent: owner.share_percent || 0,
+        share_amount: owner.share_amount || 0,
+      }));
+      
+      console.log('Bulk creating branch owners:', payload);
+      
+      return await fetchApi('/api/branch-owners/bulk', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch (error) {
+      throw new Error('Cannot bulk create branch owners: ' + error.message);
+    }
+  },
 };

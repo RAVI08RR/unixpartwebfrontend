@@ -114,7 +114,7 @@ export default function AddBranchPage() {
           return;
         }
 
-        // Filter valid owners
+        // Filter valid owners and prepare array
         const validOwners = owners
           .filter(owner => owner.supplier_id && owner.share_percent)
           .map(owner => ({
@@ -125,34 +125,16 @@ export default function AddBranchPage() {
           }));
 
         if (validOwners.length > 0) {
-          console.log("Creating branch owners with data:", validOwners);
+          console.log("Creating branch owners with bulk array:", validOwners);
           
-          // Create owners one by one
-          let successCount = 0;
-          let failCount = 0;
-          let lastError = null;
-          
-          for (const owner of validOwners) {
-            try {
-              console.log("Creating owner:", owner);
-              const result = await branchOwnerService.create(owner);
-              console.log("Owner created successfully:", result);
-              successCount++;
-              console.log(`Branch owner ${successCount}/${validOwners.length} created successfully`);
-            } catch (individualError) {
-              failCount++;
-              lastError = individualError;
-              console.error(`Failed to create branch owner:`, individualError);
-              console.error(`Failed owner data:`, owner);
-            }
-          }
-          
-          if (successCount > 0) {
-            console.log(`Successfully created ${successCount} branch owners`);
-          }
-          
-          if (failCount > 0) {
-            const errorMsg = `Branch created but ${failCount} owner(s) failed to save. ${lastError?.message || ''}`;
+          try {
+            // Send all owners in one array
+            const result = await branchOwnerService.bulkCreate(validOwners);
+            console.log("Branch owners created successfully:", result);
+            success(`Branch and ${validOwners.length} owner(s) created successfully!`);
+          } catch (ownerError) {
+            console.error("Failed to create branch owners:", ownerError);
+            const errorMsg = `Branch created but owners failed to save: ${ownerError.message}`;
             showError(errorMsg);
             setError(errorMsg);
             setIsLoading(false);
@@ -163,7 +145,9 @@ export default function AddBranchPage() {
       }
       
       // Success - redirect to branches list
-      success("Branch created successfully!");
+      if (owners.length === 0) {
+        success("Branch created successfully!");
+      }
       router.push("/dashboard/administration/branches");
       
     } catch (err) {
