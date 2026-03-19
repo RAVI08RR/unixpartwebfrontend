@@ -25,6 +25,15 @@ export const assetService = {
     }
   },
 
+  // Get asset with ownership history
+  getByIdWithOwnership: async (id) => {
+    try {
+      return await fetchApi(`/api/assets/${id}/ownership/with-history`);
+    } catch (error) {
+      throw new Error(`Asset with ID ${id} not found`);
+    }
+  },
+
   // Get asset by asset_id string
   getByAssetId: async (assetId) => {
     try {
@@ -43,6 +52,18 @@ export const assetService = {
       });
     } catch (error) {
       throw new Error('Cannot create asset: ' + error.message);
+    }
+  },
+
+  // Create asset with default ownership
+  createWithDefaultOwnership: async (assetData) => {
+    try {
+      return await fetchApi('/api/assets/with-default-ownership', {
+        method: 'POST',
+        body: JSON.stringify(assetData),
+      });
+    } catch (error) {
+      throw new Error('Cannot create asset with default ownership: ' + error.message);
     }
   },
 
@@ -121,6 +142,18 @@ export const assetService = {
       });
     } catch (error) {
       throw new Error('Cannot update ownership: ' + error.message);
+    }
+  },
+
+  // Update ownership with history
+  updateOwnershipWithHistory: async (id, ownershipData) => {
+    try {
+      return await fetchApi(`/api/assets/${id}/ownership/with-history`, {
+        method: 'PUT',
+        body: JSON.stringify(ownershipData),
+      });
+    } catch (error) {
+      throw new Error('Cannot update ownership with history: ' + error.message);
     }
   },
 

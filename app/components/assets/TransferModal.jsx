@@ -36,7 +36,18 @@ export default function TransferModal({
         }
 
         try {
-            await onTransfer(formData);
+            // Include from_branch_id in the transfer data
+            const transferData = {
+                ...formData,
+                from_branch_id: asset?.current_operating_branch_id,
+                to_branch_id: parseInt(formData.to_branch_id),
+                transfer_date: formData.transfer_date,
+                reason: formData.reason,
+                responsible_person: formData.responsible_person || null,
+                return_date: formData.return_date || null
+            };
+
+            await onTransfer(transferData);
             onClose();
         } catch (err) {
             setError(err.message || "Failed to transfer asset");

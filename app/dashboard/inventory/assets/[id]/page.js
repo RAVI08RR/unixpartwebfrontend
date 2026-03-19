@@ -13,6 +13,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
 import TransferModal from "@/app/components/assets/TransferModal";
+import SellAssetModal from "@/app/components/assets/SellAssetModal";
+import SaleDetailsModal from "@/app/components/assets/SaleDetailsModal";
 
 export default function AssetDetailsPage() {
   const params = useParams();
@@ -33,8 +35,15 @@ export default function AssetDetailsPage() {
   // Modals
   const [transferModalOpen, setTransferModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [sellModalOpen, setSellModalOpen] = useState(false);
+  const [saleDetailsModalOpen, setSaleDetailsModalOpen] = useState(false);
   const [transferring, setTransferring] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selling, setSelling] = useState(false);
+  
+  // Sale data
+  const [saleDetails, setSaleDetails] = useState(null);
+  const [loadingSaleDetails, setLoadingSaleDetails] = useState(false);
   
   // Document upload
   const [uploadingDoc, setUploadingDoc] = useState(false);
@@ -58,8 +67,14 @@ export default function AssetDetailsPage() {
   const fetchAssetData = async () => {
     try {
       setLoading(true);
-      const data = await assetService.getById(params.id);
+      // Use the endpoint that includes ownership history
+      const data = await assetService.getByIdWithOwnership(params.id);
       setAsset(data);
+      
+      // Set ownership history from the response
+      if (data.asset_ownerships && Array.isArray(data.asset_ownerships)) {
+        setOwnershipHistory(data.asset_ownerships);
+      }
     } catch (err) {
       showError("Failed to load asset data");
       console.error(err);
@@ -164,6 +179,41 @@ export default function AssetDetailsPage() {
     }
   };
 
+  const handleSell = async (saleData) => {
+    setSelling(true);
+    try {
+      await assetService.sell(params.id, saleData);
+      success("Asset sold successfully!");
+      setSellModalOpen(false);
+      fetchAssetData();
+      // Fetch sale details after successful sale
+      await fetchSaleDetails();
+    } catch (err) {
+      showError("Failed to sell asset: " + err.message);
+      throw err;
+    } finally {
+      setSelling(false);
+    }
+  };
+
+  const fetchSaleDetails = async () => {
+    setLoadingSaleDetails(true);
+    try {
+      const details = await assetService.getSaleDetails(params.id);
+      setSaleDetails(details);
+    } catch (err) {
+      console.error("Failed to fetch sale details:", err);
+      setSaleDetails(null);
+    } finally {
+      setLoadingSaleDetails(false);
+    }
+  };
+
+  const handleViewSaleDetails = async () => {
+    await fetchSaleDetails();
+    setSaleDetailsModalOpen(true);
+  };
+
   const getSupplierName = (supplierId) => {
     const supplier = suppliers.find(s => s.id === supplierId);
     return supplier ? supplier.name : 'Unknown';
@@ -223,13 +273,33 @@ export default function AssetDetailsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setTransferModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-          >
-            <ArrowRightLeft className="w-4 h-4" />
-            Transfer
-          </button>
+          {asset.status?.toLowerCase() === 'sold' ? (
+            <button
+              onClick={handleViewSaleDetails}
+              disabled={loadingSaleDetails}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition-all disabled:opacity-50"
+            >
+              <DollarSign className="w-4 h-4" />
+              {loadingSaleDetails ? "Loading..." : "View Sale Details"}
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => setSellModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition-all"
+              >
+                <DollarSign className="w-4 h-4" />
+                Sell Asset
+              </button>
+              <button
+                onClick={() => setTransferModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+              >
+                <ArrowRightLeft className="w-4 h-4" />
+                Transfer
+              </button>
+            </>
+          )}
           <Link
             href={`/dashboard/inventory/assets/edit/${asset.id}`}
             className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-sm transition-all"
@@ -335,52 +405,117 @@ export default function AssetDetailsPage() {
                 </button>
               </div>
 
+              {/* Current Ownership Summary */}
+              {asset.asset_ownerships && asset.asset_ownerships.length > 0 && (
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200 mb-3 flex items-center gap-2">
+                    <Truck className="w-4 h-4" />
+                    Current Ownership Structure
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {asset.asset_ownerships.map((ownership, index) => (
+                      <div key={index} className="bg-white dark:bg-zinc-900 rounded-lg p-3 border border-blue-100 dark:border-blue-800/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                              {getSupplierName(ownership.supplier_id)}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Supplier ID: {ownership.supplier_id}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            <Percent className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            <span className="text-lg font-black text-blue-600 dark:text-blue-400">
+                              {ownership.ownership_percentage}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-900 dark:text-blue-200">Total Ownership:</span>
+                    <span className="text-sm font-black text-green-600 dark:text-green-400">
+                      {asset.asset_ownerships.reduce((sum, o) => sum + parseFloat(o.ownership_percentage || 0), 0).toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {ownershipHistory.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-zinc-800">
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Owner Supplier
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Percentage
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          From Date
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          To Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                      {ownershipHistory.map((record, index) => (
-                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                            <div className="flex items-center gap-2">
-                              <Truck className="w-4 h-4 text-gray-400" />
-                              {getSupplierName(record.supplier_id)}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400">
-                            {record.ownership_percentage}%
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                            {record.from_date ? new Date(record.from_date).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                            {record.to_date ? new Date(record.to_date).toLocaleDateString() : 'Present'}
-                          </td>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    Historical Records
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-zinc-800">
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Owner Supplier
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Percentage
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            From Date
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            To Date
+                          </th>
+                          <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Status
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                        {ownershipHistory.map((record, index) => (
+                          <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                              <div className="flex items-center gap-2">
+                                <Truck className="w-4 h-4 text-gray-400" />
+                                {getSupplierName(record.supplier_id)}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-sm font-bold text-blue-600 dark:text-blue-400">
+                              {record.ownership_percentage}%
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                              {record.from_date ? new Date(record.from_date).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                              {record.to_date ? new Date(record.to_date).toLocaleDateString() : 
+                                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold rounded">
+                                  Present
+                                </span>
+                              }
+                            </td>
+                            <td className="px-4 py-3 text-sm">
+                              {!record.to_date ? (
+                                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold rounded">
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-xs font-bold rounded">
+                                  Historical
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">
                   <History className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400 text-sm">No ownership history available</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                    Ownership records will appear here once configured
+                  </p>
                 </div>
               )}
             </div>
@@ -528,6 +663,23 @@ export default function AssetDetailsPage() {
         branches={branches}
         onTransfer={handleTransfer}
         isLoading={transferring}
+      />
+
+      {/* Sell Asset Modal */}
+      <SellAssetModal
+        isOpen={sellModalOpen}
+        onClose={() => setSellModalOpen(false)}
+        asset={asset}
+        onSell={handleSell}
+        isLoading={selling}
+      />
+
+      {/* Sale Details Modal */}
+      <SaleDetailsModal
+        isOpen={saleDetailsModalOpen}
+        onClose={() => setSaleDetailsModalOpen(false)}
+        asset={asset}
+        saleDetails={saleDetails}
       />
 
       {/* Delete Confirmation Modal */}

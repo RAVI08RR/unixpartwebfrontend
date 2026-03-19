@@ -7,12 +7,15 @@ import {
   ChevronLeft, ChevronRight, Pencil, Trash2, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
   AlertCircle, FileText, Upload, Trash, ExternalLink, 
-  TrendingUp, History, ArrowRightLeft
+  TrendingUp, History, ArrowRightLeft, ShoppingCart
 } from "lucide-react";
 import { useAssets } from "@/app/lib/hooks/useAssets";
 import { assetService } from "@/app/lib/services/assetService";
 import { useToast } from "@/app/components/Toast";
 import { useBranches } from "@/app/lib/hooks/useBranches";
+import SellAssetModal from "@/app/components/assets/SellAssetModal";
+import SaleDetailsModal from "@/app/components/assets/SaleDetailsModal";
+import TransferHistoryModal from "@/app/components/assets/TransferHistoryModal";
 
 export default function AssetsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,6 +43,9 @@ export default function AssetsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [sellModalOpen, setSellModalOpen] = useState(false);
+  const [saleDetailsModalOpen, setSaleDetailsModalOpen] = useState(false);
+  const [transferHistoryModalOpen, setTransferHistoryModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -47,6 +53,11 @@ export default function AssetsPage() {
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState(null);
+  const [selling, setSelling] = useState(false);
+  const [saleDetails, setSaleDetails] = useState(null);
+  const [loadingSaleDetails, setLoadingSaleDetails] = useState(false);
+  const [transferHistory, setTransferHistory] = useState([]);
+  const [loadingTransferHistory, setLoadingTransferHistory] = useState(false);
 
   // Filter and search logic
   const filteredAssets = useMemo(() => {
@@ -171,6 +182,61 @@ export default function AssetsPage() {
     } catch (err) {
       error("Failed to view document: " + err.message);
     }
+  };
+
+  const handleSell = async (saleData) => {
+    if (!selectedAsset) return;
+    setSelling(true);
+    try {
+      await assetService.sell(selectedAsset.id, saleData);
+      success("Asset sold successfully!");
+      setSellModalOpen(false);
+      setSelectedAsset(null);
+      refetch();
+    } catch (err) {
+      error("Failed to sell asset: " + err.message);
+      throw err;
+    } finally {
+      setSelling(false);
+    }
+  };
+
+  const fetchSaleDetails = async (assetId) => {
+    setLoadingSaleDetails(true);
+    try {
+      const details = await assetService.getSaleDetails(assetId);
+      setSaleDetails(details);
+    } catch (err) {
+      console.error("Failed to fetch sale details:", err);
+      setSaleDetails(null);
+    } finally {
+      setLoadingSaleDetails(false);
+    }
+  };
+
+  const handleViewSaleDetails = async (asset) => {
+    setSelectedAsset(asset);
+    await fetchSaleDetails(asset.id);
+    setSaleDetailsModalOpen(true);
+  };
+
+  const fetchTransferHistory = async (assetId) => {
+    setLoadingTransferHistory(true);
+    try {
+      const history = await assetService.getTransferHistory(assetId);
+      setTransferHistory(Array.isArray(history) ? history : []);
+    } catch (err) {
+      console.error("Failed to fetch transfer history:", err);
+      setTransferHistory([]);
+    } finally {
+      setLoadingTransferHistory(false);
+    }
+  };
+
+  const handleViewTransferHistory = async (asset) => {
+    setSelectedAsset(asset);
+    await fetchTransferHistory(asset.id);
+    setTransferHistoryModalOpen(true);
   };
 
   const getStatusBadge = (status) => {
@@ -372,6 +438,40 @@ export default function AssetsPage() {
                                 <FileText className="w-4 h-4" />
                                 Documents
                               </button>
+                              <button
+                                onClick={() => {
+                                  handleViewTransferHistory(asset);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
+                              >
+                                <History className="w-4 h-4" />
+                                Transfer History
+                              </button>
+                              {asset.status?.toLowerCase() === 'sold' ? (
+                                <button
+                                  onClick={() => {
+                                    handleViewSaleDetails(asset);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                >
+                                  <TrendingUp className="w-4 h-4" />
+                                  View Sale Details
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => {
+                                    setSelectedAsset(asset);
+                                    setSellModalOpen(true);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                >
+                                  <ShoppingCart className="w-4 h-4" />
+                                  Sell Asset
+                                </button>
+                              )}
                               <Link 
                                 href={`/dashboard/inventory/assets/edit/${asset.id}`}
                                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
@@ -718,6 +818,44 @@ export default function AssetsPage() {
           </div>
         </div>
       )}
+
+      {/* Sell Asset Modal */}
+      <SellAssetModal
+        isOpen={sellModalOpen}
+        onClose={() => {
+          setSellModalOpen(false);
+          setSelectedAsset(null);
+        }}
+        asset={selectedAsset}
+        onSell={handleSell}
+        isLoading={selling}
+      />
+
+      {/* Sale Details Modal */}
+      <SaleDetailsModal
+        isOpen={saleDetailsModalOpen}
+        onClose={() => {
+          setSaleDetailsModalOpen(false);
+          setSelectedAsset(null);
+          setSaleDetails(null);
+        }}
+        asset={selectedAsset}
+        saleDetails={saleDetails}
+      />
+
+      {/* Transfer History Modal */}
+      <TransferHistoryModal
+        isOpen={transferHistoryModalOpen}
+        onClose={() => {
+          setTransferHistoryModalOpen(false);
+          setSelectedAsset(null);
+          setTransferHistory([]);
+        }}
+        asset={selectedAsset}
+        transferHistory={transferHistory}
+        branches={branches}
+        loading={loadingTransferHistory}
+      />
     </div>
   );
 }

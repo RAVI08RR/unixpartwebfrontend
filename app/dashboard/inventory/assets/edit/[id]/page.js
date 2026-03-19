@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
   Package, Hash, FileText, DollarSign, Calendar, Building2, 
-  ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2
+  ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2, ArrowRightLeft, History, ChevronUp
 } from "lucide-react";
 import { assetService } from "@/app/lib/services/assetService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
 import OwnershipSection from "@/app/components/assets/OwnershipSection";
 import { supplierService } from "@/app/lib/services/supplierService";
+import TransferModal from "@/app/components/assets/TransferModal";
 
 export default function EditAssetPage() {
   const router = useRouter();
@@ -24,6 +25,12 @@ export default function EditAssetPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
   const [owners, setOwners] = useState([]);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferring, setTransferring] = useState(false);
+  const [assetData, setAssetData] = useState(null);
+  const [transferHistory, setTransferHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   
   const [formData, setFormData] = useState({
     asset_id: "",
@@ -62,30 +69,34 @@ export default function EditAssetPage() {
         setSuppliersLoading(false);
 
         // Fetch asset data
-        const assetData = await assetService.getById(params.id);
-        console.log('Asset data loaded:', assetData);
+        const fetchedAssetData = await assetService.getById(params.id);
+        console.log('Asset data loaded:', fetchedAssetData);
+        setAssetData(fetchedAssetData);
         
         setFormData({
-          asset_id: assetData.asset_id || "",
-          asset_name: assetData.asset_name || "",
-          description: assetData.description || "",
-          category: assetData.category || "",
-          purchase_price: assetData.purchase_price || "",
-          current_value: assetData.current_value || "",
-          purchase_date: assetData.purchase_date || "",
-          purchase_branch_id: assetData.purchase_branch_id || "",
-          current_operating_branch_id: assetData.current_operating_branch_id || "",
-          status: assetData.status || "active",
-          notes: assetData.notes || ""
+          asset_id: fetchedAssetData.asset_id || "",
+          asset_name: fetchedAssetData.asset_name || "",
+          description: fetchedAssetData.description || "",
+          category: fetchedAssetData.category || "",
+          purchase_price: fetchedAssetData.purchase_price || "",
+          current_value: fetchedAssetData.current_value || "",
+          purchase_date: fetchedAssetData.purchase_date || "",
+          purchase_branch_id: fetchedAssetData.purchase_branch_id || "",
+          current_operating_branch_id: fetchedAssetData.current_operating_branch_id || "",
+          status: fetchedAssetData.status || "active",
+          notes: fetchedAssetData.notes || ""
         });
 
         // Load existing ownership if available
-        if (assetData.ownership && Array.isArray(assetData.ownership)) {
-          setOwners(assetData.ownership.map(o => ({
+        if (fetchedAssetData.ownership && Array.isArray(fetchedAssetData.ownership)) {
+          setOwners(fetchedAssetData.ownership.map(o => ({
             supplier_id: o.supplier_id?.toString() || "",
             ownership_percentage: o.ownership_percentage?.toString() || ""
           })));
         }
+
+        // Fetch transfer history
+        await fetchTransferHistory();
       } catch (err) {
         console.error('Failed to fetch data:', err);
         error('Failed to load asset data');
@@ -98,6 +109,49 @@ export default function EditAssetPage() {
       fetchData();
     }
   }, [params.id]);
+
+  const fetchTransferHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const history = await assetService.getTransferHistory(params.id);
+      setTransferHistory(Array.isArray(history) ? history : []);
+    } catch (err) {
+      console.error("Failed to fetch transfer history:", err);
+      setTransferHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const handleTransfer = async (transferData) => {
+    setTransferring(true);
+    try {
+      await assetService.transfer(params.id, transferData);
+      success("Asset transferred successfully!");
+      setTransferModalOpen(false);
+      
+      // Refresh asset data
+      const updatedAsset = await assetService.getById(params.id);
+      setAssetData(updatedAsset);
+      setFormData({
+        ...formData,
+        current_operating_branch_id: updatedAsset.current_operating_branch_id || ""
+      });
+      
+      // Refresh transfer history
+      await fetchTransferHistory();
+    } catch (err) {
+      error("Failed to transfer asset: " + err.message);
+      throw err;
+    } finally {
+      setTransferring(false);
+    }
+  };
+
+  const getBranchName = (branchId) => {
+    const branch = branches.find(b => b.id === branchId);
+    return branch ? (branch.branch_name || branch.label || branch.name) : 'Unknown';
+  };
 
   const handleSubmit = async () => {
     if (!formData.asset_id || !formData.asset_name || !formData.category || !formData.purchase_price || !formData.purchase_branch_id || !formData.current_operating_branch_id) {
@@ -190,6 +244,15 @@ export default function EditAssetPage() {
             <p className="text-gray-500 text-sm">Update asset information</p>
           </div>
         </div>
+        
+        {/* Transfer Button */}
+        <button
+          onClick={() => setTransferModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
+        >
+          <ArrowRightLeft className="w-4 h-4" />
+          Transfer Asset
+        </button>
       </div>
 
       {/* Main Form Section */}
@@ -417,6 +480,120 @@ export default function EditAssetPage() {
         </div>
       </div>
 
+      {/* Transfer History Section */}
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+              <History className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Transfer History</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {transferHistory.length} transfer{transferHistory.length !== 1 ? 's' : ''} recorded
+              </p>
+            </div>
+          </div>
+          {showHistory ? (
+            <ChevronUp className="w-5 h-5 text-gray-400" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-gray-400" />
+          )}
+        </button>
+
+        {showHistory && (
+          <div className="border-t border-gray-200 dark:border-zinc-800">
+            {loadingHistory ? (
+              <div className="p-12 flex flex-col items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
+                <p className="text-sm text-gray-500">Loading transfer history...</p>
+              </div>
+            ) : transferHistory.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        From Branch
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        To Branch
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Reason
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Responsible Person
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                    {transferHistory.map((transfer, index) => (
+                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {transfer.transfer_date ? new Date(transfer.transfer_date).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              }) : 'N/A'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Building2 className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {getBranchName(transfer.from_branch_id)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <ArrowRightLeft className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {getBranchName(transfer.to_branch_id)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {transfer.reason || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {transfer.responsible_person || 'N/A'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                  <History className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">No transfer history available</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
+                  Transfer records will appear here once the asset is moved between branches
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
         <button 
@@ -434,6 +611,16 @@ export default function EditAssetPage() {
           Cancel
         </Link>
       </div>
+
+      {/* Transfer Modal */}
+      <TransferModal
+        isOpen={transferModalOpen}
+        onClose={() => setTransferModalOpen(false)}
+        asset={assetData}
+        branches={branches}
+        onTransfer={handleTransfer}
+        isLoading={transferring}
+      />
     </div>
   );
 }
