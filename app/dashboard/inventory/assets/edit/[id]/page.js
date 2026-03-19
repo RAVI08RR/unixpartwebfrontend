@@ -98,7 +98,7 @@ export default function EditAssetPage() {
           console.log('✓ Loading ownership from asset.ownership:', fetchedAssetData.ownership);
           setOwners(fetchedAssetData.ownership.map(o => ({
             supplier_id: o.supplier_id?.toString() || "",
-            ownership_percentage: o.ownership_percentage?.toString() || ""
+            ownership_percentage: (o.percent_share || o.ownership_percentage)?.toString() || ""
           })));
           ownersLoaded = true;
         }
@@ -110,7 +110,7 @@ export default function EditAssetPage() {
           if (activeOwnership.length > 0) {
             setOwners(activeOwnership.map(o => ({
               supplier_id: o.supplier_id?.toString() || "",
-              ownership_percentage: o.ownership_percentage?.toString() || ""
+              ownership_percentage: (o.percent_share || o.ownership_percentage)?.toString() || ""
             })));
             ownersLoaded = true;
           }
@@ -129,6 +129,7 @@ export default function EditAssetPage() {
               ownershipHistory.forEach((record, idx) => {
                 console.log(`  Record ${idx + 1}:`, {
                   supplier_id: record.supplier_id,
+                  percent_share: record.percent_share,
                   ownership_percentage: record.ownership_percentage,
                   from_date: record.from_date,
                   to_date: record.to_date,
@@ -143,7 +144,7 @@ export default function EditAssetPage() {
               if (activeOwnership.length > 0) {
                 const mappedOwners = activeOwnership.map(o => ({
                   supplier_id: o.supplier_id?.toString() || "",
-                  ownership_percentage: o.ownership_percentage?.toString() || ""
+                  ownership_percentage: (o.percent_share || o.ownership_percentage)?.toString() || ""
                 }));
                 console.log('✓ Mapped owners for display:', mappedOwners);
                 setOwners(mappedOwners);
@@ -165,7 +166,7 @@ export default function EditAssetPage() {
                   console.log('📌 Loading most recent historical ownership:', mostRecentOwnership);
                   setOwners(mostRecentOwnership.map(o => ({
                     supplier_id: o.supplier_id?.toString() || "",
-                    ownership_percentage: o.ownership_percentage?.toString() || ""
+                    ownership_percentage: (o.percent_share || o.ownership_percentage)?.toString() || ""
                   })));
                   ownersLoaded = true;
                 }
@@ -316,11 +317,20 @@ export default function EditAssetPage() {
         // Get current ownership to determine what changed
         const currentOwnership = ownershipHistory.filter(o => !o.to_date);
         
+        // Calculate amount_share based on current asset value
+        const assetValue = parseFloat(formData.current_value) || parseFloat(formData.purchase_price) || 0;
+        
         // Prepare ownership changes for history tracking
-        const newOwners = owners.map(owner => ({
-          supplier_id: parseInt(owner.supplier_id),
-          ownership_percentage: parseFloat(owner.ownership_percentage)
-        }));
+        const newOwners = owners.map(owner => {
+          const percentShare = parseFloat(owner.ownership_percentage);
+          const amountShare = (assetValue * percentShare) / 100;
+          
+          return {
+            supplier_id: parseInt(owner.supplier_id),
+            percent_share: percentShare,
+            amount_share: amountShare
+          };
+        });
         
         // Determine which suppliers to create, update, or delete
         const currentSupplierIds = currentOwnership.map(o => o.supplier_id);
@@ -808,7 +818,7 @@ export default function EditAssetPage() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-1">
                               <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                                {ownership.ownership_percentage}
+                                {ownership.percent_share || ownership.ownership_percentage || 0}
                               </span>
                               <Percent className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                             </div>
