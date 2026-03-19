@@ -68,8 +68,8 @@ export default function EditAssetPage() {
         setSuppliers(suppliersList);
         setSuppliersLoading(false);
 
-        // Fetch asset data
-        const fetchedAssetData = await assetService.getById(params.id);
+        // Fetch asset data with ownership
+        const fetchedAssetData = await assetService.getByIdWithOwnership(params.id);
         console.log('Asset data loaded:', fetchedAssetData);
         setAssetData(fetchedAssetData);
         
@@ -87,9 +87,11 @@ export default function EditAssetPage() {
           notes: fetchedAssetData.notes || ""
         });
 
-        // Load existing ownership if available
-        if (fetchedAssetData.ownership && Array.isArray(fetchedAssetData.ownership)) {
-          setOwners(fetchedAssetData.ownership.map(o => ({
+        // Load existing ownership if available (current ownership from asset_ownerships)
+        if (fetchedAssetData.asset_ownerships && Array.isArray(fetchedAssetData.asset_ownerships)) {
+          // Filter only active ownership (where to_date is null)
+          const activeOwnership = fetchedAssetData.asset_ownerships.filter(o => !o.to_date);
+          setOwners(activeOwnership.map(o => ({
             supplier_id: o.supplier_id?.toString() || "",
             ownership_percentage: o.ownership_percentage?.toString() || ""
           })));
@@ -130,8 +132,8 @@ export default function EditAssetPage() {
       success("Asset transferred successfully!");
       setTransferModalOpen(false);
       
-      // Refresh asset data
-      const updatedAsset = await assetService.getById(params.id);
+      // Refresh asset data with ownership
+      const updatedAsset = await assetService.getByIdWithOwnership(params.id);
       setAssetData(updatedAsset);
       setFormData({
         ...formData,
@@ -201,13 +203,24 @@ export default function EditAssetPage() {
 
       // Add ownership data if provided
       if (owners.length > 0) {
-        payload.ownership = owners.map(owner => ({
+        // Use updateOwnershipWithHistory to track changes
+        const ownershipPayload = owners.map(owner => ({
           supplier_id: parseInt(owner.supplier_id),
           ownership_percentage: parseFloat(owner.ownership_percentage)
         }));
+        
+        // First update the asset
+        await assetService.update(params.id, payload);
+        
+        // Then update ownership with history tracking
+        await assetService.updateOwnershipWithHistory(params.id, {
+          ownership: ownershipPayload
+        });
+      } else {
+        // Just update the asset without ownership
+        await assetService.update(params.id, payload);
       }
 
-      await assetService.update(params.id, payload);
       success("Asset updated successfully!");
       router.push("/dashboard/inventory/assets");
     } catch (err) {
