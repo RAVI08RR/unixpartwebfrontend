@@ -293,6 +293,10 @@ export default function BranchManagementPage() {
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Branch</span>
             </Link>
+            <Link href="/dashboard/administration/branch-owners" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all">
+              <Truck className="w-4 h-4" />
+              <span className="whitespace-nowrap font-black">Branch Owners</span>
+            </Link>
           </div>
         </div>
       </div>
