@@ -214,18 +214,20 @@ export default function EditAssetPage() {
       // Add ownership data if provided
       if (owners.length > 0) {
         // Use updateOwnershipWithHistory to track changes
-        const ownershipPayload = owners.map(owner => ({
-          supplier_id: parseInt(owner.supplier_id),
-          ownership_percentage: parseFloat(owner.ownership_percentage)
-        }));
+        const ownershipPayload = {
+          ownership: owners.map(owner => ({
+            supplier_id: parseInt(owner.supplier_id),
+            ownership_percentage: parseFloat(owner.ownership_percentage)
+          })),
+          effective_date: new Date().toISOString().split('T')[0], // Today's date
+          reason: "Ownership updated via edit form"
+        };
         
         // First update the asset
         await assetService.update(params.id, payload);
         
         // Then update ownership with history tracking
-        await assetService.updateOwnershipWithHistory(params.id, {
-          ownership: ownershipPayload
-        });
+        await assetService.updateOwnershipWithHistory(params.id, ownershipPayload);
       } else {
         // Just update the asset without ownership
         await assetService.update(params.id, payload);
