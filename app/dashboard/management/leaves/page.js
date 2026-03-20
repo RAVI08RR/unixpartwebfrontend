@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  FileText, Plus, Search, Eye, CheckCircle, XCircle, Loader2, Clock
+  FileText, Plus, Search, Eye, CheckCircle, XCircle, Loader2, Clock, Trash2, Edit
 } from "lucide-react";
 import { leaveService } from "@/app/lib/services/leaveService";
 import { useToast } from "@/app/components/Toast";
@@ -55,6 +55,18 @@ export default function LeavesPage() {
       fetchData();
     } catch (err) {
       error(err.message || "Failed to reject leave");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this leave? This action cannot be undone.")) return;
+    
+    try {
+      await leaveService.delete(id);
+      success("Leave deleted successfully!");
+      fetchData();
+    } catch (err) {
+      error(err.message || "Failed to delete leave");
     }
   };
 
@@ -224,6 +236,13 @@ export default function LeavesPage() {
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                         </Link>
+                        <Link
+                          href={`/dashboard/management/leaves/edit/${leave.id}`}
+                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                        </Link>
                         {leave.status === 'pending' && (
                           <>
                             <button
@@ -242,6 +261,13 @@ export default function LeavesPage() {
                             </button>
                           </>
                         )}
+                        <button
+                          onClick={() => handleDelete(leave.id)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                        </button>
                       </div>
                     </td>
                   </tr>

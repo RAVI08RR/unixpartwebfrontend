@@ -37,8 +37,10 @@ export const getAuthToken = () => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) return null;
   
-  // Check if token is expired
-  if (isTokenExpired()) {
+  // Check if token is expired (only if expiry time exists)
+  const expiryTime = localStorage.getItem('token_expiry');
+  if (expiryTime && Date.now() > parseInt(expiryTime)) {
+    console.log('🔒 Token expired, clearing auth');
     clearAuthToken();
     return null;
   }
@@ -49,9 +51,10 @@ export const getAuthToken = () => {
 export const setAuthToken = (token) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(TOKEN_KEY, token);
-    // Set session timestamp for 24 hours
-    const expiryTime = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    // Set session timestamp for 7 days (longer session)
+    const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
     localStorage.setItem('token_expiry', expiryTime.toString());
+    console.log('🔑 Token stored, expires:', new Date(expiryTime).toLocaleString());
   }
 };
 
@@ -67,9 +70,17 @@ export const isTokenExpired = () => {
   if (typeof window === 'undefined') return true;
   
   const expiryTime = localStorage.getItem('token_expiry');
-  if (!expiryTime) return true;
+  if (!expiryTime) {
+    // If no expiry time set, check if token exists
+    const token = localStorage.getItem(TOKEN_KEY);
+    return !token; // Not expired if token exists
+  }
   
-  return Date.now() > parseInt(expiryTime);
+  const isExpired = Date.now() > parseInt(expiryTime);
+  if (isExpired) {
+    console.log('🔒 Token expired at:', new Date(parseInt(expiryTime)).toLocaleString());
+  }
+  return isExpired;
 };
 
 /**

@@ -97,4 +97,15 @@ export const payrollService = {
       return null;
     }
   },
+
+  // Delete payroll
+  delete: async (id) => {
+    try {
+      return await fetchApi(`/api/payroll/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      throw new Error('Cannot delete payroll: ' + error.message);
+    }
+  },
 };

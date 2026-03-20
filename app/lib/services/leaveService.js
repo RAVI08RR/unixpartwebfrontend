@@ -122,4 +122,30 @@ export const leaveService = {
       return null;
     }
   },
+
+  // Get leave by ID
+  getById: async (id) => {
+    try {
+      const response = await fetchApi(`/api/leaves/${id}`);
+      
+      if (response?.data && typeof response.data === 'object') {
+        return response.data;
+      }
+      
+      return response;
+    } catch (error) {
+      throw new Error(`Leave with ID ${id} not found: ${error.message}`);
+    }
+  },
+
+  // Delete leave
+  delete: async (id) => {
+    try {
+      return await fetchApi(`/api/leaves/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      throw new Error('Cannot delete leave: ' + error.message);
+    }
+  },
 };

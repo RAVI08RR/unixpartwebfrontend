@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  UserCheck, Plus, Search, Eye, CheckCircle, Loader2, Clock
+  UserCheck, Plus, Search, Eye, CheckCircle, Loader2, Clock, Trash2, Edit
 } from "lucide-react";
 import { attendanceService } from "@/app/lib/services/attendanceService";
 import { useToast } from "@/app/components/Toast";
@@ -43,6 +43,18 @@ export default function AttendancePage() {
       fetchData();
     } catch (err) {
       error(err.message || "Failed to approve attendance");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this attendance record? This action cannot be undone.")) return;
+    
+    try {
+      await attendanceService.delete(id);
+      success("Attendance deleted successfully!");
+      fetchData();
+    } catch (err) {
+      error(err.message || "Failed to delete attendance");
     }
   };
 
@@ -197,6 +209,13 @@ export default function AttendancePage() {
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                         </Link>
+                        <Link
+                          href={`/dashboard/management/attendance/edit/${record.id}`}
+                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                        </Link>
                         {record.status === 'pending' && (
                           <button
                             onClick={() => handleApprove(record.id)}
@@ -206,6 +225,13 @@ export default function AttendancePage() {
                             <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDelete(record.id)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                        </button>
                       </div>
                     </td>
                   </tr>

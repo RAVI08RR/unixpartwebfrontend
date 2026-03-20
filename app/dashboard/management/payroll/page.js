@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  DollarSign, Plus, Search, Eye, Calculator, CheckCircle, Loader2, Calendar
+  DollarSign, Plus, Search, Eye, Calculator, CheckCircle, Loader2, Calendar, Trash2, Edit
 } from "lucide-react";
 import { payrollService } from "@/app/lib/services/payrollService";
 import { useToast } from "@/app/components/Toast";
@@ -55,6 +55,19 @@ export default function PayrollPage() {
       fetchData();
     } catch (err) {
       error(err.message || "Failed to mark payroll as paid");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this payroll? This action cannot be undone.")) return;
+    
+    try {
+      // Add delete method to payrollService if not exists
+      await payrollService.delete(id);
+      success("Payroll deleted successfully!");
+      fetchData();
+    } catch (err) {
+      error(err.message || "Failed to delete payroll");
     }
   };
 
@@ -199,6 +212,13 @@ export default function PayrollPage() {
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                         </Link>
+                        <Link
+                          href={`/dashboard/management/payroll/edit/${payroll.id}`}
+                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                        </Link>
                         {payroll.status === 'pending' && (
                           <button
                             onClick={() => handleCalculate(payroll.id)}
@@ -217,6 +237,13 @@ export default function PayrollPage() {
                             <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDelete(payroll.id)}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                        </button>
                       </div>
                     </td>
                   </tr>

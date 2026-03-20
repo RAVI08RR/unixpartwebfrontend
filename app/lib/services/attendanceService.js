@@ -95,4 +95,30 @@ export const attendanceService = {
       return [];
     }
   },
+
+  // Get attendance by ID
+  getById: async (id) => {
+    try {
+      const response = await fetchApi(`/api/attendance/${id}`);
+      
+      if (response?.data && typeof response.data === 'object') {
+        return response.data;
+      }
+      
+      return response;
+    } catch (error) {
+      throw new Error(`Attendance with ID ${id} not found: ${error.message}`);
+    }
+  },
+
+  // Delete attendance
+  delete: async (id) => {
+    try {
+      return await fetchApi(`/api/attendance/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      throw new Error('Cannot delete attendance: ' + error.message);
+    }
+  },
 };

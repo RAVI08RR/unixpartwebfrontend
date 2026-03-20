@@ -83,18 +83,18 @@ export async function POST(request) {
       const token = parsedData.access_token;
       const isProduction = process.env.NODE_ENV === 'production';
       
-      // Set HttpOnly cookie with security flags
+      // Set HttpOnly cookie with security flags - 7 days expiry
       const cookieOptions = [
         `auth_token=${token}`,
         'Path=/',
         'HttpOnly',
         'SameSite=Lax',
-        'Max-Age=86400', // 24 hours
+        'Max-Age=604800', // 7 days (7 * 24 * 60 * 60)
         isProduction ? 'Secure' : '', // Only use Secure in production (HTTPS)
       ].filter(Boolean).join('; ');
       
       nextResponse.headers.set('Set-Cookie', cookieOptions);
-      console.log('🍪 Auth token set as HttpOnly cookie');
+      console.log('🍪 Auth token set as HttpOnly cookie (7 days expiry)');
     }
     
     return nextResponse;
