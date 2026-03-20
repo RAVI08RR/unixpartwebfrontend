@@ -40,12 +40,13 @@ export default function EditBranchPage() {
       try {
         setIsLoading(true);
         
-        // Fetch branch, suppliers, and owners in parallel
-        const [branchData, suppliersData, ownersData] = await Promise.all([
+        // Fetch branch and suppliers
+        const [branchData, suppliersData] = await Promise.all([
           branchService.getById(branchId),
-          supplierService.getAll(0, 100),
-          branchOwnerService.getAll(0, 100)
+          supplierService.getAll(0, 100)
         ]);
+        
+        console.log('Branch data received:', branchData);
         
         // Set branch data
         setFormData({
@@ -60,17 +61,28 @@ export default function EditBranchPage() {
         const suppliersList = Array.isArray(suppliersData) ? suppliersData : (suppliersData?.suppliers || []);
         setSuppliers(suppliersList);
         
-        // Set existing owners for this branch
-        const allOwners = Array.isArray(ownersData) ? ownersData : [];
-        const branchOwners = allOwners.filter(owner => owner.branch_id === parseInt(branchId));
+        // Check if branch data includes ownerships array
+        let branchOwners = [];
+        if (branchData.ownerships && Array.isArray(branchData.ownerships)) {
+          console.log('Using ownerships from branch data:', branchData.ownerships);
+          branchOwners = branchData.ownerships;
+        } else {
+          // Fallback: fetch from branch-owners endpoint
+          console.log('Fetching ownerships from branch-owners endpoint');
+          const ownersData = await branchOwnerService.getAll(0, 100);
+          const allOwners = Array.isArray(ownersData) ? ownersData : [];
+          branchOwners = allOwners.filter(owner => owner.branch_id === parseInt(branchId));
+        }
+        
+        console.log('Branch owners loaded:', branchOwners);
         setExistingOwners(branchOwners);
         
         // Initialize owners state with existing owners
         setOwners(branchOwners.map(owner => ({
           id: owner.id, // Keep ID for updates/deletes
-          supplier_id: owner.supplier_id.toString(),
-          share_percent: owner.share_percent.toString(),
-          share_amount: owner.share_amount.toString()
+          supplier_id: owner.supplier_id?.toString() || "",
+          share_percent: owner.share_percent?.toString() || "",
+          share_amount: (owner.share_amount || 0).toString()
         })));
         
         setError(null);
