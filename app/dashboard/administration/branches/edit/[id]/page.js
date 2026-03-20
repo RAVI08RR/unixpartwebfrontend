@@ -130,30 +130,7 @@ export default function EditBranchPage() {
         return;
       }
 
-      const payload = {
-        branch_name: formData.branch_name,
-        branch_code: formData.branch_code,
-        status: formData.status,
-        total_revenue: parseFloat(formData.total_revenue) || 0,
-        total_outstanding: parseFloat(formData.total_outstanding) || 0,
-      };
-
-      // Update branch
-      await branchService.update(branchId, payload);
-
-      // Handle owners - delete all existing and create new ones
-      if (existingOwners.length > 0) {
-        console.log("Deleting existing owners...");
-        for (const owner of existingOwners) {
-          try {
-            await branchOwnerService.delete(owner.id);
-          } catch (deleteError) {
-            console.error("Failed to delete owner:", deleteError);
-          }
-        }
-      }
-
-      // Create new owners if any
+      // Prepare ownerships array
       const validOwners = owners
         .filter(owner => owner.supplier_id && owner.share_percent)
         .map(owner => ({
@@ -163,19 +140,21 @@ export default function EditBranchPage() {
           share_amount: parseFloat(owner.share_amount) || 0,
         }));
 
-      if (validOwners.length > 0) {
-        console.log("Creating new owners:", validOwners);
-        try {
-          await branchOwnerService.bulkCreate(validOwners);
-          success(`Branch and ${validOwners.length} owner(s) updated successfully!`);
-        } catch (ownerError) {
-          console.error("Failed to update owners:", ownerError);
-          showError("Branch updated but owners failed to save");
-        }
-      } else {
-        success("Branch updated successfully!");
-      }
+      const payload = {
+        branch_name: formData.branch_name,
+        branch_code: formData.branch_code,
+        status: formData.status,
+        total_revenue: parseFloat(formData.total_revenue) || 0,
+        total_outstanding: parseFloat(formData.total_outstanding) || 0,
+        ownerships: validOwners, // Include ownerships in branch payload
+      };
 
+      console.log("Updating branch with payload:", payload);
+
+      // Update branch with ownerships
+      await branchService.update(branchId, payload);
+
+      success(`Branch and ${validOwners.length} owner(s) updated successfully!`);
       router.push("/dashboard/administration/branches");
     } catch (err) {
       console.error("Failed to update branch:", err);

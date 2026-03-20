@@ -80,13 +80,33 @@ export default function AddBranchPage() {
     setError("");
 
     try {
-      // Prepare the data for submission
+      // Validate total percentage
+      const totalPercent = getTotalSharePercent();
+      if (totalPercent > 100) {
+        showError("Total ownership percentage cannot exceed 100%");
+        setError("Total ownership percentage cannot exceed 100%");
+        setIsLoading(false);
+        return;
+      }
+
+      // Prepare valid owners array
+      const validOwners = owners
+        .filter(owner => owner.supplier_id && owner.share_percent)
+        .map(owner => ({
+          branch_id: 0, // Will be set by backend
+          supplier_id: parseInt(owner.supplier_id),
+          share_percent: parseFloat(owner.share_percent),
+          share_amount: parseFloat(owner.share_amount) || 0,
+        }));
+
+      // Prepare the data for submission with ownerships
       const submitData = {
         branch_name: formData.branch_name.trim(),
         branch_code: formData.branch_code.trim().toUpperCase(),
         status: formData.status,
         total_revenue: formData.total_revenue ? parseFloat(formData.total_revenue) : 0,
         total_outstanding: formData.total_outstanding ? parseFloat(formData.total_outstanding) : 0,
+        ownerships: validOwners, // Include ownerships in branch payload
       };
 
       // Validate required fields
@@ -97,57 +117,12 @@ export default function AddBranchPage() {
 
       console.log("Creating branch with data:", submitData);
       
-      // Create the branch
-      const createdBranch = await branchService.create(submitData);
-      const branchId = createdBranch.id;
-
-      // Create branch owners if any
-      if (owners.length > 0 && branchId) {
-        console.log("Creating branch owners for branch ID:", branchId);
-        
-        // Validate total percentage
-        const totalPercent = getTotalSharePercent();
-        if (totalPercent > 100) {
-          showError("Total ownership percentage cannot exceed 100%");
-          setError("Total ownership percentage cannot exceed 100%");
-          setIsLoading(false);
-          return;
-        }
-
-        // Filter valid owners and prepare array
-        const validOwners = owners
-          .filter(owner => owner.supplier_id && owner.share_percent)
-          .map(owner => ({
-            branch_id: branchId,
-            supplier_id: parseInt(owner.supplier_id),
-            share_percent: parseFloat(owner.share_percent),
-            share_amount: parseFloat(owner.share_amount) || 0,
-          }));
-
-        if (validOwners.length > 0) {
-          console.log("Creating branch owners with bulk array:", validOwners);
-          
-          try {
-            // Send all owners in one array
-            const result = await branchOwnerService.bulkCreate(validOwners);
-            console.log("Branch owners created successfully:", result);
-            success(`Branch and ${validOwners.length} owner(s) created successfully!`);
-          } catch (ownerError) {
-            console.error("Failed to create branch owners:", ownerError);
-            const errorMsg = `Branch created but owners failed to save: ${ownerError.message}`;
-            showError(errorMsg);
-            setError(errorMsg);
-            setIsLoading(false);
-            // Don't redirect if owners failed
-            return;
-          }
-        }
-      }
+      // Create the branch with ownerships
+      await branchService.create(submitData);
       
       // Success - redirect to branches list
-      if (owners.length === 0) {
-        success("Branch created successfully!");
-      }
+      success(`Branch and ${validOwners.length} owner(s) created successfully!`);
+
       router.push("/dashboard/administration/branches");
       
     } catch (err) {
