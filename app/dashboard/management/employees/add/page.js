@@ -28,7 +28,7 @@ export default function AddEmployeePage() {
     visa_status: "",
     actual_position: "",
     visa_position: "",
-    visa_type: "",
+    visa_type: "nil",
     branch_on_visa_id: "",
     current_branch_id: "",
     position_start_date: new Date().toISOString().split('T')[0],
@@ -69,37 +69,35 @@ export default function AddEmployeePage() {
 
     setLoading(true);
     try {
-      // Build payload with only non-empty values
+      // Build payload matching API schema
       const payload = {
         first_name: formData.first_name,
         last_name: formData.last_name,
+        nationality: formData.nationality || "",
+        mobile_number: formData.mobile_number || "",
+        emergency_contact: formData.emergency_contact || null,
+        personal_email: formData.personal_email || null,
+        work_email: formData.work_email || null,
+        passport_number: formData.passport_number || "",
+        passport_expiry: formData.passport_expiry || "2099-12-31",
+        visa_status: formData.visa_status || "",
+        actual_position: formData.actual_position || "",
+        visa_position: formData.visa_position || "",
+        visa_type: formData.visa_type || "nil",
+        branch_on_visa_id: formData.branch_on_visa_id ? parseInt(formData.branch_on_visa_id) : null,
+        current_branch_id: formData.current_branch_id ? parseInt(formData.current_branch_id) : 0,
+        position_start_date: formData.position_start_date || new Date().toISOString().split('T')[0],
+        eid_number: formData.eid_number || "",
+        eid_expiry: formData.eid_expiry || "2099-12-31",
+        visa_number: formData.visa_number || "",
+        visa_expiry: formData.visa_expiry || "2099-12-31",
+        insurance_policy_number: formData.insurance_policy_number || "",
+        insurance_expiry: formData.insurance_expiry || "2099-12-31",
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
         status: formData.status
       };
-
-      // Only add optional fields if they have values
-      if (formData.nationality) payload.nationality = formData.nationality;
-      if (formData.mobile_number) payload.mobile_number = formData.mobile_number;
-      if (formData.emergency_contact) payload.emergency_contact = formData.emergency_contact;
-      if (formData.personal_email) payload.personal_email = formData.personal_email;
-      if (formData.work_email) payload.work_email = formData.work_email;
-      if (formData.passport_number) payload.passport_number = formData.passport_number;
-      if (formData.passport_expiry) payload.passport_expiry = formData.passport_expiry;
-      if (formData.visa_status) payload.visa_status = formData.visa_status;
-      if (formData.actual_position) payload.actual_position = formData.actual_position;
-      if (formData.visa_position) payload.visa_position = formData.visa_position;
-      if (formData.visa_type) payload.visa_type = formData.visa_type;
-      if (formData.branch_on_visa_id) payload.branch_on_visa_id = parseInt(formData.branch_on_visa_id);
-      if (formData.current_branch_id) payload.current_branch_id = parseInt(formData.current_branch_id);
-      if (formData.position_start_date) payload.position_start_date = formData.position_start_date;
-      if (formData.eid_number) payload.eid_number = formData.eid_number;
-      if (formData.eid_expiry) payload.eid_expiry = formData.eid_expiry;
-      if (formData.visa_number) payload.visa_number = formData.visa_number;
-      if (formData.visa_expiry) payload.visa_expiry = formData.visa_expiry;
-      if (formData.insurance_policy_number) payload.insurance_policy_number = formData.insurance_policy_number;
-      if (formData.insurance_expiry) payload.insurance_expiry = formData.insurance_expiry;
 
       await employeeService.create(payload);
       success("Employee created successfully!");
@@ -151,15 +149,94 @@ export default function AddEmployeePage() {
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Work Email</label>
               <input type="email" placeholder="work@company.com" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.work_email} onChange={(e) => setFormData({...formData, work_email: e.target.value})} />
             </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Contact</label>
+              <input type="text" placeholder="Name and phone number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.emergency_contact} onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})} />
+            </div>
           </div>
         </div>
 
+        {/* Passport & Visa Information */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Passport & Visa Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Passport Number</label>
+              <input type="text" placeholder="Enter passport number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.passport_number} onChange={(e) => setFormData({...formData, passport_number: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Passport Expiry</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.passport_expiry} onChange={(e) => setFormData({...formData, passport_expiry: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Number</label>
+              <input type="text" placeholder="Enter visa number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_number} onChange={(e) => setFormData({...formData, visa_number: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Expiry</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_expiry} onChange={(e) => setFormData({...formData, visa_expiry: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Status</label>
+              <input type="text" placeholder="e.g. Valid, Expired" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_status} onChange={(e) => setFormData({...formData, visa_status: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Type</label>
+              <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_type} onChange={(e) => setFormData({...formData, visa_type: e.target.value})}>
+                <option value="">Select Visa Type</option>
+                <option value="company">Company</option>
+                <option value="third_party">Third Party</option>
+                <option value="nil">Nil</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Position</label>
+              <input type="text" placeholder="Position on visa" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_position} onChange={(e) => setFormData({...formData, visa_position: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Branch on Visa</label>
+              <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.branch_on_visa_id} onChange={(e) => setFormData({...formData, branch_on_visa_id: e.target.value})} disabled={branchesLoading}>
+                <option value="">{branchesLoading ? 'Loading...' : 'Select Branch'}</option>
+                {branches.map(branch => (<option key={branch.id} value={branch.id}>{branch.label || branch.branch_name || branch.name}</option>))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Emirates ID Information */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Emirates ID Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Emirates ID Number</label>
+              <input type="text" placeholder="784-XXXX-XXXXXXX-X" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.eid_number} onChange={(e) => setFormData({...formData, eid_number: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Emirates ID Expiry</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.eid_expiry} onChange={(e) => setFormData({...formData, eid_expiry: e.target.value})} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Employment Information */}
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Employment Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Actual Position</label>
-              <input type="text" placeholder="e.g. Sales Manager" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.actual_position} onChange={(e) => setFormData({...formData, actual_position: e.target.value})} />
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="text" placeholder="e.g. Sales Manager" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.actual_position} onChange={(e) => setFormData({...formData, actual_position: e.target.value})} />
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Branch</label>
@@ -169,12 +246,50 @@ export default function AddEmployeePage() {
               </select>
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Position Start Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.position_start_date} onChange={(e) => setFormData({...formData, position_start_date: e.target.value})} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+              <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="on_leave">On Leave</option>
+                <option value="terminated">Terminated</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Salary & Benefits */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Salary & Benefits</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Starting Salary (AED)</label>
               <input type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.starting_salary} onChange={(e) => setFormData({...formData, starting_salary: e.target.value})} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Salary (AED)</label>
               <input type="number" step="0.01" placeholder="0.00" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.current_salary} onChange={(e) => setFormData({...formData, current_salary: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Annual Leave Entitlement (Days)</label>
+              <input type="number" placeholder="30" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.annual_leave_entitlement} onChange={(e) => setFormData({...formData, annual_leave_entitlement: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Policy Number</label>
+              <input type="text" placeholder="Enter policy number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_policy_number} onChange={(e) => setFormData({...formData, insurance_policy_number: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Expiry</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_expiry} onChange={(e) => setFormData({...formData, insurance_expiry: e.target.value})} />
+              </div>
             </div>
           </div>
         </div>

@@ -4,11 +4,26 @@ export const employeeService = {
   // Get all employees
   getAll: async (skip = 0, limit = 100) => {
     try {
-      const data = await fetchApi(`/api/employees?skip=${skip}&limit=${limit}`);
-      return Array.isArray(data) ? data : (data?.employees || []);
+      const response = await fetchApi(`/api/employees?skip=${skip}&limit=${limit}`);
+      
+      // Handle nested data structure from API: { success: true, message: "...", data: [...] }
+      if (response?.data && Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Fallback for other response formats
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
+      if (response?.employees && Array.isArray(response.employees)) {
+        return response.employees;
+      }
+      
+      return [];
     } catch (error) {
       console.error("Employees API failed:", error.message);
-      return [];
+      throw error;
     }
   },
 

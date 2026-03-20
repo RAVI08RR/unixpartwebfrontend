@@ -17,6 +17,8 @@ export default function EmployeesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -28,7 +30,16 @@ export default function EmployeesPage() {
       const data = await employeeService.getAll();
       setEmployees(Array.isArray(data) ? data : []);
     } catch (err) {
-      error("Failed to load employees");
+      // Check if it's an authentication error
+      if (err.message?.includes('authenticated') || err.message?.includes('session has expired')) {
+        error("Your session has expired. Please log in again.");
+        // Redirect to login after a short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        error("Failed to load employees");
+      }
       setEmployees([]);
     } finally {
       setLoading(false);
@@ -55,9 +66,11 @@ export default function EmployeesPage() {
   const filteredEmployees = employees.filter(emp =>
     emp.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     emp.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employee_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.position?.toLowerCase().includes(searchTerm.toLowerCase())
+    emp.personal_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.work_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.employee_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.actual_position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.nationality?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -156,13 +169,16 @@ export default function EmployeesPage() {
                     Employee
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Code
+                    ID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Position
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Contact
+                    Branch
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Visa Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
@@ -187,36 +203,36 @@ export default function EmployeesPage() {
                             {employee.first_name} {employee.last_name}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {employee.email}
+                            {employee.work_email || employee.personal_email || 'No email'}
                           </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {employee.employee_code || 'N/A'}
+                        {employee.employee_id || 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {employee.position || 'N/A'}
+                        {employee.actual_position || 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        {employee.phone && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-                            <Phone className="w-3 h-3" />
-                            {employee.phone}
-                          </div>
-                        )}
-                        {employee.email && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-                            <Mail className="w-3 h-3" />
-                            {employee.email}
-                          </div>
-                        )}
-                      </div>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {employee.current_branch?.branch_name || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                        employee.visa_type === 'company'
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                          : employee.visa_type === 'third_party'
+                          ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {employee.visa_type === 'company' ? 'Company' : employee.visa_type === 'third_party' ? 'Third Party' : 'Nil'}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
@@ -232,13 +248,16 @@ export default function EmployeesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/management/employees/${employee.id}`}
+                        <button
+                          onClick={() => {
+                            setSelectedEmployee(employee);
+                            setViewModalOpen(true);
+                          }}
                           className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                        </Link>
+                        </button>
                         <Link
                           href={`/dashboard/management/employees/edit/${employee.id}`}
                           className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
@@ -283,6 +302,208 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+
+      {/* View Employee Modal */}
+      {viewModalOpen && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-3xl shadow-2xl my-8">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {selectedEmployee.first_name?.[0]}{selectedEmployee.last_name?.[0]}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {selectedEmployee.first_name} {selectedEmployee.last_name}
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{selectedEmployee.employee_id}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setViewModalOpen(false);
+                    setSelectedEmployee(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* Personal Information */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Personal Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Nationality</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.nationality || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Mobile Number</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.mobile_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Personal Email</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.personal_email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Work Email</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.work_email || 'N/A'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Emergency Contact</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.emergency_contact || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employment Information */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Employment Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Position</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.actual_position || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Current Branch</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.current_branch?.branch_name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Position Start Date</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.position_start_date || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      selectedEmployee.status === 'active'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {selectedEmployee.status || 'inactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visa & Passport Information */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Visa & Passport Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Passport Number</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.passport_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Passport Expiry</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.passport_expiry || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Visa Number</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.visa_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Visa Expiry</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.visa_expiry || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Visa Type</p>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                      selectedEmployee.visa_type === 'company'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                        : selectedEmployee.visa_type === 'third_party'
+                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {selectedEmployee.visa_type === 'company' ? 'Company' : selectedEmployee.visa_type === 'third_party' ? 'Third Party' : 'Nil'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Visa Status</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.visa_status || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Visa Position</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.visa_position || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Branch on Visa</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.branch_on_visa?.branch_name || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emirates ID Information */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Emirates ID Information</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">EID Number</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.eid_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">EID Expiry</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.eid_expiry || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Salary & Benefits */}
+              <div>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Salary & Benefits</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Starting Salary</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">AED {selectedEmployee.starting_salary || '0.00'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Current Salary</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">AED {selectedEmployee.current_salary || '0.00'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Annual Leave Entitlement</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.annual_leave_entitlement || 30} days</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Insurance Policy</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.insurance_policy_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Insurance Expiry</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{selectedEmployee.insurance_expiry || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setViewModalOpen(false);
+                  setSelectedEmployee(null);
+                }}
+                className="px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Close
+              </button>
+              <Link
+                href={`/dashboard/management/employees/edit/${selectedEmployee.id}`}
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Edit Employee
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
