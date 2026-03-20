@@ -30,9 +30,17 @@ export const employeeService = {
   // Get employee by ID
   getById: async (id) => {
     try {
-      return await fetchApi(`/api/employees/${id}`);
+      const response = await fetchApi(`/api/employees/${id}`);
+      
+      // Handle nested data structure: { success: true, message: "...", data: {...} }
+      if (response?.data && typeof response.data === 'object') {
+        return response.data;
+      }
+      
+      // Direct response
+      return response;
     } catch (error) {
-      throw new Error(`Employee with ID ${id} not found`);
+      throw new Error(`Employee with ID ${id} not found: ${error.message}`);
     }
   },
 

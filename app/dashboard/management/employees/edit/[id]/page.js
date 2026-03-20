@@ -61,6 +61,8 @@ export default function EditEmployeePage() {
 
       // Fetch employee data
       const employee = await employeeService.getById(params.id);
+      console.log('Fetched employee data:', employee);
+      
       setFormData({
         first_name: employee.first_name || "",
         last_name: employee.last_name || "",
@@ -89,6 +91,8 @@ export default function EditEmployeePage() {
         annual_leave_entitlement: employee.annual_leave_entitlement || "30",
         status: employee.status || "active"
       });
+      
+      console.log('Form data set successfully');
     } catch (err) {
       error("Failed to load employee data");
     } finally {
