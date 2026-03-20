@@ -20,7 +20,10 @@ export async function POST(request) {
       });
     }
     
-    const backendUrl = `${apiBaseUrl}/api/branch-owners/`;
+    // Wrap array in object with branch_owners key as backend expects
+    const payload = { branch_owners: owners };
+    
+    const backendUrl = `${apiBaseUrl}/api/branch-owners/bulk`;
     
     const headers = {
       'Content-Type': 'application/json',
@@ -29,19 +32,18 @@ export async function POST(request) {
     if (authHeader) headers['Authorization'] = authHeader;
     
     console.log('Branch owners BULK POST - Backend URL:', backendUrl);
-    console.log('Branch owners BULK POST - Sending array of', owners.length, 'owners');
+    console.log('Branch owners BULK POST - Sending', owners.length, 'owners');
     
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
-      body: JSON.stringify(owners),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(15000),
     });
     
     const data = await response.text();
     
     console.log('Branch owners BULK POST - Response status:', response.status);
-    console.log('Branch owners BULK POST - Response data:', data);
     
     if (!response.ok) {
       console.error('Branch owners BULK POST - Backend error:', data);
