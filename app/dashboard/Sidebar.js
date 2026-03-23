@@ -12,6 +12,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { NavItem } from "./NavItem";
 import { authService } from "../lib/services/authService";
+import { usePermission } from "../lib/hooks/usePermission";
+import { PERMISSIONS } from "../lib/constants/permissions";
+import useAuthStore from "../lib/store/authStore";
 
 export function Sidebar() {
   const router = useRouter();
@@ -20,17 +23,18 @@ export function Sidebar() {
     activeCategory, changeCategory, isSecondaryOpen 
   } = useSidebar();
   const pathname = usePathname();
+  const { hasPermission, hasModuleAccess, isAdmin } = usePermission();
+  const { clearAuth } = useAuthStore();
 
   const handleLogout = async () => {
     console.log("🔄 Sidebar logout initiated...");
     try {
       await authService.logout();
+      clearAuth();
       console.log("✅ Sidebar logout successful, redirecting to login page...");
     } catch (error) {
-      // This should rarely happen now since authService.logout doesn't throw
       console.error("❌ Unexpected sidebar logout error:", error);
     } finally {
-      // Always redirect regardless of any errors
       console.log("🔄 Sidebar redirecting to login page...");
       router.push("/");
     }
@@ -42,10 +46,11 @@ export function Sidebar() {
       icon: LayoutDashboard,
       customIcon: "/icons/dashboard-icon.svg",
       label: "Dashboards",
+      permission: null, // Always visible
       items: [
-        { label: "CRM", href: "/dashboard", icon: BarChart3 },
-        { label: "Analytics", href: "/dashboard/analytics", icon: Layers },
-        { label: "eCommerce", href: "/dashboard/ecommerce", icon: ShoppingCart },
+        { label: "CRM", href: "/dashboard", icon: BarChart3, permission: null },
+        { label: "Analytics", href: "/dashboard/analytics", icon: Layers, permission: null },
+        { label: "eCommerce", href: "/dashboard/ecommerce", icon: ShoppingCart, permission: null },
       ]
     },
     {
@@ -53,13 +58,14 @@ export function Sidebar() {
       icon: Users,
       customIcon: "/icons/Button-5.svg",
       label: "Management",
+      permission: null, // Show if any sub-item is visible
       items: [
-        { label: "User Management", href: "/dashboard/users", icon: Users },
-        { label: "Role Management", href: "/dashboard/roles", icon: Shield },
-        { label: "Employees", href: "/dashboard/management/employees", icon: UserCheck },
-        { label: "Attendance", href: "/dashboard/management/attendance", icon: UserCheck },
-        { label: "Leaves", href: "/dashboard/management/leaves", icon: FileText },
-        { label: "Payroll", href: "/dashboard/management/payroll", icon: DollarSign },
+        { label: "User Management", href: "/dashboard/users", icon: Users, permission: PERMISSIONS.USERS.VIEW },
+        { label: "Role Management", href: "/dashboard/roles", icon: Shield, permission: PERMISSIONS.ROLES.VIEW },
+        { label: "Employees", href: "/dashboard/management/employees", icon: UserCheck, permission: PERMISSIONS.EMPLOYEES?.VIEW },
+        { label: "Attendance", href: "/dashboard/management/attendance", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE?.VIEW },
+        { label: "Leaves", href: "/dashboard/management/leaves", icon: FileText, permission: PERMISSIONS.LEAVES?.VIEW },
+        { label: "Payroll", href: "/dashboard/management/payroll", icon: DollarSign, permission: PERMISSIONS.PAYROLL?.VIEW },
       ]
     },
     {
@@ -67,27 +73,28 @@ export function Sidebar() {
       icon: Package,
       customIcon: "/icons/Button-3.svg",
       label: "Inventory",
+      permission: null,
       items: [
-        { label: "Inventory", href: "/dashboard/inventory/all-inventory", icon: Layers },
-        { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart },
-        { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield },
-        { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck },
-        { label: "Stock Items", href: "/dashboard/inventory/stock-items", icon: Package },
-        { label: "Assets", href: "/dashboard/inventory/assets", icon: Box },
+        { label: "Inventory", href: "/dashboard/inventory/all-inventory", icon: Layers, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck, permission: PERMISSIONS.SUPPLIERS.VIEW },
+        { label: "Stock Items", href: "/dashboard/inventory/stock-items", icon: Package, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Assets", href: "/dashboard/inventory/assets", icon: Box, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
       ]
     },
-
     {
       id: "Sales",
       icon: ShoppingCart,
       customIcon: "/icons/Button-4.svg",
       label: "Sales",
+      permission: null,
       items: [
-        { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck },
-        { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
-        { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText },
-        { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign },
-        { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3 },
+        { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck, permission: PERMISSIONS.CUSTOMERS.VIEW },
+        { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart, permission: PERMISSIONS.INVOICES.VIEW },
+        { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText, permission: PERMISSIONS.INVOICES.VIEW },
+        { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign, permission: PERMISSIONS.INVOICES.VIEW },
+        { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3, permission: PERMISSIONS.INVOICES.VIEW },
       ]
     },
     {
@@ -95,20 +102,21 @@ export function Sidebar() {
       icon: Shield,
       customIcon: "/icons/Button-5.svg",
       label: "Approvals",
+      permission: null,
       items: [
-        { label: "Pending", href: "/dashboard/approvals/pending", icon: FileText },
-        { label: "History", href: "/dashboard/approvals/history", icon: Layers },
+        { label: "Pending", href: "/dashboard/approvals/pending", icon: FileText, permission: null },
+        { label: "History", href: "/dashboard/approvals/history", icon: Layers, permission: null },
       ]
     },
-
     {
       id: "Reports",
       icon: BarChart3,
       customIcon: "/icons/Button-7.svg",
       label: "Reports",
+      permission: null,
       items: [
-        { label: "Daily", href: "/dashboard/reports/daily", icon: BarChart3 },
-        { label: "Monthly", href: "/dashboard/reports/monthly", icon: Layers },
+        { label: "Daily", href: "/dashboard/reports/daily", icon: BarChart3, permission: null },
+        { label: "Monthly", href: "/dashboard/reports/monthly", icon: Layers, permission: null },
       ]
     },
     {
@@ -116,11 +124,12 @@ export function Sidebar() {
       icon: DollarSign,
       customIcon: "/icons/Button-8.svg",
       label: "Finance",
+      permission: null,
       items: [
-        { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign },
-        { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText },
-        { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers },
-        { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers },
+        { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign, permission: null },
+        { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText, permission: null },
+        { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers, permission: null },
+        { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers, permission: null },
       ]
     },
     {
@@ -128,9 +137,10 @@ export function Sidebar() {
       icon: Shield,
       customIcon: "/icons/Button-9.svg",
       label: "Security",
+      permission: null,
       items: [
-        { label: "Alerts", href: "/dashboard/security/alerts", icon: Shield },
-        { label: "Logs", href: "/dashboard/security/logs", icon: Layers },
+        { label: "Alerts", href: "/dashboard/security/alerts", icon: Shield, permission: null },
+        { label: "Logs", href: "/dashboard/security/logs", icon: Layers, permission: null },
       ]
     },
     {
@@ -138,8 +148,9 @@ export function Sidebar() {
       icon: Settings,
       customIcon: "/icons/Button-2.svg",
       label: "Administration",
+      permission: null,
       items: [
-        { label: "Branches", href: "/dashboard/administration/branches", icon: Building2 },
+        { label: "Branches", href: "/dashboard/administration/branches", icon: Building2, permission: PERMISSIONS.BRANCHES.VIEW },
       ]
     },
     {
@@ -147,15 +158,34 @@ export function Sidebar() {
       icon: Settings,
       customIcon: "/icons/Button-10.svg",
       label: "Settings",
+      permission: null,
       items: [
-        { label: "General", href: "/dashboard/settings", icon: Settings },
-        { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield },
-        { label: "Profile", href: "/dashboard/settings/profile", icon: Users },
+        { label: "General", href: "/dashboard/settings", icon: Settings, permission: null },
+        { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield, permission: PERMISSIONS.PERMISSIONS.VIEW },
+        { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null },
       ]
     },
   ];
 
-  const activeGroup = menuGroups.find(g => g.id === activeCategory) || menuGroups[0];
+  // Filter menu items based on permissions
+  const filterMenuItems = (items) => {
+    return items.filter(item => {
+      // No permission required - always show
+      if (!item.permission) return true;
+      // Admin bypass
+      if (isAdmin()) return true;
+      // Check permission
+      return hasPermission(item.permission);
+    });
+  };
+
+  // Filter menu groups - only show groups that have visible items
+  const visibleMenuGroups = menuGroups.map(group => ({
+    ...group,
+    items: filterMenuItems(group.items)
+  })).filter(group => group.items.length > 0);
+
+  const activeGroup = visibleMenuGroups.find(g => g.id === activeCategory) || visibleMenuGroups[0];
 
   const sidebarVariants = {
     expanded: { width: isSecondaryOpen ? 320 : 88 },
@@ -177,7 +207,7 @@ export function Sidebar() {
 
       {/* Rail Navigation icons */}
       <div className="flex-1 flex flex-col gap-4 w-full px-3">
-        {menuGroups.map((group) => {
+        {visibleMenuGroups.map((group) => {
           const isActive = activeCategory === group.id;
           return (
             <button
@@ -202,8 +232,6 @@ export function Sidebar() {
               <div className="absolute left-full ml-4 px-3 py-1 bg-zinc-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-white/10">
                 {group.label}
               </div>
-
-              {/* Active Dot indicator - Removed as per new design (circle bg replaces it) */}
             </button>
           );
         })}

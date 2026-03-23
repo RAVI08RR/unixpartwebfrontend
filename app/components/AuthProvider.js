@@ -1,108 +1,59 @@
-"use client";
+/**
+ * AuthProvider Component
+ * Initializes user permissions on app load
+ */
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { authService } from '../lib/services/authService';
-import { getAuthToken, setAuthToken } from '../lib/api';
+'use client';
 
-const AuthContext = createContext({});
+import { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import useAuthStore from '@/app/lib/store/authStore';
+import { authService } from '@/app/lib/services/authService';
+import { getAuthToken } from '@/app/lib/api';
 
-export const useAuth = () => useContext(AuthContext);
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
+export default function AuthProvider({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { setAuth, clearAuth, setLoading, isInitialized } = useAuthStore();
 
-  // Check authentication status only on mount (not on every route change)
   useEffect(() => {
-    checkAuth();
-  }, []); // Empty dependency array - only run once on mount
-
-  const checkAuth = async () => {
-    try {
-      // Quick check: if token exists in localStorage
-      const token = getAuthToken();
-      
-      if (!token) {
-        setIsAuthenticated(false);
-        setUser(null);
-        setLoading(false);
+    const initializeAuth = async () => {
+      // Skip auth check on login/signup pages
+      if (pathname === '/' || pathname === '/login' || pathname === '/signup') {
         return;
       }
 
-      // Fast path: Check if user is already in localStorage
-      const cachedUser = localStorage.getItem('current_user');
-      if (cachedUser) {
-        try {
-          const parsedUser = JSON.parse(cachedUser);
-          setUser(parsedUser);
-          setIsAuthenticated(true);
-          setLoading(false);
-          return; // Skip API call for faster load
-        } catch (e) {
-          console.error('Failed to parse cached user:', e);
-        }
+      const token = getAuthToken();
+      
+      // No token - redirect to login
+      if (!token) {
+        clearAuth();
+        router.replace('/?redirect=' + encodeURIComponent(pathname));
+        return;
       }
 
-      // Slow path: Only verify with API if no cached user
+      // Already initialized - skip
+      if (isInitialized) {
+        return;
+      }
+
+      // Fetch user permissions
+      setLoading(true);
       try {
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
-        setIsAuthenticated(true);
-        localStorage.setItem('current_user', JSON.stringify(currentUser));
+        const permissionsData = await authService.getUserPermissions();
+        setAuth(permissionsData);
       } catch (error) {
-        // Token is invalid or expired
-        console.error('Auth check failed:', error);
-        setIsAuthenticated(false);
-        setUser(null);
-        // Clear invalid token
-        await authService.logout();
+        console.error('Failed to fetch permissions:', error);
+        // On error, clear auth and redirect to login
+        clearAuth();
+        router.replace('/?redirect=' + encodeURIComponent(pathname));
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Auth check error:', error);
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const login = async (email, password) => {
-    const response = await authService.login(email, password);
-    if (response?.access_token) {
-      setAuthToken(response.access_token);
-      if (response.user) {
-        setUser(response.user);
-        localStorage.setItem("current_user", JSON.stringify(response.user));
-      }
-      setIsAuthenticated(true);
-      return response;
-    }
-    throw new Error('Login failed');
-  };
+    initializeAuth();
+  }, [pathname, router, setAuth, clearAuth, setLoading, isInitialized]);
 
-  const logout = async () => {
-    await authService.logout();
-    setUser(null);
-    setIsAuthenticated(false);
-    router.push('/');
-  };
-
-  const value = {
-    user,
-    loading,
-    isAuthenticated,
-    login,
-    logout,
-    checkAuth,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <>{children}</>;
 }

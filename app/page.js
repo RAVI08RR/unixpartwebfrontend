@@ -9,6 +9,7 @@ import { authService } from "./lib/services/authService";
 import { setAuthToken, clearAuthToken, getAuthToken } from "./lib/api";
 import PasswordInput from "./components/PasswordInput";
 import { useToast } from "./components/Toast";
+import useAuthStore from "./lib/store/authStore";
 
 function LoginForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false); // Start as false for instant render
   const { success, error } = useToast();
+  const { setAuth } = useAuthStore();
 
   // Check if user is already authenticated on mount (instant check)
   useEffect(() => {
@@ -26,9 +28,12 @@ function LoginForm() {
       // User already has a token, redirect immediately without showing login form
       console.log('✅ User already authenticated, redirecting to dashboard');
       setIsCheckingAuth(true); // Show loading only during redirect
-      router.replace('/dashboard');
+      
+      // Get redirect URL from query params or default to dashboard
+      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      router.replace(redirectUrl);
     }
-  }, [router]);
+  }, [router, searchParams]);
 
   // Helper function to parse validation errors into user-friendly messages
   const parseValidationError = (errorMessage) => {
@@ -71,6 +76,15 @@ function LoginForm() {
                 localStorage.setItem("current_user", JSON.stringify(response.user));
             }
             
+            // Fetch user permissions
+            try {
+                const permissionsData = await authService.getUserPermissions();
+                setAuth(permissionsData);
+            } catch (permErr) {
+                console.error("Failed to fetch permissions:", permErr);
+                // Continue anyway - permissions will be fetched by AuthProvider
+            }
+            
             success("Login successful! Redirecting to dashboard...");
             
             // Get redirect URL from query params or default to dashboard
@@ -78,7 +92,7 @@ function LoginForm() {
             
             // Small delay to show success message
             setTimeout(() => {
-              router.push(redirectUrl);
+              router.replace(redirectUrl);
             }, 500);
         } else {
             error("Login failed. No authentication token received.");

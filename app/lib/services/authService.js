@@ -35,5 +35,13 @@ export const authService = {
     } catch (error) {
       throw new Error('User profile not available');
     }
+  },
+
+  getUserPermissions: async () => {
+    try {
+      return await fetchApi('/api/auth/user/roles-permissions');
+    } catch (error) {
+      throw new Error('Failed to fetch user permissions');
+    }
   }
 };

@@ -12,6 +12,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useCurrentUser } from "../lib/hooks/useCurrentUser";
 import { authService } from "../lib/services/authService";
 import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
+import AuthProvider from "../components/AuthProvider";
+import useAuthStore from "../lib/store/authStore";
 
 function Topbar() {
   const router = useRouter();
@@ -23,12 +25,12 @@ function Topbar() {
     console.log("🔄 Logout initiated...");
     try {
       await authService.logout();
+      // Clear auth store
+      useAuthStore.getState().clearAuth();
       console.log("✅ Logout successful, redirecting to login page...");
     } catch (error) {
-      // This should rarely happen now since authService.logout doesn't throw
       console.error("❌ Unexpected logout error:", error);
     } finally {
-      // Always redirect regardless of any errors
       console.log("🔄 Redirecting to login page...");
       router.push("/");
     }
@@ -190,7 +192,9 @@ function LayoutContent({ children }) {
 export default function DashboardLayout({ children }) {
   return (
     <SidebarProvider>
-      <LayoutContent>{children}</LayoutContent>
+      <AuthProvider>
+        <LayoutContent>{children}</LayoutContent>
+      </AuthProvider>
     </SidebarProvider>
   );
 }
