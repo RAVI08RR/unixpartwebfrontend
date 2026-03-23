@@ -92,6 +92,23 @@ export async function GET(request, { params }) {
     const data = await response.text();
     console.log('Get user proxy - Backend response data length:', data.length);
     
+    // Parse and log the response to see what we're getting
+    try {
+      const parsedData = JSON.parse(data);
+      console.log('Get user proxy - Parsed response:', {
+        id: parsedData.id,
+        name: parsedData.full_name || parsedData.name,
+        email: parsedData.email,
+        role_id: parsedData.role_id,
+        has_permissions: !!parsedData.permissions,
+        permissions_count: parsedData.permissions?.length || 0,
+        has_permission_ids: !!parsedData.permission_ids,
+        permission_ids_count: parsedData.permission_ids?.length || 0
+      });
+    } catch (e) {
+      console.log('Get user proxy - Could not parse response for logging');
+    }
+    
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -139,6 +156,29 @@ export async function GET(request, { params }) {
         { id: 1, name: "ABC Electronics Ltd", supplier_code: "SUP001" },
         { id: 2, name: "Global Components Inc", supplier_code: "SUP002" }
       ] : []),
+      permission_ids: userId <= 2 ? [1, 2, 3, 4, 5, 6, 7, 8] : (userId <= 4 ? [1, 5, 6, 21, 22] : [1, 33, 34, 37, 38]),
+      permissions: userId <= 2 ? [
+        { id: 1, name: "View Users", slug: "users.view", module: "users" },
+        { id: 2, name: "Create Users", slug: "users.create", module: "users" },
+        { id: 3, name: "Update Users", slug: "users.update", module: "users" },
+        { id: 4, name: "Delete Users", slug: "users.delete", module: "users" },
+        { id: 5, name: "View Branches", slug: "branches.view", module: "branches" },
+        { id: 6, name: "Create Branches", slug: "branches.create", module: "branches" },
+        { id: 7, name: "Update Branches", slug: "branches.update", module: "branches" },
+        { id: 8, name: "Delete Branches", slug: "branches.delete", module: "branches" }
+      ] : (userId <= 4 ? [
+        { id: 1, name: "View Users", slug: "users.view", module: "users" },
+        { id: 5, name: "View Branches", slug: "branches.view", module: "branches" },
+        { id: 6, name: "Create Branches", slug: "branches.create", module: "branches" },
+        { id: 21, name: "View Stock Items", slug: "stock_items.view", module: "stock_items" },
+        { id: 22, name: "Create Stock Items", slug: "stock_items.create", module: "stock_items" }
+      ] : [
+        { id: 1, name: "View Users", slug: "users.view", module: "users" },
+        { id: 33, name: "View Customers", slug: "customers.view", module: "customers" },
+        { id: 34, name: "Create Customers", slug: "customers.create", module: "customers" },
+        { id: 37, name: "View Invoices", slug: "invoices.view", module: "invoices" },
+        { id: 38, name: "Create Invoices", slug: "invoices.create", module: "invoices" }
+      ]),
       created_at: "2024-01-15T10:00:00Z",
       updated_at: "2024-01-15T10:00:00Z"
     };

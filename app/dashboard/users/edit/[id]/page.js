@@ -102,27 +102,72 @@ export default function EditUserPage() {
       setUserLoading(true);
       try {
         const userData = await userService.getById(userId);
-        console.log('Fetched user data:', userData);
+        console.log('📥 RAW USER DATA:', userData);
+        console.log('📥 User role_id:', userData.role_id);
+        console.log('📥 User role object:', userData.role);
         
+        const roleId = userData.role_id || userData.role?.id;
+        console.log('📥 Extracted role_id:', roleId, 'Type:', typeof roleId);
+        
+        // Set form data first (without permissions)
         setFormData({
-          name: userData.name || "",
+          name: userData.name || userData.full_name || "",
           email: userData.email || "",
           phone: userData.phone || "+91",
-          user_code: userData.user_code || "",
-          role_id: userData.role_id || userData.role?.id || "",
-          status: userData.status !== undefined ? userData.status : true,
+          user_code: userData.user_code || userData.username || "",
+          role_id: roleId || "",
+          status: userData.status !== undefined ? userData.status : (userData.is_active !== undefined ? userData.is_active : true),
           branch_ids: userData.branches?.map(b => b.id) || userData.branch_ids || [],
           supplier_ids: userData.suppliers?.map(s => s.id) || userData.supplier_ids || [],
-          permission_ids: userData.permissions?.map(p => p.id) || userData.permission_ids || []
+          permission_ids: [] // Will be set after fetching role permissions
         });
+        
+        console.log('✅ Form data set (without permissions yet)');
+        
+        // Fetch role permissions and set them
+        if (roleId) {
+          try {
+            console.log('🔍 Fetching permissions for role ID:', roleId);
+            const rolePermissions = await roleService.getPermissions(roleId);
+            console.log('✅ Role permissions API response:', rolePermissions);
+            console.log('✅ Role permissions count:', rolePermissions?.length || 0);
+            
+            if (rolePermissions && Array.isArray(rolePermissions) && rolePermissions.length > 0) {
+              const rolePermissionIds = rolePermissions.map(p => {
+                const id = p.id || p.permission_id;
+                const numId = typeof id === 'number' ? id : parseInt(id, 10);
+                return numId;
+              }).filter(id => !isNaN(id));
+              
+              console.log('✅ Final permission IDs to set:', rolePermissionIds);
+              
+              // Update formData with permissions
+              setFormData(prev => {
+                console.log('🔄 Updating formData with permissions:', rolePermissionIds);
+                return {
+                  ...prev,
+                  permission_ids: rolePermissionIds
+                };
+              });
+              
+              setRolePermissions(rolePermissions);
+            } else {
+              console.warn('⚠️ No role permissions returned or empty array');
+            }
+          } catch (permError) {
+            console.error('❌ Failed to fetch role permissions:', permError);
+          }
+        } else {
+          console.warn('⚠️ No role_id found in user data');
+        }
         
         // Set current profile image
         if (userData.profile_image) {
           const fullImageUrl = userService.getProfileImageUrl(userData.profile_image);
           setCurrentProfileImage(fullImageUrl);
         }
-      } catch (error) {
-        console.error("Failed to fetch user:", error);
+      } catch (err) {
+        console.error("❌ Failed to fetch user:", err);
         
         // Check if it's an authentication error
         if (err.message.includes("session has expired") || err.message.includes("401")) {
@@ -139,7 +184,7 @@ export default function EditUserPage() {
     };
 
     fetchUser();
-  }, [userId, router]);
+  }, [userId, router, error]);
 
   // Permission selection handlers
   const handlePermissionToggle = (permissionId) => {
@@ -188,11 +233,11 @@ export default function EditUserPage() {
             return null;
           }),
           branchService.getDropdown().catch(err => {
-            console.error('Branches API failed:', err);
+            console.error('Branches API failed (permission issue - using fallback):', err);
             return null;
           }),
           supplierService.getDropdown().catch(err => {
-            console.error('Suppliers API failed:', err);
+            console.error('Suppliers API failed (permission issue - using fallback):', err);
             return null;
           })
         ]);
@@ -216,7 +261,7 @@ export default function EditUserPage() {
           ]);
         }
         
-        // Set branches data or fallback
+        // Set branches data or fallback (permission errors are handled gracefully)
         if (branchesData && branchesData.length > 0) {
           setBranches(branchesData);
           setBranchesError(null);
@@ -232,7 +277,7 @@ export default function EditUserPage() {
           setBranchesError(null); // Clear error since we have fallback data
         }
         
-        // Set suppliers data or fallback
+        // Set suppliers data or fallback (permission errors are handled gracefully)
         if (suppliersData && suppliersData.length > 0) {
           setSuppliers(suppliersData);
           setSuppliersError(null);
@@ -251,13 +296,7 @@ export default function EditUserPage() {
       } catch (err) {
         console.error("❌ Failed to fetch data:", err);
         
-        // Check if it's an authentication error
-        if (err.message.includes("session has expired") || err.message.includes("401")) {
-          error("Your session has expired. Please log in again.");
-          router.push("/");
-          return;
-        }
-        
+        // Don't redirect on permission errors, just use fallback data
         // For other errors, still provide fallback data
         setRoles([
           { id: 1, name: "Administrator" },
@@ -291,42 +330,74 @@ export default function EditUserPage() {
     fetchData();
   }, [router]);
 
-  // Fetch role permissions when role is selected
+  // Fetch role permissions when role is manually changed (not on initial load)
   useEffect(() => {
+    // Skip if this is the initial load (userLoading is true)
+    if (userLoading) {
+      console.log('⏭️ Skipping role permission fetch - initial load');
+      return;
+    }
+    
     const fetchRolePermissions = async () => {
       // Check if role_id is valid (not empty, not undefined, and is a number)
       if (!formData.role_id || formData.role_id === "" || isNaN(parseInt(formData.role_id))) {
+        console.log('⏭️ No valid role_id, clearing permissions');
         setRolePermissions([]);
+        setFormData(prev => ({
+          ...prev,
+          permission_ids: []
+        }));
         return;
       }
 
       setRolePermissionsLoading(true);
       try {
         const roleId = parseInt(formData.role_id);
-        console.log('Fetching permissions for role ID:', roleId);
+        console.log('🔄 Role changed in dropdown - Fetching permissions for role ID:', roleId);
         
         const permissions = await roleService.getPermissions(roleId);
+        console.log('✅ Role permissions fetched for dropdown change:', permissions);
+        console.log('✅ Permissions count:', permissions?.length || 0);
+        
         setRolePermissions(permissions || []);
         
-        // Don't auto-select role permissions when editing - keep existing permissions
-      } catch (error) {
-        console.error("Failed to fetch role permissions:", error);
-        
-        // Check if it's an authentication error
-        if (err.message.includes("session has expired") || err.message.includes("401")) {
-          error("Your session has expired. Please log in again.");
-          router.push("/");
-          return;
+        // Auto-update permissions when role changes in dropdown
+        if (permissions && Array.isArray(permissions) && permissions.length > 0) {
+          const rolePermissionIds = permissions.map(p => {
+            const id = p.id || p.permission_id;
+            const numId = typeof id === 'number' ? id : parseInt(id, 10);
+            console.log('  - Permission:', p.name, 'ID:', numId);
+            return numId;
+          }).filter(id => !isNaN(id));
+          
+          console.log('✅ Auto-updating permission IDs for role change:', rolePermissionIds);
+          
+          setFormData(prev => ({
+            ...prev,
+            permission_ids: rolePermissionIds
+          }));
+        } else {
+          console.warn('⚠️ No permissions for this role, clearing selection');
+          setFormData(prev => ({
+            ...prev,
+            permission_ids: []
+          }));
         }
         
+      } catch (error) {
+        console.error("❌ Failed to fetch role permissions on dropdown change:", error);
         setRolePermissions([]);
+        setFormData(prev => ({
+          ...prev,
+          permission_ids: []
+        }));
       } finally {
         setRolePermissionsLoading(false);
       }
     };
 
     fetchRolePermissions();
-  }, [formData.role_id, router]);
+  }, [formData.role_id, userLoading]);
 
   const handleSubmit = async () => {
       // Basic validation
@@ -689,6 +760,12 @@ export default function EditUserPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Select the permissions for this user</p>
+            {/* Debug info - only render on client to avoid hydration mismatch */}
+            {typeof window !== 'undefined' && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                Current permission IDs: [{formData.permission_ids.join(', ')}] (Count: {formData.permission_ids.length})
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -726,6 +803,7 @@ export default function EditUserPage() {
                   {modulePermissions.map((permission) => {
                     const isSelected = formData.permission_ids.includes(permission.id);
                     const isRolePermission = rolePermissions.some(rp => rp.id === permission.id);
+                    
                     return (
                       <label
                         key={permission.id}

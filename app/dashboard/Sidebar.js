@@ -25,6 +25,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const { hasPermission, hasModuleAccess, isAdmin } = usePermission();
   const { clearAuth } = useAuthStore();
+  const [isClient, setIsClient] = React.useState(false);
+
+  // Ensure we only render permission-filtered content on client
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleLogout = async () => {
     console.log("🔄 Sidebar logout initiated...");
@@ -180,10 +186,13 @@ export function Sidebar() {
   };
 
   // Filter menu groups - only show groups that have visible items
-  const visibleMenuGroups = menuGroups.map(group => ({
-    ...group,
-    items: filterMenuItems(group.items)
-  })).filter(group => group.items.length > 0);
+  // Only apply permission filtering on client to avoid hydration mismatch
+  const visibleMenuGroups = isClient 
+    ? menuGroups.map(group => ({
+        ...group,
+        items: filterMenuItems(group.items)
+      })).filter(group => group.items.length > 0)
+    : menuGroups; // Show all groups on server render
 
   const activeGroup = visibleMenuGroups.find(g => g.id === activeCategory) || visibleMenuGroups[0];
 
