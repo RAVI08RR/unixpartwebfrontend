@@ -168,10 +168,11 @@ export default function EditRolePage() {
 
     setLoading(true);
     try {
-      // Prepare payload
+      // Prepare payload - backend expects status field
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
+        status: true, // Add status field as required by backend
         permission_ids: formData.permission_ids || []
       };
 
