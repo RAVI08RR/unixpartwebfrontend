@@ -92,6 +92,18 @@ export const PERMISSIONS = {
     APPROVE: 'leaves.approve',
     REJECT: 'leaves.reject',
   },
+  EXPENSES: {
+    VIEW: 'expenses.view',
+    CREATE: 'expenses.create',
+    UPDATE: 'expenses.update',
+    DELETE: 'expenses.delete',
+  },
+  FUND_TRANSFERS: {
+    VIEW: 'fund_transfers.view',
+    CREATE: 'fund_transfers.create',
+    UPDATE: 'fund_transfers.update',
+    DELETE: 'fund_transfers.delete',
+  },
 };
 
 // Helper to get all permission slugs as a flat array
