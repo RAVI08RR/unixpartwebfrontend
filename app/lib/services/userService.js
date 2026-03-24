@@ -59,14 +59,65 @@ export const userService = {
     // Log what we're sending
     console.log("📤 userService.create called with:", userData);
     console.log("📤 userData keys:", Object.keys(userData));
-    console.log("📤 userData stringified:", JSON.stringify(userData, null, 2));
     
-    // Send data as-is, API expects these field names
-    const response = await fetchApi('/api/users', {
-      method: 'POST',
-      body: JSON.stringify(userData),
+    // Create FormData for multipart/form-data submission
+    const formData = new FormData();
+    
+    // Add all user data fields to FormData
+    Object.keys(userData).forEach(key => {
+      const value = userData[key];
+      
+      // Handle arrays (branch_ids, supplier_ids, permission_ids)
+      if (Array.isArray(value)) {
+        // Send arrays as JSON string
+        formData.append(key, JSON.stringify(value));
+      } else if (value !== null && value !== undefined) {
+        // Send other values as strings
+        formData.append(key, String(value));
+      }
     });
-    return mapFromApiFields(response);
+    
+    console.log("📤 FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
+    // Get token
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.');
+    }
+    
+    // Make request with FormData (don't set Content-Type, browser will set it with boundary)
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    
+    console.log('📤 Create user response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Create user failed:', errorText);
+      
+      let errorMessage = `Failed to create user (${response.status})`;
+      try {
+        const error = JSON.parse(errorText);
+        errorMessage = error.detail || error.message || errorMessage;
+      } catch (e) {
+        if (errorText && errorText.length < 200) {
+          errorMessage = errorText;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+    
+    const result = await response.json();
+    console.log('✅ User created successfully:', result);
+    return mapFromApiFields(result);
   },
 
   // Update existing user

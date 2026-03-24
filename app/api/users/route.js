@@ -234,27 +234,38 @@ export async function POST(request) {
   // Get auth token from request headers
   const authHeader = request.headers.get('authorization');
   
-  // Get request body - moved to function scope so it's available in catch block
-  const body = await request.text();
-  
   console.log('Users proxy POST - API Base URL:', apiBaseUrl);
   console.log('Users proxy POST - Auth header present:', !!authHeader);
-  console.log('Users proxy POST - Request body length:', body.length);
-  console.log('Users proxy POST - Request body content:', body);
+  console.log('Users proxy POST - Content-Type:', request.headers.get('content-type'));
   
   try {
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/users/`;
     console.log('Users proxy POST - Backend URL:', backendUrl);
     
-    const headers = {
-      'Content-Type': 'application/json',
+    // Get the request body (could be FormData or JSON)
+    const contentType = request.headers.get('content-type') || '';
+    let body;
+    let headers = {
       'ngrok-skip-browser-warning': 'true',
     };
     
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
+    }
+    
+    if (contentType.includes('multipart/form-data')) {
+      // Forward FormData as-is
+      body = await request.formData();
+      console.log('Users proxy POST - Forwarding FormData');
+      // Don't set Content-Type for FormData, let fetch set it with boundary
+    } else {
+      // Handle JSON
+      body = await request.text();
+      headers['Content-Type'] = 'application/json';
+      console.log('Users proxy POST - Request body length:', body.length);
+      console.log('Users proxy POST - Request body content:', body);
     }
     
     const response = await fetch(backendUrl, {
@@ -287,46 +298,14 @@ export async function POST(request) {
     console.error('Users proxy POST error:', error);
     console.log('➕ Create user API failed, using fallback response:', error.message);
     
-    // Parse the request body to get user data
-    let userData = {};
-    try {
-      userData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-    }
-    
-    // Generate a new user ID (simulate auto-increment)
-    const newUserId = Math.floor(Math.random() * 1000) + 100;
-    
-    // Return fallback created user data when backend is unavailable
-    const fallbackCreatedUser = {
-      id: newUserId,
-      username: userData.username || userData.user_code || `new_user_${newUserId}`,
-      email: userData.email || `user${newUserId}@company.com`,
-      full_name: userData.full_name || userData.name || `New User ${newUserId}`,
-      phone: userData.phone || `+1-555-${String(newUserId).padStart(4, '0')}`,
-      is_active: userData.is_active !== undefined ? userData.is_active : (userData.status !== undefined ? userData.status : true),
-      role_id: userData.role_id || 1,
-      role: {
-        id: userData.role_id || 1,
-        name: "Administrator",
-        slug: "administrator",
-        description: "Full system access"
-      },
-      branch_ids: userData.branch_ids || [1],
-      branches: [
-        { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
-      ],
-      supplier_ids: userData.supplier_ids || [],
-      suppliers: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
+    // Return error response
     return new Response(
-      JSON.stringify(fallbackCreatedUser),
+      JSON.stringify({
+        error: 'Failed to create user',
+        detail: error.message
+      }),
       {
-        status: 201,
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
