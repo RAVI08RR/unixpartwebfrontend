@@ -41,30 +41,13 @@ export const roleService = {
   },
 
   update: async (id, roleData) => {
-    try {
-      console.log('🚀 roleService.update called with:', { id, roleData });
-      const result = await fetchApi(`/api/roles/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(roleData),
-      });
-      console.log('✅ roleService.update successful:', result);
-      return result;
-    } catch (error) {
-      console.error('❌ roleService.update failed:', error);
-      
-      // Return fallback success response if API fails
-      console.log('🔄 Using fallback update response for role ID:', id);
-      return {
-        id: parseInt(id),
-        name: roleData.name,
-        description: roleData.description,
-        permissions: [],
-        permission_ids: roleData.permission_ids || [],
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        _fallback: true
-      };
-    }
+    console.log('🚀 roleService.update called with:', { id, roleData });
+    const result = await fetchApi(`/api/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(roleData),
+    });
+    console.log('✅ roleService.update successful:', result);
+    return result;
   },
 
   delete: async (id) => {

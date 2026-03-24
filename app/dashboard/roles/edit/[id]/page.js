@@ -186,12 +186,7 @@ export default function EditRolePage() {
       const result = await roleService.update(roleId, payload);
       console.log("✅ Role update successful:", result);
       
-      if (result._fallback) {
-        warning("Role updated successfully (using fallback mode)! Note: The backend API is not available, so changes are only stored locally. Please contact support to ensure your changes are properly saved.");
-      } else {
-        success("Role updated successfully!");
-      }
-      
+      success("Role updated successfully!");
       router.push("/dashboard/roles");
     } catch (err) {
       console.error("❌ UPDATE ROLE FAILED:", err);

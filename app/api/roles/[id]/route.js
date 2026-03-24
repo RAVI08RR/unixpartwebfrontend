@@ -168,33 +168,14 @@ export async function PUT(request, { params }) {
     
   } catch (error) {
     console.error('Update role proxy error:', error);
-    console.log('🔄 Roles API failed, using fallback update response for role ID:', id);
-    
-    // Parse the request body to get role data
-    let roleData = {};
-    try {
-      const body = await request.text();
-      roleData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-    }
-    
-    // Return fallback success response when backend is unavailable
-    const fallbackUpdatedRole = {
-      id: parseInt(id),
-      name: roleData.name || `Role ${id}`,
-      description: roleData.description || `Updated role description`,
-      permissions: [],
-      permission_ids: roleData.permission_ids || [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      _fallback: true
-    };
     
     return new Response(
-      JSON.stringify(fallbackUpdatedRole),
+      JSON.stringify({ 
+        error: 'Failed to update role', 
+        details: error.message 
+      }),
       {
-        status: 200,
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
