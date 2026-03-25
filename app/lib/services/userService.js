@@ -60,41 +60,20 @@ export const userService = {
     console.log("📤 userService.create called with:", userData);
     console.log("📤 userData keys:", Object.keys(userData));
     
-    // Create FormData for multipart/form-data submission
-    const formData = new FormData();
-    
-    // Add all user data fields to FormData
-    Object.keys(userData).forEach(key => {
-      const value = userData[key];
-      
-      // Handle arrays (branch_ids, supplier_ids, permission_ids)
-      if (Array.isArray(value)) {
-        // Send arrays as JSON string
-        formData.append(key, JSON.stringify(value));
-      } else if (value !== null && value !== undefined) {
-        // Send other values as strings
-        formData.append(key, String(value));
-      }
-    });
-    
-    console.log("📤 FormData entries:");
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-    
     // Get token
     const token = localStorage.getItem('access_token');
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
     }
     
-    // Make request with FormData (don't set Content-Type, browser will set it with boundary)
+    // Send as JSON instead of FormData
     const response = await fetch('/api/users', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-      body: formData,
+      body: JSON.stringify(userData),
     });
     
     console.log('📤 Create user response status:', response.status);
