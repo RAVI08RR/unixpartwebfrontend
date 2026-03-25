@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { 
   User, Mail, Shield, 
   Search, ChevronDown,
-  Check, X, Lock, Hash, ArrowLeft, Camera
+  Check, X, Lock, Hash, ArrowLeft, Camera, Eye, EyeOff
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
@@ -55,6 +55,7 @@ export default function EditUserPage() {
   const [profileImage, setProfileImage] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
   const [currentProfileImage, setCurrentProfileImage] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -610,12 +611,23 @@ export default function EditUserPage() {
           <div className="relative">
             <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter new password"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full pl-10 pr-12 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
               value={formData.password}
               onChange={(e) => setFormData({...formData, password: e.target.value})}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Leave blank to keep the current password. Minimum 6 characters if changing.
