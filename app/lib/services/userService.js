@@ -66,14 +66,46 @@ export const userService = {
       throw new Error('No authentication token found. Please log in again.');
     }
     
-    // Send as JSON instead of FormData
+    // Create FormData for multipart/form-data submission
+    const formData = new FormData();
+    
+    // Add all user data fields to FormData
+    Object.keys(userData).forEach(key => {
+      const value = userData[key];
+      
+      // Handle arrays (branch_ids, supplier_ids, permission_ids)
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          // Send each array item separately with the same key
+          value.forEach(item => {
+            formData.append(key, item);
+          });
+        } else {
+          // Send empty string for empty arrays
+          formData.append(key, '');
+        }
+      } else if (value !== null && value !== undefined && value !== '') {
+        // Send other values as strings
+        formData.append(key, String(value));
+      } else {
+        // Send empty string for null/undefined values
+        formData.append(key, '');
+      }
+    });
+    
+    console.log("📤 FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
+    // Send as FormData (don't set Content-Type, browser will set it with boundary)
     const response = await fetch('/api/users', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        // Don't set Content-Type for FormData - browser will add boundary automatically
       },
-      body: JSON.stringify(userData),
+      body: formData,
     });
     
     console.log('📤 Create user response status:', response.status);
