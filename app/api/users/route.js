@@ -243,10 +243,36 @@ export async function POST(request) {
     const backendUrl = `${apiBaseUrl}/api/users/`;
     console.log('Users proxy POST - Backend URL:', backendUrl);
     
-    // Get the request body (could be FormData or JSON)
-    const contentType = request.headers.get('content-type') || '';
-    let body;
-    let headers = {
+    // Get the request body as text first
+    const bodyText = await request.text();
+    console.log('Users proxy POST - Request body length:', bodyText.length);
+    console.log('Users proxy POST - Request body content:', bodyText);
+    
+    // Parse to verify it's valid JSON
+    let bodyData;
+    try {
+      bodyData = JSON.parse(bodyText);
+      console.log('Users proxy POST - Parsed body data:', bodyData);
+      console.log('Users proxy POST - Body data keys:', Object.keys(bodyData));
+    } catch (parseError) {
+      console.error('Users proxy POST - Failed to parse body as JSON:', parseError);
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid JSON in request body',
+          detail: parseError.message
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+    
+    const headers = {
+      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     
@@ -255,23 +281,10 @@ export async function POST(request) {
       headers['Authorization'] = authHeader;
     }
     
-    if (contentType.includes('multipart/form-data')) {
-      // Forward FormData as-is
-      body = await request.formData();
-      console.log('Users proxy POST - Forwarding FormData');
-      // Don't set Content-Type for FormData, let fetch set it with boundary
-    } else {
-      // Handle JSON
-      body = await request.text();
-      headers['Content-Type'] = 'application/json';
-      console.log('Users proxy POST - Request body length:', body.length);
-      console.log('Users proxy POST - Request body content:', body);
-    }
-    
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
-      body,
+      body: bodyText, // Send the original text body
       signal: AbortSignal.timeout(15000), // 15 second timeout for user creation
     });
     
