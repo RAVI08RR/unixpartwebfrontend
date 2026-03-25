@@ -81,16 +81,41 @@ export const userService = {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Create user failed:', errorText);
+      console.error('❌ Response status:', response.status);
       
       let errorMessage = `Failed to create user (${response.status})`;
+      
       try {
-        const error = JSON.parse(errorText);
-        errorMessage = error.detail || error.message || errorMessage;
+        const errorData = JSON.parse(errorText);
+        console.error('❌ Parsed error data:', errorData);
+        
+        // Handle different error response formats
+        if (errorData.detail) {
+          // FastAPI validation error format
+          if (Array.isArray(errorData.detail)) {
+            // Validation errors array
+            const errors = errorData.detail.map(err => {
+              const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+              return `${field}: ${err.msg}`;
+            }).join(', ');
+            errorMessage = `Validation Error: ${errors}`;
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else {
+            errorMessage = JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
       } catch (e) {
-        if (errorText && errorText.length < 200) {
+        console.error('❌ Failed to parse error response:', e);
+        if (errorText && errorText.length < 500) {
           errorMessage = errorText;
         }
       }
+      
       throw new Error(errorMessage);
     }
     

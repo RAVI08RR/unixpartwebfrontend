@@ -367,17 +367,28 @@ export default function AddUserPage() {
           router.push("/dashboard/users");
       } catch (err) {
           console.error("❌ CREATE USER FAILED:", err);
+          console.error("❌ Error object:", {
+            message: err.message,
+            name: err.name,
+            stack: err.stack
+          });
           
           // Try to show the most helpful error message
-          let detailedMsg = err.message;
-          if (detailedMsg.includes("422")) {
-            detailedMsg = "Validation Error: Please check if the User Code or Email is already taken, or if required fields are missing.";
+          let detailedMsg = err.message || 'Unknown error occurred';
+          
+          // Check for specific error patterns
+          if (detailedMsg.includes("422") || detailedMsg.includes("Validation Error")) {
+            // Keep validation error as-is since it's already formatted
           } else if (detailedMsg.includes("400")) {
             detailedMsg = "Bad Request: The server couldn't process the request. Please check all field values.";
           } else if (detailedMsg.includes("401")) {
             detailedMsg = "Authentication Error: Please log in again.";
+            router.push("/");
+            return;
           } else if (detailedMsg.includes("500")) {
             detailedMsg = "Server Error: Please try again later or contact support.";
+          } else if (detailedMsg.includes("duplicate") || detailedMsg.includes("already exists")) {
+            detailedMsg = "User Code or Email already exists. Please use different values.";
           }
           
           error(`Failed to create user: ${detailedMsg}`);
