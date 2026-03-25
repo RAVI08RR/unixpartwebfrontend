@@ -37,7 +37,7 @@ export const customerService = {
       return await fetchApi('/api/dropdown/customers');
     } catch (error) {
       console.error("🏢 Customers Dropdown API failed:", error.message);
-      return customerService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      return customerService.getAll(0, 100); // Fallback to getAll with max limit of 100
     }
   },
 

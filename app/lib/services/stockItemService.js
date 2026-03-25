@@ -22,7 +22,7 @@ export const stockItemService = {
       return await fetchApi('/api/dropdown/stock-items');
     } catch (error) {
       console.error("📦 Stock Items Dropdown API failed:", error.message);
-      return stockItemService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      return stockItemService.getAll(0, 100); // Fallback to getAll with max limit of 100
     }
   },
 

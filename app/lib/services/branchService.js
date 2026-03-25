@@ -21,7 +21,7 @@ export const branchService = {
       console.error("🏢 Branches Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
-        return await branchService.getAll(0, 500);
+        return await branchService.getAll(0, 100);
       } catch (fallbackError) {
         console.error("🏢 Branches fallback also failed:", fallbackError.message);
         return [];

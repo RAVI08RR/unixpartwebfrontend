@@ -44,7 +44,7 @@ export const userService = {
       return await fetchApi('/api/dropdown/users');
     } catch (error) {
       console.error("👤 Users Dropdown API failed:", error.message);
-      return userService.getAll(0, 500); // Fallback to getAll if dropdown endpoint fails
+      return userService.getAll(0, 100); // Fallback to getAll with max limit of 100
     }
   },
 

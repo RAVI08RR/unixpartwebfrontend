@@ -22,9 +22,9 @@ export default function AddClearancePage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [submittingItem, setSubmittingItem] = useState(false);
   const { success: showSuccess, error: showError } = useToast();
-  const { suppliers } = useSuppliers(0, 500, null, true);
-  const { branches } = useBranches(0, 500, true);
-  const { stockItems: apiStockItems } = useStockItems(0, 500, null, true);
+  const { suppliers } = useSuppliers(0, 100, null, true);
+  const { branches } = useBranches(0, 100, true);
+  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
 
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];

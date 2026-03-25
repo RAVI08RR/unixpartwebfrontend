@@ -35,7 +35,7 @@ export const supplierService = {
       console.error("🏭 Suppliers Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
-        return await supplierService.getAll(0, 500);
+        return await supplierService.getAll(0, 100);
       } catch (fallbackError) {
         console.error("🏭 Suppliers fallback also failed:", fallbackError.message);
         return [];
