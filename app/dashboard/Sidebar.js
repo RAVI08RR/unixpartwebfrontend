@@ -82,11 +82,11 @@ export function Sidebar() {
       permission: null,
       items: [
         { label: "Inventory", href: "/dashboard/inventory/all-inventory", icon: Layers, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
-        { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
-        { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Purchase Orders", href: "/dashboard/inventory/purchase-orders", icon: ShoppingCart, permission: PERMISSIONS.PURCHASE_ORDERS.VIEW },
+        { label: "Custom Clearance", href: "/dashboard/inventory/custom-clearance", icon: Shield, permission: PERMISSIONS.CUSTOM_CLEARANCE.VIEW },
         { label: "Suppliers", href: "/dashboard/inventory/suppliers", icon: Truck, permission: PERMISSIONS.SUPPLIERS.VIEW },
         { label: "Stock Items", href: "/dashboard/inventory/stock-items", icon: Package, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
-        { label: "Assets", href: "/dashboard/inventory/assets", icon: Box, permission: PERMISSIONS.STOCK_ITEMS.VIEW },
+        { label: "Assets", href: "/dashboard/inventory/assets", icon: Box, permission: PERMISSIONS.ASSETS.VIEW },
       ]
     },
     {

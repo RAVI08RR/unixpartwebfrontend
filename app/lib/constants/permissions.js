@@ -40,6 +40,30 @@ export const PERMISSIONS = {
     UPDATE: 'stock_items.update',
     DELETE: 'stock_items.delete',
   },
+  PURCHASE_ORDERS: {
+    VIEW: 'purchase_orders.view',
+    CREATE: 'purchase_orders.create',
+    UPDATE: 'purchase_orders.update',
+    DELETE: 'purchase_orders.delete',
+  },
+  PO_ITEMS: {
+    VIEW: 'po_items.view',
+    CREATE: 'po_items.create',
+    UPDATE: 'po_items.update',
+    DELETE: 'po_items.delete',
+  },
+  ASSETS: {
+    VIEW: 'assets.view',
+    CREATE: 'assets.create',
+    UPDATE: 'assets.update',
+    DELETE: 'assets.delete',
+  },
+  CUSTOM_CLEARANCE: {
+    VIEW: 'custom_clearance.view',
+    CREATE: 'custom_clearance.create',
+    UPDATE: 'custom_clearance.update',
+    DELETE: 'custom_clearance.delete',
+  },
   CONTAINERS: {
     VIEW: 'containers.view',
     CREATE: 'containers.create',
