@@ -4,9 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
-  User, Mail, Shield, Building2, Store, 
-  Search, Filter, Download, Plus, ChevronLeft, ChevronDown,
-  Check, X, Lock, Hash, ArrowLeft, Upload, Camera
+  User, Mail, Shield, 
+  Search, ChevronDown,
+  Check, X, Lock, Hash, ArrowLeft, Camera
 } from "lucide-react";
 import { userService } from "@/app/lib/services/userService";
 import { roleService } from "@/app/lib/services/roleService";
@@ -48,7 +48,8 @@ export default function EditUserPage() {
     status: true,
     branch_ids: [],
     supplier_ids: [],
-    permission_ids: []
+    permission_ids: [],
+    password: "" // Optional password field for updates
   });
 
   const [profileImage, setProfileImage] = useState(null);
@@ -412,6 +413,14 @@ export default function EditUserPage() {
           return;
       }
 
+      // Validate password if provided
+      if (formData.password && formData.password.trim().length > 0) {
+          if (formData.password.length < 6) {
+              error("Password must be at least 6 characters long");
+              return;
+          }
+      }
+
       const token = localStorage.getItem('access_token');
       if (!token) {
           error("Your session has expired or you are not logged in. Please log in again.");
@@ -434,6 +443,11 @@ export default function EditUserPage() {
               permission_ids: formData.permission_ids || []
           };
 
+          // Only include password if it's provided and not empty
+          if (formData.password && formData.password.trim().length > 0) {
+              payload.password = formData.password.trim();
+          }
+
           // Final check for valid numeric IDs
           if (isNaN(payload.role_id)) {
             error("Error: The selected Role has an invalid ID. Please try selecting it again.");
@@ -454,7 +468,8 @@ export default function EditUserPage() {
             token: !!token,
             payload,
             selectedPermissions: formData.permission_ids.length,
-            hasNewProfileImage: !!profileImage
+            hasNewProfileImage: !!profileImage,
+            hasPasswordUpdate: !!payload.password
           });
 
           const result = await userService.update(userId, payload);
@@ -481,7 +496,7 @@ export default function EditUserPage() {
             }
           }
           
-          success("User updated successfully!");
+          success(payload.password ? "User and password updated successfully!" : "User updated successfully!");
           router.push("/dashboard/users");
       } catch (err) {
           console.error("❌ UPDATE USER FAILED:", err);
@@ -585,6 +600,26 @@ export default function EditUserPage() {
             placeholder="Enter phone number"
             className="w-full"
           />
+        </div>
+
+        {/* New Password */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            New Password <span className="text-gray-400 font-normal">(Optional - leave blank to keep current)</span>
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="password"
+              placeholder="Enter new password"
+              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Leave blank to keep the current password. Minimum 6 characters if changing.
+          </p>
         </div>
 
         {/* Profile Image Upload */}
