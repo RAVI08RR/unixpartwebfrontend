@@ -403,14 +403,8 @@ export default function EditUserPage() {
 
   const handleSubmit = async () => {
       // Basic validation
-      if(!formData.name || !formData.email || !formData.phone || !formData.role_id) {
-          error("Please fill in all required fields (Name, Email, Phone, and Role)");
-          return;
-      }
-
-      // Validate phone number format (should start with + and have at least 10 digits)
-      if (!formData.phone || formData.phone.length < 10) {
-          error("Please enter a valid phone number");
+      if(!formData.name || !formData.email || !formData.role_id) {
+          error("Please fill in all required fields (Name, Email, and Role)");
           return;
       }
 
@@ -435,7 +429,6 @@ export default function EditUserPage() {
           const payload = {
               name: formData.name.trim(),
               email: formData.email.trim().toLowerCase(),
-              phone: formData.phone.trim(),
               user_code: formData.user_code.trim(),
               role_id: parseInt(formData.role_id),
               status: formData.status,
@@ -443,6 +436,11 @@ export default function EditUserPage() {
               supplier_ids: formData.supplier_ids || [],
               permission_ids: formData.permission_ids || []
           };
+
+          // Only include phone if it exists and is not empty
+          if (formData.phone && formData.phone.trim()) {
+              payload.phone = formData.phone.trim();
+          }
 
           // Only include password if it's provided and not empty
           if (formData.password && formData.password.trim().length > 0) {
@@ -588,19 +586,6 @@ export default function EditUserPage() {
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
-        </div>
-
-        {/* Phone Number */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Phone Number <span className="text-red-500">*</span>
-          </label>
-          <PhoneInput
-            value={formData.phone}
-            onChange={(value) => setFormData({...formData, phone: value})}
-            placeholder="Enter phone number"
-            className="w-full"
-          />
         </div>
 
         {/* New Password */}
@@ -807,12 +792,6 @@ export default function EditUserPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">Select the permissions for this user</p>
-            {/* Debug info - only render on client to avoid hydration mismatch */}
-            {typeof window !== 'undefined' && (
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                Current permission IDs: [{formData.permission_ids.join(', ')}] (Count: {formData.permission_ids.length})
-              </p>
-            )}
           </div>
           <div className="flex items-center gap-3">
             <button

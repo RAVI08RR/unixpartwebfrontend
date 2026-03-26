@@ -285,12 +285,6 @@ export default function AddUserPage() {
           return;
       }
 
-      // Validate phone number if provided
-      if (formData.phone && formData.phone.length < 10) {
-          error("Please enter a valid phone number");
-          return;
-      }
-
       const token = localStorage.getItem('access_token');
       if (!token) {
           error("Your session has expired or you are not logged in. Please log in again.");
@@ -306,13 +300,17 @@ export default function AddUserPage() {
               email: formData.email.trim().toLowerCase(),
               password: formData.password,
               user_code: formData.user_code.trim(),
-              phone: formData.phone?.trim() || null,
               role_id: parseInt(formData.role_id),
               status: true,
               branch_ids: formData.branch_ids || [],
               supplier_ids: formData.supplier_ids || [],
               permission_ids: formData.permission_ids || []
           };
+
+          // Only include phone if it exists and is not empty
+          if (formData.phone && formData.phone.trim() && formData.phone !== '+91') {
+              payload.phone = formData.phone.trim();
+          }
 
           // Final check for valid numeric IDs
           if (isNaN(payload.role_id)) {
@@ -449,19 +447,6 @@ export default function AddUserPage() {
               onChange={(e) => setFormData({...formData, email: e.target.value})}
             />
           </div>
-        </div>
-
-        {/* Phone Number */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Phone Number <span className="text-gray-400 font-normal">(Optional)</span>
-          </label>
-          <PhoneInput
-            value={formData.phone}
-            onChange={(value) => setFormData({...formData, phone: value})}
-            placeholder="Enter phone number"
-            className="w-full"
-          />
         </div>
 
         {/* Password */}
