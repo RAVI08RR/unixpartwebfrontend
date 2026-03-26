@@ -23,6 +23,10 @@ export default function EmployeesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [permissionAlert, setPermissionAlert] = useState({ isOpen: false, action: '', resource: '' });
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('personal');
+  const [employeeDetails, setEmployeeDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   
   const { success, error } = useToast();
   const { hasPermission } = usePermission();
@@ -100,6 +104,24 @@ export default function EmployeesPage() {
       return;
     }
     window.location.href = '/dashboard/management/employees/add';
+  };
+
+  const handleViewEmployee = async (employee) => {
+    setSelectedEmployee(employee);
+    setViewModalOpen(true);
+    setActiveTab('personal');
+    setLoadingDetails(true);
+    
+    try {
+      // Fetch additional details if needed
+      const details = await employeeService.getById(employee.id);
+      setEmployeeDetails(details);
+    } catch (err) {
+      console.error('Failed to fetch employee details:', err);
+      setEmployeeDetails(employee);
+    } finally {
+      setLoadingDetails(false);
+    }
   };
 
   if (loading) {
@@ -248,13 +270,13 @@ export default function EmployeesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/dashboard/management/employees/${employee.id}`}
+                      <button
+                        onClick={() => handleViewEmployee(employee)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      </Link>
+                      </button>
                       <Link
                         href={`/dashboard/management/employees/edit/${employee.id}`}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
@@ -262,16 +284,77 @@ export default function EmployeesPage() {
                       >
                         <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       </Link>
-                      <button
-                        onClick={() => {
-                          setSelectedEmployee(employee);
-                          setDeleteModalOpen(true);
-                        }}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-                      </button>
+                      
+                      {/* More Actions Dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                          title="More Actions"
+                        >
+                          <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                        </button>
+                        
+                        {menuOpenId === employee.id && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-10" 
+                              onClick={() => setMenuOpenId(null)}
+                            />
+                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 z-20">
+                              <div className="py-1">
+                                <Link
+                                  href={`/dashboard/management/employees/${employee.id}/position-history`}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                >
+                                  <Briefcase className="w-4 h-4" />
+                                  Position History
+                                </Link>
+                                <Link
+                                  href={`/dashboard/management/employees/${employee.id}/salary-history`}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                >
+                                  <DollarSign className="w-4 h-4" />
+                                  Salary History
+                                </Link>
+                                <Link
+                                  href={`/dashboard/management/employees/${employee.id}/visa-history`}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Visa History
+                                </Link>
+                                <Link
+                                  href={`/dashboard/management/employees/${employee.id}/documents`}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Documents
+                                </Link>
+                                <Link
+                                  href={`/dashboard/management/employees/${employee.id}/bank-details`}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                >
+                                  <CreditCard className="w-4 h-4" />
+                                  Bank Details
+                                </Link>
+                                <div className="border-t border-gray-200 dark:border-zinc-700 my-1"></div>
+                                <button
+                                  onClick={() => {
+                                    setSelectedEmployee(employee);
+                                    setDeleteModalOpen(true);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Employee
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>
