@@ -1,16 +1,12 @@
 import { NextResponse } from 'next/server';
 
-// GET /api/employees - Get all employees
-export async function GET(request) {
+export async function GET(request, { params }) {
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
   const authHeader = request.headers.get('authorization');
+  const { employee_id } = await params;
   
   try {
-    const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
-    const backendUrl = `${apiBaseUrl}/api/employees/?skip=${skip}&limit=${limit}`;
+    const backendUrl = `${apiBaseUrl}/api/employees/${employee_id}/bank-details`;
     
     const response = await fetch(backendUrl, {
       method: 'GET',
@@ -31,20 +27,20 @@ export async function GET(request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to fetch employees', detail: error.message },
+      { error: 'Failed to fetch bank details', detail: error.message },
       { status: 500 }
     );
   }
 }
 
-// POST /api/employees - Create employee
-export async function POST(request) {
+export async function POST(request, { params }) {
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
   const authHeader = request.headers.get('authorization');
+  const { employee_id } = await params;
   
   try {
     const body = await request.text();
-    const backendUrl = `${apiBaseUrl}/api/employees/`;
+    const backendUrl = `${apiBaseUrl}/api/employees/${employee_id}/bank-details`;
     
     const response = await fetch(backendUrl, {
       method: 'POST',
@@ -67,19 +63,8 @@ export async function POST(request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to create employee', detail: error.message },
+      { error: 'Failed to save bank details', detail: error.message },
       { status: 500 }
     );
   }
-}
-
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
 }

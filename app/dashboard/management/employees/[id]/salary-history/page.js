@@ -61,7 +61,14 @@ export default function SalaryHistoryPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-96">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-red-200 border-t-red-600 rounded-full animate-spin"></div>
+          <p className="text-gray-500 dark:text-gray-400">Loading salary history...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -86,7 +93,7 @@ export default function SalaryHistoryPage() {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add Salary Record
@@ -95,7 +102,7 @@ export default function SalaryHistoryPage() {
 
       {/* Current Salary Card */}
       {employee && (
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-red-500 to-rose-600 rounded-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">Current Salary</p>
@@ -123,8 +130,8 @@ export default function SalaryHistoryPage() {
                 key={salary.id}
                 className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg"
               >
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <DollarSign className="w-6 h-6 text-red-600 dark:text-red-400" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
@@ -137,7 +144,7 @@ export default function SalaryHistoryPage() {
                       </p>
                     </div>
                     {index === 0 && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 text-xs rounded-full">
                         Current
                       </span>
                     )}
@@ -221,7 +228,7 @@ export default function SalaryHistoryPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Add Salary
                 </button>

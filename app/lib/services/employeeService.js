@@ -147,12 +147,12 @@ export const employeeService = {
     }
   },
 
-  uploadDocument: async (employeeId, file, documentType, description) => {
+  uploadDocument: async (employeeId, file, documentType, documentName) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
       if (documentType) formData.append('document_type', documentType);
-      if (description) formData.append('description', description);
+      if (documentName) formData.append('document_name', documentName);
 
       const token = localStorage.getItem('access_token');
       if (!token) {
