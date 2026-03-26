@@ -4,8 +4,16 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.
 
 export async function PUT(request, { params }) {
   try {
-    const { leave_id } = params;
+    const { leave_id } = await params;
     const authHeader = request.headers.get('authorization');
+    
+    // Get request body if provided, otherwise send empty object
+    let body = {};
+    try {
+      body = await request.json();
+    } catch (e) {
+      // No body provided, use empty object
+    }
     
     const headers = {
       'Content-Type': 'application/json',
@@ -16,6 +24,7 @@ export async function PUT(request, { params }) {
     const response = await fetch(`${API_BASE_URL}/api/leaves/${leave_id}/approve`, {
       method: 'PUT',
       headers,
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();

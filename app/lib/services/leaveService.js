@@ -66,10 +66,11 @@ export const leaveService = {
   },
 
   // Approve leave
-  approve: async (id) => {
+  approve: async (id, notes = '') => {
     try {
       return await fetchApi(`/api/leaves/${id}/approve`, {
         method: 'PUT',
+        body: JSON.stringify({ notes }),
       });
     } catch (error) {
       throw new Error('Cannot approve leave: ' + error.message);
@@ -77,10 +78,11 @@ export const leaveService = {
   },
 
   // Reject leave
-  reject: async (id) => {
+  reject: async (id, notes = '') => {
     try {
       return await fetchApi(`/api/leaves/${id}/reject`, {
         method: 'PUT',
+        body: JSON.stringify({ notes }),
       });
     } catch (error) {
       throw new Error('Cannot reject leave: ' + error.message);
@@ -127,11 +129,6 @@ export const leaveService = {
   getById: async (id) => {
     try {
       const response = await fetchApi(`/api/leaves/${id}`);
-      
-      if (response?.data && typeof response.data === 'object') {
-        return response.data;
-      }
-      
       return response;
     } catch (error) {
       throw new Error(`Leave with ID ${id} not found: ${error.message}`);

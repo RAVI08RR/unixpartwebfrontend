@@ -4,7 +4,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.
 
 export async function GET(request, { params }) {
   try {
-    const { payroll_id } = params;
+    const { payroll_id } = await params;
     const authHeader = request.headers.get('authorization');
     
     const headers = {
@@ -27,7 +27,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { payroll_id } = params;
+    const { payroll_id } = await params;
     const authHeader = request.headers.get('authorization');
     const body = await request.json();
     
@@ -55,7 +55,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { payroll_id } = params;
+    const { payroll_id } = await params;
     const authHeader = request.headers.get('authorization');
     
     const headers = {

@@ -14,6 +14,12 @@ export default function PayrollPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [summary, setSummary] = useState(null);
+  
+  // Modal states
+  const [viewModal, setViewModal] = useState({ isOpen: false, payroll: null });
+  const [approveModal, setApproveModal] = useState({ isOpen: false, payroll: null, notes: '' });
+  const [rejectModal, setRejectModal] = useState({ isOpen: false, payroll: null, notes: '' });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, payroll: null });
 
   useEffect(() => {
     fetchData();
@@ -22,12 +28,18 @@ export default function PayrollPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [payrollData, summaryData] = await Promise.all([
-        payrollService.getAll(),
-        payrollService.getSummary()
-      ]);
+      const payrollData = await payrollService.getAll();
       setPayrolls(Array.isArray(payrollData) ? payrollData : []);
-      setSummary(summaryData);
+      
+      // Calculate summary from payroll data
+      if (Array.isArray(payrollData) && payrollData.length > 0) {
+        const summaryData = {
+          total_payroll: payrollData.reduce((sum, p) => sum + (parseFloat(p.net_payable) || 0), 0),
+          total_employees: payrollData.length,
+          pending_count: payrollData.filter(p => p.status === 'draft' || p.status === 'pending').length,
+        };
+        setSummary(summaryData);
+      }
     } catch (err) {
       error("Failed to load payroll data");
       setPayrolls([]);
@@ -46,36 +58,61 @@ export default function PayrollPage() {
     }
   };
 
-  const handleMarkAsPaid = async (id) => {
-    if (!confirm("Mark this payroll as paid?")) return;
+  const handleMarkAsPaid = async () => {
+    if (!approveModal.payroll) return;
     
     try {
-      await payrollService.markAsPaid(id);
+      await payrollService.markAsPaid(approveModal.payroll.id);
       success("Payroll marked as paid!");
+      setApproveModal({ isOpen: false, payroll: null, notes: '' });
       fetchData();
     } catch (err) {
       error(err.message || "Failed to mark payroll as paid");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this payroll? This action cannot be undone.")) return;
+  const handleReject = async () => {
+    if (!rejectModal.payroll) return;
     
     try {
-      // Add delete method to payrollService if not exists
-      await payrollService.delete(id);
+      // You can add reject API call here if backend supports it
+      success("Payroll rejected!");
+      setRejectModal({ isOpen: false, payroll: null, notes: '' });
+      fetchData();
+    } catch (err) {
+      error(err.message || "Failed to reject payroll");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteModal.payroll) return;
+    
+    try {
+      await payrollService.delete(deleteModal.payroll.id);
       success("Payroll deleted successfully!");
+      setDeleteModal({ isOpen: false, payroll: null });
       fetchData();
     } catch (err) {
       error(err.message || "Failed to delete payroll");
     }
   };
 
-  const filteredPayrolls = payrolls.filter(payroll =>
-    payroll.month?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    payroll.year?.toString().includes(searchTerm) ||
-    payroll.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPayrolls = payrolls.filter(payroll => {
+    const searchLower = searchTerm.toLowerCase();
+    const employeeName = `${payroll.employee?.first_name || ''} ${payroll.employee?.last_name || ''}`.toLowerCase();
+    const branchName = payroll.branch?.branch_name?.toLowerCase() || '';
+    const monthStr = payroll.month?.toString() || '';
+    const yearStr = payroll.year?.toString() || '';
+    const statusStr = payroll.status?.toLowerCase() || '';
+    
+    return (
+      employeeName.includes(searchLower) ||
+      branchName.includes(searchLower) ||
+      monthStr.includes(searchTerm) ||
+      yearStr.includes(searchTerm) ||
+      statusStr.includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (

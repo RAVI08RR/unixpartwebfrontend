@@ -22,12 +22,14 @@ export default function AttendancePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [attendanceData, pendingData] = await Promise.all([
-        attendanceService.getAll(),
-        attendanceService.getPendingApprovals()
-      ]);
+      const attendanceData = await attendanceService.getAll();
       setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
-      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
+      
+      // Calculate pending count from attendance data
+      const pending = Array.isArray(attendanceData) 
+        ? attendanceData.filter(a => a.status === 'pending' || !a.approved_by_supervisor).length 
+        : 0;
+      setPendingCount(pending);
     } catch (err) {
       error("Failed to load attendance data");
       setAttendance([]);
@@ -58,11 +60,17 @@ export default function AttendancePage() {
     }
   };
 
-  const filteredAttendance = attendance.filter(record =>
-    record.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.date?.includes(searchTerm) ||
-    record.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAttendance = attendance.filter(record => {
+    const employeeName = `${record.employee?.first_name || ''} ${record.employee?.last_name || ''}`.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    return (
+      employeeName.includes(searchLower) ||
+      record.date?.includes(searchTerm) ||
+      record.status?.toLowerCase().includes(searchLower) ||
+      record.notes?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
@@ -173,8 +181,9 @@ export default function AttendancePage() {
                   <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        {record.employee_name || 'N/A'}
+                        {record.employee ? `${record.employee.first_name} ${record.employee.last_name}` : 'N/A'}
                       </p>
+                      <p className="text-xs text-gray-500">ID: {record.employee_id}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm text-gray-600 dark:text-gray-400">

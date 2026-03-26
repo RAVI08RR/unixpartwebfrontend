@@ -70,11 +70,17 @@ export default function LeavesPage() {
     }
   };
 
-  const filteredLeaves = leaves.filter(leave =>
-    leave.employee_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    leave.leave_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    leave.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLeaves = leaves.filter(leave => {
+    const employeeName = `${leave.employee?.first_name || ''} ${leave.employee?.last_name || ''}`.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    return (
+      employeeName.includes(searchLower) ||
+      leave.leave_type?.toLowerCase().includes(searchLower) ||
+      leave.status?.toLowerCase().includes(searchLower) ||
+      leave.reason?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
@@ -198,8 +204,9 @@ export default function LeavesPage() {
                   <tr key={leave.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
                     <td className="px-6 py-4">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        {leave.employee_name || 'N/A'}
+                        {leave.employee ? `${leave.employee.first_name} ${leave.employee.last_name}` : 'N/A'}
                       </p>
+                      <p className="text-xs text-gray-500">ID: {leave.employee_id}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
