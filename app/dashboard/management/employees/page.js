@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   Search, Filter, Download, Plus, MoreVertical,
   UserCheck, Mail, Phone, Building2, Calendar,
-  Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X
+  Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X, DollarSign
 } from "lucide-react";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
