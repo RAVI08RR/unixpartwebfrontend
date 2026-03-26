@@ -5,7 +5,7 @@ import Link from "next/link";
 import { 
   Search, Filter, Download, Plus, MoreVertical,
   UserCheck, Mail, Phone, Building2, Calendar,
-  Edit, Trash2, Eye, FileText, CreditCard, Briefcase
+  Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X
 } from "lucide-react";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
@@ -422,6 +422,197 @@ export default function EmployeesPage() {
         action={permissionAlert.action}
         resource={permissionAlert.resource}
       />
+
+      {/* View Employee Modal */}
+      {viewModalOpen && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {selectedEmployee.first_name} {selectedEmployee.last_name}
+                </h3>
+                <p className="text-sm text-gray-500">{selectedEmployee.employee_id}</p>
+              </div>
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-zinc-800 px-6">
+              {['personal', 'visa', 'salary', 'contact'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+              {loadingDetails ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-gray-500">Loading...</div>
+                </div>
+              ) : (
+                <>
+                  {activeTab === 'personal' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500">First Name</label>
+                        <p className="text-sm font-medium">{selectedEmployee.first_name}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Last Name</label>
+                        <p className="text-sm font-medium">{selectedEmployee.last_name}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Nationality</label>
+                        <p className="text-sm font-medium">{selectedEmployee.nationality}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Passport Number</label>
+                        <p className="text-sm font-medium">{selectedEmployee.passport_number}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Passport Expiry</label>
+                        <p className="text-sm font-medium">{selectedEmployee.passport_expiry}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">EID Number</label>
+                        <p className="text-sm font-medium">{selectedEmployee.eid_number}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">EID Expiry</label>
+                        <p className="text-sm font-medium">{selectedEmployee.eid_expiry}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Status</label>
+                        <p className="text-sm font-medium capitalize">{selectedEmployee.status}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'visa' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500">Visa Number</label>
+                        <p className="text-sm font-medium">{selectedEmployee.visa_number}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Visa Expiry</label>
+                        <p className="text-sm font-medium">{selectedEmployee.visa_expiry}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Visa Status</label>
+                        <p className="text-sm font-medium">{selectedEmployee.visa_status}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Visa Type</label>
+                        <p className="text-sm font-medium capitalize">{selectedEmployee.visa_type}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Visa Position</label>
+                        <p className="text-sm font-medium">{selectedEmployee.visa_position}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Branch on Visa</label>
+                        <p className="text-sm font-medium">{selectedEmployee.branch_on_visa?.branch_name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'salary' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500">Starting Salary</label>
+                        <p className="text-sm font-medium">AED {selectedEmployee.starting_salary}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Current Salary</label>
+                        <p className="text-sm font-medium">AED {selectedEmployee.current_salary}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Actual Position</label>
+                        <p className="text-sm font-medium">{selectedEmployee.actual_position}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Position Start Date</label>
+                        <p className="text-sm font-medium">{selectedEmployee.position_start_date}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Annual Leave</label>
+                        <p className="text-sm font-medium">{selectedEmployee.annual_leave_entitlement} days</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Current Branch</label>
+                        <p className="text-sm font-medium">{selectedEmployee.current_branch?.branch_name}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'contact' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500">Mobile Number</label>
+                        <p className="text-sm font-medium">{selectedEmployee.mobile_number}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Emergency Contact</label>
+                        <p className="text-sm font-medium">{selectedEmployee.emergency_contact}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Personal Email</label>
+                        <p className="text-sm font-medium">{selectedEmployee.personal_email}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Work Email</label>
+                        <p className="text-sm font-medium">{selectedEmployee.work_email}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Insurance Policy</label>
+                        <p className="text-sm font-medium">{selectedEmployee.insurance_policy_number}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500">Insurance Expiry</label>
+                        <p className="text-sm font-medium">{selectedEmployee.insurance_expiry}</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+              <button
+                onClick={() => setViewModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700"
+              >
+                Close
+              </button>
+              <Link
+                href={`/dashboard/management/employees/edit/${selectedEmployee.id}`}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Edit Employee
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
