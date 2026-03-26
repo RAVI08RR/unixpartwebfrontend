@@ -76,7 +76,7 @@ export const attendanceService = {
     }
   },
 
-  // Get pending approvals
+  // Get pending approvals (deprecated - calculate from attendance data instead)
   getPendingApprovals: async () => {
     try {
       const response = await fetchApi('/api/attendance/pending-approval');
@@ -91,7 +91,8 @@ export const attendanceService = {
       
       return [];
     } catch (error) {
-      console.error("Pending approvals failed:", error.message);
+      console.warn('getPendingApprovals failed (deprecated method):', error.message);
+      // Return empty array instead of throwing error
       return [];
     }
   },

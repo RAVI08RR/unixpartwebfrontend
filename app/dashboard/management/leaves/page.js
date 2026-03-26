@@ -14,6 +14,12 @@ export default function LeavesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
+  
+  // Modal states
+  const [viewModal, setViewModal] = useState({ isOpen: false, leave: null });
+  const [approveModal, setApproveModal] = useState({ isOpen: false, leave: null, notes: '' });
+  const [rejectModal, setRejectModal] = useState({ isOpen: false, leave: null, notes: '' });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, leave: null });
 
   useEffect(() => {
     fetchData();
@@ -36,34 +42,39 @@ export default function LeavesPage() {
     }
   };
 
-  const handleApprove = async (id) => {
+  const handleApprove = async () => {
+    if (!approveModal.leave) return;
+    
     try {
-      await leaveService.approve(id);
+      await leaveService.approve(approveModal.leave.id, approveModal.notes);
       success("Leave approved successfully!");
+      setApproveModal({ isOpen: false, leave: null, notes: '' });
       fetchData();
     } catch (err) {
       error(err.message || "Failed to approve leave");
     }
   };
 
-  const handleReject = async (id) => {
-    if (!confirm("Are you sure you want to reject this leave request?")) return;
+  const handleReject = async () => {
+    if (!rejectModal.leave) return;
     
     try {
-      await leaveService.reject(id);
+      await leaveService.reject(rejectModal.leave.id, rejectModal.notes);
       success("Leave rejected!");
+      setRejectModal({ isOpen: false, leave: null, notes: '' });
       fetchData();
     } catch (err) {
       error(err.message || "Failed to reject leave");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this leave? This action cannot be undone.")) return;
+  const handleDelete = async () => {
+    if (!deleteModal.leave) return;
     
     try {
-      await leaveService.delete(id);
+      await leaveService.delete(deleteModal.leave.id);
       success("Leave deleted successfully!");
+      setDeleteModal({ isOpen: false, leave: null });
       fetchData();
     } catch (err) {
       error(err.message || "Failed to delete leave");
@@ -236,13 +247,13 @@ export default function LeavesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/management/leaves/${leave.id}`}
+                        <button
+                          onClick={() => setViewModal({ isOpen: true, leave })}
                           className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                        </Link>
+                        </button>
                         <Link
                           href={`/dashboard/management/leaves/edit/${leave.id}`}
                           className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
@@ -253,14 +264,14 @@ export default function LeavesPage() {
                         {leave.status === 'pending' && (
                           <>
                             <button
-                              onClick={() => handleApprove(leave.id)}
+                              onClick={() => setApproveModal({ isOpen: true, leave, notes: '' })}
                               className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
                               title="Approve"
                             >
                               <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
                             </button>
                             <button
-                              onClick={() => handleReject(leave.id)}
+                              onClick={() => setRejectModal({ isOpen: true, leave, notes: '' })}
                               className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
                               title="Reject"
                             >
@@ -269,7 +280,7 @@ export default function LeavesPage() {
                           </>
                         )}
                         <button
-                          onClick={() => handleDelete(leave.id)}
+                          onClick={() => setDeleteModal({ isOpen: true, leave })}
                           className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
                           title="Delete"
                         >
@@ -293,6 +304,218 @@ export default function LeavesPage() {
           </div>
         )}
       </div>
+
+      {/* View Modal */}
+      {viewModal.isOpen && viewModal.leave && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-2xl w-full border border-gray-200 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Leave Details</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Employee</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">
+                    {viewModal.leave.employee ? `${viewModal.leave.employee.first_name} ${viewModal.leave.employee.last_name}` : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Employee ID</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.employee_id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Leave Type</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.leave_type}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Status</p>
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold mt-1 ${
+                    viewModal.leave.status === 'approved'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      : viewModal.leave.status === 'rejected'
+                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                  }`}>
+                    {viewModal.leave.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Start Date</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.start_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">End Date</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.end_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Total Days</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.total_days || 0}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Created At</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.created_at}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Reason</p>
+                <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.reason || 'N/A'}</p>
+              </div>
+              {viewModal.leave.approval_date && (
+                <div>
+                  <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Approval Date</p>
+                  <p className="text-sm text-gray-900 dark:text-white mt-1">{viewModal.leave.approval_date}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setViewModal({ isOpen: false, leave: null })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Modal */}
+      {approveModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Approve Leave</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to approve this leave request?
+              </p>
+              {approveModal.leave && (
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 space-y-2">
+                  <p className="text-sm"><span className="font-bold">Employee:</span> {approveModal.leave.employee ? `${approveModal.leave.employee.first_name} ${approveModal.leave.employee.last_name}` : 'N/A'}</p>
+                  <p className="text-sm"><span className="font-bold">Type:</span> {approveModal.leave.leave_type}</p>
+                  <p className="text-sm"><span className="font-bold">Period:</span> {approveModal.leave.start_date} to {approveModal.leave.end_date}</p>
+                  <p className="text-sm"><span className="font-bold">Days:</span> {approveModal.leave.total_days || 0}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={approveModal.notes}
+                  onChange={(e) => setApproveModal({ ...approveModal, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  rows="3"
+                  placeholder="Add approval notes..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setApproveModal({ isOpen: false, leave: null, notes: '' })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApprove}
+                className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              >
+                Approve Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Modal */}
+      {rejectModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Reject Leave</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to reject this leave request?
+              </p>
+              {rejectModal.leave && (
+                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2">
+                  <p className="text-sm"><span className="font-bold">Employee:</span> {rejectModal.leave.employee ? `${rejectModal.leave.employee.first_name} ${rejectModal.leave.employee.last_name}` : 'N/A'}</p>
+                  <p className="text-sm"><span className="font-bold">Type:</span> {rejectModal.leave.leave_type}</p>
+                  <p className="text-sm"><span className="font-bold">Period:</span> {rejectModal.leave.start_date} to {rejectModal.leave.end_date}</p>
+                  <p className="text-sm"><span className="font-bold">Days:</span> {rejectModal.leave.total_days || 0}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Rejection Reason (Optional)
+                </label>
+                <textarea
+                  value={rejectModal.notes}
+                  onChange={(e) => setRejectModal({ ...rejectModal, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows="3"
+                  placeholder="Explain why this leave is being rejected..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setRejectModal({ isOpen: false, leave: null, notes: '' })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReject}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Reject Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Leave</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete this leave? This action cannot be undone.
+              </p>
+              {deleteModal.leave && (
+                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2">
+                  <p className="text-sm"><span className="font-bold">Employee:</span> {deleteModal.leave.employee ? `${deleteModal.leave.employee.first_name} ${deleteModal.leave.employee.last_name}` : 'N/A'}</p>
+                  <p className="text-sm"><span className="font-bold">Type:</span> {deleteModal.leave.leave_type}</p>
+                  <p className="text-sm"><span className="font-bold">Period:</span> {deleteModal.leave.start_date} to {deleteModal.leave.end_date}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, leave: null })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

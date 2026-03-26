@@ -267,7 +267,7 @@ export default function PayrollPage() {
                         )}
                         {payroll.status === 'calculated' && (
                           <button
-                            onClick={() => handleMarkAsPaid(payroll.id)}
+                            onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
                             className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
                             title="Mark as Paid"
                           >
@@ -275,7 +275,7 @@ export default function PayrollPage() {
                           </button>
                         )}
                         <button
-                          onClick={() => handleDelete(payroll.id)}
+                          onClick={() => setDeleteModal({ isOpen: true, payroll })}
                           className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
                           title="Delete"
                         >
@@ -308,6 +308,90 @@ export default function PayrollPage() {
           </div>
         )}
       </div>
+
+      {/* Approve Modal */}
+      {approveModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Mark as Paid</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to mark this payroll as paid?
+              </p>
+              {approveModal.payroll && (
+                <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-2">
+                  <p className="text-sm"><span className="font-bold">Period:</span> {approveModal.payroll.month} {approveModal.payroll.year}</p>
+                  <p className="text-sm"><span className="font-bold">Amount:</span> AED {approveModal.payroll.total_amount}</p>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Notes (Optional)
+                </label>
+                <textarea
+                  value={approveModal.notes}
+                  onChange={(e) => setApproveModal({ ...approveModal, notes: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  rows="3"
+                  placeholder="Add any notes..."
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setApproveModal({ isOpen: false, payroll: null, notes: '' })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleMarkAsPaid}
+                className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {deleteModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Payroll</h3>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Are you sure you want to delete this payroll? This action cannot be undone.
+              </p>
+              {deleteModal.payroll && (
+                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2">
+                  <p className="text-sm"><span className="font-bold">Period:</span> {deleteModal.payroll.month} {deleteModal.payroll.year}</p>
+                  <p className="text-sm"><span className="font-bold">Amount:</span> AED {deleteModal.payroll.total_amount}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, payroll: null })}
+                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete Payroll
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
