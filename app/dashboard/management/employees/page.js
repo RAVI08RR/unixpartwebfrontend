@@ -37,7 +37,8 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
       const data = await employeeService.getAll(0, 100);
-      setEmployees(Array.isArray(data) ? data : data?.items || []);
+      // API returns array directly
+      setEmployees(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch employees:', err);
       error('Failed to load employees');
@@ -50,7 +51,8 @@ export default function EmployeesPage() {
   // Filter employees
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
-      const searchTarget = `${emp.full_name || emp.name || ''} ${emp.email || ''} ${emp.employee_code || ''}`.toLowerCase();
+      const fullName = `${emp.first_name || ''} ${emp.last_name || ''}`.trim();
+      const searchTarget = `${fullName} ${emp.work_email || ''} ${emp.employee_id || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || emp.status === statusFilter;
       return matchesSearch && matchesStatus;
@@ -170,7 +172,10 @@ export default function EmployeesPage() {
                   Position
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Department
+                  Branch
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Visa Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
@@ -181,7 +186,9 @@ export default function EmployeesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-              {paginatedEmployees.map((employee) => (
+              {paginatedEmployees.map((employee) => {
+                const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
+                return (
                 <tr key={employee.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
@@ -190,27 +197,45 @@ export default function EmployeesPage() {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900 dark:text-white">
-                          {employee.full_name || employee.name || 'N/A'}
+                          {fullName || 'N/A'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {employee.employee_code || 'No code'}
+                          {employee.employee_id || 'No ID'}
                         </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900 dark:text-white">
-                      {employee.email || 'N/A'}
+                      {employee.work_email || employee.personal_email || 'N/A'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {employee.phone || 'N/A'}
+                      {employee.mobile_number || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {employee.position || 'N/A'}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {employee.actual_position || 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Visa: {employee.visa_position || 'N/A'}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                    {employee.department || 'N/A'}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {employee.current_branch?.branch_name || 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {employee.current_branch?.branch_code || ''}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {employee.visa_status || 'N/A'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {employee.visa_type || 'N/A'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
@@ -226,12 +251,14 @@ export default function EmployeesPage() {
                       <Link
                         href={`/dashboard/management/employees/${employee.id}`}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                        title="View Details"
                       >
                         <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       </Link>
                       <Link
                         href={`/dashboard/management/employees/edit/${employee.id}`}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                        title="Edit"
                       >
                         <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                       </Link>
@@ -241,13 +268,14 @@ export default function EmployeesPage() {
                           setDeleteModalOpen(true);
                         }}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
@@ -284,7 +312,7 @@ export default function EmployeesPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Delete Employee</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Are you sure you want to delete {selectedEmployee?.full_name || selectedEmployee?.name}? This action cannot be undone.
+              Are you sure you want to delete {selectedEmployee?.first_name} {selectedEmployee?.last_name}? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
