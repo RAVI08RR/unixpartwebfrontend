@@ -5,24 +5,9 @@ export const employeeService = {
   getAll: async (skip = 0, limit = 100) => {
     try {
       const response = await fetchApi(`/api/employees?skip=${skip}&limit=${limit}`);
-      
-      // Handle nested data structure from API: { success: true, message: "...", data: [...] }
-      if (response?.data && Array.isArray(response.data)) {
-        return response.data;
-      }
-      
-      // Fallback for other response formats
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      if (response?.employees && Array.isArray(response.employees)) {
-        return response.employees;
-      }
-      
-      return [];
+      return response;
     } catch (error) {
-      console.error("Employees API failed:", error.message);
+      console.error('Failed to fetch employees:', error);
       throw error;
     }
   },
@@ -31,139 +16,149 @@ export const employeeService = {
   getById: async (id) => {
     try {
       const response = await fetchApi(`/api/employees/${id}`);
-      
-      // Handle nested data structure: { success: true, message: "...", data: {...} }
-      if (response?.data && typeof response.data === 'object') {
-        return response.data;
-      }
-      
-      // Direct response
       return response;
     } catch (error) {
-      throw new Error(`Employee with ID ${id} not found: ${error.message}`);
+      console.error(`Failed to fetch employee ${id}:`, error);
+      throw error;
     }
   },
 
   // Create new employee
   create: async (employeeData) => {
     try {
-      return await fetchApi('/api/employees', {
+      const response = await fetchApi('/api/employees', {
         method: 'POST',
         body: JSON.stringify(employeeData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot create employee: ' + error.message);
+      console.error('Failed to create employee:', error);
+      throw error;
     }
   },
 
   // Update employee
   update: async (id, employeeData) => {
     try {
-      return await fetchApi(`/api/employees/${id}`, {
+      const response = await fetchApi(`/api/employees/${id}`, {
         method: 'PUT',
         body: JSON.stringify(employeeData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot update employee: ' + error.message);
+      console.error(`Failed to update employee ${id}:`, error);
+      throw error;
     }
   },
 
   // Delete employee
   delete: async (id) => {
     try {
-      return await fetchApi(`/api/employees/${id}`, {
+      const response = await fetchApi(`/api/employees/${id}`, {
         method: 'DELETE',
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot delete employee: ' + error.message);
+      console.error(`Failed to delete employee ${id}:`, error);
+      throw error;
     }
   },
 
-  // Get position history
-  getPositionHistory: async (id) => {
+  // Position History
+  getPositionHistory: async (employeeId) => {
     try {
-      const data = await fetchApi(`/api/employees/${id}/position-history`);
-      return Array.isArray(data) ? data : [];
+      const response = await fetchApi(`/api/employees/${employeeId}/position-history`);
+      return response;
     } catch (error) {
-      return [];
+      console.error(`Failed to fetch position history for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Add position
-  addPosition: async (id, positionData) => {
+  addPosition: async (employeeId, positionData) => {
     try {
-      return await fetchApi(`/api/employees/${id}/position`, {
+      const response = await fetchApi(`/api/employees/${employeeId}/position`, {
         method: 'POST',
         body: JSON.stringify(positionData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot add position: ' + error.message);
+      console.error(`Failed to add position for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Get salary history
-  getSalaryHistory: async (id) => {
+  // Salary History
+  getSalaryHistory: async (employeeId) => {
     try {
-      const data = await fetchApi(`/api/employees/${id}/salary-history`);
-      return Array.isArray(data) ? data : [];
+      const response = await fetchApi(`/api/employees/${employeeId}/salary-history`);
+      return response;
     } catch (error) {
-      return [];
+      console.error(`Failed to fetch salary history for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Add salary
-  addSalary: async (id, salaryData) => {
+  addSalary: async (employeeId, salaryData) => {
     try {
-      return await fetchApi(`/api/employees/${id}/salary`, {
+      const response = await fetchApi(`/api/employees/${employeeId}/salary`, {
         method: 'POST',
         body: JSON.stringify(salaryData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot add salary: ' + error.message);
+      console.error(`Failed to add salary for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Get visa history
-  getVisaHistory: async (id) => {
+  // Visa History
+  getVisaHistory: async (employeeId) => {
     try {
-      const data = await fetchApi(`/api/employees/${id}/visa-history`);
-      return Array.isArray(data) ? data : [];
+      const response = await fetchApi(`/api/employees/${employeeId}/visa-history`);
+      return response;
     } catch (error) {
-      return [];
+      console.error(`Failed to fetch visa history for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Add visa
-  addVisa: async (id, visaData) => {
+  addVisa: async (employeeId, visaData) => {
     try {
-      return await fetchApi(`/api/employees/${id}/visa`, {
+      const response = await fetchApi(`/api/employees/${employeeId}/visa`, {
         method: 'POST',
         body: JSON.stringify(visaData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot add visa: ' + error.message);
+      console.error(`Failed to add visa for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Get documents
-  getDocuments: async (id) => {
+  // Documents
+  getDocuments: async (employeeId) => {
     try {
-      const data = await fetchApi(`/api/employees/${id}/documents`);
-      return Array.isArray(data) ? data : [];
+      const response = await fetchApi(`/api/employees/${employeeId}/documents`);
+      return response;
     } catch (error) {
-      return [];
+      console.error(`Failed to fetch documents for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Upload document
-  uploadDocument: async (employeeId, file, documentName) => {
+  uploadDocument: async (employeeId, file, documentType, description) => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('document_name', documentName);
+      if (documentType) formData.append('document_type', documentType);
+      if (description) formData.append('description', description);
 
       const token = localStorage.getItem('access_token');
-      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/employees/${employeeId}/documents/upload`, {
         method: 'POST',
         headers: {
@@ -174,93 +169,82 @@ export const employeeService = {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Upload failed');
+        throw new Error(errorText || 'Failed to upload document');
       }
-      
-      const responseText = await response.text();
-      try {
-        return JSON.parse(responseText);
-      } catch {
-        return responseText;
-      }
+
+      return await response.json();
     } catch (error) {
-      throw new Error('Cannot upload document: ' + error.message);
+      console.error(`Failed to upload document for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 
-  // Delete document
-  deleteDocument: async (documentId) => {
-    try {
-      return await fetchApi(`/api/employees/documents/${documentId}`, {
-        method: 'DELETE',
-      });
-    } catch (error) {
-      throw new Error('Cannot delete document: ' + error.message);
-    }
-  },
-
-  // Download document
   downloadDocument: async (employeeId, documentId) => {
     try {
       const token = localStorage.getItem('access_token');
-      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`/api/employees/${employeeId}/documents/${documentId}/download`, {
+        method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error(`Download failed with status ${response.status}`);
+        throw new Error('Failed to download document');
       }
 
       const blob = await response.blob();
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'document';
-      
-      if (contentDisposition) {
-        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
-        if (matches != null && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '');
-        }
-      }
-
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = `document_${documentId}`;
       document.body.appendChild(a);
       a.click();
-      
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 100);
-      
-      return true;
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
-      throw new Error(error.message || 'Failed to download document');
+      console.error(`Failed to download document ${documentId}:`, error);
+      throw error;
     }
   },
 
-  // Get bank details
-  getBankDetails: async (id) => {
+  deleteDocument: async (documentId) => {
     try {
-      return await fetchApi(`/api/employees/${id}/bank-details`);
+      const response = await fetchApi(`/api/employees/documents/${documentId}`, {
+        method: 'DELETE',
+      });
+      return response;
     } catch (error) {
-      return null;
+      console.error(`Failed to delete document ${documentId}:`, error);
+      throw error;
     }
   },
 
-  // Create or update bank details
-  saveBankDetails: async (id, bankData) => {
+  // Bank Details
+  getBankDetails: async (employeeId) => {
     try {
-      return await fetchApi(`/api/employees/${id}/bank-details`, {
+      const response = await fetchApi(`/api/employees/${employeeId}/bank-details`);
+      return response;
+    } catch (error) {
+      console.error(`Failed to fetch bank details for employee ${employeeId}:`, error);
+      throw error;
+    }
+  },
+
+  createOrUpdateBankDetails: async (employeeId, bankData) => {
+    try {
+      const response = await fetchApi(`/api/employees/${employeeId}/bank-details`, {
         method: 'POST',
         body: JSON.stringify(bankData),
       });
+      return response;
     } catch (error) {
-      throw new Error('Cannot save bank details: ' + error.message);
+      console.error(`Failed to save bank details for employee ${employeeId}:`, error);
+      throw error;
     }
   },
 };
