@@ -119,6 +119,7 @@ export default function EditUserPage() {
             const numId = typeof id === 'number' ? id : parseInt(id, 10);
             return numId;
           }).filter(id => !isNaN(id));
+          console.log('✅ User permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
         }
         
         console.log('✅ User permission IDs extracted:', userPermissionIds);
@@ -132,6 +133,7 @@ export default function EditUserPage() {
         
         // Set role permissions for display (to show "(Role)" label)
         setRolePermissions(rolePermissionsList);
+        console.log('✅ Setting rolePermissions state with', rolePermissionsList.length, 'permissions');
         
         // Set form data with user's actual permissions
         setFormData({
@@ -785,7 +787,13 @@ export default function EditUserPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Select the permissions for this user</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Select the permissions for this user
+              <span className="ml-2 text-xs">
+                <span className="text-blue-600 dark:text-blue-400 font-medium">(Role)</span> = From role, 
+                <span className="ml-1 text-green-600 dark:text-green-400 font-medium">(Custom)</span> = User-specific
+              </span>
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <button
