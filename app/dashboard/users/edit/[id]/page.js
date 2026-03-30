@@ -104,9 +104,11 @@ export default function EditUserPage() {
       setUserLoading(true);
       try {
         const userData = await userService.getById(userId);
-        console.log('📥 RAW USER DATA:', userData);
+        console.log('📥 RAW USER DATA:', JSON.stringify(userData, null, 2));
         console.log('📥 User role:', userData.role);
+        console.log('📥 User role.permissions:', userData.role?.permissions);
         console.log('📥 User permissions:', userData.permissions);
+        console.log('📥 User permission_ids:', userData.permission_ids);
         
         const roleId = userData.role_id || userData.role?.id;
         console.log('📥 Extracted role_id:', roleId, 'Type:', typeof roleId);
@@ -457,14 +459,17 @@ export default function EditUserPage() {
           console.log("🚀 UPDATING USER:", {
             userId,
             token: !!token,
-            payload,
+            payload: JSON.stringify(payload, null, 2),
             selectedPermissions: formData.permission_ids.length,
+            permissionIds: formData.permission_ids,
             hasNewProfileImage: !!profileImage,
             hasPasswordUpdate: !!payload.password
           });
 
           const result = await userService.update(userId, payload);
           console.log("✅ User update successful:", result);
+          console.log("✅ Updated user permissions in response:", result.permissions);
+          console.log("✅ Updated user permission_ids in response:", result.permission_ids);
           
           // Upload new profile image if provided
           if (profileImage) {
