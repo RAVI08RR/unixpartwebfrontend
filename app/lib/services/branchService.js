@@ -18,12 +18,17 @@ export const branchService = {
       const data = await fetchApi('/api/dropdown/branches');
       return Array.isArray(data) ? data : [];
     } catch (error) {
+      // Silently handle permission errors (403) - these are expected when user lacks permissions
+      if (error.message.includes('Not authorized') || error.message.includes('403')) {
+        console.log("ℹ️ Branches dropdown: Using fallback data (permission restricted)");
+        return [];
+      }
       console.error("🏢 Branches Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
         return await branchService.getAll(0, 100);
       } catch (fallbackError) {
-        console.error("🏢 Branches fallback also failed:", fallbackError.message);
+        console.log("ℹ️ Branches fallback: Using empty array (permission restricted)");
         return [];
       }
     }

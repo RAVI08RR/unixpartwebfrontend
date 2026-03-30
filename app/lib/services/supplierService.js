@@ -32,12 +32,17 @@ export const supplierService = {
       const data = await fetchApi('/api/dropdown/suppliers');
       return Array.isArray(data) ? data : [];
     } catch (error) {
+      // Silently handle permission errors (403) - these are expected when user lacks permissions
+      if (error.message.includes('Not authorized') || error.message.includes('403')) {
+        console.log("ℹ️ Suppliers dropdown: Using fallback data (permission restricted)");
+        return [];
+      }
       console.error("🏭 Suppliers Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
         return await supplierService.getAll(0, 100);
       } catch (fallbackError) {
-        console.error("🏭 Suppliers fallback also failed:", fallbackError.message);
+        console.log("ℹ️ Suppliers fallback: Using empty array (permission restricted)");
         return [];
       }
     }

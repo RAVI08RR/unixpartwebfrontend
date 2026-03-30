@@ -230,12 +230,22 @@ export default function EditUserPage() {
             return null;
           }),
           branchService.getDropdown().catch(err => {
-            console.error('Branches API failed (permission issue - using fallback):', err);
-            return null;
+            // Silently handle permission errors
+            if (err.message.includes('Not authorized') || err.message.includes('403')) {
+              console.log('ℹ️ Branches: Permission restricted, using empty array');
+            } else {
+              console.error('Branches API failed:', err);
+            }
+            return [];
           }),
           supplierService.getDropdown().catch(err => {
-            console.error('Suppliers API failed (permission issue - using fallback):', err);
-            return null;
+            // Silently handle permission errors
+            if (err.message.includes('Not authorized') || err.message.includes('403')) {
+              console.log('ℹ️ Suppliers: Permission restricted, using empty array');
+            } else {
+              console.error('Suppliers API failed:', err);
+            }
+            return [];
           })
         ]);
         
@@ -258,43 +268,32 @@ export default function EditUserPage() {
           ]);
         }
         
-        // Set branches data or fallback (permission errors are handled gracefully)
+        // Set branches data (empty array if no permission)
         if (branchesData && branchesData.length > 0) {
           setBranches(branchesData);
           setBranchesError(null);
           console.log('✅ Branches set:', branchesData);
         } else {
-          console.log('❌ No branches data, using fallback');
-          setBranches([
-            { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
-            { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" },
-            { id: 3, branch_name: "Branch 2 - Sharjah", branch_code: "SHJ" },
-            { id: 4, branch_name: "Branch 3 - Ajman", branch_code: "AJM" }
-          ]);
-          setBranchesError(null); // Clear error since we have fallback data
+          setBranches([]);
+          setBranchesError(null);
+          console.log('ℹ️ No branches available (may be permission restricted)');
         }
         
-        // Set suppliers data or fallback (permission errors are handled gracefully)
+        // Set suppliers data (empty array if no permission)
         if (suppliersData && suppliersData.length > 0) {
           setSuppliers(suppliersData);
           setSuppliersError(null);
           console.log('✅ Suppliers set:', suppliersData);
         } else {
-          console.log('❌ No suppliers data, using fallback');
-          setSuppliers([
-            { id: 1, name: "Global Parts Inc.", supplier_code: "SUP-001", type: "Owner", contact_person: "John Doe" },
-            { id: 2, name: "Auto Parts Rental LLC", supplier_code: "SUP-002", type: "Rental", contact_person: "Jane Smith" },
-            { id: 3, name: "Premium Auto Supply", supplier_code: "SUP-003", type: "Wholesale", contact_person: "Mike Johnson" },
-            { id: 4, name: "Dubai Motors Trading", supplier_code: "SUP-004", type: "Retail", contact_person: "Sarah Ahmed" }
-          ]);
-          setSuppliersError(null); // Clear error since we have fallback data
+          setSuppliers([]);
+          setSuppliersError(null);
+          console.log('ℹ️ No suppliers available (may be permission restricted)');
         }
         
       } catch (err) {
         console.error("❌ Failed to fetch data:", err);
         
-        // Don't redirect on permission errors, just use fallback data
-        // For other errors, still provide fallback data
+        // For errors, still provide fallback data
         setRoles([
           { id: 1, name: "Administrator" },
           { id: 2, name: "Manager" },
@@ -303,20 +302,10 @@ export default function EditUserPage() {
           { id: 5, name: "Accountant" }
         ]);
         
-        setBranches([
-          { id: 1, branch_name: "Main Warehouse - Dubai", branch_code: "DXB" },
-          { id: 2, branch_name: "Branch 1 - Abu Dhabi", branch_code: "AUH" },
-          { id: 3, branch_name: "Branch 2 - Sharjah", branch_code: "SHJ" },
-          { id: 4, branch_name: "Branch 3 - Ajman", branch_code: "AJM" }
-        ]);
+        setBranches([]);
         setBranchesError(null);
         
-        setSuppliers([
-          { id: 1, name: "Global Parts Inc.", supplier_code: "SUP-001", type: "Owner", contact_person: "John Doe" },
-          { id: 2, name: "Auto Parts Rental LLC", supplier_code: "SUP-002", type: "Rental", contact_person: "Jane Smith" },
-          { id: 3, name: "Premium Auto Supply", supplier_code: "SUP-003", type: "Wholesale", contact_person: "Mike Johnson" },
-          { id: 4, name: "Dubai Motors Trading", supplier_code: "SUP-004", type: "Retail", contact_person: "Sarah Ahmed" }
-        ]);
+        setSuppliers([]);
         setSuppliersError(null);
       } finally {
         setBranchesLoading(false);
