@@ -302,14 +302,22 @@ export default function AddUserPage() {
               user_code: formData.user_code.trim(),
               role_id: parseInt(formData.role_id),
               status: true,
-              branch_ids: formData.branch_ids || [],
-              supplier_ids: formData.supplier_ids || [],
               permission_ids: formData.permission_ids || []
           };
 
           // Only include phone if it exists and is not empty
           if (formData.phone && formData.phone.trim() && formData.phone !== '+91') {
               payload.phone = formData.phone.trim();
+          }
+
+          // Only include branch_ids if branches are selected
+          if (formData.branch_ids && formData.branch_ids.length > 0) {
+              payload.branch_ids = formData.branch_ids;
+          }
+
+          // Only include supplier_ids if suppliers are selected
+          if (formData.supplier_ids && formData.supplier_ids.length > 0) {
+              payload.supplier_ids = formData.supplier_ids;
           }
 
           // Final check for valid numeric IDs

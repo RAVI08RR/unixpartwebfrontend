@@ -189,12 +189,10 @@ export default function AddSupplierPage() {
               value={formData.type}
               onChange={(e) => setFormData({...formData, type: e.target.value})}
             >
-              <option value="Wholesale">Wholesale</option>
-              <option value="Retail">Retail</option>
-              <option value="Manufacturer">Manufacturer</option>
-              <option value="Distributor">Distributor</option>
-              <option value="Owner">Owner</option>
-              <option value="Rental">Rental</option>
+           
+           
+              <option value="OWNER">Owner</option>
+              <option value="RENTAL">Rental</option>
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
