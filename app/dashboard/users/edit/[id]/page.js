@@ -829,65 +829,54 @@ export default function EditUserPage() {
             <div className="text-gray-500">No permissions available</div>
           </div>
         ) : (
-          <>
-            {/* Debug info - remove after testing */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs">
-                <div>Selected IDs: [{formData.permission_ids.join(', ')}]</div>
-                <div>Role Permission IDs: [{rolePermissions.map(rp => rp.id).join(', ')}]</div>
-                <div>Total Modules: {Object.keys(groupedPermissions).length}</div>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
-                <div key={module} className="space-y-3">
-                  {/* Module Header */}
-                  <div className="pb-2 border-b border-gray-200 dark:border-zinc-700">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{module}</h4>
-                  </div>
-
-                  {/* Module Permissions */}
-                  <div className="space-y-2">
-                    {modulePermissions.map((permission) => {
-                      const isSelected = formData.permission_ids.includes(permission.id);
-                      const isRolePermission = rolePermissions.some(rp => rp.id === permission.id);
-                      const isUserOnlyPermission = isSelected && !isRolePermission;
-                      
-                      return (
-                        <label
-                          key={permission.id}
-                          className="flex items-center gap-2 cursor-pointer group"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handlePermissionToggle(permission.id)}
-                            className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-sm font-medium transition-colors ${
-                              isSelected
-                                ? 'text-black dark:text-white' 
-                                : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
-                            }`}>
-                              {permission.name}
-                              {isRolePermission && (
-                                <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">(Role)</span>
-                              )}
-                              {isUserOnlyPermission && (
-                                <span className="ml-1 text-xs text-green-600 dark:text-green-400 font-medium">(Custom)</span>
-                              )}
-                            </div>
-                          </div>
-                        </label>
-                      );
-                    })}
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
+              <div key={module} className="space-y-3">
+                {/* Module Header */}
+                <div className="pb-2 border-b border-gray-200 dark:border-zinc-700">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{module}</h4>
                 </div>
-              ))}
-            </div>
-          </>
+
+                {/* Module Permissions */}
+                <div className="space-y-2">
+                  {modulePermissions.map((permission) => {
+                    const isSelected = formData.permission_ids.includes(permission.id);
+                    const isRolePermission = rolePermissions.some(rp => rp.id === permission.id);
+                    const isUserOnlyPermission = isSelected && !isRolePermission;
+                    
+                    return (
+                      <label
+                        key={permission.id}
+                        className="flex items-center gap-2 cursor-pointer group"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handlePermissionToggle(permission.id)}
+                          className="w-4 h-4 bg-gray-100 border-gray-300 rounded focus:ring-2 focus:ring-black dark:focus:ring-white dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600 checkbox-black"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-sm font-medium transition-colors ${
+                            isSelected
+                              ? 'text-black dark:text-white' 
+                              : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
+                          }`}>
+                            {permission.name}
+                            {isRolePermission && (
+                              <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">(Role)</span>
+                            )}
+                            {isUserOnlyPermission && (
+                              <span className="ml-1 text-xs text-green-600 dark:text-green-400 font-medium">(Custom)</span>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Selected Permissions Summary */}
