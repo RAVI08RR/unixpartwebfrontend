@@ -170,13 +170,23 @@ export default function SupplierManagementPage() {
 
       if (confirmed) {
           try {
+              console.log("🗑️ Deleting supplier with ID:", id);
               await supplierService.delete(id);
-              mutate();
+              console.log("✅ Supplier deleted successfully");
+              mutate(); // Refresh the list
+              setMenuOpenId(null); // Close the menu
               success("Supplier deleted successfully!");
           } catch (err) {
-              console.error("Failed to delete supplier", err);
-              error("Failed to delete supplier");
+              console.error("❌ Failed to delete supplier:", err);
+              console.error("❌ Error details:", {
+                message: err.message,
+                stack: err.stack
+              });
+              error(`Failed to delete supplier: ${err.message}`);
           }
+      } else {
+          console.log("ℹ️ Supplier deletion cancelled by user");
+          setMenuOpenId(null); // Close the menu even if cancelled
       }
   }
 
