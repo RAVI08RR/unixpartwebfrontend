@@ -201,8 +201,6 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   // Declare variables at the top level so they're accessible in catch block
   let userId;
-  let body = '';
-  let userData = {};
   
   try {
     // In Next.js 15+, params is a Promise that needs to be awaited
@@ -250,34 +248,42 @@ export async function PUT(request, { params }) {
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
+    const contentType = request.headers.get('content-type');
     
-    // Get request body
-    body = await request.text();
-    
-    // Parse the body to get user data for fallback
-    try {
-      userData = JSON.parse(body);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
+    // Get request body (as FormData or text depending on content-type)
+    let body;
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Forward FormData as-is
+      body = await request.formData();
+      console.log('Update user proxy - Received FormData');
+    } else {
+      // Handle JSON
+      body = await request.text();
+      console.log('Update user proxy - Received JSON, body length:', body.length);
     }
     
     console.log('Update user proxy - User ID:', userId);
     console.log('Update user proxy - API Base URL:', apiBaseUrl);
     console.log('Update user proxy - Auth header present:', !!authHeader);
-    console.log('Update user proxy - Request body length:', body.length);
+    console.log('Update user proxy - Content-Type:', contentType);
     
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/users/${userId}`;
     console.log('Update user proxy - Backend URL:', backendUrl);
     
     const headers = {
-      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
+    }
+    
+    // Don't set Content-Type for FormData - fetch will set it with boundary
+    if (contentType && !contentType.includes('multipart/form-data')) {
+      headers['Content-Type'] = contentType;
+    }
     }
     
     const response = await fetch(backendUrl, {
@@ -319,41 +325,17 @@ export async function PUT(request, { params }) {
     
   } catch (error) {
     console.error('Update user proxy error:', error);
-    console.log('✏️ Update user API failed, using fallback response:', error.message);
+    console.log('✏️ Update user API failed:', error.message);
     
-    // Return fallback updated user data when backend is unavailable
-    const fallbackUpdatedUser = {
-      id: userId,
-      username: userData.username || userData.user_code || `user_${userId}`,
-      email: userData.email || `user${userId}@company.com`,
-      full_name: userData.full_name || userData.name || `User ${userId}`,
-      phone: userData.phone || `+1-555-000${userId}`,
-      is_active: userData.is_active !== undefined ? userData.is_active : (userData.status !== undefined ? userData.status : true),
-      role_id: userData.role_id || 1,
-      role: {
-        id: userData.role_id || 1,
-        name: "Administrator",
-        slug: "administrator",
-        description: "Full system access"
-      },
-      branch_ids: userData.branch_ids || [1],
-      branches: [
-        { id: 1, branch_name: "Main Branch", branch_code: "MB001" }
-      ],
-      supplier_ids: userData.supplier_ids || [],
-      suppliers: [],
-      permission_ids: userData.permission_ids || [],
-      permissions: [],
-      created_at: "2024-01-15T10:00:00Z",
-      updated_at: new Date().toISOString()
-    };
-    
-    console.log('✅ Returning fallback user data:', fallbackUpdatedUser);
-    
+    // Return error response
     return new Response(
-      JSON.stringify(fallbackUpdatedUser),
+      JSON.stringify({
+        error: 'Failed to update user',
+        message: error.message,
+        details: 'The backend API is unavailable or returned an error'
+      }),
       {
-        status: 200,
+        status: 500,
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*',
