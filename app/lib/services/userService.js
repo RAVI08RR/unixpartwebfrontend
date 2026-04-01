@@ -158,12 +158,100 @@ export const userService = {
 
   // Update existing user
   update: async (id, userData) => {
-    // Send data as-is, API expects these field names
-    const response = await fetchApi(`/api/users/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(userData),
+    // Log what we're sending
+    console.log("📤 userService.update called with:", userData);
+    console.log("📤 userData keys:", Object.keys(userData));
+    
+    // Get token
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.');
+    }
+    
+    // Create FormData for multipart/form-data submission (same as create)
+    const formData = new FormData();
+    
+    // Add all user data fields to FormData
+    Object.keys(userData).forEach(key => {
+      const value = userData[key];
+      
+      // Handle arrays (branch_ids, supplier_ids, permission_ids)
+      if (Array.isArray(value)) {
+        if (value.length > 0) {
+          // Send each array item separately with the same key
+          value.forEach(item => {
+            formData.append(key, item);
+          });
+        }
+        // Don't send empty string for empty arrays in update
+      } else if (value !== null && value !== undefined && value !== '') {
+        // Send other values as strings
+        formData.append(key, String(value));
+      }
+      // Don't send empty/null/undefined values in update
     });
-    return mapFromApiFields(response);
+    
+    console.log("📤 FormData entries:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    
+    // Send as FormData (don't set Content-Type, browser will set it with boundary)
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type for FormData - browser will add boundary automatically
+      },
+      body: formData,
+    });
+    
+    console.log('📤 Update user response status:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Update user failed:', errorText);
+      console.error('❌ Response status:', response.status);
+      
+      let errorMessage = `Failed to update user (${response.status})`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('❌ Parsed error data:', errorData);
+        
+        // Handle different error response formats
+        if (errorData.detail) {
+          // FastAPI validation error format
+          if (Array.isArray(errorData.detail)) {
+            // Validation errors array
+            const errors = errorData.detail.map(err => {
+              const field = Array.isArray(err.loc) ? err.loc.join('.') : 'unknown';
+              return `${field}: ${err.msg}`;
+            }).join(', ');
+            errorMessage = `Validation Error: ${errors}`;
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else {
+            errorMessage = JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        console.error('❌ Failed to parse error response:', e);
+        if (errorText && errorText.length < 500) {
+          errorMessage = errorText;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    const result = await response.json();
+    console.log('✅ User updated successfully:', result);
+    return mapFromApiFields(result);
   },
 
   // Delete user
