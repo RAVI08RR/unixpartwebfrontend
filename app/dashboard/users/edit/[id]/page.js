@@ -26,8 +26,6 @@ export default function EditUserPage() {
   const [loading, setLoading] = useState(false);
   const [userLoading, setUserLoading] = useState(true);
   const { permissions, groupedPermissions, loading: permissionsLoading } = usePermissions();
-  const [rolePermissions, setRolePermissions] = useState([]);
-  const [rolePermissionsLoading, setRolePermissionsLoading] = useState(false);
   const [roles, setRoles] = useState([]);
   
   // Define branches and suppliers state
@@ -113,42 +111,22 @@ export default function EditUserPage() {
         const roleId = userData.role_id || userData.role?.id;
         console.log('📥 Extracted role_id:', roleId, 'Type:', typeof roleId);
         
-        // Extract role permissions from role.permissions for display (to show "(Role)" label)
-        let rolePermissionsList = [];
-        let rolePermissionIds = [];
-        if (userData.role && userData.role.permissions && Array.isArray(userData.role.permissions)) {
-          rolePermissionsList = userData.role.permissions;
-          rolePermissionIds = rolePermissionsList.map(p => {
-            const id = p.id || p.permission_id;
-            const numId = typeof id === 'number' ? id : parseInt(id, 10);
-            return numId;
-          }).filter(id => !isNaN(id));
-          console.log('✅ Role permissions extracted:', rolePermissionsList.map(p => ({ id: p.id, name: p.name })));
-        }
-        
-        // Extract user's actual permission IDs from the permissions array
+        // Extract user's actual permission IDs from the permissions array ONLY
+        // NOTE: We ONLY use userData.permissions, NOT role.permissions
         let userPermissionIds = [];
-        if (userData.permissions && Array.isArray(userData.permissions) && userData.permissions.length > 0) {
-          // User has custom permissions - use them
+        if (userData.permissions && Array.isArray(userData.permissions)) {
           userPermissionIds = userData.permissions.map(p => {
             const id = p.id || p.permission_id;
             const numId = typeof id === 'number' ? id : parseInt(id, 10);
             return numId;
           }).filter(id => !isNaN(id));
-          console.log('✅ User has custom permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
+          console.log('✅ User permissions from API:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
+          console.log('✅ Extracted permission IDs to set as checked:', userPermissionIds);
         } else {
-          // User has no custom permissions - use role's default permissions
-          userPermissionIds = rolePermissionIds;
-          console.log('ℹ️ User has no custom permissions, using role permissions as default');
+          console.log('⚠️ No permissions found in userData.permissions array');
         }
         
-        console.log('✅ User permission IDs to set:', userPermissionIds);
-        
-        // Set role permissions for display (to show "(Role)" label)
-        setRolePermissions(rolePermissionsList);
-        console.log('✅ Setting rolePermissions state with', rolePermissionsList.length, 'permissions');
-        
-        // Set form data with combined permissions (role + custom)
+        // Set form data with user's actual permissions (NOT role permissions)
         setFormData({
           name: userData.name || userData.full_name || "",
           email: userData.email || "",
@@ -161,7 +139,8 @@ export default function EditUserPage() {
           permission_ids: userPermissionIds // Set user's actual permissions (NOT role permissions)
         });
         
-        console.log('✅ Form data set with user permissions:', userPermissionIds);
+        console.log('✅ Form data initialized with permission_ids:', userPermissionIds);
+        console.log('✅ These permissions will be checked in the UI');
         
         // Set current profile image
         if (userData.profile_image) {
@@ -321,74 +300,9 @@ export default function EditUserPage() {
     fetchData();
   }, [router]);
 
-  // Fetch role permissions when role is manually changed (not on initial load)
-  useEffect(() => {
-    // Skip if this is the initial load (userLoading is true)
-    if (userLoading) {
-      console.log('⏭️ Skipping role permission fetch - initial load');
-      return;
-    }
-    
-    const fetchRolePermissions = async () => {
-      // Check if role_id is valid (not empty, not undefined, and is a number)
-      if (!formData.role_id || formData.role_id === "" || isNaN(parseInt(formData.role_id))) {
-        console.log('⏭️ No valid role_id, clearing permissions');
-        setRolePermissions([]);
-        setFormData(prev => ({
-          ...prev,
-          permission_ids: []
-        }));
-        return;
-      }
-
-      setRolePermissionsLoading(true);
-      try {
-        const roleId = parseInt(formData.role_id);
-        console.log('🔄 Role changed in dropdown - Fetching permissions for role ID:', roleId);
-        
-        const permissions = await roleService.getPermissions(roleId);
-        console.log('✅ Role permissions fetched for dropdown change:', permissions);
-        console.log('✅ Permissions count:', permissions?.length || 0);
-        
-        setRolePermissions(permissions || []);
-        
-        // Auto-update permissions when role changes in dropdown
-        if (permissions && Array.isArray(permissions) && permissions.length > 0) {
-          const rolePermissionIds = permissions.map(p => {
-            const id = p.id || p.permission_id;
-            const numId = typeof id === 'number' ? id : parseInt(id, 10);
-            console.log('  - Permission:', p.name, 'ID:', numId);
-            return numId;
-          }).filter(id => !isNaN(id));
-          
-          console.log('✅ Auto-updating permission IDs for role change:', rolePermissionIds);
-          
-          setFormData(prev => ({
-            ...prev,
-            permission_ids: rolePermissionIds
-          }));
-        } else {
-          console.warn('⚠️ No permissions for this role, clearing selection');
-          setFormData(prev => ({
-            ...prev,
-            permission_ids: []
-          }));
-        }
-        
-      } catch (error) {
-        console.error("❌ Failed to fetch role permissions on dropdown change:", error);
-        setRolePermissions([]);
-        setFormData(prev => ({
-          ...prev,
-          permission_ids: []
-        }));
-      } finally {
-        setRolePermissionsLoading(false);
-      }
-    };
-
-    fetchRolePermissions();
-  }, [formData.role_id, userLoading]);
+  // NOTE: We do NOT auto-fetch or auto-update permissions based on role changes
+  // The user's permissions are loaded from the API and should remain as the user set them
+  // This prevents the permissions from being cleared/overwritten on page refresh or role changes
 
   const handleSubmit = async () => {
       // Basic validation
@@ -793,10 +707,6 @@ export default function EditUserPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Permissions</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Select the permissions for this user
-              <span className="ml-2 text-xs">
-                <span className="text-blue-600 dark:text-blue-400 font-medium">(Role)</span> = From role, 
-                <span className="ml-1 text-green-600 dark:text-green-400 font-medium">(Custom)</span> = User-specific
-              </span>
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -838,8 +748,17 @@ export default function EditUserPage() {
                 <div className="space-y-2">
                   {modulePermissions.map((permission) => {
                     const isSelected = formData.permission_ids.includes(permission.id);
-                    const isRolePermission = rolePermissions.some(rp => rp.id === permission.id);
-                    const isUserOnlyPermission = isSelected && !isRolePermission;
+                    
+                    // Debug log for first render
+                    if (module === Object.keys(groupedPermissions)[0] && permission === modulePermissions[0]) {
+                      console.log('🔍 Checkbox render check:', {
+                        permissionId: permission.id,
+                        permissionName: permission.name,
+                        formDataPermissionIds: formData.permission_ids,
+                        isSelected,
+                        includes: formData.permission_ids.includes(permission.id)
+                      });
+                    }
                     
                     return (
                       <label
@@ -859,12 +778,6 @@ export default function EditUserPage() {
                               : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
                           }`}>
                             {permission.name}
-                            {isRolePermission && (
-                              <span className="ml-1 text-xs text-blue-600 dark:text-blue-400 font-medium">(Role)</span>
-                            )}
-                            {isUserOnlyPermission && (
-                              <span className="ml-1 text-xs text-green-600 dark:text-green-400 font-medium">(Custom)</span>
-                            )}
                           </div>
                         </div>
                       </label>
@@ -880,17 +793,9 @@ export default function EditUserPage() {
         {formData.permission_ids.length > 0 && (
           <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  Total Permissions: {formData.permission_ids.length}
-                </span>
-                <span className="text-xs text-blue-700 dark:text-blue-300">
-                  <span className="font-medium text-blue-600 dark:text-blue-400">Role:</span> {rolePermissions.filter(rp => formData.permission_ids.includes(rp.id)).length}
-                </span>
-                <span className="text-xs text-green-700 dark:text-green-300">
-                  <span className="font-medium text-green-600 dark:text-green-400">Custom:</span> {formData.permission_ids.filter(id => !rolePermissions.some(rp => rp.id === id)).length}
-                </span>
-              </div>
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Selected Permissions: {formData.permission_ids.length}
+              </span>
               <button
                 type="button"
                 onClick={clearAllPermissions}
