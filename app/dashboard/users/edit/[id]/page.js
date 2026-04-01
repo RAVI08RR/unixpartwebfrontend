@@ -113,47 +113,31 @@ export default function EditUserPage() {
         const roleId = userData.role_id || userData.role?.id;
         console.log('📥 Extracted role_id:', roleId, 'Type:', typeof roleId);
         
-        // Extract role permissions from role.permissions for display
+        // Extract role permissions from role.permissions for display (to show "(Role)" label)
         let rolePermissionsList = [];
-        let rolePermissionIds = [];
         if (userData.role && userData.role.permissions && Array.isArray(userData.role.permissions)) {
           rolePermissionsList = userData.role.permissions;
-          rolePermissionIds = rolePermissionsList.map(p => {
-            const id = p.id || p.permission_id;
-            const numId = typeof id === 'number' ? id : parseInt(id, 10);
-            return numId;
-          }).filter(id => !isNaN(id));
           console.log('✅ Role permissions extracted:', rolePermissionsList.map(p => ({ id: p.id, name: p.name })));
         }
         
-        // Extract user's custom permission IDs from the permissions array
-        let userCustomPermissionIds = [];
+        // Extract user's actual permission IDs from the permissions array (NOT from role)
+        let userPermissionIds = [];
         if (userData.permissions && Array.isArray(userData.permissions)) {
-          userCustomPermissionIds = userData.permissions.map(p => {
+          userPermissionIds = userData.permissions.map(p => {
             const id = p.id || p.permission_id;
             const numId = typeof id === 'number' ? id : parseInt(id, 10);
             return numId;
           }).filter(id => !isNaN(id));
-          console.log('✅ User custom permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
+          console.log('✅ User actual permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
         }
         
-        // Combine role permissions + user custom permissions (remove duplicates)
-        const allPermissionIds = [...new Set([...rolePermissionIds, ...userCustomPermissionIds])];
-        console.log('✅ Combined permission IDs (role + custom):', allPermissionIds);
+        console.log('✅ User permission IDs to set:', userPermissionIds);
         
         // Set role permissions for display (to show "(Role)" label)
         setRolePermissions(rolePermissionsList);
         console.log('✅ Setting rolePermissions state with', rolePermissionsList.length, 'permissions');
         
         // Set form data with combined permissions (role + custom)
-        const extractedBranchIds = userData.branches?.map(b => b.id) || userData.branch_ids || [];
-        const extractedSupplierIds = userData.suppliers?.map(s => s.id) || userData.supplier_ids || [];
-        
-        console.log('📥 Extracted branch_ids:', extractedBranchIds);
-        console.log('📥 Extracted supplier_ids:', extractedSupplierIds);
-        console.log('📥 userData.branches:', userData.branches);
-        console.log('📥 userData.suppliers:', userData.suppliers);
-        
         setFormData({
           name: userData.name || userData.full_name || "",
           email: userData.email || "",
@@ -161,16 +145,12 @@ export default function EditUserPage() {
           user_code: userData.user_code || userData.username || "",
           role_id: roleId || "",
           status: userData.status !== undefined ? userData.status : (userData.is_active !== undefined ? userData.is_active : true),
-          branch_ids: extractedBranchIds,
-          supplier_ids: extractedSupplierIds,
-          permission_ids: allPermissionIds // Set combined permissions (role + custom)
+          branch_ids: userData.branches?.map(b => b.id) || userData.branch_ids || [],
+          supplier_ids: userData.suppliers?.map(s => s.id) || userData.supplier_ids || [],
+          permission_ids: userPermissionIds // Set user's actual permissions (NOT role permissions)
         });
         
-        console.log('✅ Form data set:', {
-          branch_ids: extractedBranchIds,
-          supplier_ids: extractedSupplierIds,
-          permission_ids: allPermissionIds
-        });
+        console.log('✅ Form data set with user permissions:', userPermissionIds);
         
         // Set current profile image
         if (userData.profile_image) {
