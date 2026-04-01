@@ -115,20 +115,31 @@ export default function EditUserPage() {
         
         // Extract role permissions from role.permissions for display (to show "(Role)" label)
         let rolePermissionsList = [];
+        let rolePermissionIds = [];
         if (userData.role && userData.role.permissions && Array.isArray(userData.role.permissions)) {
           rolePermissionsList = userData.role.permissions;
+          rolePermissionIds = rolePermissionsList.map(p => {
+            const id = p.id || p.permission_id;
+            const numId = typeof id === 'number' ? id : parseInt(id, 10);
+            return numId;
+          }).filter(id => !isNaN(id));
           console.log('✅ Role permissions extracted:', rolePermissionsList.map(p => ({ id: p.id, name: p.name })));
         }
         
-        // Extract user's actual permission IDs from the permissions array (NOT from role)
+        // Extract user's actual permission IDs from the permissions array
         let userPermissionIds = [];
-        if (userData.permissions && Array.isArray(userData.permissions)) {
+        if (userData.permissions && Array.isArray(userData.permissions) && userData.permissions.length > 0) {
+          // User has custom permissions - use them
           userPermissionIds = userData.permissions.map(p => {
             const id = p.id || p.permission_id;
             const numId = typeof id === 'number' ? id : parseInt(id, 10);
             return numId;
           }).filter(id => !isNaN(id));
-          console.log('✅ User actual permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
+          console.log('✅ User has custom permissions:', userData.permissions.map(p => ({ id: p.id, name: p.name })));
+        } else {
+          // User has no custom permissions - use role's default permissions
+          userPermissionIds = rolePermissionIds;
+          console.log('ℹ️ User has no custom permissions, using role permissions as default');
         }
         
         console.log('✅ User permission IDs to set:', userPermissionIds);
