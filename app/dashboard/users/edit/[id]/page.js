@@ -146,6 +146,14 @@ export default function EditUserPage() {
         console.log('✅ Setting rolePermissions state with', rolePermissionsList.length, 'permissions');
         
         // Set form data with combined permissions (role + custom)
+        const extractedBranchIds = userData.branches?.map(b => b.id) || userData.branch_ids || [];
+        const extractedSupplierIds = userData.suppliers?.map(s => s.id) || userData.supplier_ids || [];
+        
+        console.log('📥 Extracted branch_ids:', extractedBranchIds);
+        console.log('📥 Extracted supplier_ids:', extractedSupplierIds);
+        console.log('📥 userData.branches:', userData.branches);
+        console.log('📥 userData.suppliers:', userData.suppliers);
+        
         setFormData({
           name: userData.name || userData.full_name || "",
           email: userData.email || "",
@@ -153,12 +161,16 @@ export default function EditUserPage() {
           user_code: userData.user_code || userData.username || "",
           role_id: roleId || "",
           status: userData.status !== undefined ? userData.status : (userData.is_active !== undefined ? userData.is_active : true),
-          branch_ids: userData.branches?.map(b => b.id) || userData.branch_ids || [],
-          supplier_ids: userData.suppliers?.map(s => s.id) || userData.supplier_ids || [],
+          branch_ids: extractedBranchIds,
+          supplier_ids: extractedSupplierIds,
           permission_ids: allPermissionIds // Set combined permissions (role + custom)
         });
         
-        console.log('✅ Form data set with combined permissions:', allPermissionIds);
+        console.log('✅ Form data set:', {
+          branch_ids: extractedBranchIds,
+          supplier_ids: extractedSupplierIds,
+          permission_ids: allPermissionIds
+        });
         
         // Set current profile image
         if (userData.profile_image) {
