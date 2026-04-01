@@ -284,7 +284,6 @@ export async function PUT(request, { params }) {
     if (contentType && !contentType.includes('multipart/form-data')) {
       headers['Content-Type'] = contentType;
     }
-    }
     
     const response = await fetch(backendUrl, {
       method: 'PUT',
