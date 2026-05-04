@@ -55,8 +55,8 @@ export function Sidebar() {
       permission: null, // Always visible
       items: [
         { label: "CRM", href: "/dashboard", icon: BarChart3, permission: null },
-        { label: "Analytics", href: "/dashboard/analytics", icon: Layers, permission: null },
-        { label: "eCommerce", href: "/dashboard/ecommerce", icon: ShoppingCart, permission: null },
+        // { label: "Analytics", href: "/dashboard/analytics", icon: Layers, permission: null },
+        // { label: "eCommerce", href: "/dashboard/ecommerce", icon: ShoppingCart, permission: null },
       ]
     },
     {
@@ -97,7 +97,7 @@ export function Sidebar() {
       permission: null,
       items: [
         { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck, permission: PERMISSIONS.CUSTOMERS.VIEW },
-        { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart, permission: PERMISSIONS.INVOICES.VIEW },
+        // { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3, permission: PERMISSIONS.INVOICES.VIEW },
@@ -135,7 +135,7 @@ export function Sidebar() {
         { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign, permission: null },
         { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText, permission: PERMISSIONS.EXPENSES?.VIEW },
         { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers, permission: PERMISSIONS.FUND_TRANSFERS?.VIEW },
-        { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers, permission: null },
+        // { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers, permission: null },
       ]
     },
     {
