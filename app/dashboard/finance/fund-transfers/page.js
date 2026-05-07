@@ -11,6 +11,8 @@ import {
 import { useFundTransfers } from "@/app/lib/hooks/useFundTransfers";
 import { fundTransferService } from "@/app/lib/services/fundTransferService";
 import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function FundTransfersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -164,6 +166,39 @@ export default function FundTransfersPage() {
     setMenuOpenId(null);
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'transfer_code', label: 'Transfer Code' },
+    { 
+      key: 'date', 
+      label: 'Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'supplier.name', 
+      label: 'Supplier',
+      formatter: (value, row) => row.supplier ? `${row.supplier.name} (${row.supplier.supplier_code || ''})` : 'N/A'
+    },
+    { 
+      key: 'amount', 
+      label: 'Amount',
+      formatter: formatCurrencyForExport
+    },
+    { key: 'method', label: 'Method' },
+    { key: 'reference', label: 'Reference #' },
+    { key: 'notes', label: 'Notes' },
+    { 
+      key: 'branch.branch_name', 
+      label: 'Branch',
+      formatter: (value, row) => row.branch ? `${row.branch.branch_name || row.branch.name} (${row.branch.branch_code || ''})` : 'N/A'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -295,10 +330,13 @@ export default function FundTransfersPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredTransfers}
+              columns={exportColumns}
+              filename={`fund-transfers-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Fund transfers exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
 
             <Link 
               href="/dashboard/finance/fund-transfers/add"

@@ -11,6 +11,8 @@ import {
 import { useExpenses } from "@/app/lib/hooks/useExpenses";
 import { expenseService } from "@/app/lib/services/expenseService";
 import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function ExpensesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -150,6 +152,35 @@ export default function ExpensesPage() {
     setMenuOpenId(null);
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'expense_id', label: 'Expense ID' },
+    { 
+      key: 'date', 
+      label: 'Date',
+      formatter: formatDateForExport
+    },
+    { key: 'description', label: 'Description' },
+    { key: 'type', label: 'Type' },
+    { key: 'category', label: 'Category' },
+    { 
+      key: 'supplier.name', 
+      label: 'Supplier',
+      formatter: (value, row) => row.supplier ? `${row.supplier.name} (${row.supplier.supplier_code || ''})` : 'N/A'
+    },
+    { key: 'document_path', label: 'Document' },
+    { 
+      key: 'amount', 
+      label: 'Amount',
+      formatter: formatCurrencyForExport
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -271,10 +302,13 @@ export default function ExpensesPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredExpenses}
+              columns={exportColumns}
+              filename={`expenses-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Expenses exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
 
             <Link 
               href="/dashboard/finance/expenses/add"

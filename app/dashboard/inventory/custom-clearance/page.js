@@ -13,6 +13,8 @@ import { containerService } from "@/app/lib/services/containerService";
 import { useToast } from "@/app/components/Toast";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 
 export default function CustomClearancePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -201,6 +203,44 @@ export default function CustomClearancePage() {
     );
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'container_code', label: 'Container Code' },
+    { key: 'container_number', label: 'Container Number' },
+    { key: 'vessel_name', label: 'Vessel Name' },
+    { key: 'voyage_number', label: 'Voyage Number' },
+    { key: 'shipping_agent', label: 'Shipping Agent' },
+    { key: 'port_of_loading', label: 'Port of Loading' },
+    { key: 'port_of_discharging', label: 'Port of Discharging' },
+    { 
+      key: 'destination_branch_id', 
+      label: 'Destination Branch',
+      formatter: (branchId) => branches?.find(b => b.id === branchId)?.branch_name || `Branch ${branchId}`
+    },
+    { 
+      key: 'supplier_id', 
+      label: 'Supplier',
+      formatter: (supplierId) => suppliers?.find(s => s.id === supplierId)?.name || `Supplier ${supplierId}`
+    },
+    { key: 'container_size', label: 'Container Size' },
+    { key: 'total_packages', label: 'Total Packages' },
+    { 
+      key: 'status', 
+      label: 'Status',
+      formatter: (status) => status?.toUpperCase() || 'DRAFT'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -257,10 +297,13 @@ export default function CustomClearancePage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredContainers}
+              columns={exportColumns}
+              filename={`custom-clearance-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => showSuccess(`Custom clearance records exported successfully as ${format}!`)}
+              onError={(err) => showError(`Export failed: ${err.message}`)}
+            />
 
             <Link 
               href="/dashboard/inventory/custom-clearance/add"

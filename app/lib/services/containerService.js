@@ -176,19 +176,41 @@ export const containerService = {
   downloadDocument: async (containerId, documentId) => {
     try {
       const token = localStorage.getItem('access_token');
+      console.log('📥 Downloading document:', { containerId, documentId });
+      
       const response = await fetch(`/api/containers/${containerId}/documents/${documentId}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      console.log('📥 Download response:', {
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get('Content-Type')
+      });
+
       if (!response.ok) {
-        throw new Error('Download failed');
+        const errorData = await response.json().catch(() => ({ error: 'Download failed' }));
+        console.error('📥 Download error:', errorData);
+        
+        // Handle specific error cases
+        if (response.status === 403) {
+          throw new Error('You do not have permission to download container documents. Please contact your administrator.');
+        } else if (response.status === 401) {
+          throw new Error('Your session has expired. Please log in again.');
+        } else if (response.status === 404) {
+          throw new Error('Document not found. It may have been deleted.');
+        } else {
+          throw new Error(errorData.details || errorData.message || errorData.error || 'Download failed');
+        }
       }
 
       const blob = await response.blob();
+      console.log('📥 Blob received:', { size: blob.size, type: blob.type });
+      
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'document';
+      let filename = `document-${documentId}`;
       
       if (contentDisposition) {
         const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
@@ -196,6 +218,8 @@ export const containerService = {
           filename = matches[1].replace(/['"]/g, '');
         }
       }
+
+      console.log('📥 Downloading as:', filename);
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -205,9 +229,11 @@ export const containerService = {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      console.log('📥 Download triggered successfully');
     } catch (error) {
-      console.warn('📦 Container document download failed:', error.message);
-      throw new Error('Cannot download document: ' + error.message);
+      console.error('📦 Container document download failed:', error);
+      throw error; // Throw the original error with the better message
     }
   },
 };

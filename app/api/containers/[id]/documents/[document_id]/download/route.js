@@ -11,6 +11,13 @@ export async function GET(request, { params }) {
     
     const backendUrl = `${apiBaseUrl}/api/containers/${id}/documents/${document_id}/download`;
     
+    console.log('📥 Downloading container document:', {
+      containerId: id,
+      documentId: document_id,
+      backendUrl,
+      hasAuth: !!authHeader
+    });
+    
     const headers = {
       'ngrok-skip-browser-warning': 'true',
     };
@@ -18,12 +25,37 @@ export async function GET(request, { params }) {
     
     const response = await fetch(backendUrl, { method: 'GET', headers });
     
+    console.log('📥 Backend response:', {
+      status: response.status,
+      statusText: response.statusText,
+      contentType: response.headers.get('Content-Type')
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('📥 Download failed:', errorText);
+      return new Response(JSON.stringify({ 
+        error: 'Download failed', 
+        details: errorText,
+        status: response.status 
+      }), { 
+        status: response.status,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
     // Get the content type and disposition from backend
     const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
     const contentDisposition = response.headers.get('Content-Disposition');
     
     // Stream the file data
     const fileData = await response.arrayBuffer();
+    
+    console.log('📥 File downloaded successfully:', {
+      size: fileData.byteLength,
+      contentType,
+      contentDisposition
+    });
     
     const responseHeaders = {
       'Content-Type': contentType,
@@ -35,11 +67,15 @@ export async function GET(request, { params }) {
     }
     
     return new Response(fileData, {
-      status: response.status,
+      status: 200,
       headers: responseHeaders,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { 
+    console.error('📥 Container document download error:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error.message 
+    }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

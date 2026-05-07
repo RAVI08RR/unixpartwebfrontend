@@ -10,6 +10,8 @@ import {
 import { useRoles } from "../../lib/hooks/useRoles";
 import { useToast } from "@/app/components/Toast";
 import { useConfirm } from "@/app/components/ConfirmModal";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport } from "@/app/lib/utils/exportUtils";
 
 export default function RolesPage() {
   const { roles, loading, error, updateRole, deleteRole } = useRoles();
@@ -85,6 +87,28 @@ export default function RolesPage() {
     setViewModalOpen(false);
     setSelectedRole(null);
   };
+
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'id', label: 'Role ID' },
+    { key: 'name', label: 'Role Name' },
+    { key: 'description', label: 'Description' },
+    { 
+      key: 'permissions', 
+      label: 'Permissions Count',
+      formatter: (permissions) => permissions ? permissions.length : 0
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
 
   // Filter and search logic
   const filteredRoles = useMemo(() => {
@@ -162,10 +186,13 @@ export default function RolesPage() {
               <span>Filters</span>
             </button>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredRoles}
+              columns={exportColumns}
+              filename={`roles-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Roles exported successfully as ${format}!`)}
+              onError={(err) => showError(`Export failed: ${err.message}`)}
+            />
             
             <Link href="/dashboard/roles/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
               <Plus className="w-4 h-4" />

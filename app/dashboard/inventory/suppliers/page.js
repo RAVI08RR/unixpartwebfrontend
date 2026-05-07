@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Truck, MoreVertical, Search, 
-  Filter, Download, Plus, ChevronLeft, ChevronRight,
+  Filter, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, Check, X, Eye, Calendar,
   User, Building2, Phone, MapPin, Mail, Tag
 } from "lucide-react";
@@ -14,6 +14,8 @@ import { getAuthToken } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import { useConfirm } from "@/app/components/ConfirmModal";
 import ViewSupplierModal from "@/app/components/ViewSupplierModal";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 
 export default function SupplierManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -209,6 +211,28 @@ export default function SupplierManagementPage() {
     }));
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'supplier_code', label: 'Supplier Code' },
+    { key: 'name', label: 'Name' },
+    { key: 'contact_person', label: 'Contact Person' },
+    { key: 'contact_number', label: 'Phone' },
+    { key: 'contact_email', label: 'Email' },
+    { key: 'type', label: 'Type' },
+    { key: 'company', label: 'Company' },
+    { key: 'address', label: 'Address' },
+    { 
+      key: 'status', 
+      label: 'Status',
+      formatter: formatStatusForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!suppliers || suppliers.length === 0))) {
     return (
@@ -285,10 +309,13 @@ export default function SupplierManagementPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredSuppliers}
+              columns={exportColumns}
+              filename={`suppliers-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Suppliers exported successfully as ${format}!`)}
+              onError={(error) => error(`Export failed: ${error.message}`)}
+            />
             <Link href="/dashboard/inventory/suppliers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Supplier</span>

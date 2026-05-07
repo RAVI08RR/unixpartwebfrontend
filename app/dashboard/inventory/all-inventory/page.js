@@ -13,6 +13,8 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 import Link from "next/link";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function AllInventoryPage() {
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -114,6 +116,54 @@ export default function AllInventoryPage() {
     }
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'stock_number', label: 'Stock Number' },
+    { 
+      key: 'purchase_order.container.supplier.supplier_code', 
+      label: 'Supplier Code',
+      formatter: (value, row) => row.purchase_order?.container?.supplier?.supplier_code || row.stock_number?.split('-')[1] || '-'
+    },
+    { 
+      key: 'purchase_order.container.container_number', 
+      label: 'Container Code',
+      formatter: (value, row) => row.purchase_order?.container?.container_number || '-'
+    },
+    { 
+      key: 'stock_item.name', 
+      label: 'Item Name',
+      formatter: (value, row) => row.stock_item?.name || '-'
+    },
+    { key: 'po_description', label: 'PO Description' },
+    { 
+      key: 'current_branch.branch_code', 
+      label: 'Branch',
+      formatter: (value, row) => row.current_branch?.branch_code || '-'
+    },
+    { key: 'status', label: 'Status' },
+    { key: 'quantity', label: 'Quantity' },
+    { 
+      key: 'invoice_items[0].sale_amount', 
+      label: 'Sale Amount',
+      formatter: (value, row) => row.invoice_items?.[0]?.sale_amount ? formatCurrencyForExport(row.invoice_items[0].sale_amount) : '-'
+    },
+    { 
+      key: 'invoice_items[0].invoice.invoice_number', 
+      label: 'Invoice Number',
+      formatter: (value, row) => row.invoice_items?.[0]?.invoice?.invoice_number || '-'
+    },
+    { 
+      key: 'invoice_items[0].sale_date', 
+      label: 'Sale Date',
+      formatter: (value, row) => row.invoice_items?.[0]?.sale_date ? formatDateForExport(row.invoice_items[0].sale_date) : '-'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    }
+  ];
+
   const clearFilters = () => {
     setFilters({
       status: "All",
@@ -213,10 +263,13 @@ export default function AllInventoryPage() {
               <span>Filters</span>
             </button>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredData}
+              columns={exportColumns}
+              filename={`all-inventory-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Inventory exported successfully as ${format}!`)}
+              onError={(err) => showError(`Export failed: ${err.message}`)}
+            />
           </div>
         </div>
       </div>

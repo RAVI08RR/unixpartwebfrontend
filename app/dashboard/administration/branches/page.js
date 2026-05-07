@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Building2, MoreVertical, Search, 
-  Filter, Download, Plus, ChevronLeft, ChevronRight,
+  Filter, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, X, Eye, Calendar,
   MapPin, DollarSign, TrendingUp, AlertCircle, Truck, Percent, ChevronDown, ChevronUp
 } from "lucide-react";
@@ -13,6 +13,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { getAuthToken } from "@/app/lib/api";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function BranchManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -160,6 +162,37 @@ export default function BranchManagementPage() {
     setSelectedBranch(null);
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'branch_code', label: 'Branch Code' },
+    { key: 'branch_name', label: 'Branch Name' },
+    { 
+      key: 'status', 
+      label: 'Status',
+      formatter: formatStatusForExport
+    },
+    { 
+      key: 'total_revenue', 
+      label: 'Total Revenue',
+      formatter: (amount) => formatCurrencyForExport(amount)
+    },
+    { 
+      key: 'total_outstanding', 
+      label: 'Total Outstanding',
+      formatter: (amount) => formatCurrencyForExport(amount)
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created At',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   // Filter and search logic
   const filteredBranches = useMemo(() => {
     if (!branches) return [];
@@ -285,10 +318,13 @@ export default function BranchManagementPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredBranches}
+              columns={exportColumns}
+              filename={`branches-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Branches exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
             <Link href="/dashboard/administration/branches/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Branch</span>

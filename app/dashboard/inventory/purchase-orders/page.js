@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
-  MoreVertical, Search, Filter, Download, Plus, 
+  MoreVertical, Search, Filter, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
   AlertCircle, FileText, Upload, Trash, ExternalLink
@@ -11,6 +11,8 @@ import {
 import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function PurchaseOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -198,6 +200,50 @@ export default function PurchaseOrdersPage() {
     );
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'po_id', label: 'PO ID' },
+    { 
+      key: 'supplier.name', 
+      label: 'Supplier',
+      formatter: (val, row) => row.supplier?.name || 'N/A'
+    },
+    { 
+      key: 'supplier.supplier_code', 
+      label: 'Supplier Code',
+      formatter: (val, row) => row.supplier?.supplier_code || 'N/A'
+    },
+    { 
+      key: 'branch.branch_name', 
+      label: 'Branch',
+      formatter: (val, row) => row.branch?.branch_name || 'N/A'
+    },
+    { 
+      key: 'total_amount', 
+      label: 'Total Amount',
+      formatter: (amount) => formatCurrencyForExport(amount)
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      formatter: (status) => status?.replace('_', ' ').toUpperCase() || 'PENDING'
+    },
+    { 
+      key: 'notes', 
+      label: 'Notes'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -255,10 +301,13 @@ export default function PurchaseOrdersPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredPOs}
+              columns={exportColumns}
+              filename={`purchase-orders-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Purchase orders exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
 
             <Link 
               href="/dashboard/inventory/purchase-orders/add"

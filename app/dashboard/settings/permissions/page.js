@@ -12,6 +12,8 @@ import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import { permissionService } from "@/app/lib/services/permissionService";
 import { getAuthToken } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport } from "@/app/lib/utils/exportUtils";
 
 export default function PermissionsManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -201,6 +203,25 @@ export default function PermissionsManagementPage() {
     });
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'id', label: 'Permission ID' },
+    { key: 'name', label: 'Permission Name' },
+    { key: 'slug', label: 'Slug' },
+    { key: 'module', label: 'Module' },
+    { key: 'description', label: 'Description' },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (loading && (!permissions || permissions.length === 0))) {
     return (
@@ -277,10 +298,13 @@ export default function PermissionsManagementPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredPermissions}
+              columns={exportColumns}
+              filename={`permissions-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Permissions exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
             <button 
               onClick={handleAddPermission}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"

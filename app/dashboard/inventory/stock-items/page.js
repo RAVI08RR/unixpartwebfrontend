@@ -11,6 +11,9 @@ import {
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { stockItemService } from "@/app/lib/services/stockItemService";
 import { getAuthToken } from "@/app/lib/api";
+import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 
 export default function StockItemsManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +22,7 @@ export default function StockItemsManagementPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [categories, setCategories] = useState([]);
+  const { success, error } = useToast();
   
   // Data Fetching
   const itemsPerPage = 8;
@@ -222,6 +226,33 @@ export default function StockItemsManagementPage() {
     });
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'id', label: 'Item ID' },
+    { key: 'name', label: 'Item Name' },
+    { key: 'description', label: 'Description' },
+    { 
+      key: 'parent_category_id', 
+      label: 'Category',
+      formatter: (categoryId) => getCategoryName(categoryId)
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      formatter: (status) => status ? 'Active' : 'Inactive'
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    },
+    { 
+      key: 'updated_at', 
+      label: 'Last Updated',
+      formatter: formatDateForExport
+    }
+  ];
+
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!stockItems || stockItems.length === 0))) {
     return (
@@ -298,10 +329,13 @@ export default function StockItemsManagementPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredStockItems}
+              columns={exportColumns}
+              filename={`stock-items-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Stock items exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
             <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Stock Item</span>

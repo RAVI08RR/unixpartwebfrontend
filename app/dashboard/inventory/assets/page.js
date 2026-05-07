@@ -16,6 +16,8 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import SellAssetModal from "@/app/components/assets/SellAssetModal";
 import SaleDetailsModal from "@/app/components/assets/SaleDetailsModal";
 import TransferHistoryModal from "@/app/components/assets/TransferHistoryModal";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function AssetsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -254,6 +256,39 @@ export default function AssetsPage() {
     );
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { key: 'asset_id', label: 'Asset ID' },
+    { key: 'description', label: 'Description' },
+    { key: 'category', label: 'Category' },
+    { 
+      key: 'current_operating_branch.branch_name', 
+      label: 'Current Branch',
+      formatter: (value, row) => row.current_operating_branch?.branch_name || branches?.find(b => b.id === row.current_operating_branch_id)?.branch_name || 'N/A'
+    },
+    { 
+      key: 'purchase_value', 
+      label: 'Purchase Value',
+      formatter: formatCurrencyForExport
+    },
+    { 
+      key: 'current_value', 
+      label: 'Current Value',
+      formatter: formatCurrencyForExport
+    },
+    { 
+      key: 'purchase_date', 
+      label: 'Purchase Date',
+      formatter: formatDateForExport
+    },
+    { key: 'status', label: 'Status' },
+    { 
+      key: 'created_at', 
+      label: 'Created Date',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -309,10 +344,13 @@ export default function AssetsPage() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-                <Download className="w-4 h-4" />
-                <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredAssets}
+              columns={exportColumns}
+              filename={`assets-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Assets exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
 
             <Link 
               href="/dashboard/inventory/assets/add"

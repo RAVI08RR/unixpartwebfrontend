@@ -3,13 +3,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { 
-  Truck, Search, Download, Plus, ChevronLeft, ChevronRight,
+  Truck, Search, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, Eye, Building2, Percent
 } from "lucide-react";
 import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function BranchOwnersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +102,41 @@ export default function BranchOwnersPage() {
     setViewModalOpen(true);
   };
 
+  // Export columns configuration
+  const exportColumns = [
+    { 
+      key: 'branch_id', 
+      label: 'Branch',
+      formatter: (branchId) => branches.find(b => b.id === branchId)?.branch_name || 'Unknown'
+    },
+    { 
+      key: 'branch_id', 
+      label: 'Branch Code',
+      formatter: (branchId) => branches.find(b => b.id === branchId)?.branch_code || 'N/A'
+    },
+    { 
+      key: 'supplier_id', 
+      label: 'Supplier',
+      formatter: (supplierId) => suppliers.find(s => s.id === supplierId)?.name || 'Unknown'
+    },
+    { 
+      key: 'supplier_id', 
+      label: 'Supplier Code',
+      formatter: (supplierId) => suppliers.find(s => s.id === supplierId)?.supplier_code || 'N/A'
+    },
+    { key: 'share_percent', label: 'Share Percentage (%)' },
+    { 
+      key: 'share_amount', 
+      label: 'Share Amount',
+      formatter: (amount) => formatCurrencyForExport(amount)
+    },
+    { 
+      key: 'created_at', 
+      label: 'Created At',
+      formatter: formatDateForExport
+    }
+  ];
+
   if (!isMounted) return null;
 
   return (
@@ -131,10 +168,17 @@ export default function BranchOwnersPage() {
               <Plus className="w-4 h-4" />
               <span>Add Branch Owner</span>
             </Link>
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredOwners.map(owner => ({
+                ...owner,
+                branch_id: owner.branch_id,
+                supplier_id: owner.supplier_id
+              }))}
+              columns={exportColumns}
+              filename={`branch-owners-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Branch owners exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
           </div>
         </div>
       </div>
