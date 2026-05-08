@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
-  DollarSign, Plus, Search, Eye, Calculator, CheckCircle, Loader2, Calendar, Trash2, Edit
+  DollarSign, Plus, Search, Eye, Calculator, CheckCircle, Loader2, Calendar, Trash2, Edit, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { payrollService } from "@/app/lib/services/payrollService";
 import { useToast } from "@/app/components/Toast";
@@ -14,6 +14,8 @@ export default function PayrollPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [summary, setSummary] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
   
   // Modal states
   const [viewModal, setViewModal] = useState({ isOpen: false, payroll: null });
@@ -114,6 +116,24 @@ export default function PayrollPage() {
     );
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPayrolls.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPayrolls = filteredPayrolls.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -198,96 +218,145 @@ export default function PayrollPage() {
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
         {filteredPayrolls.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Period
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Total Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                {filteredPayrolls.map((payroll) => (
-                  <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        {payroll.month} {payroll.year}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        AED {payroll.total_amount || '0.00'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        payroll.status === 'paid'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : payroll.status === 'calculated'
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                      }`}>
-                        {payroll.status || 'pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/management/payroll/${payroll.id}`}
-                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                        </Link>
-                        <Link
-                          href={`/dashboard/management/payroll/edit/${payroll.id}`}
-                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                        </Link>
-                        {payroll.status === 'pending' && (
-                          <button
-                            onClick={() => handleCalculate(payroll.id)}
-                            className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                            title="Calculate"
-                          >
-                            <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                          </button>
-                        )}
-                        {payroll.status === 'calculated' && (
-                          <button
-                            onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
-                            className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                            title="Mark as Paid"
-                          >
-                            <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setDeleteModal({ isOpen: true, payroll })}
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Period
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Total Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                  {paginatedPayrolls.map((payroll) => (
+                    <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                          {payroll.month} {payroll.year}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          AED {payroll.total_amount || '0.00'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          payroll.status === 'paid'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : payroll.status === 'calculated'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                        }`}>
+                          {payroll.status || 'pending'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/management/payroll/${payroll.id}`}
+                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                          </Link>
+                          <Link
+                            href={`/dashboard/management/payroll/edit/${payroll.id}`}
+                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                          </Link>
+                          {payroll.status === 'pending' && (
+                            <button
+                              onClick={() => handleCalculate(payroll.id)}
+                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                              title="Calculate"
+                            >
+                              <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          {payroll.status === 'calculated' && (
+                            <button
+                              onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
+                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                              title="Mark as Paid"
+                            >
+                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: true, payroll })}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer */}
+            <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/20 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Showing <span className="text-gray-900 dark:text-white font-bold">{startIndex + 1}</span> to{' '}
+                <span className="text-gray-900 dark:text-white font-bold">
+                  {Math.min(startIndex + itemsPerPage, filteredPayrolls.length)}
+                </span>{' '}
+                of <span className="text-gray-900 dark:text-white font-bold">{filteredPayrolls.length}</span> entries
+              </p>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setCurrentPage(i + 1)}
+                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
+                        currentPage === i + 1 
+                        ? 'bg-blue-600 text-white shadow-lg' 
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">

@@ -4,8 +4,11 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.
 
 export async function GET(request, { params }) {
   try {
-    const { leave_id } = params;
+    // Next.js 15: params is now a Promise
+    const { leave_id } = await params;
     const authHeader = request.headers.get('authorization');
+    
+    console.log('📥 GET /api/leaves/[leave_id] - ID:', leave_id);
     
     const headers = {
       'Content-Type': 'application/json',
@@ -13,11 +16,42 @@ export async function GET(request, { params }) {
     };
     if (authHeader) headers['Authorization'] = authHeader;
     
-    const response = await fetch(`${API_BASE_URL}/api/leaves/${leave_id}`, { headers });
+    // Backend doesn't support GET for individual leave records
+    // So we fetch all and filter client-side
+    const backendUrl = `${API_BASE_URL}/api/leaves?skip=0&limit=1000`;
+    console.log('🌐 Calling backend (fetching all):', backendUrl);
+    
+    const response = await fetch(backendUrl, { headers });
+    
+    console.log('📤 Backend response status:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Backend error:', errorText);
+      return NextResponse.json(
+        { error: `Backend error: ${response.status} - ${errorText}` },
+        { status: response.status }
+      );
+    }
 
     const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
+    
+    // Filter to find the specific leave record
+    let leaveList = Array.isArray(data) ? data : (data.data || []);
+    const leave = leaveList.find(l => l.id === parseInt(leave_id));
+    
+    if (!leave) {
+      console.error('❌ Leave not found with ID:', leave_id);
+      return NextResponse.json(
+        { error: `Leave with ID ${leave_id} not found` },
+        { status: 404 }
+      );
+    }
+    
+    console.log('✅ Leave data retrieved successfully');
+    return NextResponse.json(leave, { status: 200 });
   } catch (error) {
+    console.error('❌ API route error:', error);
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
@@ -27,7 +61,8 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const { leave_id } = params;
+    // Next.js 15: params is now a Promise
+    const { leave_id } = await params;
     const authHeader = request.headers.get('authorization');
     const body = await request.json();
     
@@ -55,7 +90,8 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { leave_id } = params;
+    // Next.js 15: params is now a Promise
+    const { leave_id } = await params;
     const authHeader = request.headers.get('authorization');
     
     const headers = {

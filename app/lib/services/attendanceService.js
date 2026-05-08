@@ -100,14 +100,13 @@ export const attendanceService = {
   // Get attendance by ID
   getById: async (id) => {
     try {
+      console.log('🔍 Fetching attendance with ID:', id);
       const response = await fetchApi(`/api/attendance/${id}`);
-      
-      if (response?.data && typeof response.data === 'object') {
-        return response.data;
-      }
+      console.log('✅ Attendance response:', response);
       
       return response;
     } catch (error) {
+      console.error('❌ Attendance fetch error:', error);
       throw new Error(`Attendance with ID ${id} not found: ${error.message}`);
     }
   },
