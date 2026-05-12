@@ -16,7 +16,18 @@ export const branchService = {
   getDropdown: async () => {
     try {
       const data = await fetchApi('/api/dropdown/branches');
-      return Array.isArray(data) ? data : [];
+      console.log("🏢 Branch dropdown raw response:", data);
+      
+      // Handle different response formats
+      if (Array.isArray(data)) {
+        return data;
+      } else if (data?.branches && Array.isArray(data.branches)) {
+        return data.branches;
+      } else if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      }
+      
+      return [];
     } catch (error) {
       // Silently handle permission errors (403) - these are expected when user lacks permissions
       if (error.message.includes('Not authorized') || error.message.includes('403')) {
@@ -26,7 +37,19 @@ export const branchService = {
       console.error("🏢 Branches Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
-        return await branchService.getAll(0, 100);
+        const allBranches = await branchService.getAll(0, 100);
+        console.log("🏢 Fallback branches from getAll:", allBranches);
+        
+        // Handle different response formats from getAll
+        if (Array.isArray(allBranches)) {
+          return allBranches;
+        } else if (allBranches?.branches && Array.isArray(allBranches.branches)) {
+          return allBranches.branches;
+        } else if (allBranches?.data && Array.isArray(allBranches.data)) {
+          return allBranches.data;
+        }
+        
+        return [];
       } catch (fallbackError) {
         console.log("ℹ️ Branches fallback: Using empty array (permission restricted)");
         return [];

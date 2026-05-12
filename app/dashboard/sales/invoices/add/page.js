@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -148,10 +148,15 @@ export default function AddInvoicePage() {
       setPoItemsLoading(true);
       try {
         const data = await poItemService.getDropdown();
-        console.log('PO Items fetched:', data?.length, 'items');
-        setPoItems(Array.isArray(data) ? data : []);
+        console.log('📦 PO Items fetched:', data?.length, 'items');
+        // Filter out sold items - only show items that are not sold
+        const availableItems = Array.isArray(data) 
+          ? data.filter(item => item.status !== 'sold' && item.status !== 'Sold')
+          : [];
+        console.log('✅ Available (non-sold) items:', availableItems.length);
+        setPoItems(availableItems);
       } catch (error) {
-        console.error("Error fetching PO items:", error);
+        console.error("❌ Error fetching PO items:", error);
         setPoItems([]);
       } finally {
         setPoItemsLoading(false);
@@ -365,9 +370,11 @@ export default function AddInvoicePage() {
               value={formData.overall_load_status}
               onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
             >
+              <option value="pending">Pending</option>
               <option value="not_loaded">Not Loaded</option>
+              <option value="partial">Partial</option>
               <option value="loaded">Loaded</option>
-              <option value="delivered">Delivered</option>
+              <option value="full">Full</option>
             </select>
           </FormField>
           <FormField label="Customer" required>
@@ -416,14 +423,34 @@ export default function AddInvoicePage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice Items</h3>
-            <button
-              type="button"
-              onClick={addItem}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Item
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  // Bulk update all items to "loaded" status
+                  const updatedItems = formData.items.map(item => ({
+                    ...item,
+                    load_status: 'loaded',
+                    load_date: item.load_date || new Date().toISOString()
+                  }));
+                  setFormData({...formData, items: updatedItems});
+                  success("All items marked as loaded!");
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+                disabled={formData.items.length === 0}
+              >
+                <Check className="w-4 h-4" />
+                All Loaded
+              </button>
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Item
+              </button>
+            </div>
           </div>
 
           {formData.items.length > 0 ? (
@@ -546,6 +573,7 @@ export default function AddInvoicePage() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -569,6 +597,11 @@ export default function AddInvoicePage() {
                       <td className="px-4 py-3">
                         <span className="text-sm font-black text-green-600 dark:text-green-400">
                           {formatCurrency(payment.payment_amount)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                          {payment.received_by?.name || payment.received_by_name || payment.created_by?.name || "Admin User"}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -628,22 +661,48 @@ export default function AddInvoicePage() {
         </FormField>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
-          <button 
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
-          >
-            <Check className="w-4 h-4" />
-            {loading ? 'Creating...' : 'Create Invoice'}
-          </button>
-          <Link 
-            href="/dashboard/sales/invoices"
-            className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
-          >
-            Cancel
-          </Link>
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <button 
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+            >
+              <Check className="w-4 h-4" />
+              {loading ? 'Creating...' : 'Save'}
+            </button>
+            <button 
+              type="button"
+              onClick={() => window.print()}
+              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+            >
+              <Printer className="w-4 h-4" />
+              Print
+            </button>
+            <Link 
+              href="/dashboard/sales/invoices"
+              className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+            >
+              Cancel
+            </Link>
+          </div>
+          
+          {/* Status Change Dropdown */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-bold text-gray-600 dark:text-gray-400">Change Status:</label>
+            <select 
+              className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              value={formData.invoice_status}
+              onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
+            >
+              <option value="draft">Draft</option>
+              <option value="pending">Pending</option>
+              <option value="paid">Paid</option>
+              <option value="overdue">Overdue</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
       </div>
 

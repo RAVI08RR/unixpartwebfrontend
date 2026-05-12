@@ -7,7 +7,7 @@ import {
   Receipt, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   DollarSign, Pencil, Trash2, Check, X, Eye, Calendar,
-  User, Building2
+  User, Building2, Printer, FileText
 } from "lucide-react";
 import { useInvoices } from "@/app/lib/hooks/useInvoices";
 import { invoiceService } from "@/app/lib/services/invoiceService";
@@ -424,13 +424,14 @@ function InvoiceManagementContent() {
           <table className="w-full lg:min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Date & Time</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice By</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Outstanding</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Load Status</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
@@ -441,79 +442,83 @@ function InvoiceManagementContent() {
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
                     >
                       {/* Invoice Number */}
-                      <td className="px-6 py-6" data-label="Invoice">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Receipt className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{invoice.invoice_number}</p>
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {invoice.id}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Customer */}
-                      <td className="px-6 py-6" data-label="Customer">
-                        <div className="space-y-1.5 min-w-[180px]">
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                            <User className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{getCustomerName(invoice.customer_id)}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Amount */}
-                      <td className="px-6 py-6" data-label="Amount">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                            {formatCurrency(invoice.invoice_total)}
-                          </span>
-                          <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                            Paid: {formatCurrency(invoice.paid_amount)}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-6" data-label="Status">
-                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-sm font-black ${
-                          invoice.invoice_status === 'paid'
-                            ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                            : invoice.invoice_status === 'overdue'
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                            : invoice.invoice_status === 'cancelled'
-                            ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
-                            : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
-                        }`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${
-                            invoice.invoice_status === 'paid' ? 'bg-green-600' : 
-                            invoice.invoice_status === 'overdue' ? 'bg-red-600' :
-                            invoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
-                          }`}></div>
-                          {invoice.invoice_status?.charAt(0).toUpperCase() + invoice.invoice_status?.slice(1) || "Pending"}
-                        </div>
-                      </td>
-
-                      {/* Date */}
-                      <td className="px-6 py-6" data-label="Date">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                            {formatDate(invoice.invoice_date)}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Outstanding */}
-                      <td className="px-6 py-6" data-label="Outstanding">
-                        <span className="text-sm font-bold text-red-600 dark:text-red-400">
-                          {formatCurrency(invoice.outstanding_amount)}
+                      <td className="px-6 py-5" data-label="Invoice #">
+                        <span className="text-sm font-black text-gray-900 dark:text-white">
+                          {invoice.invoice_number || "-"}
                         </span>
                       </td>
 
+                      {/* Customer */}
+                      <td className="px-6 py-5" data-label="Customer">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                          {getCustomerName(invoice.customer_id)}
+                        </span>
+                      </td>
+
+                      {/* Date & Time */}
+                      <td className="px-6 py-5" data-label="Date & Time">
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                          {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          }) : "-"}
+                        </span>
+                      </td>
+
+                      {/* Invoice By */}
+                      <td className="px-6 py-5" data-label="Invoice By">
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                          {invoice.created_by?.name || invoice.created_by_name || "Admin User"}
+                        </span>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="px-6 py-5" data-label="Amount">
+                        <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                          {formatCurrency(invoice.invoice_total)}
+                        </span>
+                      </td>
+
+                      {/* Invoice Status */}
+                      <td className="px-6 py-5" data-label="Invoice Status">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
+                          invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                            : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                            : invoice.invoice_status === 'cancelled'
+                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}>
+                          {invoice.invoice_status || "Pending"}
+                        </div>
+                      </td>
+
+                      {/* Load Status */}
+                      <td className="px-6 py-5" data-label="Load Status">
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
+                          invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                            : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                            : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                        }`}>
+                          {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
+                           invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
+                           invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
+                           invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
+                           'Not Loaded'}
+                        </div>
+                      </td>
+
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
+                      <td className="px-6 py-5 text-right relative" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <div className="relative">
                             <button 
@@ -529,29 +534,39 @@ function InvoiceManagementContent() {
                             </button>
                                 
                                 {menuOpenId === invoice.id && (
-                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                  <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                     index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                   }`}>
-                                    <button 
-                                      onClick={() => handleView(invoice)}
+                                    <Link
+                                      href={`/dashboard/sales/invoices/view/${invoice.id}`}
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                     >
                                       <Eye className="w-4 h-4" />
-                                      View Details
-                                    </button>
-                                    <Link
-                                      href={`/dashboard/sales/invoices/${invoice.id}/payments`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                    >
-                                      <DollarSign className="w-4 h-4" />
-                                      View Payments
+                                      View/Modify Invoice
                                     </Link>
-                                    <button 
-                                      onClick={() => handleEdit(invoice)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                    <Link
+                                      href={`/dashboard/sales/invoices/edit/${invoice.id}`}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                     >
                                       <Pencil className="w-4 h-4" />
                                       Edit Invoice
+                                    </Link>
+                                    <button
+                                      onClick={() => window.print()}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
+                                    >
+                                      <Printer className="w-4 h-4" />
+                                      Print Invoice
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        // Open print preview
+                                        window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
+                                    >
+                                      <FileText className="w-4 h-4" />
+                                      Print Preview
                                     </button>
                                     <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
                                     <button 
@@ -571,7 +586,7 @@ function InvoiceManagementContent() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
+                  <td colSpan="8" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No invoices found</p>
                   </td>
                 </tr>

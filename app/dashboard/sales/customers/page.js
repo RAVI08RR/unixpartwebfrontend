@@ -5,11 +5,13 @@ import Link from "next/link";
 import { 
   Mail, MoreVertical, Search, Phone,
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  Building, Pencil, Trash2, Check, X, Eye, MapPin, DollarSign
+  Building, Pencil, Trash2, Check, X, Eye, MapPin, DollarSign, AlertTriangle, History
 } from "lucide-react";
 import { useCustomers } from "../../../lib/hooks/useCustomers";
 import { customerService } from "../../../lib/services/customerService";
 import { getAuthToken } from "../../../lib/api";
+import CustomerDeactivateModal from "../../../components/CustomerDeactivateModal";
+import CustomerCreditLimitModal from "../../../components/CustomerCreditLimitModal";
 
 export default function CustomersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,6 +70,8 @@ export default function CustomersPage() {
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [creditLimitModalOpen, setCreditLimitModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Filter and search logic
@@ -137,6 +141,30 @@ export default function CustomersPage() {
 
   const handleViewClose = () => {
     setViewModalOpen(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleDeactivateClick = (customer) => {
+    setSelectedCustomer(customer);
+    setDeactivateModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleDeactivateSuccess = () => {
+    refetch();
+    setDeactivateModalOpen(false);
+    setSelectedCustomer(null);
+  };
+
+  const handleCreditLimitClick = (customer) => {
+    setSelectedCustomer(customer);
+    setCreditLimitModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleCreditLimitSuccess = () => {
+    refetch();
+    setCreditLimitModalOpen(false);
     setSelectedCustomer(null);
   };
 
@@ -363,12 +391,33 @@ export default function CustomersPage() {
                                   View Details
                                 </button>
                                 <Link 
+                                  href={`/dashboard/sales/customers/purchase-history/${customer.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
+                                >
+                                  <History className="w-4 h-4" />
+                                  View Purchase History
+                                </Link>
+                                <Link 
                                   href={`/dashboard/sales/customers/edit/${customer.id}`}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
                                   <Pencil className="w-4 h-4" />
                                   Edit Customer
                                 </Link>
+                                <button 
+                                  onClick={() => handleCreditLimitClick(customer)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                >
+                                  <DollarSign className="w-4 h-4" />
+                                  Change Credit Limit
+                                </button>
+                                <button 
+                                  onClick={() => handleDeactivateClick(customer)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400 rounded-xl transition-colors"
+                                >
+                                  <AlertTriangle className="w-4 h-4" />
+                                  {customer.status ? "De/Re-activate" : "Reactivate"}
+                                </button>
                                 <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
                                 <button 
                                   onClick={() => handleDeleteClick(customer)} 
@@ -629,6 +678,32 @@ export default function CustomersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Customer Deactivate Modal */}
+      {deactivateModalOpen && selectedCustomer && (
+        <CustomerDeactivateModal
+          customer={selectedCustomer}
+          isOpen={deactivateModalOpen}
+          onClose={() => {
+            setDeactivateModalOpen(false);
+            setSelectedCustomer(null);
+          }}
+          onSuccess={handleDeactivateSuccess}
+        />
+      )}
+
+      {/* Customer Credit Limit Modal */}
+      {creditLimitModalOpen && selectedCustomer && (
+        <CustomerCreditLimitModal
+          customer={selectedCustomer}
+          isOpen={creditLimitModalOpen}
+          onClose={() => {
+            setCreditLimitModalOpen(false);
+            setSelectedCustomer(null);
+          }}
+          onSuccess={handleCreditLimitSuccess}
+        />
       )}
     </div>
   );
