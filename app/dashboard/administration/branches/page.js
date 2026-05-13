@@ -6,7 +6,7 @@ import {
   Building2, MoreVertical, Search, 
   Filter, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, X, Eye, Calendar,
-  MapPin, DollarSign, TrendingUp, AlertCircle, Truck, Percent, ChevronDown, ChevronUp
+  MapPin, DollarSign, TrendingUp, AlertCircle, Truck, Percent, ChevronDown, ChevronUp, Power
 } from "lucide-react";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { branchService } from "@/app/lib/services/branchService";
@@ -15,6 +15,7 @@ import { supplierService } from "@/app/lib/services/supplierService";
 import { getAuthToken } from "@/app/lib/api";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import BranchActivateDeactivateModal from "@/app/components/BranchActivateDeactivateModal";
 
 export default function BranchManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +32,7 @@ export default function BranchManagementPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const [activateDeactivateModalOpen, setActivateDeactivateModalOpen] = useState(false);
   
   // Branch owners state
   const [branchOwners, setBranchOwners] = useState([]);
@@ -159,6 +161,18 @@ export default function BranchManagementPage() {
 
   const handleViewClose = () => {
     setViewModalOpen(false);
+    setSelectedBranch(null);
+  };
+
+  const handleActivateDeactivateClick = (branch) => {
+    setSelectedBranch(branch);
+    setActivateDeactivateModalOpen(true);
+    setMenuOpenId(null);
+  };
+
+  const handleActivateDeactivateSuccess = () => {
+    mutate(); // Refresh the branch list
+    setActivateDeactivateModalOpen(false);
     setSelectedBranch(null);
   };
 
@@ -497,6 +511,17 @@ export default function BranchManagementPage() {
                                     <Pencil className="w-4 h-4" />
                                     Edit Branch
                                   </Link>
+                                  <button 
+                                    onClick={() => handleActivateDeactivateClick(branch)}
+                                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-xl transition-colors ${
+                                      branch.status 
+                                        ? 'text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
+                                    }`}
+                                  >
+                                    <Power className="w-4 h-4" />
+                                    {branch.status ? 'Deactivate' : 'Activate'}
+                                  </button>
                                   <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
                                   <button 
                                     onClick={() => handleDeleteClick(branch)} 
@@ -780,6 +805,17 @@ export default function BranchManagementPage() {
           </div>
         </div>
       )}
+
+      {/* Activate/Deactivate Modal */}
+      <BranchActivateDeactivateModal
+        branch={selectedBranch}
+        isOpen={activateDeactivateModalOpen}
+        onClose={() => {
+          setActivateDeactivateModalOpen(false);
+          setSelectedBranch(null);
+        }}
+        onSuccess={handleActivateDeactivateSuccess}
+      />
     </div>
   );
 }

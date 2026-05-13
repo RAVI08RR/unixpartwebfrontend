@@ -108,7 +108,7 @@ export default function EditFundTransferPage({ params }) {
 
     try {
       const submitData = {
-        date: formData.date,
+        date: null, // API requires date to always be null
         amount: parseFloat(formData.amount),
         method: formData.method,
         reference: formData.reference.trim() || null,
@@ -122,6 +122,7 @@ export default function EditFundTransferPage({ params }) {
         return;
       }
 
+      console.log("Updating fund transfer data:", submitData);
       await fundTransferService.update(transferId, submitData);
       success("Fund transfer updated successfully!");
       router.push("/dashboard/finance/fund-transfers");
@@ -164,23 +165,8 @@ export default function EditFundTransferPage({ params }) {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Row 1: Date and Amount */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
-                  required
-                />
-              </div>
-
+            {/* Row 1: Amount (Date field removed as API doesn't accept it) */}
+            <div className="grid grid-cols-1 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />

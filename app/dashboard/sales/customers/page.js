@@ -393,7 +393,7 @@ export default function CustomersPage() {
                             
                             {menuOpenId === customer.id && (
                               <div 
-                                className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-1.5 ${
+                                className={`absolute right-0 w-[17rem] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-1.5 ${
                                   index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                 }`}
                                 style={{
