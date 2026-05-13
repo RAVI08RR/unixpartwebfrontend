@@ -90,6 +90,12 @@ export default function StockItemsManagementPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState(null);
+  const [addCategoryModalOpen, setAddCategoryModalOpen] = useState(false);
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: "",
+    description: ""
+  });
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
 
   // Group items by category
   const categorizedItems = useMemo(() => {
@@ -216,6 +222,56 @@ export default function StockItemsManagementPage() {
     setSelectedStockItem(null);
   };
 
+  // Category modal handlers
+  const handleAddCategoryClick = () => {
+    setCategoryFormData({ name: "", description: "" });
+    setAddCategoryModalOpen(true);
+  };
+
+  const handleCategoryFormChange = (e) => {
+    const { name, value } = e.target;
+    setCategoryFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!categoryFormData.name.trim()) {
+      error("Category name is required");
+      return;
+    }
+
+    setIsSavingCategory(true);
+    try {
+      // Create category using the same API with parent_category_id: 0
+      await stockItemService.create({
+        name: categoryFormData.name.trim(),
+        description: categoryFormData.description.trim(),
+        parent_category_id: 0, // 0 indicates this is a category
+        status: true
+      });
+
+      success("Category created successfully!");
+      setAddCategoryModalOpen(false);
+      setCategoryFormData({ name: "", description: "" });
+      
+      // Refresh categories and stock items
+      const cats = await stockItemService.getCategories();
+      setCategories(cats || []);
+      mutate();
+    } catch (err) {
+      console.error("Failed to create category:", err);
+      error(err.message || "Failed to create category");
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
+  const handleCategoryModalClose = () => {
+    setAddCategoryModalOpen(false);
+    setCategoryFormData({ name: "", description: "" });
+  };
+
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -336,6 +392,13 @@ export default function StockItemsManagementPage() {
               onSuccess={(format) => success(`Stock items exported successfully as ${format}!`)}
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
+            <button 
+              onClick={handleAddCategoryClick}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-95 transition-all"
+            >
+              <Tag className="w-4 h-4" />
+              <span className="whitespace-nowrap font-black">Add Category</span>
+            </button>
             <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Stock Item</span>
@@ -618,6 +681,110 @@ export default function StockItemsManagementPage() {
                 Delete Stock Item
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {addCategoryModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[28px] shadow-2xl max-w-lg w-full border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-8 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                  <Tag className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">
+                    Add New Category
+                  </h2>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 font-medium mt-0.5">
+                    Enter the details for the new stock category
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleCategoryModalClose}
+                disabled={isSavingCategory}
+                className="p-3 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-2xl transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white active:scale-90 disabled:opacity-50"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <form onSubmit={handleCategorySubmit} className="p-8 space-y-6">
+              {/* Category Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  Category Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={categoryFormData.name}
+                  onChange={handleCategoryFormChange}
+                  placeholder="Enter category name"
+                  disabled={isSavingCategory}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm disabled:opacity-50"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              {/* Category Description */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={categoryFormData.description}
+                  onChange={handleCategoryFormChange}
+                  placeholder="Enter category description (optional)"
+                  rows="3"
+                  disabled={isSavingCategory}
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm resize-none disabled:opacity-50"
+                />
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <p className="text-sm text-blue-700 dark:text-blue-400 font-medium">
+                  <strong>Note:</strong> This will create a new category that can be used when adding stock items.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCategoryModalClose}
+                  disabled={isSavingCategory}
+                  className="flex-1 px-6 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCategory || !categoryFormData.name.trim()}
+                  className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-600/25 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSavingCategory ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Create Category</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

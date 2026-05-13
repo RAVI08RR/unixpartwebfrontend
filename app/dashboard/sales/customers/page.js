@@ -74,6 +74,18 @@ export default function CustomersPage() {
   const [creditLimitModalOpen, setCreditLimitModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
+
   // Filter and search logic
   const filteredCustomers = useMemo(() => {
     if (!customers) return [];
@@ -364,9 +376,9 @@ export default function CustomersPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
+                      <td className="px-6 py-6 text-right" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
+                          <div className="relative inline-block actions-menu-container">
                             <button 
                               onClick={() => toggleMenu(customer.id)}
                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
@@ -380,9 +392,14 @@ export default function CustomersPage() {
                             </button>
                             
                             {menuOpenId === customer.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
+                              <div 
+                                className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-1.5 ${
+                                  index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}
+                                style={{
+                                  animation: 'fadeIn 0.2s ease-out'
+                                }}
+                              >
                                 <button 
                                   onClick={() => handleViewCustomer(customer)}
                                   className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"

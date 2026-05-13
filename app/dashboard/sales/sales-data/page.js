@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import Link from "next/link";
+import CustomerAutocomplete from "@/app/components/CustomerAutocomplete";
 
 export default function SalesDataPage() {
   const [salesData, setSalesData] = useState([]);
@@ -23,7 +24,7 @@ export default function SalesDataPage() {
     supplier: "All",
     customerName: "",
     customerNumber: "",
-    dateRange: "",
+    dateRange: "", // Empty by default to show all data
     container: "All",
     itemSold: "All",
     stockNumber: "",
@@ -53,9 +54,17 @@ export default function SalesDataPage() {
     fetchData();
   }, []);
 
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
   // Filter logic
   const filteredData = useMemo(() => {
-    return salesData.filter(item => {
+    console.log("🔍 Applying filters:", filters);
+    console.log("📊 Total sales data:", salesData.length);
+    
+    const filtered = salesData.filter(item => {
       const matchesUser = filters.user === "All" || item.invoice?.created_by?.name === filters.user;
       const matchesSupplier = filters.supplier === "All" || item.po_item?.purchase_order?.container?.supplier?.supplier_code === filters.supplier;
       const matchesCustomer = !filters.customerName || item.invoice?.customer?.full_name?.toLowerCase().includes(filters.customerName.toLowerCase());
@@ -63,8 +72,41 @@ export default function SalesDataPage() {
       const matchesStock = !filters.stockNumber || (item.po_item?.stock_number || "").toLowerCase().includes(filters.stockNumber.toLowerCase());
       const matchesLoadStatus = filters.loadStatus === "All" || item.load_status === filters.loadStatus;
       
-      return matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus;
+      // Invoice Status Filter
+      let matchesInvoiceStatus = true;
+      if (filters.invoiceStatus !== "All") {
+        const paidAmount = parseFloat(item.invoice?.paid_amount || 0);
+        const outstandingAmount = parseFloat(item.invoice?.outstanding_amount || 0);
+        
+        if (filters.invoiceStatus === "paid") {
+          matchesInvoiceStatus = paidAmount > 0 && outstandingAmount === 0;
+        } else if (filters.invoiceStatus === "partial") {
+          matchesInvoiceStatus = paidAmount > 0 && outstandingAmount > 0;
+        } else if (filters.invoiceStatus === "unpaid") {
+          matchesInvoiceStatus = paidAmount === 0 && outstandingAmount > 0;
+        }
+      }
+      
+      // Date filter - check if invoice date matches selected date OR if no date filter is set
+      let matchesDate = true;
+      if (filters.dateRange) {
+        const invoiceDate = item.invoice?.created_at || item.invoice?.invoice_date;
+        if (invoiceDate) {
+          const invoiceDateOnly = new Date(invoiceDate).toISOString().split('T')[0];
+          matchesDate = invoiceDateOnly === filters.dateRange;
+        } else {
+          // If item has no date, exclude it when date filter is active
+          matchesDate = false;
+        }
+      }
+      
+      const matches = matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus && matchesInvoiceStatus && matchesDate;
+      
+      return matches;
     });
+    
+    console.log("✅ Filtered results:", filtered.length);
+    return filtered;
   }, [salesData, filters]);
 
   // Totals
@@ -121,7 +163,7 @@ export default function SalesDataPage() {
       supplier: "All",
       customerName: "",
       customerNumber: "",
-      dateRange: "",
+      dateRange: "", // Clear date filter completely
       container: "All",
       itemSold: "All",
       stockNumber: "",
@@ -130,6 +172,22 @@ export default function SalesDataPage() {
     });
     setCurrentPage(1);
   };
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (filters.user !== "All") count++;
+    if (filters.supplier !== "All") count++;
+    if (filters.customerName) count++;
+    if (filters.customerNumber) count++;
+    if (filters.dateRange) count++;
+    if (filters.container !== "All") count++;
+    if (filters.itemSold !== "All") count++;
+    if (filters.stockNumber) count++;
+    if (filters.invoiceStatus !== "All") count++;
+    if (filters.loadStatus !== "All") count++;
+    return count;
+  }, [filters]);
 
   const toggleMenu = (id, item = null) => {
     if (item) console.log("📊 Sales Item context:", item);
@@ -180,7 +238,14 @@ export default function SalesDataPage() {
       {/* Filters Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[20px] border border-gray-100 dark:border-zinc-800 shadow-sm p-8 space-y-6">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white">Filters</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-black text-gray-900 dark:text-white">Filters</h3>
+            {activeFiltersCount > 0 && (
+              <span className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-xs font-black">
+                {activeFiltersCount} Active
+              </span>
+            )}
+          </div>
           <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="p-2 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
             <Filter className={`w-5 h-5 ${isFilterOpen ? 'text-red-500' : 'text-gray-400'}`} />
           </button>
@@ -217,12 +282,10 @@ export default function SalesDataPage() {
             {/* Filter by Customer Name */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Customer Name</label>
-              <input 
-                type="text" 
-                placeholder="Search customer..."
-                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              <CustomerAutocomplete
                 value={filters.customerName}
-                onChange={(e) => setFilters({...filters, customerName: e.target.value})}
+                onChange={(value) => setFilters({...filters, customerName: value})}
+                placeholder="Search customer..."
               />
             </div>
 
@@ -245,6 +308,8 @@ export default function SalesDataPage() {
                 <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="date" 
+                  value={filters.dateRange}
+                  onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
                   className="w-full pl-11 pr-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
                 />
               </div>
@@ -253,7 +318,11 @@ export default function SalesDataPage() {
             {/* Filter by Container */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Container #</label>
-              <select className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
+              <select 
+                value={filters.container}
+                onChange={(e) => setFilters({...filters, container: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              >
                 <option value="All">All Containers</option>
               </select>
             </div>
@@ -261,7 +330,11 @@ export default function SalesDataPage() {
             {/* Filter by Item Sold */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Item Sold</label>
-              <select className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all">
+              <select 
+                value={filters.itemSold}
+                onChange={(e) => setFilters({...filters, itemSold: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              >
                 <option value="All">All Items</option>
               </select>
             </div>
@@ -276,6 +349,38 @@ export default function SalesDataPage() {
                 value={filters.stockNumber}
                 onChange={(e) => setFilters({...filters, stockNumber: e.target.value})}
               />
+            </div>
+
+            {/* Filter by Invoice Status */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Invoice Status</label>
+              <select 
+                value={filters.invoiceStatus}
+                onChange={(e) => setFilters({...filters, invoiceStatus: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              >
+                <option value="All">All Statuses</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partial</option>
+                <option value="unpaid">Unpaid</option>
+              </select>
+            </div>
+
+            {/* Filter by Load Status */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Load Status</label>
+              <select 
+                value={filters.loadStatus}
+                onChange={(e) => setFilters({...filters, loadStatus: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              >
+                <option value="All">All Statuses</option>
+                <option value="loaded">Loaded</option>
+                <option value="pending">Pending</option>
+                <option value="partial">Partial</option>
+                <option value="draft">Draft</option>
+                <option value="not_loaded">Not Loaded</option>
+              </select>
             </div>
           </div>
         )}
@@ -422,7 +527,7 @@ export default function SalesDataPage() {
                           </button>
                           
                           {menuOpenId === (item.id || idx) && (
-                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                               idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'
                             }`}>
                               <button 
@@ -517,7 +622,7 @@ export default function SalesDataPage() {
 
       {/* View Details Modal */}
       {viewModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 rounded-[32px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 flex items-center justify-between p-8 border-b border-gray-50 dark:border-zinc-900">

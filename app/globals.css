@@ -2096,6 +2096,28 @@ a.bg-black svg,
   }
 }
 
+/* Actions Menu Dropdown Positioning */
+.actions-menu-container {
+  position: relative;
+}
+
+.actions-menu-container > div[class*="absolute"] {
+  min-width: 12rem;
+  max-width: 16rem;
+}
+
+/* Ensure dropdown is visible on desktop */
+@media (min-width: 1024px) {
+  tbody tr {
+    position: relative;
+  }
+  
+  .actions-menu-container > div[class*="absolute"] {
+    position: absolute !important;
+    right: 0;
+    z-index: 50;
+  }
+}
 
 /* Print Styles for Invoice */
 @media print {

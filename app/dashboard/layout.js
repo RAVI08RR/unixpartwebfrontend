@@ -14,6 +14,7 @@ import { authService } from "../lib/services/authService";
 import { LogOut, User as UserIcon, Settings as SettingsIcon } from "lucide-react";
 import AuthProvider from "../components/AuthProvider";
 import useAuthStore from "../lib/store/authStore";
+import QuickSearch from "../components/QuickSearch";
 
 function Topbar() {
   const router = useRouter();
@@ -185,6 +186,9 @@ function LayoutContent({ children }) {
           {children}
         </div>
       </main>
+
+      {/* Quick Search Component */}
+      <QuickSearch />
     </div>
   );
 }
