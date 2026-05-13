@@ -63,23 +63,87 @@ export const customerService = {
   // Create new customer
   create: async (customerData) => {
     try {
-      return await fetchApi('/api/customers', {
-        method: 'POST',
-        body: JSON.stringify(customerData),
-      });
+      // Check if customerData contains a file (profile_image is a File object)
+      const hasFile = customerData.profile_image instanceof File;
+      
+      if (hasFile) {
+        // Use multipart/form-data for file upload
+        const formData = new FormData();
+        
+        // Append all customer data to FormData
+        Object.keys(customerData).forEach(key => {
+          if (customerData[key] !== null && customerData[key] !== undefined) {
+            formData.append(key, customerData[key]);
+          }
+        });
+        
+        const token = localStorage.getItem('access_token');
+        const response = await fetch('/api/customers', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+        }
+        
+        return await response.json();
+      } else {
+        // Use JSON for regular data
+        return await fetchApi('/api/customers', {
+          method: 'POST',
+          body: JSON.stringify(customerData),
+        });
+      }
     } catch (error) {
       console.warn('📋 Customer creation failed, backend unavailable:', error.message);
-      throw new Error('Cannot create customer: Backend server is unavailable. Please try again later.');
+      throw new Error('Cannot create customer: ' + error.message);
     }
   },
 
   // Update existing customer
   update: async (id, customerData) => {
     try {
-      return await fetchApi(`/api/customers/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(customerData),
-      });
+      // Check if customerData contains a file (profile_image is a File object)
+      const hasFile = customerData.profile_image instanceof File;
+      
+      if (hasFile) {
+        // Use multipart/form-data for file upload
+        const formData = new FormData();
+        
+        // Append all customer data to FormData
+        Object.keys(customerData).forEach(key => {
+          if (customerData[key] !== null && customerData[key] !== undefined) {
+            formData.append(key, customerData[key]);
+          }
+        });
+        
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`/api/customers/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+        }
+        
+        return await response.json();
+      } else {
+        // Use JSON for regular data
+        return await fetchApi(`/api/customers/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(customerData),
+        });
+      }
     } catch (error) {
       console.warn('📋 Customer update failed, backend unavailable:', error.message);
       
@@ -100,7 +164,7 @@ export const customerService = {
         };
       }
       
-      throw new Error('Cannot update customer: Backend server is unavailable. Please try again later.');
+      throw new Error('Cannot update customer: ' + error.message);
     }
   },
 

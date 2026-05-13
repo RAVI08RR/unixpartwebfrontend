@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
   Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer
@@ -11,6 +12,7 @@ import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useToast } from "@/app/components/Toast";
+import PrintableInvoice from "@/app/components/PrintableInvoice";
 
 export default function AddInvoicePage() {
   const router = useRouter();
@@ -22,6 +24,11 @@ export default function AddInvoicePage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
+  const printRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+  });
   
   const [formData, setFormData] = useState({
     invoice_number: "",
@@ -93,6 +100,53 @@ export default function AddInvoicePage() {
       itemsWithPaidAmounts
     };
   }, [formData.items, formData.payments]);
+
+  // Auto-calculate overall load status based on items
+  useEffect(() => {
+    if (formData.items.length === 0) {
+      // No items, set to not_loaded
+      if (formData.overall_load_status !== 'not_loaded') {
+        setFormData(prev => ({ ...prev, overall_load_status: 'not_loaded' }));
+      }
+      return;
+    }
+
+    const loadStatuses = formData.items.map(item => item.load_status?.toLowerCase());
+    const uniqueStatuses = [...new Set(loadStatuses)];
+
+    let calculatedStatus = 'not_loaded';
+
+    // All items are loaded or full
+    if (uniqueStatuses.every(status => status === 'loaded' || status === 'full')) {
+      calculatedStatus = 'loaded';
+    }
+    // All items are pending
+    else if (uniqueStatuses.every(status => status === 'pending')) {
+      calculatedStatus = 'pending';
+    }
+    // All items are draft
+    else if (uniqueStatuses.every(status => status === 'draft')) {
+      calculatedStatus = 'draft';
+    }
+    // Mix of statuses - partial
+    else if (uniqueStatuses.some(status => status === 'loaded' || status === 'full') && 
+             uniqueStatuses.some(status => status === 'pending' || status === 'not_loaded' || status === 'draft')) {
+      calculatedStatus = 'partial';
+    }
+    // All not loaded
+    else if (uniqueStatuses.every(status => status === 'not_loaded')) {
+      calculatedStatus = 'not_loaded';
+    }
+    // Default to partial if mixed
+    else {
+      calculatedStatus = 'partial';
+    }
+
+    // Only update if different to avoid infinite loop
+    if (formData.overall_load_status !== calculatedStatus) {
+      setFormData(prev => ({ ...prev, overall_load_status: calculatedStatus }));
+    }
+  }, [formData.items]);
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -370,6 +424,7 @@ export default function AddInvoicePage() {
               value={formData.overall_load_status}
               onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
             >
+              <option value="draft">Draft</option>
               <option value="pending">Pending</option>
               <option value="not_loaded">Not Loaded</option>
               <option value="partial">Partial</option>
@@ -674,7 +729,7 @@ export default function AddInvoicePage() {
             </button>
             <button 
               type="button"
-              onClick={() => window.print()}
+              onClick={handlePrint}
               className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
             >
               <Printer className="w-4 h-4" />
@@ -938,6 +993,21 @@ export default function AddInvoicePage() {
           </div>
         </div>
       )}
+
+      {/* Hidden Printable Invoice */}
+      <div style={{ display: 'none' }}>
+        <PrintableInvoice 
+          ref={printRef} 
+          invoice={{
+            invoice_number: formData.invoice_number,
+            invoice_date: formData.invoice_date,
+            invoice_total: totals.itemsTotal,
+            invoice_notes: formData.invoice_notes,
+            items: formData.items
+          }} 
+          customer={selectedCustomer} 
+        />
+      </div>
     </div>
   );
 }

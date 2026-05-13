@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useReactToPrint } from 'react-to-print';
 import { 
-  ArrowLeft, Printer, FileText, Calendar, User, 
-  Building2, DollarSign, Package, CreditCard, Receipt
+  ArrowLeft, Printer, FileText, CreditCard, Receipt
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
+import PrintableInvoice from "@/app/components/PrintableInvoice";
 
 export default function ViewInvoicePage({ params }) {
   const router = useRouter();
@@ -17,7 +18,11 @@ export default function ViewInvoicePage({ params }) {
   const [invoice, setInvoice] = useState(null);
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
-  const isPrintPreview = searchParams?.get('print') === 'preview';
+  const printRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+  });
 
   useEffect(() => {
     // Unwrap params promise
@@ -55,13 +60,6 @@ export default function ViewInvoicePage({ params }) {
 
     fetchInvoiceData();
   }, [invoiceId, router]);
-
-  // Auto-print in preview mode
-  useEffect(() => {
-    if (isPrintPreview && invoice && !loading) {
-      setTimeout(() => window.print(), 500);
-    }
-  }, [isPrintPreview, invoice, loading]);
 
   const formatCurrency = (amount) => {
     if (!amount) return "AED 0.00";
@@ -111,6 +109,8 @@ export default function ViewInvoicePage({ params }) {
         return 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400';
       case 'pending':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'draft':
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400';
       case 'not_loaded':
       default:
         return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
@@ -128,6 +128,8 @@ export default function ViewInvoicePage({ params }) {
         return 'Partial';
       case 'pending':
         return 'Pending';
+      case 'draft':
+        return 'Draft';
       case 'not_loaded':
       default:
         return 'Not Loaded';
@@ -153,7 +155,7 @@ export default function ViewInvoicePage({ params }) {
   return (
     <div className="max-w-[1200px] mx-auto space-y-6 pb-12 px-4 sm:px-6">
       {/* Header - Hide in print mode */}
-      <div className="flex items-center justify-between print:hidden">
+      <div className="flex items-center justify-between no-print">
         <div className="flex items-center gap-4">
           <Link 
             href="/dashboard/sales/invoices" 
@@ -169,7 +171,7 @@ export default function ViewInvoicePage({ params }) {
         
         <div className="flex items-center gap-3">
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
           >
             <Printer className="w-4 h-4" />
@@ -389,6 +391,11 @@ export default function ViewInvoicePage({ params }) {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Hidden Printable Invoice */}
+      <div style={{ display: 'none' }}>
+        <PrintableInvoice ref={printRef} invoice={invoice} customer={customer} />
       </div>
     </div>
   );

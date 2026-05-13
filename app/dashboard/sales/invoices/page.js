@@ -507,12 +507,15 @@ function InvoiceManagementContent() {
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
                             : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
                             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
                             : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                         }`}>
                           {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
                            invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
                            invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
                            invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
+                           invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft' ? 'Draft' :
                            'Not Loaded'}
                         </div>
                       </td>
@@ -551,13 +554,6 @@ function InvoiceManagementContent() {
                                       <Pencil className="w-4 h-4" />
                                       Edit Invoice
                                     </Link>
-                                    <button
-                                      onClick={() => window.print()}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
-                                    >
-                                      <Printer className="w-4 h-4" />
-                                      Print Invoice
-                                    </button>
                                     <button
                                       onClick={() => {
                                         // Open print preview

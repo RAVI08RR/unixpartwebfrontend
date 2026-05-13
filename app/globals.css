@@ -2095,3 +2095,27 @@ a.bg-black svg,
     justify-content: center !important;
   }
 }
+
+
+/* Print Styles for Invoice */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  
+  body {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure backgrounds and colors print */
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+}
