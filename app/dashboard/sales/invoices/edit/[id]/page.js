@@ -13,6 +13,7 @@ import { customerService } from "@/app/lib/services/customerService";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useToast } from "@/app/components/Toast";
 import PrintableInvoice from "@/app/components/PrintableInvoice";
+import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocompleteWithCreate";
 
 export default function EditInvoicePage({ params }) {
   const router = useRouter();
@@ -614,19 +615,24 @@ export default function EditInvoicePage({ params }) {
           </FormField>
 
           <FormField label="Customer" required>
-            <select 
-              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+            <CustomerAutocompleteWithCreate
               value={formData.customer_id}
-              onChange={(e) => handleCustomerChange(e.target.value)}
+              onChange={(customerId) => handleCustomerChange(customerId)}
+              onCustomerSelect={async (customer) => {
+                if (customer) {
+                  try {
+                    const fullCustomer = await customerService.getById(customer.id);
+                    setSelectedCustomer(fullCustomer);
+                  } catch (error) {
+                    console.error("Failed to fetch full customer details:", error);
+                    setSelectedCustomer(customer);
+                  }
+                } else {
+                  setSelectedCustomer(null);
+                }
+              }}
               disabled={customersLoading}
-            >
-              <option value="">Select a customer...</option>
-              {customers.map(customer => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.label || customer.full_name || customer.name}
-                </option>
-              ))}
-            </select>
+            />
           </FormField>
         </div>
 

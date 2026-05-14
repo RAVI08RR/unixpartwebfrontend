@@ -13,6 +13,8 @@ import { useInvoices } from "@/app/lib/hooks/useInvoices";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
 import { getAuthToken } from "@/app/lib/api";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 
 function InvoiceManagementContent() {
   const router = useRouter();
@@ -406,10 +408,20 @@ function InvoiceManagementContent() {
               )}
             </div>
 
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-              <Download className="w-4 h-4" />
-              <span>Export</span>
-            </button>
+            <ExportButton
+              data={filteredInvoices}
+              columns={[
+                { key: 'invoice_number', label: 'Invoice Number' },
+                { key: 'customer_name', label: 'Customer' },
+                { key: 'invoice_date', label: 'Date', formatter: formatDateForExport },
+                { key: 'invoice_total', label: 'Total Amount', formatter: formatCurrencyForExport },
+                { key: 'total_paid', label: 'Paid Amount', formatter: formatCurrencyForExport },
+                { key: 'balance_due', label: 'Balance Due', formatter: formatCurrencyForExport },
+                { key: 'invoice_status', label: 'Status', formatter: formatStatusForExport },
+                { key: 'overall_load_status', label: 'Load Status', formatter: formatStatusForExport },
+              ]}
+              filename={`invoices-${new Date().toISOString().split('T')[0]}`}
+            />
             <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Invoice</span>

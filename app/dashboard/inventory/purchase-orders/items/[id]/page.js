@@ -12,6 +12,8 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 import ConfirmModal from "@/app/components/ConfirmModal";
+import ExportButton from "@/app/components/ExportButton";
+import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 
 export default function PurchaseOrderItemsPage({ params }) {
   const [poId, setPoId] = useState(null);
@@ -179,13 +181,26 @@ export default function PurchaseOrderItemsPage({ params }) {
           </div>
         </div>
 
-        <Link 
-          href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
-          className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
-        >
-          <Plus className="w-4 h-4" />
-          ADD ITEM TO ORDER
-        </Link>
+        <div className="flex items-center gap-3">
+          <ExportButton
+            data={filteredItems}
+            columns={[
+              { key: 'stock_number', label: 'Stock Number' },
+              { key: 'po_description', label: 'Description' },
+              { key: 'quantity', label: 'Quantity' },
+              { key: 'status', label: 'Status', formatter: formatStatusForExport },
+              { key: 'created_at', label: 'Created At', formatter: formatDateForExport },
+            ]}
+            filename={`po-items-${poId}-${new Date().toISOString().split('T')[0]}`}
+          />
+          <Link 
+            href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            ADD ITEM TO ORDER
+          </Link>
+        </div>
       </div>
 
       {/* Stats Bar */}

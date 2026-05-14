@@ -190,34 +190,77 @@ export default function CustomerAutocompleteWithCreate({
 
     setSaving(true);
     try {
-      // Don't include profile_image in the initial payload - upload it separately
-      const payload = {
-        customer_code: trimmedCode,
-        full_name: trimmedName,
-        phone: trimmedPhone,
-        business_name: customerForm.business_name?.trim() || null,
-        business_number: customerForm.business_number?.trim() || null,
-        address: trimmedAddress,
-        notes: customerForm.notes?.trim() || null,
-        status: customerForm.status
-      };
-
-      console.log("🚀 Sending payload to API:", payload);
-
-      const newCustomer = await customerService.create(payload);
-      console.log("✅ Customer created:", newCustomer);
+      // Use FormData for multipart/form-data submission (same as add customer page)
+      const formData = new FormData();
+      formData.append('customer_code', trimmedCode);
+      formData.append('full_name', trimmedName);
+      formData.append('phone', trimmedPhone);
+      formData.append('address', trimmedAddress);
+      formData.append('status', customerForm.status);
       
-      // Upload profile image separately if provided
-      if (profileImage && newCustomer.id) {
-        try {
-          console.log("📸 Uploading profile image...");
-          await customerService.uploadProfileImage(newCustomer.id, profileImage);
-          console.log("✅ Profile image uploaded");
-        } catch (imgError) {
-          console.error("❌ Profile image upload failed:", imgError);
-          // Don't fail the whole operation if image upload fails
-        }
+      // Add optional fields
+      if (customerForm.business_name?.trim()) {
+        formData.append('business_name', customerForm.business_name.trim());
       }
+      if (customerForm.business_number?.trim()) {
+        formData.append('business_number', customerForm.business_number.trim());
+      }
+      if (customerForm.notes?.trim()) {
+        formData.append('notes', customerForm.notes.trim());
+      }
+      
+      // Add profile image if provided
+      if (profileImage) {
+        formData.append('profile_image', profileImage);
+      }
+
+      console.log("🚀 Sending FormData to API");
+      
+      // Debug: Log FormData contents
+      for (let pair of formData.entries()) {
+        console.log(`  ${pair[0]}:`, pair[1]);
+      }
+
+      // Send FormData directly
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('/api/customers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("❌ API Error Response:", errorData);
+        
+        // Handle different error formats
+        let errorMessage = `Request failed with status ${response.status}`;
+        
+        if (errorData.detail) {
+          // FastAPI validation error format
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map(err => {
+              const field = err.loc ? err.loc.join('.') : 'unknown';
+              return `${field}: ${err.msg}`;
+            }).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else {
+            errorMessage = JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      const newCustomer = await response.json();
+      console.log("✅ Customer created:", newCustomer);
       
       // Add to local list
       const newOption = {
