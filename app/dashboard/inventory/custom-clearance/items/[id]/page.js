@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
   ArrowLeft, Plus, Search, Filter, MoreVertical, 
-  Pencil, Trash2, Package, Box, Building2, Hash, DollarSign, Calendar
+  Pencil, Trash2, Package, Box, Building2, Hash, DollarSign, Calendar, Download
 } from "lucide-react";
 import { containerItemService } from "@/app/lib/services/containerItemService";
 import { containerService } from "@/app/lib/services/containerService";
@@ -26,6 +26,7 @@ export default function ContainerItemsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   
   const { success, error: showError } = useToast();
   const { stockItems: apiStockItems } = useStockItems(0, 100);
@@ -82,6 +83,89 @@ export default function ContainerItemsPage() {
     }
   };
 
+  const exportToCSV = () => {
+    if (!filteredItems || filteredItems.length === 0) {
+      showError("No data to export");
+      return;
+    }
+
+    const headers = ["Item Name", "Description", "Quantity", "Unit Price (AED)", "Subtotal (AED)"];
+    const rows = filteredItems.map(item => {
+      const stockItem = stockItems.find(si => si.id === item.item_id);
+      return [
+        stockItem?.name || `Item #${item.item_id}`,
+        item.item_description || '-',
+        item.quantity,
+        parseFloat(item.unit_price || 0).toFixed(2),
+        (parseFloat(item.unit_price || 0) * parseInt(item.quantity || 0)).toFixed(2)
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `container_items_${container?.container_code || containerId}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setExportMenuOpen(false);
+    success("CSV exported successfully");
+  };
+
+  const exportToExcel = () => {
+    if (!filteredItems || filteredItems.length === 0) {
+      showError("No data to export");
+      return;
+    }
+
+    const headers = ["Item Name", "Description", "Quantity", "Unit Price (AED)", "Subtotal (AED)"];
+    const rows = filteredItems.map(item => {
+      const stockItem = stockItems.find(si => si.id === item.item_id);
+      return [
+        stockItem?.name || `Item #${item.item_id}`,
+        item.item_description || '-',
+        item.quantity,
+        parseFloat(item.unit_price || 0).toFixed(2),
+        (parseFloat(item.unit_price || 0) * parseInt(item.quantity || 0)).toFixed(2)
+      ];
+    });
+
+    // Create HTML table for Excel
+    let tableHTML = '<table><thead><tr>';
+    headers.forEach(header => {
+      tableHTML += `<th>${header}</th>`;
+    });
+    tableHTML += '</tr></thead><tbody>';
+    
+    rows.forEach(row => {
+      tableHTML += '<tr>';
+      row.forEach(cell => {
+        tableHTML += `<td>${cell}</td>`;
+      });
+      tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody></table>';
+
+    const blob = new Blob([tableHTML], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `container_items_${container?.container_code || containerId}_${new Date().toISOString().split('T')[0]}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setExportMenuOpen(false);
+    success("Excel file exported successfully");
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -106,13 +190,43 @@ export default function ContainerItemsPage() {
             {container?.container_code} - {container?.container_number}
           </p>
         </div>
-        <button
-          onClick={() => setAddModalOpen(true)}
-          className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
-        >
-          <Plus className="w-4 h-4" />
-          Add Item
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <button
+              onClick={() => setExportMenuOpen(!exportMenuOpen)}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+            
+            {exportMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-xl z-50 p-1.5">
+                <button 
+                  onClick={exportToExcel}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Export as Excel (.xls)
+                </button>
+                <button 
+                  onClick={exportToCSV}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  Export as CSV
+                </button>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
+          >
+            <Plus className="w-4 h-4" />
+            Add Item
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
