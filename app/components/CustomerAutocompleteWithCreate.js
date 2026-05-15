@@ -387,12 +387,12 @@ export default function CustomerAutocompleteWithCreate({
 
       {/* Create Customer Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" style={{zIndex: 100}}>
-          <div className="bg-white dark:bg-zinc-900 rounded-[28px] shadow-2xl max-w-2xl w-full border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200 overflow-y-auto" style={{zIndex: 100}}>
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-[28px] shadow-2xl w-full max-w-2xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 my-4 sm:my-8 max-h-[95vh] sm:max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="p-6 text-center border-b border-gray-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                <Plus className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="p-4 sm:p-6 text-center border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-t-[28px] flex-shrink-0">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
               </div>
               <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Add New Customer
@@ -588,7 +588,7 @@ export default function CustomerAutocompleteWithCreate({
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center gap-3 p-6 border-t border-gray-100 dark:border-zinc-800 sticky bottom-0 bg-white dark:bg-zinc-900">
+            <div className="flex items-center gap-2 sm:gap-3 p-4 sm:p-6 border-t border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-b-2xl sm:rounded-b-[28px] flex-shrink-0">
               <button 
                 onClick={() => setCreateModalOpen(false)}
                 disabled={saving}
