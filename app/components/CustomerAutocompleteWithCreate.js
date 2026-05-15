@@ -388,22 +388,23 @@ export default function CustomerAutocompleteWithCreate({
       {/* Create Customer Modal */}
       {createModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-200 overflow-y-auto" style={{zIndex: 100}}>
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-[28px] shadow-2xl w-full max-w-2xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 my-4 sm:my-8 max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl sm:rounded-[28px] shadow-2xl w-full max-w-4xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 my-4 sm:my-8 max-h-[95vh] sm:max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="p-4 sm:p-6 text-center border-b border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-t-[28px] flex-shrink-0">
               <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
                 <Plus className="w-6 h-6 sm:w-8 sm:h-8 text-green-600 dark:text-green-400" />
               </div>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-2">
                 Add New Customer
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Enter the details for the new customer.
               </p>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6 space-y-4">
+            {/* Modal Content - Scrollable */}
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Customer Code */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
@@ -540,7 +541,23 @@ export default function CustomerAutocompleteWithCreate({
                 </div>
               </div>
 
-              {/* Address */}
+              {/* Status */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                  Status <span className="text-red-600">*</span>
+                </label>
+                <select 
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all appearance-none text-gray-900 dark:text-white"
+                  value={customerForm.status}
+                  onChange={(e) => setCustomerForm({...customerForm, status: e.target.value === 'true'})}
+                >
+                  <option value={true}>Active</option>
+                  <option value={false}>Inactive</option>
+                </select>
+              </div>
+              </div>
+
+              {/* Address - Full Width */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Address <span className="text-red-600">*</span>
@@ -557,7 +574,7 @@ export default function CustomerAutocompleteWithCreate({
                 </div>
               </div>
 
-              {/* Notes */}
+              {/* Notes - Full Width */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                   Notes
@@ -569,21 +586,6 @@ export default function CustomerAutocompleteWithCreate({
                   rows={3}
                   className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all resize-none dark:text-white"
                 />
-              </div>
-
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Status <span className="text-red-600">*</span>
-                </label>
-                <select 
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-600/50 transition-all appearance-none text-gray-900 dark:text-white"
-                  value={customerForm.status}
-                  onChange={(e) => setCustomerForm({...customerForm, status: e.target.value === 'true'})}
-                >
-                  <option value={true}>Active</option>
-                  <option value={false}>Inactive</option>
-                </select>
               </div>
             </div>
 
