@@ -686,6 +686,24 @@ export default function EditInvoicePage({ params }) {
               </button>
               <button
                 type="button"
+                onClick={() => {
+                  // Bulk update all items to "not_loaded" status
+                  const updatedItems = formData.items.map(item => ({
+                    ...item,
+                    load_status: 'not_loaded',
+                    load_date: null
+                  }));
+                  setFormData({...formData, items: updatedItems});
+                  success("All items marked as unloaded!");
+                }}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+                disabled={formData.items.length === 0}
+              >
+                <X className="w-4 h-4" />
+                All Unloaded
+              </button>
+              <button
+                type="button"
                 onClick={addItem}
                 className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
               >
