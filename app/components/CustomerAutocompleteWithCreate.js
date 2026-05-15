@@ -221,9 +221,10 @@ export default function CustomerAutocompleteWithCreate({
         console.log(`  ${pair[0]}:`, pair[1]);
       }
 
-      // Send FormData directly
+      // Send FormData directly to backend API
       const token = localStorage.getItem('access_token');
-      const response = await fetch('/api/customers', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+      const response = await fetch(`${apiUrl}api/customers/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

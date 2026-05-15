@@ -78,7 +78,8 @@ export const customerService = {
         });
         
         const token = localStorage.getItem('access_token');
-        const response = await fetch('/api/customers', {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const response = await fetch(`${apiUrl}api/customers/`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -93,11 +94,24 @@ export const customerService = {
         
         return await response.json();
       } else {
-        // Use JSON for regular data
-        return await fetchApi('/api/customers', {
+        // Use JSON for regular data - also send directly to backend
+        const token = localStorage.getItem('access_token');
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const response = await fetch(`${apiUrl}api/customers/`, {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify(customerData),
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+        }
+        
+        return await response.json();
       }
     } catch (error) {
       console.warn('📋 Customer creation failed, backend unavailable:', error.message);
@@ -123,7 +137,8 @@ export const customerService = {
         });
         
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`/api/customers/${id}`, {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const response = await fetch(`${apiUrl}api/customers/${id}`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
