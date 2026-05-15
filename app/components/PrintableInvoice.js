@@ -1,8 +1,65 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 
-const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
+const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref) => {
+  const [fullInvoiceData, setFullInvoiceData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch full invoice data from API if invoiceId is provided
+  useEffect(() => {
+    const fetchFullInvoice = async () => {
+      if (!invoiceId) {
+        setFullInvoiceData(invoice);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/invoices/${invoiceId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📄 Full invoice data fetched for PDF:', data);
+          setFullInvoiceData(data);
+        } else {
+          console.error('Failed to fetch full invoice data');
+          setFullInvoiceData(invoice);
+        }
+      } catch (error) {
+        console.error('Error fetching full invoice data:', error);
+        setFullInvoiceData(invoice);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFullInvoice();
+  }, [invoiceId, invoice]);
+
+  const invoiceData = fullInvoiceData || invoice;
+
+  if (loading) {
+    return (
+      <div ref={ref} style={{ 
+        width: '210mm', 
+        minHeight: '297mm',
+        padding: '15mm',
+        margin: '0 auto',
+        backgroundColor: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <p>Loading invoice data...</p>
+      </div>
+    );
+  }
   const formatCurrency = (amount) => {
     if (!amount) return "AED 0.00";
     const numAmount = parseFloat(amount);
@@ -47,10 +104,10 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
           }}>INVOICE</h1>
           <div style={{ fontSize: '13px', lineHeight: '1.8' }}>
             <p style={{ margin: '3px 0' }}>
-              <strong>INVOICE#:</strong> {invoice.invoice_number}
+              <strong>INVOICE#:</strong> {invoiceData.invoice_number}
             </p>
             <p style={{ margin: '3px 0' }}>
-              <strong>DATE:</strong> {formatDate(invoice.invoice_date)}
+              <strong>DATE:</strong> {formatDate(invoiceData.invoice_date)}
             </p>
           </div>
         </div>
@@ -183,8 +240,8 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
           </tr>
         </thead>
         <tbody>
-          {invoice.items && invoice.items.length > 0 ? (
-            invoice.items.map((item, index) => {
+          {invoiceData.items && invoiceData.items.length > 0 ? (
+            invoiceData.items.map((item, index) => {
               const itemTotal = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
               return (
                 <tr key={index} style={{ borderBottom: '1px solid #000' }}>
@@ -242,7 +299,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
             </tr>
           )}
           {/* Empty rows for spacing */}
-          {[...Array(Math.max(0, 5 - (invoice.items?.length || 0)))].map((_, i) => (
+          {[...Array(Math.max(0, 5 - (invoiceData.items?.length || 0)))].map((_, i) => (
             <tr key={`empty-${i}`} style={{ 
               borderBottom: '1px solid #000', 
               height: '45px' 
@@ -310,7 +367,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
                 fontSize: '16px', 
                 fontWeight: '900' 
               }}>
-                {formatCurrency(invoice.invoice_total)}
+                {formatCurrency(invoiceData.invoice_total)}
               </td>
             </tr>
           </tbody>
@@ -335,12 +392,12 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer }, ref) => {
         }}>
           <p style={{ fontSize: '12px', fontWeight: 'bold', margin: '0' }}>NOTES:</p>
         </div>
-        {invoice.invoice_notes && (
+        {invoiceData.invoice_notes && (
           <p style={{ 
             fontSize: '12px', 
             margin: '10px 0 0 0', 
             lineHeight: '1.6' 
-          }}>{invoice.invoice_notes}</p>
+          }}>{invoiceData.invoice_notes}</p>
         )}
       </div>
     </div>

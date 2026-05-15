@@ -425,12 +425,9 @@ export default function AddInvoicePage() {
               value={formData.overall_load_status}
               onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
             >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="not_loaded">Not Loaded</option>
+              <option value="not_loaded">Unloaded</option>
               <option value="partial">Partial</option>
               <option value="loaded">Loaded</option>
-              <option value="full">Full</option>
             </select>
           </FormField>
           <FormField label="Customer" required>
@@ -506,14 +503,20 @@ export default function AddInvoicePage() {
               <button
                 type="button"
                 onClick={() => {
-                  // Bulk update all items to "not_loaded" status
-                  const updatedItems = formData.items.map(item => ({
-                    ...item,
-                    load_status: 'not_loaded',
-                    load_date: null
-                  }));
+                  // Bulk update all items to "not_loaded" status (only non-delivered items)
+                  const updatedItems = formData.items.map(item => {
+                    // Don't change delivered items
+                    if (item.load_status === 'delivered') {
+                      return item;
+                    }
+                    return {
+                      ...item,
+                      load_status: 'not_loaded',
+                      load_date: null
+                    };
+                  });
                   setFormData({...formData, items: updatedItems});
-                  success("All items marked as unloaded!");
+                  success("All non-delivered items marked as unloaded!");
                 }}
                 className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
                 disabled={formData.items.length === 0}
@@ -585,7 +588,7 @@ export default function AddInvoicePage() {
                               ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                               : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                           }`}>
-                            {item.load_status === 'pending' ? 'Pending' : item.load_status === 'loaded' ? 'Loaded' : 'Delivered'}
+                            {item.load_status === 'loaded' ? 'Loaded' : item.load_status === 'delivered' ? 'Delivered' : 'Unloaded'}
                           </span>
                         </td>
                         <td className="px-4 py-3">

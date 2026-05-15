@@ -120,19 +120,16 @@ export default function ViewInvoicePage({ params }) {
   const getLoadStatusLabel = (status) => {
     switch (status?.toLowerCase()) {
       case 'loaded':
-        return 'Loaded';
       case 'full':
-        return 'Full';
+        return 'Loaded';
       case 'partial':
       case 'partially_loaded':
         return 'Partial';
       case 'pending':
-        return 'Pending';
       case 'draft':
-        return 'Draft';
       case 'not_loaded':
       default:
-        return 'Not Loaded';
+        return 'Unloaded';
     }
   };
 
@@ -258,12 +255,13 @@ export default function ViewInvoicePage({ params }) {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Description</th>
                     <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Amount</th>
                     <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Discount</th>
                     <th className="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total</th>
                     <th className="px-4 py-3 text-center text-xs font-bold text-gray-500 uppercase">Load Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Date & Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -300,6 +298,17 @@ export default function ViewInvoicePage({ params }) {
                           <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${getLoadStatusColor(item.load_status)}`}>
                             {getLoadStatusLabel(item.load_status)}
                           </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
+                              day: '2-digit', 
+                              month: 'short', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }) : '-'}
+                          </p>
                         </td>
                       </tr>
                     );
@@ -395,7 +404,7 @@ export default function ViewInvoicePage({ params }) {
 
       {/* Hidden Printable Invoice */}
       <div style={{ display: 'none' }}>
-        <PrintableInvoice ref={printRef} invoice={invoice} customer={customer} />
+        <PrintableInvoice ref={printRef} invoice={invoice} customer={customer} invoiceId={invoiceId} />
       </div>
     </div>
   );
