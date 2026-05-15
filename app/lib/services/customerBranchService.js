@@ -13,13 +13,14 @@ export const customerBranchService = {
   },
 
   // Bulk update branch activation status
-  bulkActivation: async (customerId, branchActivations) => {
+  bulkActivation: async (customerId, activateBranchIds = [], deactivateBranchIds = []) => {
     try {
       const response = await fetchApi('/api/customer-branches/bulk-activation', {
         method: 'POST',
         body: JSON.stringify({
-          customer_id: customerId,
-          branch_activations: branchActivations
+          customer_id: parseInt(customerId),
+          activate_branch_ids: activateBranchIds.map(id => parseInt(id)),
+          deactivate_branch_ids: deactivateBranchIds.map(id => parseInt(id))
         }),
       });
       return response;
