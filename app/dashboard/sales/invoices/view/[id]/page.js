@@ -248,7 +248,7 @@ export default function ViewInvoicePage({ params }) {
         </div>
 
         {/* Invoice Items */}
-        {invoice.items && invoice.items.length > 0 && (
+        {((invoice.items && invoice.items.length > 0) || (invoice.invoice_items && invoice.invoice_items.length > 0)) && (
           <div className="mb-8">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Invoice Items</h3>
             <div className="overflow-x-auto">
@@ -265,7 +265,7 @@ export default function ViewInvoicePage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoice.items.map((item, index) => {
+                  {(invoice.invoice_items || invoice.items || []).map((item, index) => {
                     const itemTotal = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
                     return (
                       <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
@@ -276,7 +276,7 @@ export default function ViewInvoicePage({ params }) {
                         </td>
                         <td className="px-4 py-3">
                           <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.sale_description || item.item_name || item.po_item?.item_name || '-'}
+                            {item.sale_description || item.item_name || item.po_item?.item_name || item.po_item?.po_description || '-'}
                           </p>
                         </td>
                         <td className="px-4 py-3 text-right">

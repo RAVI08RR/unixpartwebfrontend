@@ -44,6 +44,11 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
 
   const invoiceData = fullInvoiceData || invoice;
 
+  // Handle both 'items' and 'invoice_items' field names from API
+  const invoiceItems = invoiceData?.invoice_items || invoiceData?.items || [];
+
+  console.log('📋 Invoice items for print:', invoiceItems);
+
   if (loading) {
     return (
       <div ref={ref} style={{ 
@@ -249,8 +254,8 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
           </tr>
         </thead>
         <tbody>
-          {invoiceData.items && invoiceData.items.length > 0 ? (
-            invoiceData.items.map((item, index) => {
+          {invoiceItems && invoiceItems.length > 0 ? (
+            invoiceItems.map((item, index) => {
               const itemTotal = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
               return (
                 <tr key={index} style={{ borderBottom: '1px solid #000' }}>
@@ -276,7 +281,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
                     padding: '10px 8px', 
                     fontSize: '12px' 
                   }}>
-                    {item.sale_description || item.item_name || item.po_item?.item_name || '-'}
+                    {item.sale_description || item.item_name || item.po_item?.item_name || item.po_item?.po_description || '-'}
                   </td>
                   <td style={{ 
                     border: '2px solid #000', 
@@ -317,7 +322,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
             </tr>
           )}
           {/* Empty rows for spacing */}
-          {[...Array(Math.max(0, 5 - (invoiceData.items?.length || 0)))].map((_, i) => (
+          {[...Array(Math.max(0, 5 - (invoiceItems?.length || 0)))].map((_, i) => (
             <tr key={`empty-${i}`} style={{ 
               borderBottom: '1px solid #000', 
               height: '45px' 
