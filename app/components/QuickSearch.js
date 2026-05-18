@@ -296,8 +296,16 @@ export default function QuickSearch() {
                           <h3 className="text-lg font-black text-gray-900 dark:text-white">
                             Item Found
                           </h3>
-                          <span className="px-3 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-xs font-bold">
-                            Available
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            searchResults.status === 'available' 
+                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                              : searchResults.status === 'sold'
+                              ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                              : searchResults.status === 'reserved'
+                              ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
+                          }`}>
+                            {searchResults.status || 'Unknown'}
                           </span>
                         </div>
                         
@@ -308,21 +316,52 @@ export default function QuickSearch() {
                               <p className="text-base font-black text-gray-900 dark:text-white">{searchResults.stock_number}</p>
                             </div>
                             <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">PO Number</p>
-                              <p className="text-base font-bold text-gray-700 dark:text-gray-300">{searchResults.po?.po_number || 'N/A'}</p>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Current Branch</p>
+                              <p className="text-base font-bold text-gray-700 dark:text-gray-300">
+                                {searchResults.current_branch?.branch_name || searchResults.current_branch?.branch_code || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Item Name</p>
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                {searchResults.stock_item?.name || searchResults.item_name || 'N/A'}
+                              </p>
                             </div>
                             <div className="col-span-2">
                               <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Description</p>
-                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{searchResults.po_description || searchResults.item_name || 'N/A'}</p>
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                {searchResults.po_description || searchResults.stock_item?.description || 'N/A'}
+                              </p>
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Purchase Price</p>
-                              <p className="text-base font-bold text-blue-600 dark:text-blue-400">AED {parseFloat(searchResults.purchase_price || 0).toFixed(2)}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Sale Price</p>
-                              <p className="text-base font-bold text-green-600 dark:text-green-400">AED {parseFloat(searchResults.sale_price || 0).toFixed(2)}</p>
-                            </div>
+                            {searchResults.purchase_price && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Purchase Price</p>
+                                <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                                  AED {parseFloat(searchResults.purchase_price || 0).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                            {searchResults.sale_price && (
+                              <div>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Sale Price</p>
+                                <p className="text-base font-bold text-green-600 dark:text-green-400">
+                                  AED {parseFloat(searchResults.sale_price || 0).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
+                            {searchResults.invoice_items && searchResults.invoice_items.length > 0 && (
+                              <div className="col-span-2">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Sold In Invoice</p>
+                                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3">
+                                  <p className="text-sm font-bold text-blue-700 dark:text-blue-400">
+                                    {searchResults.invoice_items[0].invoice?.invoice_number || 'N/A'}
+                                  </p>
+                                  <p className="text-xs text-blue-600 dark:text-blue-500 mt-1">
+                                    Sale Amount: AED {parseFloat(searchResults.invoice_items[0].sale_amount || 0).toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                             {searchResults.supplier_name && (
                               <div className="col-span-2">
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Supplier</p>
@@ -341,6 +380,17 @@ export default function QuickSearch() {
                             >
                               View Details
                             </button>
+                            {searchResults.invoice_items && searchResults.invoice_items.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  router.push(`/dashboard/sales/invoices/view/${searchResults.invoice_items[0].invoice_id}`);
+                                  setIsOpen(false);
+                                }}
+                                className="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all"
+                              >
+                                View Invoice
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 // Copy stock number to clipboard
