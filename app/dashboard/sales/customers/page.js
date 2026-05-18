@@ -20,6 +20,11 @@ export default function CustomersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
+  // Advanced Filters
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [selectedBusiness, setSelectedBusiness] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  
   // Data Fetching
   const itemsPerPage = 8;
   const { customers: apiCustomers, loading: isLoading, error: isError, refetch } = useCustomers(0, 100);
@@ -132,9 +137,34 @@ export default function CustomersPage() {
       const statusString = customer.status ? "Active" : "Inactive";
       const matchesStatus = statusFilter === "All" || statusString === statusFilter;
       
-      return matchesSearch && matchesStatus;
+      // Date range filter
+      const matchesDateRange = (() => {
+        if (!dateRange.start && !dateRange.end) return true;
+        const customerDate = new Date(customer.created_at);
+        const startDate = dateRange.start ? new Date(dateRange.start) : null;
+        const endDate = dateRange.end ? new Date(dateRange.end) : null;
+        
+        if (startDate && endDate) {
+          return customerDate >= startDate && customerDate <= endDate;
+        } else if (startDate) {
+          return customerDate >= startDate;
+        } else if (endDate) {
+          return customerDate <= endDate;
+        }
+        return true;
+      })();
+      
+      // Business filter
+      const matchesBusiness = !selectedBusiness || 
+        (customer.business_name?.toLowerCase() || "").includes(selectedBusiness.toLowerCase());
+      
+      // City/Address filter
+      const matchesCity = !selectedCity || 
+        (customer.address?.toLowerCase() || "").includes(selectedCity.toLowerCase());
+      
+      return matchesSearch && matchesStatus && matchesDateRange && matchesBusiness && matchesCity;
     });
-  }, [searchQuery, statusFilter, customers]);
+  }, [searchQuery, statusFilter, customers, dateRange, selectedBusiness, selectedCity]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage) || 1;
@@ -213,6 +243,19 @@ export default function CustomersPage() {
     setSelectedCustomer(null);
   };
 
+  // Clear all filters
+  const handleClearFilters = () => {
+    setStatusFilter("All");
+    setDateRange({ start: "", end: "" });
+    setSelectedBusiness("");
+    setSelectedCity("");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = statusFilter !== "All" || dateRange.start || dateRange.end || selectedBusiness || selectedCity;
+
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!customers || customers.length === 0))) {
     return (
@@ -267,24 +310,114 @@ export default function CustomersPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {["All", "Active", "Inactive"].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter(status);
-                        setIsFilterOpen(false);
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white">Filters</h3>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={handleClearFilters}
+                        className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Filter by Status
+                    </label>
+                    <div className="space-y-1">
+                      {["All", "Active", "Inactive"].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => {
+                            setStatusFilter(status);
+                            setCurrentPage(1);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-bold transition-colors ${
+                            statusFilter === status 
+                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
+                          }`}
+                        >
+                          {status === "All" ? "All Status" : status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Date Range Filter */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Invoice Date Range
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        type="date"
+                        value={dateRange.start}
+                        onChange={(e) => {
+                          setDateRange({ ...dateRange, start: e.target.value });
+                          setCurrentPage(1);
+                        }}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50"
+                        placeholder="Start Date"
+                      />
+                      <input
+                        type="date"
+                        value={dateRange.end}
+                        onChange={(e) => {
+                          setDateRange({ ...dateRange, end: e.target.value });
+                          setCurrentPage(1);
+                        }}
+                        className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50"
+                        placeholder="End Date"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Business Name Filter */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Filter by Business Name
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedBusiness}
+                      onChange={(e) => {
+                        setSelectedBusiness(e.target.value);
                         setCurrentPage(1);
                       }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        statusFilter === status 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      {status === "All" ? "All Status" : status}
-                    </button>
-                  ))}
+                      placeholder="Enter business name..."
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50"
+                    />
+                  </div>
+
+                  {/* City/Address Filter */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Filter by City/Address
+                    </label>
+                    <input
+                      type="text"
+                      value={selectedCity}
+                      onChange={(e) => {
+                        setSelectedCity(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      placeholder="Enter city or address..."
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50"
+                    />
+                  </div>
+
+                  {/* Apply/Close Button */}
+                  <button
+                    onClick={() => setIsFilterOpen(false)}
+                    className="w-full px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                  >
+                    Apply Filters
+                  </button>
                 </div>
               )}
             </div>
