@@ -1,12 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, X, Maximize2 } from "lucide-react";
+import { Search, X, Maximize2, Package, FileText, User } from "lucide-react";
+import { poItemService } from "@/app/lib/services/poItemService";
+import { useRouter } from "next/navigation";
 
 export default function QuickSearch() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("Invoice");
+  const [activeTab, setActiveTab] = useState("Item");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
 
   // Close on Escape key
   useEffect(() => {
@@ -25,6 +31,34 @@ export default function QuickSearch() {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // Search for PO items by stock number
+  useEffect(() => {
+    const searchPOItem = async () => {
+      if (!searchQuery.trim() || activeTab !== "Item") {
+        setSearchResults(null);
+        setSearchError(null);
+        return;
+      }
+
+      setIsSearching(true);
+      setSearchError(null);
+
+      try {
+        const result = await poItemService.getByStockNumber(searchQuery.trim());
+        setSearchResults(result);
+      } catch (error) {
+        setSearchError(error.message);
+        setSearchResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(searchPOItem, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, activeTab]);
 
   const tabs = ["Item", "Invoice", "Create", "Actions"];
 
@@ -106,9 +140,94 @@ export default function QuickSearch() {
 
             {/* Search Results Area */}
             <div className="px-8 pb-8">
-              <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-8 min-h-[300px] flex flex-col items-center justify-center">
-                {searchQuery ? (
-                  <div className="text-center">
+              <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-8 min-h-[300px]">
+                {searchQuery && activeTab === "Item" ? (
+                  <div>
+                    {isSearching ? (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-sm font-bold text-gray-500">Searching for "{searchQuery}"...</p>
+                      </div>
+                    ) : searchError ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <X className="w-8 h-8 text-red-600 dark:text-red-400" />
+                        </div>
+                        <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
+                          Item Not Found
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {searchError}
+                        </p>
+                      </div>
+                    ) : searchResults ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                            Item Found
+                          </h3>
+                          <span className="px-3 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-full text-xs font-bold">
+                            Available
+                          </span>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-800">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Stock Number</p>
+                              <p className="text-base font-black text-gray-900 dark:text-white">{searchResults.stock_number}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">PO Number</p>
+                              <p className="text-base font-bold text-gray-700 dark:text-gray-300">{searchResults.po?.po_number || 'N/A'}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Description</p>
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{searchResults.po_description || searchResults.item_name || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Purchase Price</p>
+                              <p className="text-base font-bold text-blue-600 dark:text-blue-400">AED {parseFloat(searchResults.purchase_price || 0).toFixed(2)}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Sale Price</p>
+                              <p className="text-base font-bold text-green-600 dark:text-green-400">AED {parseFloat(searchResults.sale_price || 0).toFixed(2)}</p>
+                            </div>
+                            {searchResults.supplier_name && (
+                              <div className="col-span-2">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Supplier</p>
+                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{searchResults.supplier_name}</p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-6 flex gap-3">
+                            <button
+                              onClick={() => {
+                                router.push(`/dashboard/inventory/purchase-orders/items/${searchResults.id}`);
+                                setIsOpen(false);
+                              }}
+                              className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+                            >
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Copy stock number to clipboard
+                                navigator.clipboard.writeText(searchResults.stock_number);
+                                alert('Stock number copied to clipboard!');
+                              }}
+                              className="px-4 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                            >
+                              Copy Stock #
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : searchQuery ? (
+                  <div className="text-center py-12">
                     <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                       <Search className="w-8 h-8 text-red-600 dark:text-red-400" />
                     </div>
@@ -116,19 +235,22 @@ export default function QuickSearch() {
                       Searching for "{searchQuery}"
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Search functionality will be implemented based on the active tab
+                      Search functionality for {activeTab} will be implemented
                     </p>
                   </div>
                 ) : (
-                  <div className="text-center">
+                  <div className="text-center py-12">
                     <div className="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
                       <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                     </div>
                     <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
                       Start typing to search
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
-                      Search for invoices, stock items, customers, or use the tabs above to access quick actions
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                      {activeTab === "Item" 
+                        ? "Enter a stock number to search for PO items"
+                        : "Search for invoices, stock items, customers, or use the tabs above to access quick actions"
+                      }
                     </p>
                     
                     {/* Quick Tips */}
