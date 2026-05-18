@@ -199,7 +199,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               textAlign: 'left', 
               fontSize: '12px', 
               fontWeight: 'bold', 
-              width: '8%' 
+              width: '6%' 
             }}>S.NO</th>
             <th style={{ 
               border: '2px solid #000', 
@@ -208,7 +208,16 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               textAlign: 'left', 
               fontSize: '12px', 
               fontWeight: 'bold', 
-              width: '42%' 
+              width: '12%' 
+            }}>STOCK #</th>
+            <th style={{ 
+              border: '2px solid #000', 
+              borderTop: 'none', 
+              padding: '10px 8px', 
+              textAlign: 'left', 
+              fontSize: '12px', 
+              fontWeight: 'bold', 
+              width: '32%' 
             }}>ITEM</th>
             <th style={{ 
               border: '2px solid #000', 
@@ -217,7 +226,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               textAlign: 'center', 
               fontSize: '12px', 
               fontWeight: 'bold', 
-              width: '10%' 
+              width: '8%' 
             }}>QTY</th>
             <th style={{ 
               border: '2px solid #000', 
@@ -226,7 +235,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               textAlign: 'right', 
               fontSize: '12px', 
               fontWeight: 'bold', 
-              width: '20%' 
+              width: '18%' 
             }}>UNIT PRICE</th>
             <th style={{ 
               borderTop: 'none', 
@@ -235,7 +244,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               textAlign: 'right', 
               fontSize: '12px', 
               fontWeight: 'bold', 
-              width: '20%' 
+              width: '18%' 
             }}>AMOUNT</th>
           </tr>
         </thead>
@@ -252,6 +261,15 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
                     padding: '10px 8px', 
                     fontSize: '12px' 
                   }}>{index + 1}</td>
+                  <td style={{ 
+                    border: '2px solid #000', 
+                    borderBottom: '1px solid #000', 
+                    padding: '10px 8px', 
+                    fontSize: '12px',
+                    fontWeight: 'bold'
+                  }}>
+                    {item.stock_number || item.po_item?.stock_number || '-'}
+                  </td>
                   <td style={{ 
                     border: '2px solid #000', 
                     borderBottom: '1px solid #000', 
@@ -291,7 +309,7 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
             })
           ) : (
             <tr>
-              <td colSpan="5" style={{ 
+              <td colSpan="6" style={{ 
                 padding: '20px', 
                 textAlign: 'center', 
                 fontSize: '12px' 
@@ -307,6 +325,11 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
               <td style={{ 
                 border: '2px solid #000', 
                 borderLeft: 'none', 
+                borderBottom: '1px solid #000', 
+                padding: '10px 8px' 
+              }}>&nbsp;</td>
+              <td style={{ 
+                border: '2px solid #000', 
                 borderBottom: '1px solid #000', 
                 padding: '10px 8px' 
               }}>&nbsp;</td>
