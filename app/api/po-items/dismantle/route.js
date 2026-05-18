@@ -1,34 +1,44 @@
-/**
- * Dismantle PO Item Proxy Route
- * /api/po-items/dismantle
- */
+import { NextResponse } from 'next/server';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.hstgr.cloud:8000';
 
 export async function POST(request) {
   try {
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
-    const authHeader = request.headers.get('authorization');
-    const body = await request.text();
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    const body = await request.json();
     
-    const backendUrl = `${apiBaseUrl}/api/po-items/dismantle`;
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
-    };
-    if (authHeader) headers['Authorization'] = authHeader;
-    
-    const response = await fetch(backendUrl, { 
-      method: 'POST', 
-      headers,
-      body
+    console.log('Dismantle PO Item - Parent ID:', body.parent_item_id);
+    console.log('Child items count:', body.child_items?.length || 0);
+
+    const response = await fetch(`${API_BASE_URL}/api/po-items/${body.parent_item_id}/dismantle`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        parent_item_id: body.parent_item_id,
+        child_items: body.child_items
+      }),
     });
-    const data = await response.text();
-    
-    return new Response(data, {
-      status: response.status,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Dismantle API error:', errorData);
+      return NextResponse.json(
+        { error: errorData.detail || 'Failed to dismantle item' },
+        { status: response.status }
+      );
+    }
+
+    const data = await response.json();
+    console.log('Dismantle successful:', data);
+    return NextResponse.json(data);
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error('Dismantle proxy error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error: ' + error.message },
+      { status: 500 }
+    );
   }
 }

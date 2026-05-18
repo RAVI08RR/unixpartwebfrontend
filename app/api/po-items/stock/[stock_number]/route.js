@@ -1,47 +1,37 @@
 import { NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.hstgr.cloud:8000';
+
 export async function GET(request, { params }) {
   try {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
     const { stock_number } = await params;
     
-    console.log('🔍 Get PO item by stock number proxy - Stock Number:', stock_number);
-    
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      return NextResponse.json(
-        { detail: 'Not authenticated' },
-        { status: 401 }
-      );
-    }
+    console.log('Get PO item by stock number proxy - Stock Number:', stock_number);
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/po-items/stock/${stock_number}`;
-    console.log('📡 Fetching from:', apiUrl);
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${API_BASE_URL}/api/po-items/stock/${stock_number}`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      console.error('❌ Backend error:', response.status, data);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('PO item by stock number API error:', errorData);
       return NextResponse.json(
-        data,
+        { error: errorData.detail || 'PO item not found' },
         { status: response.status }
       );
     }
 
-    console.log('✅ PO item found:', data.stock_number);
+    const data = await response.json();
     return NextResponse.json(data);
-
   } catch (error) {
-    console.error('❌ Proxy error:', error);
+    console.error('PO item by stock number proxy error:', error);
     return NextResponse.json(
-      { detail: error.message || 'Internal server error' },
+      { error: 'Internal server error: ' + error.message },
       { status: 500 }
     );
   }

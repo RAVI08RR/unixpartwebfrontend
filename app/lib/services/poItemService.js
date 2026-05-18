@@ -92,11 +92,14 @@ export const poItemService = {
   },
 
   // Dismantle PO item
-  dismantle: async (dismantleData) => {
+  dismantle: async (parentItemId, dismantleData) => {
     try {
       return await fetchApi('/api/po-items/dismantle', {
         method: 'POST',
-        body: JSON.stringify(dismantleData),
+        body: JSON.stringify({
+          parent_item_id: parentItemId,
+          ...dismantleData
+        }),
       });
     } catch (error) {
       throw new Error('Cannot dismantle item: ' + error.message);

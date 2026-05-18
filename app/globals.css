@@ -2141,3 +2141,7 @@ a.bg-black svg,
     -webkit-print-color-adjust: exact !important;
   }
 }
+
+.quick-search-box {
+    overflow: scroll;
+}
