@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, DollarSign } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { invoiceService } from "@/app/lib/services/invoiceService";
@@ -68,7 +68,7 @@ export default function QuickSearch() {
     );
   }, [searchQuery, allInvoices]);
 
-  // Search for PO items by stock number
+  // Search for PO items by stock number or item name using dropdown API
   useEffect(() => {
     const searchPOItem = async () => {
       if (!searchQuery.trim() || activeTab !== "Item") {
@@ -81,8 +81,15 @@ export default function QuickSearch() {
       setSearchError(null);
 
       try {
-        const result = await poItemService.getByStockNumber(searchQuery.trim());
-        setSearchResults(result);
+        // Use dropdown API for better search with suggestions
+        const result = await poItemService.getDropdown(searchQuery.trim());
+        // The dropdown API returns an array of items
+        if (result && result.length > 0) {
+          setSearchResults(result); // Store all results for suggestions
+        } else {
+          setSearchError('No items found matching your search');
+          setSearchResults(null);
+        }
       } catch (error) {
         setSearchError(error.message);
         setSearchResults(null);

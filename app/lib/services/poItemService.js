@@ -15,10 +15,11 @@ export const poItemService = {
     }
   },
 
-  // Get dropdown PO items
-  getDropdown: async () => {
+  // Get dropdown PO items with optional search
+  getDropdown: async (search = '') => {
     try {
-      return await fetchApi('/api/dropdown/po-items');
+      const url = search ? `/api/dropdown/po-items?search=${encodeURIComponent(search)}` : '/api/dropdown/po-items';
+      return await fetchApi(url);
     } catch (error) {
       // Silently fallback to getAll if dropdown endpoint fails (e.g., permission issues)
       console.log("📦 Using fallback: fetching PO items via getAll");
