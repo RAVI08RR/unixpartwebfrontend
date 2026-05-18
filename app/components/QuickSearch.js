@@ -75,8 +75,17 @@ export default function QuickSearch() {
       setSearchError(null);
 
       try {
-        const result = await invoiceService.getByNumber(searchQuery.trim());
-        setInvoiceResults(result);
+        // Get all invoices and filter by search query
+        const allInvoices = await invoiceService.getAll(0, 100);
+        const invoices = Array.isArray(allInvoices) ? allInvoices : (allInvoices?.data || []);
+        
+        // Filter invoices by invoice number or customer name
+        const filtered = invoices.filter(invoice => 
+          invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          invoice.customer?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        
+        setInvoiceResults(filtered);
       } catch (error) {
         setSearchError(error.message);
         setInvoiceResults(null);
@@ -184,90 +193,79 @@ export default function QuickSearch() {
                           <X className="w-8 h-8 text-red-600 dark:text-red-400" />
                         </div>
                         <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
-                          Invoice Not Found
+                          Error
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                           {searchError}
                         </p>
                       </div>
-                    ) : invoiceResults ? (
-                      <div className="space-y-4">
+                    ) : invoiceResults && invoiceResults.length > 0 ? (
+                      <div className="space-y-3">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-lg font-black text-gray-900 dark:text-white">
-                            Invoice Found
+                            {invoiceResults.length} Invoice{invoiceResults.length > 1 ? 's' : ''} Found
                           </h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            invoiceResults.invoice_status === 'paid' || invoiceResults.invoice_status === 'saved and paid'
-                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                              : invoiceResults.invoice_status === 'overdue'
-                              ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                              : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
-                          }`}>
-                            {invoiceResults.invoice_status || 'Pending'}
-                          </span>
                         </div>
                         
-                        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-800">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Invoice Number</p>
-                              <p className="text-base font-black text-gray-900 dark:text-white">{invoiceResults.invoice_number}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Invoice Date</p>
-                              <p className="text-base font-bold text-gray-700 dark:text-gray-300">
-                                {invoiceResults.invoice_date ? new Date(invoiceResults.invoice_date).toLocaleDateString() : 'N/A'}
-                              </p>
-                            </div>
-                            <div className="col-span-2">
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Customer</p>
-                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                {invoiceResults.customer?.full_name || `Customer #${invoiceResults.customer_id}`}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Total Amount</p>
-                              <p className="text-base font-bold text-blue-600 dark:text-blue-400">
-                                AED {parseFloat(invoiceResults.invoice_total || 0).toFixed(2)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Outstanding</p>
-                              <p className="text-base font-bold text-red-600 dark:text-red-400">
-                                AED {parseFloat(invoiceResults.outstanding_amount || 0).toFixed(2)}
-                              </p>
-                            </div>
-                            {(invoiceResults.invoice_items || invoiceResults.items) && (
-                              <div className="col-span-2">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Items</p>
-                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                  {(invoiceResults.invoice_items || invoiceResults.items || []).length} item(s)
-                                </p>
+                        <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                          {invoiceResults.map((invoice) => (
+                            <div 
+                              key={invoice.id}
+                              onClick={() => {
+                                router.push(`/dashboard/sales/invoices/view/${invoice.id}`);
+                                setIsOpen(false);
+                              }}
+                              className="bg-white dark:bg-zinc-900 rounded-xl p-4 border border-gray-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-500 cursor-pointer transition-all hover:shadow-lg"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <p className="text-base font-black text-gray-900 dark:text-white">
+                                      {invoice.invoice_number}
+                                    </p>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                                      invoice.invoice_status === 'paid' || invoice.invoice_status === 'saved and paid'
+                                        ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                        : invoice.invoice_status === 'overdue'
+                                        ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                                        : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                                    }`}>
+                                      {invoice.invoice_status || 'Pending'}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {invoice.customer?.full_name || `Customer #${invoice.customer_id}`}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                    {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString() : 'N/A'}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-lg font-black text-gray-900 dark:text-white">
+                                    AED {parseFloat(invoice.invoice_total || 0).toFixed(2)}
+                                  </p>
+                                  {parseFloat(invoice.outstanding_amount || 0) > 0 && (
+                                    <p className="text-xs text-red-600 dark:text-red-400 font-bold mt-1">
+                                      Due: AED {parseFloat(invoice.outstanding_amount || 0).toFixed(2)}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
-                          
-                          <div className="mt-6 flex gap-3">
-                            <button
-                              onClick={() => {
-                                router.push(`/dashboard/sales/invoices/view/${invoiceResults.id}`);
-                                setIsOpen(false);
-                              }}
-                              className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
-                            >
-                              View Invoice
-                            </button>
-                            <button
-                              onClick={() => {
-                                router.push(`/dashboard/sales/invoices/edit/${invoiceResults.id}`);
-                                setIsOpen(false);
-                              }}
-                              className="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all"
-                            >
-                              Edit
-                            </button>
-                          </div>
+                            </div>
+                          ))}
                         </div>
+                      </div>
+                    ) : invoiceResults && invoiceResults.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <Search className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
+                          No Invoices Found
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          No invoices match "{searchQuery}"
+                        </p>
                       </div>
                     ) : null}
                   </div>
