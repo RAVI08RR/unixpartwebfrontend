@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { 
   AlertTriangle, Building2, X, Check, 
   ChevronDown, Trash2, Plus, MapPin
@@ -16,7 +15,6 @@ export default function CustomerDeactivateModal({
   onClose, 
   onSuccess 
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [branches, setBranches] = useState([]);
@@ -149,16 +147,13 @@ export default function CustomerDeactivateModal({
       await customerBranchService.bulkActivation(customer.id, [], deactivateBranchIds);
 
       console.log("✅ Customer branches deactivated successfully");
-      alert("Customer branches deactivated successfully! Redirecting to branches page...");
+      alert("Customer branches deactivated successfully!");
 
       if (onSuccess) {
         onSuccess();
       }
       
       onClose();
-      
-      // Redirect to branches page after successful deactivation
-      router.push("/dashboard/administration/branches");
       
     } catch (error) {
       console.error("❌ Failed to deactivate customer branches:", error);
