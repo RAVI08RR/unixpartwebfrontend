@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { 
   AlertTriangle, Building2, X, Check, 
   ChevronDown, Trash2, Plus, MapPin
@@ -15,6 +16,7 @@ export default function CustomerDeactivateModal({
   onClose, 
   onSuccess 
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [branches, setBranches] = useState([]);
@@ -134,26 +136,29 @@ export default function CustomerDeactivateModal({
     try {
       setSaving(true);
 
-      // Prepare branch activations data
-      const branchActivations = deactivatedBranches.map(branch => ({
-        branch_id: branch.branch_id || branch.id,
-        is_active: false
-      }));
+      // Prepare branch IDs to deactivate
+      const deactivateBranchIds = deactivatedBranches.map(branch => 
+        parseInt(branch.branch_id || branch.id)
+      );
 
       console.log("🔄 Deactivating branches for customer:", customer.id);
-      console.log("📋 Branch activations:", branchActivations);
+      console.log("📋 Branch IDs to deactivate:", deactivateBranchIds);
 
       // Call API to bulk update branch activations
-      await customerBranchService.bulkActivation(customer.id, branchActivations);
+      // Pass empty array for activate, and deactivateBranchIds for deactivate
+      await customerBranchService.bulkActivation(customer.id, [], deactivateBranchIds);
 
       console.log("✅ Customer branches deactivated successfully");
-      alert("Customer branches deactivated successfully!");
+      alert("Customer branches deactivated successfully! Redirecting to branches page...");
 
       if (onSuccess) {
         onSuccess();
       }
       
       onClose();
+      
+      // Redirect to branches page after successful deactivation
+      router.push("/dashboard/administration/branches");
       
     } catch (error) {
       console.error("❌ Failed to deactivate customer branches:", error);

@@ -15,12 +15,21 @@ export const customerBranchService = {
   // Bulk update branch activation status
   bulkActivation: async (customerId, activateBranchIds = [], deactivateBranchIds = []) => {
     try {
+      // Filter out invalid IDs (0, NaN, null, undefined) and convert to integers
+      const validActivateIds = activateBranchIds
+        .map(id => parseInt(id))
+        .filter(id => !isNaN(id) && id > 0);
+      
+      const validDeactivateIds = deactivateBranchIds
+        .map(id => parseInt(id))
+        .filter(id => !isNaN(id) && id > 0);
+
       const response = await fetchApi('/api/customer-branches/bulk-activation', {
         method: 'POST',
         body: JSON.stringify({
           customer_id: parseInt(customerId),
-          activate_branch_ids: activateBranchIds.map(id => parseInt(id)),
-          deactivate_branch_ids: deactivateBranchIds.map(id => parseInt(id))
+          activate_branch_ids: validActivateIds,
+          deactivate_branch_ids: validDeactivateIds
         }),
       });
       return response;
