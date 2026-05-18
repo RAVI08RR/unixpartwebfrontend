@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Search, X, Maximize2, Package, FileText, User } from "lucide-react";
+import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, DollarSign } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
+import { invoiceService } from "@/app/lib/services/invoiceService";
 import { useRouter } from "next/navigation";
 
 export default function QuickSearch() {
@@ -11,6 +12,7 @@ export default function QuickSearch() {
   const [activeTab, setActiveTab] = useState("Item");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
+  const [invoiceResults, setInvoiceResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
 
@@ -57,6 +59,34 @@ export default function QuickSearch() {
 
     // Debounce search
     const timeoutId = setTimeout(searchPOItem, 500);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, activeTab]);
+
+  // Search for invoices by invoice number
+  useEffect(() => {
+    const searchInvoice = async () => {
+      if (!searchQuery.trim() || activeTab !== "Invoice") {
+        setInvoiceResults(null);
+        setSearchError(null);
+        return;
+      }
+
+      setIsSearching(true);
+      setSearchError(null);
+
+      try {
+        const result = await invoiceService.getByNumber(searchQuery.trim());
+        setInvoiceResults(result);
+      } catch (error) {
+        setSearchError(error.message);
+        setInvoiceResults(null);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(searchInvoice, 500);
     return () => clearTimeout(timeoutId);
   }, [searchQuery, activeTab]);
 
@@ -141,7 +171,107 @@ export default function QuickSearch() {
             {/* Search Results Area */}
             <div className="px-8 pb-8">
               <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-8 min-h-[300px]">
-                {searchQuery && activeTab === "Item" ? (
+                {searchQuery && activeTab === "Invoice" ? (
+                  <div>
+                    {isSearching ? (
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-sm font-bold text-gray-500">Searching for invoice "{searchQuery}"...</p>
+                      </div>
+                    ) : searchError ? (
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <X className="w-8 h-8 text-red-600 dark:text-red-400" />
+                        </div>
+                        <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
+                          Invoice Not Found
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {searchError}
+                        </p>
+                      </div>
+                    ) : invoiceResults ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-black text-gray-900 dark:text-white">
+                            Invoice Found
+                          </h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                            invoiceResults.invoice_status === 'paid' || invoiceResults.invoice_status === 'saved and paid'
+                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                              : invoiceResults.invoice_status === 'overdue'
+                              ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                              : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                          }`}>
+                            {invoiceResults.invoice_status || 'Pending'}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 border border-gray-200 dark:border-zinc-800">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Invoice Number</p>
+                              <p className="text-base font-black text-gray-900 dark:text-white">{invoiceResults.invoice_number}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Invoice Date</p>
+                              <p className="text-base font-bold text-gray-700 dark:text-gray-300">
+                                {invoiceResults.invoice_date ? new Date(invoiceResults.invoice_date).toLocaleDateString() : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Customer</p>
+                              <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                {invoiceResults.customer?.full_name || `Customer #${invoiceResults.customer_id}`}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Total Amount</p>
+                              <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                                AED {parseFloat(invoiceResults.invoice_total || 0).toFixed(2)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Outstanding</p>
+                              <p className="text-base font-bold text-red-600 dark:text-red-400">
+                                AED {parseFloat(invoiceResults.outstanding_amount || 0).toFixed(2)}
+                              </p>
+                            </div>
+                            {(invoiceResults.invoice_items || invoiceResults.items) && (
+                              <div className="col-span-2">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Items</p>
+                                <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                                  {(invoiceResults.invoice_items || invoiceResults.items || []).length} item(s)
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-6 flex gap-3">
+                            <button
+                              onClick={() => {
+                                router.push(`/dashboard/sales/invoices/view/${invoiceResults.id}`);
+                                setIsOpen(false);
+                              }}
+                              className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+                            >
+                              View Invoice
+                            </button>
+                            <button
+                              onClick={() => {
+                                router.push(`/dashboard/sales/invoices/edit/${invoiceResults.id}`);
+                                setIsOpen(false);
+                              }}
+                              className="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 transition-all"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : searchQuery && activeTab === "Item" ? (
                   <div>
                     {isSearching ? (
                       <div className="flex flex-col items-center justify-center py-12">
