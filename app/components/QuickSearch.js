@@ -21,6 +21,11 @@ export default function QuickSearch() {
   const [dismantleStockNumber, setDismantleStockNumber] = useState("");
   const [dismantleSearchResults, setDismantleSearchResults] = useState([]);
   const [isDismantleSearching, setIsDismantleSearching] = useState(false);
+  
+  // Item details modal states
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [isLoadingItemDetails, setIsLoadingItemDetails] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -138,6 +143,19 @@ export default function QuickSearch() {
   }, [dismantleStockNumber, activeTab]);
 
   const tabs = ["Item", "Invoice", "Create", "Actions"];
+
+  const handleViewItemDetails = async (itemId) => {
+    setIsLoadingItemDetails(true);
+    try {
+      const itemDetails = await poItemService.getById(itemId);
+      setSelectedItem(itemDetails);
+      setIsItemModalOpen(true);
+    } catch (error) {
+      alert('Failed to load item details: ' + error.message);
+    } finally {
+      setIsLoadingItemDetails(false);
+    }
+  };
 
   const handleDismantleItem = async (stockNumber) => {
     // Navigate to the dismantle page or open a modal
@@ -383,11 +401,9 @@ export default function QuickSearch() {
                               
                               <div className="flex gap-2 mt-3">
                                 <button
-                                  onClick={() => {
-                                    router.push(`/dashboard/inventory/purchase-orders/items/${item.id}`);
-                                    setIsOpen(false);
-                                  }}
-                                  className="flex-1 px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all"
+                                  onClick={() => handleViewItemDetails(item.id)}
+                                  disabled={isLoadingItemDetails}
+                                  className="flex-1 px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50"
                                 >
                                   View Details
                                 </button>
@@ -563,6 +579,206 @@ export default function QuickSearch() {
               <button
                 onClick={() => setIsOpen(false)}
                 className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Item Details Modal */}
+      {isItemModalOpen && selectedItem && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl w-full max-w-2xl border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-zinc-800 sticky top-0 bg-white dark:bg-zinc-900 z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">
+                    Inventory Item Details
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+                    STOCK #: {selectedItem.stock_number}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsItemModalOpen(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Top Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Quantity</p>
+                  <p className="text-2xl font-black text-gray-900 dark:text-white">{selectedItem.quantity}</p>
+                </div>
+                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Status</p>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${
+                    selectedItem.status === 'available' || selectedItem.status === 'in_stock'
+                      ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                      : selectedItem.status === 'sold'
+                      ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                      : selectedItem.status === 'reserved'
+                      ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
+                  }`}>
+                    {selectedItem.status?.toUpperCase() || 'UNKNOWN'}
+                  </span>
+                </div>
+                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Branch</p>
+                  <p className="text-lg font-black text-gray-900 dark:text-white">
+                    {selectedItem.current_branch?.branch_name || 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Product Information */}
+              <div className="bg-blue-50 dark:bg-blue-900/10 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <Package className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                    Product Information
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Item Name</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">
+                      {selectedItem.stock_item?.name || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Stock Number</p>
+                    <p className="text-base font-bold text-red-600 dark:text-red-400">
+                      {selectedItem.stock_number}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">PO Description</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {selectedItem.po_description || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Branch Information */}
+              <div className="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <FileText className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                    Branch Information
+                  </h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Branch Code</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">
+                      {selectedItem.current_branch?.branch_code || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Branch Name</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">
+                      {selectedItem.current_branch?.branch_name || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sale Information (if sold) */}
+              {selectedItem.invoice_items && selectedItem.invoice_items.length > 0 && (
+                <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide">
+                      Sale Information
+                    </h3>
+                  </div>
+                  <div className="space-y-3">
+                    {selectedItem.invoice_items.map((invoiceItem, index) => (
+                      <div key={index} className="bg-white dark:bg-zinc-900 rounded-lg p-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Invoice Number</p>
+                            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                              {invoiceItem.invoice?.invoice_number || 'N/A'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Sale Amount</p>
+                            <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                              AED {parseFloat(invoiceItem.sale_amount || 0).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Traceability */}
+              <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wide mb-3">
+                  Traceability
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">PO ID</p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white">
+                      #{selectedItem.po_id}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Created At</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-1">Last Updated</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      {selectedItem.updated_at ? new Date(selectedItem.updated_at).toLocaleDateString() : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => {
+                  router.push(`/dashboard/inventory/purchase-orders/view/${selectedItem.po_id}`);
+                  setIsItemModalOpen(false);
+                  setIsOpen(false);
+                }}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all"
+              >
+                View Purchase Order
+              </button>
+              <button
+                onClick={() => setIsItemModalOpen(false)}
+                className="px-4 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all"
               >
                 Close
               </button>
