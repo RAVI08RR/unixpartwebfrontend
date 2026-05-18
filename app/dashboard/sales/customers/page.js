@@ -5,10 +5,11 @@ import Link from "next/link";
 import { 
   Mail, MoreVertical, Search, Phone,
   Filter, Download, Plus, ChevronLeft, ChevronRight,
-  Building, Pencil, Trash2, Check, X, Eye, MapPin, DollarSign, AlertTriangle, History
+  Building, Building2, Pencil, Trash2, Check, X, Eye, MapPin, DollarSign, AlertTriangle, History
 } from "lucide-react";
 import { useCustomers } from "../../../lib/hooks/useCustomers";
 import { customerService } from "../../../lib/services/customerService";
+import { customerBranchService } from "../../../lib/services/customerBranchService";
 import { getAuthToken } from "../../../lib/api";
 import CustomerDeactivateModal from "../../../components/CustomerDeactivateModal";
 import CustomerCreditLimitModal from "../../../components/CustomerCreditLimitModal";
@@ -61,6 +62,37 @@ export default function CustomersPage() {
     setIsMounted(true);
   }, []);
 
+  // Fetch deactivated branches for all customers
+  useEffect(() => {
+    const fetchDeactivatedBranches = async () => {
+      if (!customers || customers.length === 0) return;
+      
+      const branchesMap = {};
+      
+      // Fetch deactivated branches for each customer
+      await Promise.all(
+        customers.map(async (customer) => {
+          try {
+            const deactivatedData = await customerBranchService.getDeactivatedBranches(customer.id);
+            const branches = Array.isArray(deactivatedData) 
+              ? deactivatedData 
+              : (deactivatedData?.branches || deactivatedData?.data || []);
+            branchesMap[customer.id] = branches;
+          } catch (error) {
+            // Silently handle errors - customer might not have deactivated branches
+            branchesMap[customer.id] = [];
+          }
+        })
+      );
+      
+      setCustomerDeactivatedBranches(branchesMap);
+    };
+
+    if (isMounted && customers.length > 0) {
+      fetchDeactivatedBranches();
+    }
+  }, [customers, isMounted]);
+
   // Reset to first page when customers list changes
   useEffect(() => {
     setCurrentPage(1);
@@ -73,6 +105,7 @@ export default function CustomersPage() {
   const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
   const [creditLimitModalOpen, setCreditLimitModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [customerDeactivatedBranches, setCustomerDeactivatedBranches] = useState({});
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -277,6 +310,7 @@ export default function CustomersPage() {
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
+                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Deactivated Branches</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
@@ -288,6 +322,7 @@ export default function CustomersPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {paginatedCustomers.length > 0 ? (
                 paginatedCustomers.map((customer, index) => {
+                  const deactivatedBranches = customerDeactivatedBranches[customer.id] || [];
                   return (
                     <tr key={customer.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
                     style= {{borderBottom :"0.9px solid #E2E8F0"}}
@@ -339,6 +374,29 @@ export default function CustomersPage() {
                             </span>
                           )}
                         </div>
+                      </td>
+
+                      {/* Deactivated Branches */}
+                      <td className="px-6 py-6" data-label="Deactivated Branches">
+                        {deactivatedBranches.length > 0 ? (
+                          <div className="space-y-1">
+                            {deactivatedBranches.slice(0, 2).map((branch, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Building2 className="w-3 h-3 text-red-400" />
+                                <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[120px]">
+                                  {branch.branch_name}
+                                </span>
+                              </div>
+                            ))}
+                            {deactivatedBranches.length > 2 && (
+                              <span className="text-xs text-red-600 dark:text-red-400 font-bold">
+                                +{deactivatedBranches.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No deactivated branches</span>
+                        )}
                       </td>
 
                       {/* Financial */}
@@ -453,7 +511,7 @@ export default function CustomersPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
+                  <td colSpan="8" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No customers found</p>
                   </td>
                 </tr>
