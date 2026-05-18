@@ -13,8 +13,10 @@ export default function QuickSearch() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState(null);
   const [invoiceResults, setInvoiceResults] = useState(null);
+  const [allInvoices, setAllInvoices] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
   // Close on Escape key
   useEffect(() => {
@@ -33,6 +35,38 @@ export default function QuickSearch() {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // Load all invoices when Invoice tab is opened
+  useEffect(() => {
+    const loadAllInvoices = async () => {
+      if (activeTab !== "Invoice" || allInvoices.length > 0) return;
+      
+      setIsLoadingInvoices(true);
+      try {
+        const invoices = await invoiceService.getAll(0, 100);
+        const invoiceList = Array.isArray(invoices) ? invoices : (invoices?.data || []);
+        setAllInvoices(invoiceList);
+      } catch (error) {
+        console.error('Failed to load invoices:', error);
+      } finally {
+        setIsLoadingInvoices(false);
+      }
+    };
+
+    loadAllInvoices();
+  }, [activeTab, allInvoices.length]);
+
+  // Filter invoices based on search query
+  const filteredInvoices = useMemo(() => {
+    if (!searchQuery.trim()) return allInvoices;
+    
+    const query = searchQuery.toLowerCase();
+    return allInvoices.filter(invoice => 
+      invoice.invoice_number?.toLowerCase().includes(query) ||
+      invoice.customer?.full_name?.toLowerCase().includes(query) ||
+      invoice.customer?.customer_code?.toLowerCase().includes(query)
+    );
+  }, [searchQuery, allInvoices]);
 
   // Search for PO items by stock number
   useEffect(() => {
