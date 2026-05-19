@@ -23,6 +23,8 @@ export default function AddInvoicePage() {
   const [customersLoading, setCustomersLoading] = useState(false);
   const [poItems, setPoItems] = useState([]);
   const [poItemsLoading, setPoItemsLoading] = useState(false);
+  // Add state for editing item index
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
@@ -224,6 +226,7 @@ export default function AddInvoicePage() {
   // Add invoice item
   const addItem = () => {
     setItemModalOpen(true);
+    setEditingItemIndex(null);
     setItemForm({
       po_item_id: "",
       stock_number: "",
@@ -236,6 +239,25 @@ export default function AddInvoicePage() {
       load_status: "pending",
       load_date: ""
     });
+  };
+
+  // Edit invoice item
+  const editItem = (index) => {
+    const item = formData.items[index];
+    setEditingItemIndex(index);
+    setItemForm({
+      po_item_id: item.po_item_id || "",
+      stock_number: item.stock_number || "",
+      item_name: item.item_name || "",
+      po_description: item.po_description || "",
+      sale_description: item.sale_description || "",
+      sale_amount: item.sale_amount || "",
+      discount: item.discount || "",
+      discount_details: item.discount_details || "",
+      load_status: item.load_status || "pending",
+      load_date: item.load_date || ""
+    });
+    setItemModalOpen(true);
   };
 
   // Handle PO Item selection
@@ -268,11 +290,24 @@ export default function AddInvoicePage() {
       return;
     }
 
-    setFormData({
-      ...formData,
-      items: [...formData.items, { ...itemForm }]
-    });
+    if (editingItemIndex !== null) {
+      // Update existing item
+      const updatedItems = [...formData.items];
+      updatedItems[editingItemIndex] = { ...itemForm };
+      setFormData({
+        ...formData,
+        items: updatedItems
+      });
+    } else {
+      // Add new item
+      setFormData({
+        ...formData,
+        items: [...formData.items, { ...itemForm }]
+      });
+    }
+    
     setItemModalOpen(false);
+    setEditingItemIndex(null);
   };
 
   // Remove invoice item
@@ -603,13 +638,24 @@ export default function AddInvoicePage() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => removeItem(index)}
-                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => editItem(index)}
+                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                              title="Edit item"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                              title="Delete item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -795,11 +841,16 @@ export default function AddInvoicePage() {
             <div className="p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-black dark:text-white">Add Invoice Item</h2>
+                  <h2 className="text-xl font-black dark:text-white">
+                    {editingItemIndex !== null ? 'Edit Invoice Item' : 'Add Invoice Item'}
+                  </h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the item details</p>
                 </div>
                 <button
-                  onClick={() => setItemModalOpen(false)}
+                  onClick={() => {
+                    setItemModalOpen(false);
+                    setEditingItemIndex(null);
+                  }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-500" />
@@ -814,6 +865,7 @@ export default function AddInvoicePage() {
                     onSelect={handlePoItemSelect}
                     placeholder="Search by stock number or item name..."
                     disabled={poItemsLoading}
+                    initialDisplayText={itemForm.stock_number && itemForm.item_name ? `${itemForm.stock_number} - ${itemForm.item_name}` : ""}
                   />
                   {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
                   {!poItemsLoading && (
@@ -911,11 +963,14 @@ export default function AddInvoicePage() {
                   onClick={saveItem}
                   className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
                 >
-                  Add Item
+                  {editingItemIndex !== null ? 'Update Item' : 'Add Item'}
                 </button>
                 <button 
                   type="button"
-                  onClick={() => setItemModalOpen(false)}
+                  onClick={() => {
+                    setItemModalOpen(false);
+                    setEditingItemIndex(null);
+                  }}
                   className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
                 >
                   Cancel
