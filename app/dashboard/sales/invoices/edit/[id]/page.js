@@ -1011,7 +1011,15 @@ export default function EditInvoicePage({ params }) {
                     onSelect={handlePoItemSelect}
                     placeholder="Search by stock number or item name..."
                     disabled={poItemsLoading}
-                    initialDisplayText={itemForm.stock_number && itemForm.item_name ? `${itemForm.stock_number} - ${itemForm.item_name}` : ""}
+                    initialDisplayText={
+                      itemForm.stock_number && itemForm.item_name 
+                        ? `${itemForm.stock_number} - ${itemForm.item_name}` 
+                        : itemForm.stock_number 
+                        ? itemForm.stock_number 
+                        : itemForm.item_name 
+                        ? itemForm.item_name 
+                        : ""
+                    }
                   />
                   {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
                   {!poItemsLoading && (

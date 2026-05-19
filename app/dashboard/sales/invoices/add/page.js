@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer, Pencil
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -865,7 +865,15 @@ export default function AddInvoicePage() {
                     onSelect={handlePoItemSelect}
                     placeholder="Search by stock number or item name..."
                     disabled={poItemsLoading}
-                    initialDisplayText={itemForm.stock_number && itemForm.item_name ? `${itemForm.stock_number} - ${itemForm.item_name}` : ""}
+                    initialDisplayText={
+                      itemForm.stock_number && itemForm.item_name 
+                        ? `${itemForm.stock_number} - ${itemForm.item_name}` 
+                        : itemForm.stock_number 
+                        ? itemForm.stock_number 
+                        : itemForm.item_name 
+                        ? itemForm.item_name 
+                        : ""
+                    }
                   />
                   {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
                   {!poItemsLoading && (
