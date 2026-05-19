@@ -5,9 +5,11 @@ import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, Dolla
 import { poItemService } from "@/app/lib/services/poItemService";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/app/components/Toast";
 
 export default function QuickSearch() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Item");
   const [searchQuery, setSearchQuery] = useState("");
@@ -151,23 +153,24 @@ export default function QuickSearch() {
       setSelectedItem(itemDetails);
       setIsItemModalOpen(true);
     } catch (error) {
-      alert('Failed to load item details: ' + error.message);
+      showError('Failed to load item details: ' + error.message);
     } finally {
       setIsLoadingItemDetails(false);
     }
   };
 
   const handleDismantleItem = async (stockNumber) => {
-    // Navigate to the dismantle page or open a modal
-    // For now, let's navigate to the PO item details page where dismantle can be done
     try {
       const item = await poItemService.getByStockNumber(stockNumber);
       if (item && item.id) {
-        router.push(`/dashboard/inventory/purchase-orders/items/${item.id}`);
-        setIsOpen(false);
+        // Show success message without redirecting
+        success(`Item ${stockNumber} is ready for dismantling`);
+        // Clear the search input
+        setDismantleStockNumber("");
+        setDismantleSearchResults([]);
       }
     } catch (error) {
-      alert('Item not found: ' + error.message);
+      showError('Item not found: ' + error.message);
     }
   };
 
