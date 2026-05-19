@@ -14,6 +14,7 @@ import { poItemService } from "@/app/lib/services/poItemService";
 import { useToast } from "@/app/components/Toast";
 import PrintableInvoice from "@/app/components/PrintableInvoice";
 import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocompleteWithCreate";
+import POItemAutocomplete from "@/app/components/POItemAutocomplete";
 
 export default function AddInvoicePage() {
   const router = useRouter();
@@ -238,21 +239,20 @@ export default function AddInvoicePage() {
   };
 
   // Handle PO Item selection
-  const handlePoItemSelect = (poItemId) => {
-    const selectedPoItem = poItems.find(item => item.id === parseInt(poItemId));
+  const handlePoItemSelect = (selectedPoItem) => {
     if (selectedPoItem) {
       setItemForm({
         ...itemForm,
-        po_item_id: poItemId,
+        po_item_id: selectedPoItem.id,
         stock_number: selectedPoItem.stock_number || "",
-        item_name: selectedPoItem.item_name || selectedPoItem.stock_item?.name || "",
-        po_description: selectedPoItem.po_description || selectedPoItem.item_name || "",
-        sale_description: selectedPoItem.po_description || selectedPoItem.item_name || ""
+        item_name: selectedPoItem.label || selectedPoItem.item_name || "",
+        po_description: selectedPoItem.po_description || selectedPoItem.label || "",
+        sale_description: selectedPoItem.po_description || selectedPoItem.label || ""
       });
     } else {
       setItemForm({
         ...itemForm,
-        po_item_id: poItemId,
+        po_item_id: "",
         stock_number: "",
         item_name: "",
         po_description: "",
@@ -808,27 +808,16 @@ export default function AddInvoicePage() {
 
               <div className="space-y-4">
                 <FormField label="Select PO Item" required>
-                  <select 
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                  <POItemAutocomplete
                     value={itemForm.po_item_id}
-                    onChange={(e) => handlePoItemSelect(e.target.value)}
+                    onChange={(poItemId) => setItemForm({...itemForm, po_item_id: poItemId})}
+                    onSelect={handlePoItemSelect}
+                    placeholder="Search by stock number or item name..."
                     disabled={poItemsLoading}
-                  >
-                    <option value="">
-                      {poItemsLoading ? 'Loading items...' : poItems.length === 0 ? 'No items available' : 'Select a PO Item...'}
-                    </option>
-                    {poItems.map(poItem => (
-                      <option key={poItem.id} value={poItem.id}>
-                        {poItem.item_name || poItem.label || poItem.po_description} - {poItem.stock_number}
-                      </option>
-                    ))}
-                  </select>
+                  />
                   {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
-                  {!poItemsLoading && poItems.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">No PO items found. Please add items to purchase orders first.</p>
-                  )}
-                  {!poItemsLoading && poItems.length > 0 && (
-                    <p className="text-xs text-gray-500 mt-1">{poItems.length} items available</p>
+                  {!poItemsLoading && (
+                    <p className="text-xs text-gray-500 mt-1">Type to search available PO items</p>
                   )}
                 </FormField>
 
