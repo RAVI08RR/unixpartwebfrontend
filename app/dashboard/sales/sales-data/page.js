@@ -9,8 +9,8 @@ import {
   Package, Hash, DollarSign, Truck, MapPin
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
+import { apiClient } from "@/app/lib/api";
 import Link from "next/link";
-import CustomerAutocomplete from "@/app/components/CustomerAutocomplete";
 
 export default function SalesDataPage() {
   const [salesData, setSalesData] = useState([]);
@@ -18,11 +18,18 @@ export default function SalesDataPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
+  // Dropdown data
+  const [customers, setCustomers] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
+  const [stockItems, setStockItems] = useState([]);
+  const [containers, setContainers] = useState([]);
+  
   // Filters state
   const [filters, setFilters] = useState({
     user: "All",
     supplier: "All",
-    customerName: "",
+    customerName: "All",
     customerNumber: "",
     dateRange: "", // Empty by default to show all data
     container: "All",
@@ -43,6 +50,17 @@ export default function SalesDataPage() {
     try {
       const data = await invoiceService.getSalesData(0, 500);
       setSalesData(Array.isArray(data) ? data : []);
+      
+      // Debug: Log unique customer IDs in sales data
+      if (Array.isArray(data) && data.length > 0) {
+        const customerIds = [...new Set(data.map(item => item.invoice?.customer?.id).filter(Boolean))];
+        const customerNames = [...new Set(data.map(item => item.invoice?.customer?.full_name).filter(Boolean))];
+        console.log("📊 Sales Data Loaded:");
+        console.log("  - Total items:", data.length);
+        console.log("  - Unique customer IDs:", customerIds);
+        console.log("  - Unique customer names:", customerNames);
+        console.log("  - Sample item:", data[0]);
+      }
     } catch (error) {
       console.error("Error fetching sales data:", error);
     } finally {
@@ -50,8 +68,37 @@ export default function SalesDataPage() {
     }
   };
 
+  // Fetch dropdown data
+  const fetchDropdownData = async () => {
+    try {
+      const [customersData, usersData, suppliersData, stockItemsData, containersData] = await Promise.all([
+        apiClient.get('/api/dropdown/customers').catch(() => []),
+        apiClient.get('/api/dropdown/users').catch(() => []),
+        apiClient.get('/api/dropdown/suppliers').catch(() => []),
+        apiClient.get('/api/dropdown/stock-items').catch(() => []),
+        apiClient.get('/api/dropdown/containers').catch(() => [])
+      ]);
+      
+      console.log("📦 Dropdown Data Loaded:");
+      console.log("  - Customers:", customersData);
+      console.log("  - Users:", usersData);
+      console.log("  - Suppliers:", suppliersData);
+      console.log("  - Stock Items:", stockItemsData);
+      console.log("  - Containers:", containersData);
+      
+      setCustomers(Array.isArray(customersData) ? customersData : []);
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
+      setStockItems(Array.isArray(stockItemsData) ? stockItemsData : []);
+      setContainers(Array.isArray(containersData) ? containersData : []);
+    } catch (error) {
+      console.error("Error fetching dropdown data:", error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchDropdownData();
   }, []);
 
   // Reset to page 1 when filters change
@@ -65,12 +112,32 @@ export default function SalesDataPage() {
     console.log("📊 Total sales data:", salesData.length);
     
     const filtered = salesData.filter(item => {
-      const matchesUser = filters.user === "All" || item.invoice?.created_by?.name === filters.user;
-      const matchesSupplier = filters.supplier === "All" || item.po_item?.purchase_order?.container?.supplier?.supplier_code === filters.supplier;
-      const matchesCustomer = !filters.customerName || item.invoice?.customer?.full_name?.toLowerCase().includes(filters.customerName.toLowerCase());
+      const matchesUser = filters.user === "All" || item.invoice?.created_by?.id === parseInt(filters.user);
+      const matchesSupplier = filters.supplier === "All" || item.po_item?.purchase_order?.container?.supplier?.id === parseInt(filters.supplier);
+      
+      // Customer filter - match by name since customer ID is not in sales data
+      let matchesCustomer = true;
+      if (filters.customerName !== "All") {
+        // Get the selected customer's label (name) from the customers dropdown
+        const selectedCustomer = customers.find(c => c.id === parseInt(filters.customerName));
+        if (selectedCustomer) {
+          matchesCustomer = item.invoice?.customer?.full_name === selectedCustomer.label;
+          console.log("🔍 Customer Filter Debug:", {
+            filterValue: filters.customerName,
+            selectedCustomerName: selectedCustomer.label,
+            itemCustomerName: item.invoice?.customer?.full_name,
+            matches: matchesCustomer
+          });
+        } else {
+          matchesCustomer = false;
+        }
+      }
+      
       const matchesCustomerNum = !filters.customerNumber || (item.invoice?.customer?.phone || "").includes(filters.customerNumber);
       const matchesStock = !filters.stockNumber || (item.po_item?.stock_number || "").toLowerCase().includes(filters.stockNumber.toLowerCase());
       const matchesLoadStatus = filters.loadStatus === "All" || item.load_status === filters.loadStatus;
+      const matchesContainer = filters.container === "All" || item.po_item?.purchase_order?.container?.id === parseInt(filters.container);
+      const matchesItemSold = filters.itemSold === "All" || item.po_item?.stock_item?.id === parseInt(filters.itemSold);
       
       // Invoice Status Filter
       let matchesInvoiceStatus = true;
@@ -100,14 +167,15 @@ export default function SalesDataPage() {
         }
       }
       
-      const matches = matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus && matchesInvoiceStatus && matchesDate;
+      const matches = matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus && matchesInvoiceStatus && matchesDate && matchesContainer && matchesItemSold;
       
       return matches;
     });
     
     console.log("✅ Filtered results:", filtered.length);
+    console.log("📋 Sample filtered items:", filtered.slice(0, 2));
     return filtered;
-  }, [salesData, filters]);
+  }, [salesData, filters, customers]);
 
   // Totals
   const totals = useMemo(() => {
@@ -161,7 +229,7 @@ export default function SalesDataPage() {
     setFilters({
       user: "All",
       supplier: "All",
-      customerName: "",
+      customerName: "All",
       customerNumber: "",
       dateRange: "", // Clear date filter completely
       container: "All",
@@ -178,7 +246,7 @@ export default function SalesDataPage() {
     let count = 0;
     if (filters.user !== "All") count++;
     if (filters.supplier !== "All") count++;
-    if (filters.customerName) count++;
+    if (filters.customerName !== "All") count++;
     if (filters.customerNumber) count++;
     if (filters.dateRange) count++;
     if (filters.container !== "All") count++;
@@ -262,7 +330,11 @@ export default function SalesDataPage() {
                 className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
               >
                 <option value="All">All Users</option>
-                <option value="Admin User">Admin User</option>
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -275,18 +347,29 @@ export default function SalesDataPage() {
                 className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
               >
                 <option value="All">All Suppliers</option>
-                <option value="SUP-001">SUP-001</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Filter by Customer Name */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Customer Name</label>
-              <CustomerAutocomplete
+              <select 
                 value={filters.customerName}
-                onChange={(value) => setFilters({...filters, customerName: value})}
-                placeholder="Search customer..."
-              />
+                onChange={(e) => setFilters({...filters, customerName: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
+              >
+                <option value="All">All Customers</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Filter by Customer Number */}
@@ -324,6 +407,11 @@ export default function SalesDataPage() {
                 className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
               >
                 <option value="All">All Containers</option>
+                {containers.map((container) => (
+                  <option key={container.id} value={container.id}>
+                    {container.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -336,6 +424,11 @@ export default function SalesDataPage() {
                 className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
               >
                 <option value="All">All Items</option>
+                {stockItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -394,9 +487,12 @@ export default function SalesDataPage() {
             Clear Filters
           </button>
           
-          <button className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-600/20 active:scale-90 transition-all">
-            <Search className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-900/30">
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+            <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
+              {filteredData.length} Results
+            </span>
+          </div>
         </div>
       </div>
 
