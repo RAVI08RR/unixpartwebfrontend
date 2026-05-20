@@ -23,7 +23,6 @@ export default function SalesDataPage() {
   const [users, setUsers] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [stockItems, setStockItems] = useState([]);
-  const [containers, setContainers] = useState([]);
   
   // Filters state
   const [filters, setFilters] = useState({
@@ -32,7 +31,6 @@ export default function SalesDataPage() {
     customerName: "All",
     customerNumber: "",
     dateRange: "", // Empty by default to show all data
-    container: "All",
     itemSold: "All",
     stockNumber: "",
     invoiceStatus: "All",
@@ -71,12 +69,11 @@ export default function SalesDataPage() {
   // Fetch dropdown data
   const fetchDropdownData = async () => {
     try {
-      const [customersData, usersData, suppliersData, stockItemsData, containersData] = await Promise.all([
+      const [customersData, usersData, suppliersData, stockItemsData] = await Promise.all([
         apiClient.get('/api/dropdown/customers').catch(() => []),
         apiClient.get('/api/dropdown/users').catch(() => []),
         apiClient.get('/api/dropdown/suppliers').catch(() => []),
-        apiClient.get('/api/dropdown/stock-items').catch(() => []),
-        apiClient.get('/api/dropdown/containers').catch(() => [])
+        apiClient.get('/api/dropdown/stock-items').catch(() => [])
       ]);
       
       console.log("📦 Dropdown Data Loaded:");
@@ -84,13 +81,11 @@ export default function SalesDataPage() {
       console.log("  - Users:", usersData);
       console.log("  - Suppliers:", suppliersData);
       console.log("  - Stock Items:", stockItemsData);
-      console.log("  - Containers:", containersData);
       
       setCustomers(Array.isArray(customersData) ? customersData : []);
       setUsers(Array.isArray(usersData) ? usersData : []);
       setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
       setStockItems(Array.isArray(stockItemsData) ? stockItemsData : []);
-      setContainers(Array.isArray(containersData) ? containersData : []);
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }
@@ -136,7 +131,6 @@ export default function SalesDataPage() {
       const matchesCustomerNum = !filters.customerNumber || (item.invoice?.customer?.phone || "").includes(filters.customerNumber);
       const matchesStock = !filters.stockNumber || (item.po_item?.stock_number || "").toLowerCase().includes(filters.stockNumber.toLowerCase());
       const matchesLoadStatus = filters.loadStatus === "All" || item.load_status === filters.loadStatus;
-      const matchesContainer = filters.container === "All" || item.po_item?.purchase_order?.container?.id === parseInt(filters.container);
       
       // Item Sold Filter - match by stock_item name since ID is not available in sales data
       let matchesItemSold = true;
@@ -188,7 +182,7 @@ export default function SalesDataPage() {
         }
       }
       
-      const matches = matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus && matchesInvoiceStatus && matchesDate && matchesContainer && matchesItemSold;
+      const matches = matchesUser && matchesSupplier && matchesCustomer && matchesCustomerNum && matchesStock && matchesLoadStatus && matchesInvoiceStatus && matchesDate && matchesItemSold;
       
       return matches;
     });
@@ -253,7 +247,6 @@ export default function SalesDataPage() {
       customerName: "All",
       customerNumber: "",
       dateRange: "", // Clear date filter completely
-      container: "All",
       itemSold: "All",
       stockNumber: "",
       invoiceStatus: "All",
@@ -270,7 +263,6 @@ export default function SalesDataPage() {
     if (filters.customerName !== "All") count++;
     if (filters.customerNumber) count++;
     if (filters.dateRange) count++;
-    if (filters.container !== "All") count++;
     if (filters.itemSold !== "All") count++;
     if (filters.stockNumber) count++;
     if (filters.invoiceStatus !== "All") count++;
@@ -417,23 +409,6 @@ export default function SalesDataPage() {
                   className="w-full pl-11 pr-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
                 />
               </div>
-            </div>
-
-            {/* Filter by Container */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by Container #</label>
-              <select 
-                value={filters.container}
-                onChange={(e) => setFilters({...filters, container: e.target.value})}
-                className="w-full px-4 py-3 bg-gray-50/50 dark:bg-zinc-800/50 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-all"
-              >
-                <option value="All">All Containers</option>
-                {containers.map((container) => (
-                  <option key={container.id} value={container.id}>
-                    {container.label}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Filter by Item Sold */}
