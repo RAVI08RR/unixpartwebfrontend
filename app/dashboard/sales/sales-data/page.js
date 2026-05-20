@@ -137,7 +137,25 @@ export default function SalesDataPage() {
       const matchesStock = !filters.stockNumber || (item.po_item?.stock_number || "").toLowerCase().includes(filters.stockNumber.toLowerCase());
       const matchesLoadStatus = filters.loadStatus === "All" || item.load_status === filters.loadStatus;
       const matchesContainer = filters.container === "All" || item.po_item?.purchase_order?.container?.id === parseInt(filters.container);
-      const matchesItemSold = filters.itemSold === "All" || item.po_item?.stock_item?.id === parseInt(filters.itemSold);
+      
+      // Item Sold Filter - match by stock_item id
+      let matchesItemSold = true;
+      if (filters.itemSold !== "All") {
+        const itemStockItemId = item.po_item?.stock_item?.id;
+        const filterItemId = parseInt(filters.itemSold);
+        matchesItemSold = itemStockItemId === filterItemId;
+        
+        // Debug logging for item sold filter
+        if (filters.itemSold !== "All") {
+          console.log("🔍 Item Sold Filter Debug:", {
+            filterValue: filters.itemSold,
+            filterValueType: typeof filters.itemSold,
+            itemStockItemId: itemStockItemId,
+            itemStockItemName: item.po_item?.stock_item?.name,
+            matches: matchesItemSold
+          });
+        }
+      }
       
       // Invoice Status Filter
       let matchesInvoiceStatus = true;
