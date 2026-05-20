@@ -138,22 +138,25 @@ export default function SalesDataPage() {
       const matchesLoadStatus = filters.loadStatus === "All" || item.load_status === filters.loadStatus;
       const matchesContainer = filters.container === "All" || item.po_item?.purchase_order?.container?.id === parseInt(filters.container);
       
-      // Item Sold Filter - match by stock_item id
+      // Item Sold Filter - match by stock_item name since ID is not available in sales data
       let matchesItemSold = true;
       if (filters.itemSold !== "All") {
-        const itemStockItemId = item.po_item?.stock_item?.id;
-        const filterItemId = parseInt(filters.itemSold);
-        matchesItemSold = itemStockItemId === filterItemId;
-        
-        // Debug logging for item sold filter
-        if (filters.itemSold !== "All") {
+        // Get the selected stock item's label (name) from the stockItems dropdown
+        const selectedStockItem = stockItems.find(si => si.id === parseInt(filters.itemSold));
+        if (selectedStockItem) {
+          const itemStockItemName = item.po_item?.stock_item?.name;
+          matchesItemSold = itemStockItemName === selectedStockItem.label;
+          
+          // Debug logging for item sold filter
           console.log("🔍 Item Sold Filter Debug:", {
             filterValue: filters.itemSold,
-            filterValueType: typeof filters.itemSold,
-            itemStockItemId: itemStockItemId,
-            itemStockItemName: item.po_item?.stock_item?.name,
+            selectedStockItemName: selectedStockItem.label,
+            itemStockItemId: item.po_item?.stock_item?.id,
+            itemStockItemName: itemStockItemName,
             matches: matchesItemSold
           });
+        } else {
+          matchesItemSold = false;
         }
       }
       
@@ -193,7 +196,7 @@ export default function SalesDataPage() {
     console.log("✅ Filtered results:", filtered.length);
     console.log("📋 Sample filtered items:", filtered.slice(0, 2));
     return filtered;
-  }, [salesData, filters, customers]);
+  }, [salesData, filters, customers, stockItems]);
 
   // Totals
   const totals = useMemo(() => {
