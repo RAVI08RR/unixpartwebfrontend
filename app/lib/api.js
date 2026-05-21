@@ -89,11 +89,6 @@ export const isTokenExpired = () => {
 export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
   const maxRetries = 2;
   
-  // Runtime check for API URL
-  if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
-    throw new Error('NEXT_PUBLIC_API_URL environment variable must be set in Vercel dashboard');
-  }
-  
   // Check if this is a Next.js API route (starts with /)
   const isNextApiRoute = endpoint.startsWith('/');
   
