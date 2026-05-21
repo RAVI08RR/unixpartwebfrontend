@@ -1412,6 +1412,35 @@ label.text-xs {
   font-size: 14px !important;
 }
 
+/* ===== REMOVE NUMBER INPUT ARROWS ===== */
+/* Remove arrows from number inputs in Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Remove arrows from number inputs in Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Ensure this applies to all number inputs across the project */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+  display: none !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}el.text-xs {
+  font-size: 14px !important;
+}
+
 /* Additional select styling for consistency */
 select.form-select,
 select.form-control,
@@ -2144,4 +2173,9 @@ a.bg-black svg,
 
 .quick-search-box {
     overflow: scroll;
+}
+@media (max-width: 1024px) {
+.invoice-table .dark tbody tr:hover {
+    background-color: #f9fafb !important;
+}
 }

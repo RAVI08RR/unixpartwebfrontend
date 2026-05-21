@@ -741,9 +741,7 @@ const PrintableInvoice = React.forwardRef(
 
                 <p>
                   <strong>
-                    #
-                    {invoiceData.invoice_number ||
-                      "INV-00123"}
+                    Invoice #: {invoiceData.invoice_number || "INV-00123"}
                   </strong>
                 </p>
 
