@@ -145,7 +145,7 @@ const PrintableInvoice = React.forwardRef(
 
         <style jsx>{`
           .invoice-wrapper {
-            width: 100%;
+            width: 95%;
             max-width: 1100px;
             margin: 0 auto;
             padding: 10px;
