@@ -91,51 +91,74 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
   return (
     <div ref={ref} style={{ width: '210mm', minHeight: '297mm', padding: '20mm', margin: '0 auto', backgroundColor: '#f5f5f5', color: '#000', fontFamily: 'Arial, sans-serif', fontSize: '11px' }}>
       <div style={{ backgroundColor: 'white', padding: '20px', marginBottom: '20px', borderRadius: '8px' }}>
-        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 5px 0' }}>
-          {templateSettings?.invoice_header || 'Invoice Template Preview'}
-        </h1>
+        <h1 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 5px 0' }}>Invoice Template Preview</h1>
         <p style={{ fontSize: '11px', color: '#666', margin: '0' }}>This is a preview of how your invoice will look. This is not an actual invoice.</p>
       </div>
 
       <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px' }}>
-        {/* Company Logo and Info */}
-        {templateSettings?.logo_url && (
-          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <img src={templateSettings.logo_url} alt="Company Logo" style={{ maxHeight: '80px', objectFit: 'contain' }} />
+        {/* Header Section with Company Info, Logo, and Invoice Details */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '20px', marginBottom: '30px', alignItems: 'start' }}>
+          {/* Left: Company Information */}
+          <div style={{ fontSize: '11px' }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+              {templateSettings?.company_name || 'Dubai Main Branch'}
+            </h2>
+            <p style={{ margin: '2px 0' }}>{templateSettings?.company_address || 'PO Box 12345, Dubai, UAE'}</p>
+            {templateSettings?.contact_number_1 && (
+              <p style={{ margin: '2px 0' }}>{templateSettings.contact_number_1}</p>
+            )}
+            {templateSettings?.contact_email && (
+              <p style={{ margin: '2px 0' }}>{templateSettings.contact_email}</p>
+            )}
+            {templateSettings?.trn_number && (
+              <p style={{ margin: '2px 0' }}>TRN: {templateSettings.trn_number}</p>
+            )}
           </div>
-        )}
-        
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 5px 0' }}>
-            {templateSettings?.company_name || 'UNIXPARTS TRADING LLC'}
-          </h2>
-          <p style={{ fontSize: '11px', margin: '2px 0' }}>{templateSettings?.company_address || 'PO Box 12345, Dubai, UAE'}</p>
-          {templateSettings?.contact_number_1 && (
-            <p style={{ fontSize: '11px', margin: '2px 0' }}>Phone: {templateSettings.contact_number_1}</p>
-          )}
-          {templateSettings?.contact_number_2 && (
-            <p style={{ fontSize: '11px', margin: '2px 0' }}>Phone: {templateSettings.contact_number_2}</p>
-          )}
-          {templateSettings?.contact_email && (
-            <p style={{ fontSize: '11px', margin: '2px 0' }}>Email: {templateSettings.contact_email}</p>
-          )}
-          {templateSettings?.trn_number && (
-            <p style={{ fontSize: '11px', margin: '2px 0' }}>TRN: {templateSettings.trn_number}</p>
-          )}
+
+          {/* Center: Company Logo */}
+          <div style={{ textAlign: 'center', minWidth: '120px' }}>
+            {templateSettings?.logo_url ? (
+              <img src={templateSettings.logo_url} alt="Company Logo" style={{ maxHeight: '80px', maxWidth: '120px', objectFit: 'contain' }} />
+            ) : (
+              <div style={{ width: '120px', height: '80px', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#999' }}>
+                Company Logo
+              </div>
+            )}
+          </div>
+
+          {/* Right: Invoice Header and Details */}
+          <div style={{ textAlign: 'right' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 10px 0', color: '#999', letterSpacing: '2px' }}>
+              {templateSettings?.invoice_header || 'PROFORMA'}<br/>INVOICE
+            </h1>
+            <p style={{ margin: '3px 0', fontSize: '11px' }}>
+              <strong>#{invoiceData.invoice_number || 'INV-00123'}</strong>
+            </p>
+            <p style={{ margin: '3px 0', fontSize: '11px' }}>
+              Date: {formatDate(invoiceData.invoice_date) || '5/20/2026'}
+            </p>
+            <p style={{ margin: '10px 0 0 0', fontSize: '11px' }}>
+              <strong>Invoiced By:</strong> {invoiceData.created_by?.name || 'Admin User'}
+            </p>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '30px' }}>
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 10px 0' }}>Bill To:</h3>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}><strong>Customer Name</strong></p>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}>{customer?.full_name || 'Customer Name'}</p>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}><strong>Customer Contact</strong></p>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}>{customer?.phone || 'Other Details...'}</p>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}><strong>Customer Address</strong></p>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}>{customer?.address || 'Address...'}</p>
+        {/* Bill To Section */}
+        <div style={{ marginBottom: '30px' }}>
+          <h3 style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 10px 0' }}>Bill To:</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', fontSize: '11px' }}>
+            <div>
+              <p style={{ margin: '3px 0' }}><strong>Customer Name</strong></p>
+              <p style={{ margin: '3px 0' }}>{customer?.full_name || 'Customer Name'}</p>
+            </div>
+            <div>
+              <p style={{ margin: '3px 0' }}><strong>Customer Contact</strong></p>
+              <p style={{ margin: '3px 0' }}>{customer?.phone || 'Other Details...'}</p>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}><strong>Invoiced By:</strong> {invoiceData.created_by?.name || 'Admin User'}</p>
+          <div style={{ marginTop: '8px', fontSize: '11px' }}>
+            <p style={{ margin: '3px 0' }}><strong>Customer Address</strong></p>
+            <p style={{ margin: '3px 0' }}>{customer?.address || 'Address...'}</p>
           </div>
         </div>
 
