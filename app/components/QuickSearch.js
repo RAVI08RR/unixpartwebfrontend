@@ -381,16 +381,17 @@ export default function QuickSearch() {
                                     <p className="text-base font-black text-gray-900 dark:text-white">
                                       {item.stock_number}
                                     </p>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                      item.status === 'available' 
-                                        ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                    {/* Status Badge */}
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide ${
+                                      item.status === 'in_stock' 
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
                                         : item.status === 'sold'
                                         ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
                                         : item.status === 'reserved'
                                         ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
                                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
                                     }`}>
-                                      {item.status || 'Unknown'}
+                                      {item.status === 'in_stock' ? 'In Stock' : item.status === 'sold' ? 'Sold' : item.status || 'Unknown'}
                                     </span>
                                   </div>
                                   <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -403,17 +404,31 @@ export default function QuickSearch() {
                               </div>
                               
                               <div className="flex gap-2 mt-3">
+                                {/* Create Invoice Button - Only show if in_stock */}
+                                {item.status === 'in_stock' && (
+                                  <button
+                                    onClick={() => {
+                                      router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`);
+                                      setIsOpen(false);
+                                    }}
+                                    className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    <Receipt className="w-3.5 h-3.5" />
+                                    Create Invoice
+                                  </button>
+                                )}
+                                
                                 <button
                                   onClick={() => handleViewItemDetails(item.id)}
                                   disabled={isLoadingItemDetails}
-                                  className="flex-1 px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50"
+                                  className={`${item.status === 'in_stock' ? 'flex-1' : 'flex-1'} px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50`}
                                 >
                                   View Details
                                 </button>
                                 <button
                                   onClick={() => {
                                     navigator.clipboard.writeText(item.stock_number);
-                                    alert('Stock number copied!');
+                                    success('Stock number copied!');
                                   }}
                                   className="px-3 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-xs hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                                 >

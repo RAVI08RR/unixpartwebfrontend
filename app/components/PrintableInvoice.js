@@ -686,27 +686,31 @@ const PrintableInvoice = React.forwardRef(
               <div className="company-info">
                 <h2>
                   {templateSettings?.company_name ||
-                    "Dubai Main Branch"}
+                    "UNIXPARTS TRADING LLC"}
                 </h2>
 
-                <p>
-                  {templateSettings?.company_address ||
-                    "PO Box 12345, Dubai, UAE"}
-                </p>
-
-                {templateSettings?.contact_number_1 && (
-                  <p>
-                    {
-                      templateSettings.contact_number_1
-                    }
+                {/* Branch Name - Dynamic */}
+                {invoiceData?.branch?.branch_name && (
+                  <p style={{ fontWeight: "bold", fontSize: "12px" }}>
+                    {invoiceData.branch.branch_name}
                   </p>
                 )}
 
-                {templateSettings?.contact_email && (
+                <p>
+                  {invoiceData?.branch?.address || 
+                    templateSettings?.company_address ||
+                    "PO Box 12345, Dubai, UAE"}
+                </p>
+
+                {(invoiceData?.branch?.phone || templateSettings?.contact_number_1) && (
                   <p>
-                    {
-                      templateSettings.contact_email
-                    }
+                    {invoiceData?.branch?.phone || templateSettings.contact_number_1}
+                  </p>
+                )}
+
+                {(invoiceData?.branch?.email || templateSettings?.contact_email) && (
+                  <p>
+                    {invoiceData?.branch?.email || templateSettings.contact_email}
                   </p>
                 )}
 

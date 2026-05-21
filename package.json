@@ -16,6 +16,7 @@
     "framer-motion": "^12.26.2",
     "lucide-react": "^0.562.0",
     "next": "16.1.2",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-country-phone-input": "^1.0.2",
     "react-dom": "19.2.3",
