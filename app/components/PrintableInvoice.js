@@ -95,20 +95,20 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
         <p style={{ fontSize: '11px', color: '#666', margin: '0' }}>This is a preview of how your invoice will look. This is not an actual invoice.</p>
       </div>
 
-      <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px' }}>
+      <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', overflow: 'hidden' }}>
         {/* Header Section with Company Info, Logo, and Invoice Details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '20px', marginBottom: '30px', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 1fr', gap: '20px', marginBottom: '30px', alignItems: 'start' }}>
           {/* Left: Company Information */}
-          <div style={{ fontSize: '11px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0' }}>
+          <div style={{ fontSize: '11px', minWidth: 0 }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 'bold', margin: '0 0 8px 0', wordWrap: 'break-word' }}>
               {templateSettings?.company_name || 'Dubai Main Branch'}
             </h2>
-            <p style={{ margin: '2px 0' }}>{templateSettings?.company_address || 'PO Box 12345, Dubai, UAE'}</p>
+            <p style={{ margin: '2px 0', wordWrap: 'break-word' }}>{templateSettings?.company_address || 'PO Box 12345, Dubai, UAE'}</p>
             {templateSettings?.contact_number_1 && (
               <p style={{ margin: '2px 0' }}>{templateSettings.contact_number_1}</p>
             )}
             {templateSettings?.contact_email && (
-              <p style={{ margin: '2px 0' }}>{templateSettings.contact_email}</p>
+              <p style={{ margin: '2px 0', wordWrap: 'break-word' }}>{templateSettings.contact_email}</p>
             )}
             {templateSettings?.trn_number && (
               <p style={{ margin: '2px 0' }}>TRN: {templateSettings.trn_number}</p>
@@ -116,28 +116,26 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
           </div>
 
           {/* Center: Company Logo */}
-          <div style={{ textAlign: 'center', minWidth: '120px' }}>
-            {templateSettings?.logo_url ? (
-              <img src={templateSettings.logo_url} alt="Company Logo" style={{ maxHeight: '80px', maxWidth: '120px', objectFit: 'contain' }} />
-            ) : (
-              <div style={{ width: '120px', height: '80px', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: '#999' }}>
-                Company Logo
-              </div>
-            )}
+          <div style={{ textAlign: 'center', width: '120px', flexShrink: 0 }}>
+            <img 
+              src={templateSettings?.logo_url || '/logo.png'} 
+              alt="Company Logo" 
+              style={{ maxHeight: '80px', maxWidth: '120px', width: 'auto', height: 'auto', objectFit: 'contain' }} 
+            />
           </div>
 
           {/* Right: Invoice Header and Details */}
-          <div style={{ textAlign: 'right' }}>
-            <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 10px 0', color: '#999', letterSpacing: '2px' }}>
-              {templateSettings?.invoice_header || 'PROFORMA'}<br/>INVOICE
+          <div style={{ textAlign: 'right', minWidth: 0 }}>
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 10px 0', color: '#999', letterSpacing: '1px', lineHeight: '1.2', wordWrap: 'break-word' }}>
+              PROFORMA<br/>INVOICE
             </h1>
-            <p style={{ margin: '3px 0', fontSize: '11px' }}>
+            <p style={{ margin: '3px 0', fontSize: '11px', wordWrap: 'break-word' }}>
               <strong>#{invoiceData.invoice_number || 'INV-00123'}</strong>
             </p>
             <p style={{ margin: '3px 0', fontSize: '11px' }}>
               Date: {formatDate(invoiceData.invoice_date) || '5/20/2026'}
             </p>
-            <p style={{ margin: '10px 0 0 0', fontSize: '11px' }}>
+            <p style={{ margin: '10px 0 0 0', fontSize: '11px', wordWrap: 'break-word' }}>
               <strong>Invoiced By:</strong> {invoiceData.created_by?.name || 'Admin User'}
             </p>
           </div>
@@ -147,18 +145,18 @@ const PrintableInvoice = React.forwardRef(({ invoice, customer, invoiceId }, ref
         <div style={{ marginBottom: '30px' }}>
           <h3 style={{ fontSize: '12px', fontWeight: 'bold', margin: '0 0 10px 0' }}>Bill To:</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', fontSize: '11px' }}>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <p style={{ margin: '3px 0' }}><strong>Customer Name</strong></p>
-              <p style={{ margin: '3px 0' }}>{customer?.full_name || 'Customer Name'}</p>
+              <p style={{ margin: '3px 0', wordWrap: 'break-word' }}>{customer?.full_name || 'Customer Name'}</p>
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <p style={{ margin: '3px 0' }}><strong>Customer Contact</strong></p>
-              <p style={{ margin: '3px 0' }}>{customer?.phone || 'Other Details...'}</p>
+              <p style={{ margin: '3px 0', wordWrap: 'break-word' }}>{customer?.phone || 'Other Details...'}</p>
             </div>
           </div>
-          <div style={{ marginTop: '8px', fontSize: '11px' }}>
+          <div style={{ marginTop: '8px', fontSize: '11px', minWidth: 0 }}>
             <p style={{ margin: '3px 0' }}><strong>Customer Address</strong></p>
-            <p style={{ margin: '3px 0' }}>{customer?.address || 'Address...'}</p>
+            <p style={{ margin: '3px 0', wordWrap: 'break-word' }}>{customer?.address || 'Address...'}</p>
           </div>
         </div>
 
