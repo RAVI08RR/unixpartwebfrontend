@@ -260,6 +260,29 @@ export default function PaymentsReceivedPage() {
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
+                <tr>
+                  <td colSpan="7" className="py-24 text-center">
+                    <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
+                    <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
+                  </td>
+                </tr>
+              ) : paginatedPayments && paginatedPayments.length > 0 ? (
+                paginatedPayments.map((payment, index) => (
+                  <tr key={index} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-6 py-6">
+                        <div className="flex items-center gap-2">
+                          <Hash className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-black text-gray-900 dark:text-white uppercase">
+                            PAY-{payment.id}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-6">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                            {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { 
                               day: '2-digit', 
                               month: 'short', 
                               year: 'numeric' 
@@ -320,8 +343,7 @@ export default function PaymentsReceivedPage() {
                         </button>
                       </td>
                     </tr>
-                  );
-                })
+                  ))
               ) : (
                 <tr>
                   <td colSpan="8" className="py-24 text-center">
@@ -375,7 +397,7 @@ export default function PaymentsReceivedPage() {
             </button>
           </div>
         </div>
-
+      </div>
 
       {/* Invoice Details Modal */}
       {invoiceModalOpen && (

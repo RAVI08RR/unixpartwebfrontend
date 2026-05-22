@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
-  AlertCircle, FileText, Upload, Trash, ExternalLink
+  AlertCircle, FileText, Upload, Trash, ExternalLink, RefreshCcw, Download
 } from "lucide-react";
 import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
@@ -362,7 +362,40 @@ export default function PurchaseOrdersPage() {
                   <td className="px-6 py-6 font-black text-sm text-gray-900 dark:text-white">AED {parseFloat(po.total_container_revenue).toLocaleString()}</td>
                   <td className="px-6 py-6"><span className="text-sm font-bold text-gray-600 dark:text-zinc-400">{po.items_in_stock} units</span></td>
                   <td className="px-6 py-6 text-right">
-                    <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400"><MoreVertical className="w-5 h-5" /></button>
+                    <div className="relative inline-block">
+                      <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                      {menuOpenId === po.id && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                          <Link 
+                            href={`/dashboard/inventory/purchase-orders/items/${po.id}`}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-blue-500" /> View Items
+                          </Link>
+                          <button 
+                            onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                          >
+                            <FileText className="w-4 h-4 text-purple-500" /> Documents
+                          </button>
+                          <Link 
+                            href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <Pencil className="w-4 h-4 text-amber-500" /> Edit Order
+                          </Link>
+                          <div className="my-1 border-t border-gray-100 dark:border-zinc-800"></div>
+                          <button 
+                            onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete Order
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -400,9 +433,10 @@ export default function PurchaseOrdersPage() {
               </div>
 
               {menuOpenId === po.id && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 duration-200">
-                   <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Documents</span></button>
-                   <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-3 gap-2 animate-in slide-in-from-top-2 duration-200">
+                   <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Docs</span></button>
+                   <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
+                   <button onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl"><Trash2 className="w-3.5 h-3.5 text-red-600" /><span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete</span></button>
                 </div>
               )}
             </div>

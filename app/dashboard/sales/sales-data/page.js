@@ -518,7 +518,9 @@ export default function SalesDataPage() {
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Balance</th>
                 <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Load Date and Time</th>
                 <th className="px-6 py-5"></th>
-                        <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
                 <tr>
                    <td colSpan="14" className="px-6 py-20 text-center">

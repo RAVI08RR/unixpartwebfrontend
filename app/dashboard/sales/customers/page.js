@@ -450,6 +450,132 @@ export default function CustomersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              {paginatedCustomers && paginatedCustomers.length > 0 ? (
+                paginatedCustomers.map((customer, index) => (
+                  <tr key={customer.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                    {/* Customer Info */}
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={customer.profile_image ? customerService.getProfileImageUrl(customer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
+                          alt={customer.full_name} 
+                          className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`;
+                          }}
+                        />
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{customer.full_name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{customer.customer_code}</p>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    {/* Contact */}
+                    <td className="px-6 py-5">
+                      <div className="space-y-1">
+                        {customer.phone && (
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <Phone className="w-3.5 h-3.5" />
+                            {customer.phone}
+                          </div>
+                        )}
+                        {customer.address && (
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="truncate max-w-[150px]">{customer.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    
+                    {/* Business */}
+                    <td className="px-6 py-5">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          <Building className="w-3.5 h-3.5" />
+                          {customer.business_name || "-"}
+                        </div>
+                        {customer.business_number && (
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-mono ml-5 uppercase tracking-widest">{customer.business_number}</div>
+                        )}
+                      </div>
+                    </td>
+                    
+                    {/* Financial */}
+                    <td className="px-6 py-5">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <DollarSign className="w-3.5 h-3.5 text-blue-500" />
+                          <span className="flex gap-1">Total: <strong className="text-gray-900 dark:text-white font-black">AED {parseFloat(customer.total_purchase || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <AlertTriangle className={`w-3.5 h-3.5 ${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-500' : 'text-green-500'}`} />
+                          <span className="flex gap-1">Due: <strong className={`${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'} font-black`}>AED {parseFloat(customer.outstanding_balance || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></span>
+                        </div>
+                      </div>
+                    </td>
+                    
+                    {/* Status */}
+                    <td className="px-6 py-5">
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        customer.status 
+                          ? 'bg-green-100/50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                          : 'bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                      }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${customer.status ? 'bg-green-600 dark:bg-green-400' : 'bg-red-600 dark:bg-red-400'}`} />
+                        {customer.status ? "Active" : "Inactive"}
+                      </div>
+                    </td>
+                    
+                    {/* Actions */}
+                    <td className="px-6 py-5 text-right relative">
+                      <button onClick={() => toggleMenu(customer.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                      
+                      {menuOpenId === customer.id && (
+                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                          index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                        }`}>
+                          <button onClick={() => handleViewCustomer(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                            <Eye className="w-3.5 h-3.5" /> View Details
+                          </button>
+                          
+                          <Link href={`/dashboard/sales/customers/history/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
+                            <History className="w-3.5 h-3.5" /> Purchase History
+                          </Link>
+                          
+                          <Link href={`/dashboard/sales/customers/edit/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
+                            <Pencil className="w-3.5 h-3.5" /> Edit Customer
+                          </Link>
+                          
+                          <button onClick={() => handleCreditLimitClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors">
+                            <DollarSign className="w-3.5 h-3.5" /> Set Credit Limit
+                          </button>
+                          
+                          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                          
+                          <button onClick={() => handleDeactivateClick(customer)} className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${
+                            customer.status 
+                              ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20' 
+                              : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                          }`}>
+                            {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />} 
+                            {customer.status ? "Deactivate" : "Activate"}
+                          </button>
+
+                          <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No customers found</p>
                   </td>
                 </tr>
@@ -497,6 +623,7 @@ export default function CustomersPage() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
         </div>
 
 

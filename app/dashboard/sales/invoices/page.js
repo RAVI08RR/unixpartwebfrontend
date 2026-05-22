@@ -433,6 +433,27 @@ function InvoiceManagementContent() {
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-gray-100 dark:border-zinc-800">
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice #</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Customer</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Date & Time</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice By</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Amount</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice Status</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Load Status</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              {paginatedInvoices && paginatedInvoices.length > 0 ? (
+                paginatedInvoices.map((invoice, index) => {
+                  return (
+                    <tr key={invoice.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                      {/* Invoice Number */}
+                      <td className="px-6 py-5" data-label="Invoice #">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
                           {invoice.invoice_number || "-"}
                         </span>
                       </td>
@@ -619,6 +640,7 @@ function InvoiceManagementContent() {
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
         </div>
 
 

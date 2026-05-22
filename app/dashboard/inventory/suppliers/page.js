@@ -482,11 +482,52 @@ export default function SupplierManagementPage() {
                             {supplier.status ? "Active" : "Inactive"}
                           </div>
                         )}
+                      </td>                      {/* Actions */}
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
+                        {isEditing ? (
+                          <div className="flex items-center justify-end gap-2">
+                            <button onClick={handleSave} className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors">
+                              <Check className="w-5 h-5" />
+                            </button>
+                            <button onClick={handleCancel} className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                              <X className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <button onClick={() => toggleMenu(supplier.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === supplier.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedSuppliers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
+                                <button onClick={() => handleView(supplier)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                                  <Eye className="w-3.5 h-3.5" /> View Details
+                                </button>
+                                
+                                <button onClick={() => handleEdit(supplier)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
+                                  <Pencil className="w-3.5 h-3.5" /> Edit Quick
+                                </button>
+                                
+                                <Link href={`/dashboard/inventory/suppliers/edit/${supplier.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
+                                  <Pencil className="w-3.5 h-3.5" /> Edit Full
+                                </Link>
+                                
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+  
+                                <button onClick={() => handleDelete(supplier.id)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </button>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </td>
-
-                    </td>
-                  </tr>
-                ))
+                    </tr>
+                  );
+                })
               ) : (
                 <tr><td colSpan="6" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest">No suppliers found</td></tr>
               )}

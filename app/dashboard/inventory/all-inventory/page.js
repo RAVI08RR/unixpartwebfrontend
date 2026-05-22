@@ -372,17 +372,81 @@ export default function AllInventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {filteredData.map((item) => (
-                <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all duration-300">
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500 shadow-inner">
-                        <Package className="w-5 h-5" />
+              {paginatedData.length > 0 ? (
+                paginatedData.map((item) => (
+                  <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all duration-300">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500 shadow-inner">
+                          <Package className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white">{item.stock_item?.name || item.po_description || "-"}</p>
+                          <p className="text-xs text-gray-400 font-medium mt-0.5">{item.po_description || "-"}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
-                        <p className="text-sm text-gray-400 font-medium">Try adjusting your filters to find what you're looking for.</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{item.stock_number || "-"}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.quantity || 1}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold">
+                        <Building2 className="w-3 h-3" />
+                        {item.current_branch?.branch_code || "-"}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${
+                        item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                        item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
+                        'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                      }`}>
+                        {item.status?.replace('_', ' ') || "-"}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="relative inline-block">
+                        <button
+                          onClick={() => toggleMenu(item.id)}
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                        >
+                          <MoreVertical className="w-4 h-4 text-gray-400" />
+                        </button>
+                        {menuOpenId === item.id && (
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <button
+                              onClick={() => handleViewDetails(item)}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => handleEditItem(item)}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <FileText className="w-4 h-4" />
+                              Edit Item
+                            </button>
+                          </div>
+                        )}
                       </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="px-8 py-16 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
+                        <Package className="w-7 h-7 text-gray-300 dark:text-zinc-600" />
+                      </div>
+                      <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
+                      <p className="text-sm text-gray-400 font-medium">Try adjusting your filters to find what you&apos;re looking for.</p>
                     </div>
                   </td>
                 </tr>
@@ -431,6 +495,7 @@ export default function AllInventoryPage() {
             </button>
           </div>
         </div>
+      </div>
 
 
       {/* Removed View Details Modal as it's now a dedicated page */}
