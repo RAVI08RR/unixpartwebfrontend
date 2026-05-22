@@ -320,13 +320,14 @@ export default function PurchaseOrdersPage() {
         </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[1600px]">
+      {/* Main Table / Mobile Cards */}
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">PO ID</th>
+              <tr className="border-b border-gray-50 dark:border-zinc-800">
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">PO ID</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Container Code</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Container No.</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier Code</th>
@@ -334,170 +335,80 @@ export default function PurchaseOrdersPage() {
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Arrival Branch</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Revenue</th>
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Items In Stock</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
+                <th className="px-6 py-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
-                <tr>
-                  <td colSpan="9" className="py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Orders...</p>
+                <tr><td colSpan="9" className="py-24 text-center"><RefreshCcw className="w-8 h-8 mx-auto animate-spin text-gray-300" /></td></tr>
+              ) : paginatedPOs.map((po, index) => (
+                <tr key={po.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                  <td className="px-6 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                        <Hash className="w-5 h-5 text-red-600 dark:text-red-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{po.po_id}</p>
+                        <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[150px]">{po.notes || 'No notes'}</p>
+                      </div>
                     </div>
                   </td>
-                </tr>
-              ) : paginatedPOs.length > 0 ? (
-                paginatedPOs.map((po, index) => {
-                  return (
-                    <tr key={po.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-6" data-label="PO ID">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Hash className="w-5 h-5 text-red-600 dark:text-red-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                              {po.po_id}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[150px]">
-                              {po.notes || 'No notes'}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Container Code">
-                        <div className="flex items-center gap-2">
-                          <Package className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {po.container?.container_code || '-'}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Container No.">
-                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {po.container?.container_number || '-'}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Supplier Code">
-                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {po.container?.supplier?.supplier_code || '-'}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Arrival Date">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {po.created_at ? new Date(po.created_at).toLocaleDateString('en-GB', { 
-                              day: '2-digit', 
-                              month: 'short', 
-                              year: 'numeric' 
-                            }) : '-'}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Arrival Branch">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {po.container?.destination_branch?.branch_name || '-'}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Total Container Revenue">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-sm font-black dark:text-white">
-                            AED {parseFloat(po.total_container_revenue).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Items In Stock">
-                        <span className="text-sm font-bold text-gray-600 dark:text-zinc-400">
-                          {po.items_in_stock} units
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(po.id)}
-                              className={`p-2 rounded-xl transition-all ${
-                                menuOpenId === po.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === po.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedPOs.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
-                                <Link 
-                                  href={`/dashboard/inventory/purchase-orders/items/${po.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View Items
-                                </Link>
-                                <button
-                                  onClick={() => {
-                                    handleOpenDocuments(po);
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Documents
-                                </button>
-                                <Link 
-                                  href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Order
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => {
-                                    setSelectedPO(po);
-                                    setDeleteModalOpen(true);
-                                    setMenuOpenId(null);
-                                  }} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Order
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="9" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No purchase orders found</p>
+                  <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_code || '-'}</span></td>
+                  <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_number || '-'}</span></td>
+                  <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.supplier?.supplier_code || '-'}</span></td>
+                  <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</span></td>
+                  <td className="px-6 py-6 font-bold text-sm">{po.container?.destination_branch?.branch_name || '-'}</td>
+                  <td className="px-6 py-6 font-black text-sm text-gray-900 dark:text-white">AED {parseFloat(po.total_container_revenue).toLocaleString()}</td>
+                  <td className="px-6 py-6"><span className="text-sm font-bold text-gray-600 dark:text-zinc-400">{po.items_in_stock} units</span></td>
+                  <td className="px-6 py-6 text-right">
+                    <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400"><MoreVertical className="w-5 h-5" /></button>
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
 
+        {/* Mobile Cards View */}
+        <div className="lg:hidden divide-y divide-gray-50 dark:divide-zinc-800/50">
+          {paginatedPOs.map((po) => (
+            <div key={po.id} className="p-5 active:bg-gray-50 dark:active:bg-zinc-900 transition-colors">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-50 dark:bg-red-900/10 rounded-xl flex items-center justify-center text-red-600">
+                    <Hash className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{po.po_id}</h4>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{po.container?.container_code || 'No Container'}</p>
+                  </div>
+                </div>
+                <button onClick={() => toggleMenu(po.id)} className="p-2 -mr-2 text-gray-400 active:scale-90 transition-transform"><MoreVertical className="w-5 h-5" /></button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Revenue</p><p className="text-sm font-black text-gray-900 dark:text-white">AED {parseFloat(po.total_container_revenue).toLocaleString()}</p></div>
+                <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Stock Items</p><p className="text-sm font-black text-gray-900 dark:text-white truncate">{po.items_in_stock} units</p></div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2">
+                  <div className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">Active</div>
+                </div>
+                <Link href={`/dashboard/inventory/purchase-orders/items/${po.id}`} className="text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 px-3 py-1 rounded-lg">View Items</Link>
+              </div>
+
+              {menuOpenId === po.id && (
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 duration-200">
+                   <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Documents</span></button>
+                   <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">

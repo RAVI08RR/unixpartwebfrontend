@@ -97,23 +97,23 @@ export default function ItemViewPage() {
               </span>
               <span className="text-xs font-bold text-gray-400">STOCK #{item.stock_number}</span>
             </div>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight uppercase">
+            <h1 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tight uppercase line-clamp-1">
               {item.stock_item?.name || "Inventory Item"}
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           {item.status?.toLowerCase() === 'in_stock' ? (
             <Link 
               href={`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`}
-              className="flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-sm hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/20 active:scale-95"
             >
               <DollarSign className="w-5 h-5" />
               CREATE INVOICE
             </Link>
           ) : (
-            <div className="px-8 py-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-2xl font-black text-sm flex items-center gap-2">
+            <div className="flex-1 md:flex-none px-6 py-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-2xl font-black text-sm flex items-center justify-center gap-2">
               <ShieldCheck className="w-5 h-5" />
               ITEM SOLD
             </div>
@@ -128,13 +128,13 @@ export default function ItemViewPage() {
           <div className="bg-white dark:bg-zinc-900 rounded-[40px] border border-gray-100 dark:border-zinc-800 shadow-xl overflow-hidden p-8 md:p-12 relative group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 dark:bg-red-400/5 rounded-full blur-[100px] -mr-32 -mt-32"></div>
             
-            <div className="flex flex-col md:flex-row gap-10">
-               <div className="w-full md:w-48 h-48 bg-gray-50 dark:bg-zinc-800 rounded-[32px] flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-zinc-700">
-                  <Package className="w-20 h-20 text-gray-200 dark:text-zinc-700" />
+            <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-center md:items-start text-center md:text-left">
+               <div className="w-40 h-40 md:w-48 md:h-48 bg-gray-50 dark:bg-zinc-800 rounded-[32px] flex items-center justify-center border-2 border-dashed border-gray-200 dark:border-zinc-700 shrink-0">
+                  <Package className="w-16 h-16 md:w-20 md:h-20 text-gray-200 dark:text-zinc-700" />
                </div>
                
-               <div className="flex-1 space-y-6">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+               <div className="flex-1 space-y-6 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
                     <StatBox label="Quantity" value={item.quantity} suffix="Units" icon={<Box className="text-red-600" />} />
                     <StatBox label="Current Branch" value={item.current_branch?.branch_code || "N/A"} icon={<Building2 className="text-blue-600" />} />
                     <StatBox label="Status" value={item.status?.replace('_', ' ')} highlight icon={<ShieldCheck className="text-emerald-600" />} />

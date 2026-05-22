@@ -242,54 +242,24 @@ export default function PaymentsReceivedPage() {
         </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[1400px]">
+      {/* Main Table / Mobile Cards */}
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment ID</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment Date</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment Amount</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Received By</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment Method</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment Notes</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
+              <tr className="border-b border-gray-50 dark:border-zinc-800">
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment ID</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Collected By</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Method</th>
+                <th className="px-6 py-6 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
-                <tr>
-                  <td colSpan="8" className="py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Payments...</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : paginatedPayments.length > 0 ? (
-                paginatedPayments.map((payment) => {
-                  return (
-                    <tr key={payment.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Hash className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                              PAY-{String(payment.id).padStart(3, '0')}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { 
                               day: '2-digit', 
                               month: 'short', 
                               year: 'numeric' 

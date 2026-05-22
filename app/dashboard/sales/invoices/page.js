@@ -433,29 +433,6 @@ function InvoiceManagementContent() {
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Date & Time</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice By</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Invoice Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Load Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedInvoices.length > 0 ? (
-                paginatedInvoices.map((invoice, index) => {
-                  return (
-                    <tr key={invoice.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style= {{borderBottom :"0.9px solid #E2E8F0"}}
-                    >
-                      {/* Invoice Number */}
-                      <td className="px-6 py-5" data-label="Invoice #">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
                           {invoice.invoice_number || "-"}
                         </span>
                       </td>

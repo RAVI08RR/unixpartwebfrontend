@@ -13,8 +13,8 @@ export const metadata = {
     title: "Unixparts",
   },
   icons: {
-    icon: "/pwa-icon.png",
-    apple: "/pwa-icon.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
 };
 

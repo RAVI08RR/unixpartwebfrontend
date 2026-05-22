@@ -484,95 +484,58 @@ export default function SupplierManagementPage() {
                         )}
                       </td>
 
-                      {/* Last Updated */}
-                      <td className="px-6 py-6" data-label="Last Updated">
-                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                          {supplier.updated_at ? new Date(supplier.updated_at).toLocaleDateString() : "-"}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                           {isEditing ? (
-                              <div className="flex items-center gap-2">
-                                <button 
-                                  onClick={handleSave} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 rounded-xl transition-all shadow-lg shadow-green-500/25 hover:shadow-green-500/40 active:scale-95 font-semibold text-sm" 
-                                  title="Save Changes"
-                                >
-                                  <Check className="w-4 h-4" />
-                                  <span>Save</span>
-                                </button>
-                                <button 
-                                  onClick={handleCancel} 
-                                  className="flex items-center gap-2 px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-all shadow-sm active:scale-95 font-semibold text-sm" 
-                                  title="Cancel"
-                                >
-                                  <X className="w-4 h-4" />
-                                  <span>Cancel</span>
-                                </button>
-                              </div>
-                           ) : (
-                              <div className="relative">
-                                <button 
-                                  onClick={() => toggleMenu(supplier.id)}
-                                  className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                    menuOpenId === supplier.id 
-                                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                      : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                                  }`}
-                                >
-                                  <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                                  <MoreVertical className="w-5 h-5" />
-                                </button>
-                                
-                                {menuOpenId === supplier.id && (
-                                  <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                    index > paginatedSuppliers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                    <button 
-                                      onClick={() => handleView(supplier)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                      View Details
-                                    </button>
-                                    <Link 
-                                      href={`/dashboard/inventory/suppliers/edit/${supplier.id}`}
-                                      onClick={() => setMenuOpenId(null)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Supplier
-                                    </Link>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                    <button 
-                                      onClick={() => handleDelete(supplier.id)} 
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Supplier
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                    </td>
+                  </tr>
+                ))
               ) : (
-                <tr>
-                  <td colSpan="7" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No suppliers found</p>
-                  </td>
-                </tr>
+                <tr><td colSpan="6" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest">No suppliers found</td></tr>
               )}
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="lg:hidden space-y-4">
+        {paginatedSuppliers.map((supplier) => (
+          <div key={supplier.id} className="bg-white dark:bg-zinc-900 p-5 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm active:scale-[0.98] transition-all">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 bg-orange-50 dark:bg-orange-900/10 rounded-2xl flex items-center justify-center text-orange-600">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-[15px] font-black text-gray-900 dark:text-white leading-tight">{supplier.name || 'N/A'}</h4>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{supplier.supplier_code || 'SUP-000'}</p>
+                </div>
+              </div>
+              <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${supplier.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {supplier.status ? "Active" : "Inactive"}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-5">
+               <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Contact Person</p><p className="text-[13px] font-bold text-gray-700 dark:text-zinc-300">{supplier.contact_person || '-'}</p></div>
+               <div className="space-y-1 text-right"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Phone / WhatsApp</p><p className="text-[13px] font-bold text-gray-700 dark:text-zinc-300">{supplier.contact_number || '-'}</p></div>
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-zinc-800/50">
+               <div className="flex items-center gap-2">
+                 <Mail className="w-3.5 h-3.5 text-gray-400" />
+                 <span className="text-[12px] font-medium text-gray-500 w-40 truncate">{supplier.contact_email || 'No Email'}</span>
+               </div>
+               <button onClick={() => toggleMenu(supplier.id)} className="p-2 text-gray-400"><MoreVertical className="w-5 h-5" /></button>
+            </div>
+
+            {menuOpenId === supplier.id && (
+              <div className="mt-4 pt-4 border-t border-gray-50 flex gap-2 animate-in slide-in-from-top-2 duration-200">
+                 <button onClick={() => handleView(supplier)} className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600"><Eye className="w-3.5 h-3.5" />View</button>
+                 <Link href={`/dashboard/inventory/suppliers/edit/${supplier.id}`} className="flex-1 flex items-center justify-center gap-2 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-blue-600"><Pencil className="w-3.5 h-3.5" />Edit</Link>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">

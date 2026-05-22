@@ -9,18 +9,8 @@ export default function manifest() {
     theme_color: '#000000',
     icons: [
       {
-        src: '/pwa-icon.png',
-        sizes: '1024x1024',
-        type: 'image/png',
-      },
-      {
-        src: '/pwa-icon.png',
-        sizes: '512x512',
-        type: 'image/png',
-      },
-      {
-        src: '/pwa-icon.png',
-        sizes: '192x192',
+        src: '/logo.png',
+        sizes: 'any',
         type: 'image/png',
       },
     ],

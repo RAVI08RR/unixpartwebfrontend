@@ -356,174 +356,29 @@ export default function AllInventoryPage() {
         </div>
       )}
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1400px]">
+        {/* Main Table / Mobile Cards */}
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 dark:bg-zinc-800/20">
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Stock Number</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Supplier Code</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Container Code</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Item</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">PO Description</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Branch</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Sale Amount</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Invoice #</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Sale Date</th>
-                <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">View Invoice</th>
-                <th className="px-6 py-5 text-right">Actions</th>
+              <tr className="border-b border-gray-50 dark:border-zinc-800">
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Item / Details</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Stock Number</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Quantity</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Branch</th>
+                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Status</th>
+                <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {loading ? (
-                <tr>
-                   <td colSpan="12" className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                         <RefreshCcw className="w-8 h-8 text-gray-300 animate-spin" />
-                         <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Loading Inventory Data...</p>
+              {filteredData.map((item) => (
+                <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all duration-300">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500 shadow-inner">
+                        <Package className="w-5 h-5" />
                       </div>
-                   </td>
-                </tr>
-              ) : paginatedData.length > 0 ? (
-                paginatedData.map((item, idx) => {
-                  const saleItem = item.invoice_items?.[0] || null;
-                  const supplierCode = item.purchase_order?.container?.supplier?.supplier_code || item.stock_number?.split('-')[1] || "-";
-                  const containerCode = item.purchase_order?.container?.container_number || "-";
-                  
-                  return (
-                    <tr key={idx} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-5">
-                         <span className="text-xs font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded-md">{item.stock_number || "-"}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-xs font-black text-gray-500 dark:text-gray-400 tracking-wider">
-                          {supplierCode}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-xs font-bold text-gray-500 dark:text-gray-400 tracking-wider">
-                           {containerCode}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-black text-gray-900 dark:text-white leading-tight">{item.stock_item?.name || "-"}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 italic max-w-[200px] block truncate">{item.po_description || "-"}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white">{item.current_branch?.branch_code || "-"}</span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                            item.status?.toLowerCase() === 'in_stock' 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                              : item.status?.toLowerCase() === 'sold'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                          }`}>
-                            {item.status?.toLowerCase() === 'in_stock' ? 'Sell' : item.status?.toLowerCase() === 'sold' ? 'Sold' : item.status?.replace('_', ' ') || "unknown"}
-                          </div>
-                          
-                          {item.status?.toLowerCase() === 'in_stock' && (
-                            <button 
-                              onClick={() => router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`)}
-                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm hover:shadow-md active:scale-95 flex items-center gap-1.5"
-                            >
-                              <DollarSign className="w-3 h-3" />
-                              Sell
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
-                          {saleItem ? formatCurrency(saleItem.sale_amount) : "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                          {saleItem?.invoice?.invoice_number || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {saleItem ? formatDate(saleItem.sale_date) : "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                         {saleItem ? (
-                           <Link 
-                            href={`/dashboard/sales/invoices/view/${saleItem.invoice_id}`}
-                            className="p-2.5 bg-gray-50 dark:bg-zinc-800 text-gray-400 hover:text-black dark:hover:text-white rounded-xl transition-all inline-flex items-center justify-center border border-gray-100 dark:border-zinc-700"
-                           >
-                              <FileText className="w-4 h-4" />
-                           </Link>
-                         ) : "-"}
-                      </td>
-                      <td className="px-6 py-5 text-right relative">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(item.id)}
-                              className={`p-2 rounded-xl transition-all ${
-                                menuOpenId === item.id
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === item.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[100] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                idx % itemsPerPage > 7 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
-                                <button 
-                                  onClick={() => handleViewDetails(item)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                <button 
-                                  onClick={() => handleEditItem(item)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Edit Item
-                                </button>
-                                {item.status?.toLowerCase() === 'in_stock' && (
-                                  <>
-                                    <button 
-                                      onClick={() => router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-colors"
-                                    >
-                                      <DollarSign className="w-4 h-4" />
-                                      Sell Item
-                                    </button>
-                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                                      <Layers className="w-4 h-4" />
-                                      Dismantle Item
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="12" className="px-6 py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <Package className="w-12 h-12 text-gray-200" />
                       <div>
                         <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
                         <p className="text-sm text-gray-400 font-medium">Try adjusting your filters to find what you're looking for.</p>

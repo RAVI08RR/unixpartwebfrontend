@@ -434,217 +434,22 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
+      {/* Main Table / Mobile Cards */}
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Deactivated Branches</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
-                style={{ width: '10rem' }}
-                >Last Updated</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
+              <tr className="border-b border-gray-50 dark:border-zinc-800">
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
+                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-6 text-right text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedCustomers.length > 0 ? (
-                paginatedCustomers.map((customer, index) => {
-                  const deactivatedBranches = customerDeactivatedBranches[customer.id] || [];
-                  return (
-                    <tr key={customer.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                    style= {{borderBottom :"0.9px solid #E2E8F0"}}
-                    >
-                      {/* Name / Customer */}
-                      <td className="px-6 py-6" data-label="Customer">
-                        <div className="flex items-center gap-4">
-                          <img 
-                            src={customer.profile_image ? customerService.getProfileImageUrl(customer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
-                            alt={customer.full_name} 
-                            className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
-                            onError={(e) => {
-                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`;
-                            }}
-                          />
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{customer.full_name}</p>
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">{customer.customer_code}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Contact */}
-                      <td className="px-6 py-6" data-label="Contact">
-                        <div className="space-y-1.5 min-w-[180px]">
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                            <Phone className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{customer.phone}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                            <MapPin className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors truncate max-w-[150px]">{customer.address}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Business */}
-                      <td className="px-6 py-6" data-label="Business">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                            <Building className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                            <span className="text-[14px] font-bold text-gray-700 dark:text-gray-200 group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">
-                              {customer.business_name || "Individual"}
-                            </span>
-                          </div>
-                          {customer.business_number && (
-                            <span className="text-xs font-medium text-blue-500 ml-5">
-                              {customer.business_number}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Deactivated Branches */}
-                      <td className="px-6 py-6" data-label="Deactivated Branches">
-                        {deactivatedBranches.length > 0 ? (
-                          <div className="space-y-1">
-                            {deactivatedBranches.slice(0, 2).map((branch, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <Building2 className="w-3 h-3 text-red-400" />
-                                <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[120px]">
-                                  {branch.branch_name}
-                                </span>
-                              </div>
-                            ))}
-                            {deactivatedBranches.length > 2 && (
-                              <span className="text-xs text-red-600 dark:text-red-400 font-bold">
-                                +{deactivatedBranches.length - 2} more
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">No deactivated branches</span>
-                        )}
-                      </td>
-
-                      {/* Financial */}
-                      <td className="px-6 py-6" data-label="Financial">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                            <DollarSign className="w-3.5 h-3.5" />
-                            <span className="text-sm font-bold">
-                              AED {parseFloat(customer.total_purchase || 0).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className={`text-xs font-medium ${
-                            parseFloat(customer.outstanding_balance || 0) > 0 
-                              ? 'text-red-600 dark:text-red-400' 
-                              : 'text-green-600 dark:text-green-400'
-                          }`}>
-                            Balance: AED {parseFloat(customer.outstanding_balance || 0).toFixed(2)}
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-6" data-label="Status">
-                        <div className={customer.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                          <div className={customer.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                          {customer.status ? "Active" : "Inactive"}
-                        </div>
-                      </td>
-
-                      {/* Last Updated */}
-                      <td className="px-6 py-6" data-label="Last Updated">
-                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                            {customer.updated_at ? new Date(customer.updated_at).toLocaleDateString() : "-"}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-6 text-right" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative inline-block actions-menu-container">
-                            <button 
-                              onClick={() => toggleMenu(customer.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                menuOpenId === customer.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                              }`}
-                            >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === customer.id && (
-                              <div 
-                                className={`absolute right-0 w-[17rem] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-1.5 ${
-                                  index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                }`}
-                                style={{
-                                  animation: 'fadeIn 0.2s ease-out'
-                                }}
-                              >
-                                <button 
-                                  onClick={() => handleViewCustomer(customer)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                <Link 
-                                  href={`/dashboard/sales/customers/purchase-history/${customer.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
-                                >
-                                  <History className="w-4 h-4" />
-                                  View Purchase History
-                                </Link>
-                                <Link 
-                                  href={`/dashboard/sales/customers/edit/${customer.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Customer
-                                </Link>
-                                <button 
-                                  onClick={() => handleCreditLimitClick(customer)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
-                                >
-                                  <DollarSign className="w-4 h-4" />
-                                  Change Credit Limit
-                                </button>
-                                <button 
-                                  onClick={() => handleDeactivateClick(customer)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400 rounded-xl transition-colors"
-                                >
-                                  <AlertTriangle className="w-4 h-4" />
-                                  {customer.status ? "De/Re-activate" : "Reactivate"}
-                                </button>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(customer)} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Customer
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="8" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No customers found</p>
                   </td>
                 </tr>

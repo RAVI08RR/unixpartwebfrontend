@@ -455,10 +455,9 @@ export default function StockItemsManagementPage() {
                     {items.map((item, index) => (
                       <div
                         key={item.id}
-                        className="group px-6 py-5 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
-                        style={{ borderBottom: index < items.length - 1 ? "0.9px solid #E2E8F0" : "none" }}
+                        className="group px-6 py-5 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all border-b border-gray-50 dark:border-zinc-800/50 last:border-0"
                       >
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           {/* Item Info */}
                           <div className="flex items-center gap-4 flex-1 min-w-0">
                             <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center shrink-0">
@@ -469,65 +468,64 @@ export default function StockItemsManagementPage() {
                                 {item.name || 'N/A'}
                               </p>
                               <p className="text-xs text-gray-400 mt-0.5 font-medium">
-                                item-{categoryId}-{items.indexOf(item) + 1}
+                                ID: {item.id} • cat-{categoryId}
                               </p>
                             </div>
                           </div>
 
-                          {/* Description */}
+                          {/* Description (Desktop only) */}
                           <div className="hidden lg:block flex-1 min-w-0 max-w-md">
                             <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                               {item.description || 'No description'}
                             </p>
                           </div>
 
-                          {/* Status */}
-                          <div className="shrink-0">
-                            <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                              <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                              {item.status ? "Active" : "Inactive"}
-                            </div>
-                          </div>
-
-                          {/* Actions */}
-                          <div className="relative shrink-0">
-                            <button 
-                              onClick={() => toggleMenu(item.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                menuOpenId === item.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50'
-                              }`}
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === item.id && (
-                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
-                                <button 
-                                  onClick={() => handleViewStockItem(item)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                <Link 
-                                  href={`/dashboard/inventory/stock-items/edit/${item.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Stock Item
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(item)} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Stock Item
-                                </button>
-                              </div>
-                            )}
+                          {/* Status & Actions */}
+                          <div className="flex items-center justify-between sm:justify-end gap-4 mt-2 sm:mt-0">
+                             <div className={item.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                                <div className={item.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                                {item.status ? "Active" : "Inactive"}
+                             </div>
+                             
+                             <div className="relative shrink-0">
+                               <button 
+                                 onClick={() => toggleMenu(item.id)}
+                                 className={`p-2 rounded-xl transition-all ${
+                                   menuOpenId === item.id 
+                                     ? 'bg-black text-white shadow-lg'
+                                     : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
+                                 }`}
+                               >
+                                 <MoreVertical className="w-5 h-5" />
+                               </button>
+                               
+                               {menuOpenId === item.id && (
+                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                                   <button 
+                                     onClick={() => handleViewStockItem(item)}
+                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"
+                                   >
+                                     <Eye className="w-4 h-4" />
+                                     View Details
+                                   </button>
+                                   <Link 
+                                     href={`/dashboard/inventory/stock-items/edit/${item.id}`}
+                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"
+                                   >
+                                     <Pencil className="w-4 h-4" />
+                                     Edit Item
+                                   </Link>
+                                   <div className="h-px bg-gray-100 my-1" />
+                                   <button 
+                                     onClick={() => handleDeleteClick(item)} 
+                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"
+                                   >
+                                     <Trash2 className="w-4 h-4" />
+                                     Delete Item
+                                   </button>
+                                 </div>
+                               )}
+                             </div>
                           </div>
                         </div>
                       </div>
