@@ -82,7 +82,8 @@ export default function QuickSearch() {
   // Search for PO items by stock number or item name using dropdown API
   useEffect(() => {
     const searchPOItem = async () => {
-      if (!searchQuery.trim() || activeTab !== "Item") {
+      const query = searchQuery.trim();
+      if (!query || activeTab !== "Item") {
         setSearchResults(null);
         setSearchError(null);
         return;
@@ -92,11 +93,45 @@ export default function QuickSearch() {
       setSearchError(null);
 
       try {
-        // Use dropdown API for better search with suggestions
-        const result = await poItemService.getDropdown(searchQuery.trim());
-        // The dropdown API returns an array of items
+        // Special Case: Check if it looks like a full stock number (e.g. AUH-SUP-0012-AA00001)
+        // Usually contains multiple hyphens and is long
+        const isFullStockNumber = query.split('-').length >= 3;
+        let result = [];
+
+        if (isFullStockNumber) {
+          try {
+            const item = await poItemService.getByStockNumber(query);
+            if (item) {
+              result = [item];
+            }
+          } catch (e) {
+            // Fallback to dropdown if exact stock number fails
+          }
+        }
+
+        // If no direct result, use dropdown API for suggestions
+        if (result.length === 0) {
+          result = await poItemService.getDropdown(query);
+        }
+        
         if (result && result.length > 0) {
-          setSearchResults(result); // Store all results for suggestions
+          // Fetch full details for the first 3 items to get status and branch info
+          const topItems = result.slice(0, 3);
+          const detailedItems = await Promise.all(
+            topItems.map(async (item) => {
+              try {
+                // If nested fields are missing, fetch full details
+                if (!item.status || !item.po_id || !item.stock_item) {
+                  return await poItemService.getById(item.id);
+                }
+                return item;
+              } catch (err) {
+                return item;
+              }
+            })
+          );
+          
+          setSearchResults(detailedItems);
         } else {
           setSearchError('No items found matching your search');
           setSearchResults(null);
@@ -146,16 +181,23 @@ export default function QuickSearch() {
 
   const tabs = ["Item", "Invoice", "Create", "Actions"];
 
-  const handleViewItemDetails = async (itemId) => {
-    setIsLoadingItemDetails(true);
-    try {
-      const itemDetails = await poItemService.getById(itemId);
-      setSelectedItem(itemDetails);
-      setIsItemModalOpen(true);
-    } catch (error) {
-      showError('Failed to load item details: ' + error.message);
-    } finally {
-      setIsLoadingItemDetails(false);
+  const handleViewItemDetails = async (item) => {
+    // If we have po_id, redirect to the items list page with item_id for auto-open
+    if (item.po_id) {
+      router.push(`/dashboard/inventory/purchase-orders/items/${item.po_id}?item_id=${item.id}&stock=${item.stock_number}`);
+      setIsOpen(false);
+    } else {
+      // Fallback: Show modal if po_id is missing
+      setIsLoadingItemDetails(true);
+      try {
+        const itemDetails = await poItemService.getById(item.id);
+        setSelectedItem(itemDetails);
+        setIsItemModalOpen(true);
+      } catch (error) {
+        showError('Failed to load item details: ' + error.message);
+      } finally {
+        setIsLoadingItemDetails(false);
+      }
     }
   };
 
@@ -381,47 +423,46 @@ export default function QuickSearch() {
                                     <p className="text-base font-black text-gray-900 dark:text-white">
                                       {item.stock_number}
                                     </p>
-                                    {/* Status Badge */}
                                     <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide ${
-                                      item.status === 'in_stock' 
+                                      (item.status || item.po_item_status || 'unknown')?.toLowerCase() === 'in_stock' 
                                         ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                                        : item.status === 'sold'
+                                        : (item.status || item.po_item_status)?.toLowerCase() === 'sold'
                                         ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                                        : item.status === 'reserved'
+                                        : (item.status || item.po_item_status)?.toLowerCase() === 'reserved'
                                         ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
                                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
                                     }`}>
-                                      {item.status === 'in_stock' ? 'In Stock' : item.status === 'sold' ? 'Sold' : item.status || 'Unknown'}
+                                      {(item.status || item.po_item_status)?.toLowerCase() === 'in_stock' ? 'Sell' : (item.status || item.po_item_status)?.toLowerCase() === 'sold' ? 'Sold' : (item.status || item.po_item_status) || 'Unknown'}
                                     </span>
                                   </div>
                                   <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                    {item.item_name || 'N/A'}
+                                    {item.item_name || item.stock_item?.name || item.label || 'N/A'}
                                   </p>
                                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                    {item.branch_name || 'N/A'}
+                                    {item.branch_name || item.current_branch?.branch_name || 'N/A'}
                                   </p>
                                 </div>
                               </div>
                               
                               <div className="flex gap-2 mt-3">
-                                {/* Create Invoice Button - Only show if in_stock */}
-                                {item.status === 'in_stock' && (
+                                {/* Sell Button - Only show if in_stock */}
+                                {(item.status || item.po_item_status)?.toLowerCase() === 'in_stock' && (
                                   <button
                                     onClick={() => {
                                       router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`);
                                       setIsOpen(false);
                                     }}
-                                    className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5"
+                                    className="flex-1 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md"
                                   >
-                                    <Receipt className="w-3.5 h-3.5" />
-                                    Create Invoice
+                                    <DollarSign className="w-3.5 h-3.5" />
+                                    Sell
                                   </button>
                                 )}
                                 
                                 <button
-                                  onClick={() => handleViewItemDetails(item.id)}
+                                  onClick={() => handleViewItemDetails(item)}
                                   disabled={isLoadingItemDetails}
-                                  className={`${item.status === 'in_stock' ? 'flex-1' : 'flex-1'} px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50`}
+                                  className={`${(item.status || item.po_item_status)?.toLowerCase() === 'in_stock' ? 'flex-1' : 'flex-1'} px-3 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-xs hover:opacity-90 transition-all disabled:opacity-50`}
                                 >
                                   View Details
                                 </button>

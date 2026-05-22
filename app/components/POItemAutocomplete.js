@@ -38,9 +38,7 @@ export default function POItemAutocomplete({
     try {
       const response = await apiClient.get(`/api/dropdown/po-items`, { search: query });
       // Filter out sold items
-      const availableItems = Array.isArray(response) 
-        ? response.filter(item => item.status !== 'sold' && item.status !== 'Sold')
-        : [];
+      const availableItems = Array.isArray(response) ? response : [];
       setSuggestions(availableItems);
       setIsOpen(true);
     } catch (error) {
@@ -147,8 +145,13 @@ export default function POItemAutocomplete({
               {suggestions.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => handleSelectItem(item)}
-                  className="w-full flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                  onClick={() => item.status?.toLowerCase() !== 'sold' && handleSelectItem(item)}
+                  disabled={item.status?.toLowerCase() === 'sold'}
+                  className={`w-full flex items-start gap-3 px-4 py-3 transition-colors text-left ${
+                    item.status?.toLowerCase() === 'sold' 
+                      ? 'opacity-60 cursor-not-allowed bg-gray-50/50 dark:bg-zinc-800/30' 
+                      : 'hover:bg-gray-50 dark:hover:bg-zinc-800'
+                  }`}
                 >
                   <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
                     <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -162,11 +165,13 @@ export default function POItemAutocomplete({
                     </p>
                     {item.status && (
                       <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        item.status === 'in_stock' 
+                        item.status?.toLowerCase() === 'in_stock' 
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : item.status?.toLowerCase() === 'sold'
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
                           : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                       }`}>
-                        {item.status.replace('_', ' ')}
+                        {item.status?.toLowerCase() === 'in_stock' ? 'Sell' : item.status?.toLowerCase() === 'sold' ? 'Sold' : item.status.replace('_', ' ')}
                       </span>
                     )}
                   </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
@@ -18,6 +18,7 @@ import POItemAutocomplete from "@/app/components/POItemAutocomplete";
 
 export default function AddInvoicePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [customersLoading, setCustomersLoading] = useState(false);
@@ -199,6 +200,48 @@ export default function AddInvoicePage() {
     };
     fetchCustomers();
   }, []);
+
+  // Handle pre-selected item from query parameters
+  useEffect(() => {
+    const preselectedItem = searchParams.get('item');
+    const preselectedStock = searchParams.get('stock');
+    
+    if (preselectedItem && preselectedStock) {
+      const loadPreselectedItem = async () => {
+        try {
+          const item = await poItemService.getById(preselectedItem);
+          if (item) {
+            // Check if item is already added to prevent duplicates
+            setFormData(prev => {
+              const exists = prev.items.find(i => i.po_item_id == preselectedItem);
+              if (exists) return prev;
+              
+              return {
+                ...prev,
+                items: [...prev.items, {
+                  po_item_id: item.id,
+                  stock_number: item.stock_number,
+                  item_name: item.stock_item?.name || item.item_name || "",
+                  po_description: item.po_description || "",
+                  sale_description: item.po_description || "",
+                  sale_amount: "", // User will fill this in
+                  discount: "0",
+                  discount_details: "",
+                  load_status: "pending",
+                  load_date: ""
+                }]
+              };
+            });
+            success(`Item ${preselectedStock} added to invoice!`);
+          }
+        } catch (err) {
+          console.error("Failed to load preselected item:", err);
+          showError("Failed to load preselected item: " + err.message);
+        }
+      };
+      loadPreselectedItem();
+    }
+  }, [searchParams]);
 
   // Fetch PO Items
   useEffect(() => {

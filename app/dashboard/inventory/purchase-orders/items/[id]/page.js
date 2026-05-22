@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { QRCodeSVG } from "qrcode.react";
+import { useSearchParams } from "next/navigation";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -41,6 +42,7 @@ export default function PurchaseOrderItemsPage({ params }) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
+  const searchParams = useSearchParams();
   const [printLabelModalOpen, setPrintLabelModalOpen] = useState(false);
   const [labelPreviewOpen, setLabelPreviewOpen] = useState(false);
   const [labelSize, setLabelSize] = useState({ width: 2.25, height: 1.25 });
@@ -110,6 +112,19 @@ export default function PurchaseOrderItemsPage({ params }) {
 
   const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
   const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  // Auto-open modal on exact stock number match (handheld scanner support)
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length > 10) {
+      const match = items.find(i => i.stock_number === query);
+      if (match) {
+        setSelectedItem(match);
+        setViewModalOpen(true);
+        // Clear search to prevent repeated opening? Optional.
+      }
+    }
+  }, [searchQuery, items]);
 
   const handleDelete = async () => {
     try {
@@ -189,12 +204,7 @@ export default function PurchaseOrderItemsPage({ params }) {
           branch_code: branch?.branch_code || '',
           supplier_code: purchaseOrder?.supplier_code || '',
           container_number: purchaseOrder?.container_number || '',
-          qr_data: JSON.stringify({
-            stock_number: item.stock_number,
-            po_id: poId,
-            item_id: item.id,
-            branch: branch?.branch_code,
-          }),
+          qr_data: `${window.location.origin}/dashboard/inventory/all-inventory/view/${item.stock_number}`,
         };
       });
   };
@@ -205,6 +215,28 @@ export default function PurchaseOrderItemsPage({ params }) {
       setLabelSize(JSON.parse(savedSize));
     }
   }, []);
+
+  // Handle auto-opening item details from QR scan URL
+  useEffect(() => {
+    if (items.length > 0) {
+      const itemId = searchParams.get('item_id');
+      const stock = searchParams.get('stock');
+      
+      if (itemId) {
+        const item = items.find(i => i.id.toString() === itemId);
+        if (item) {
+          setSelectedItem(item);
+          setViewModalOpen(true);
+        }
+      } else if (stock) {
+        const item = items.find(i => i.stock_number === stock);
+        if (item) {
+          setSelectedItem(item);
+          setViewModalOpen(true);
+        }
+      }
+    }
+  }, [searchParams, items]);
 
   if (loading) {
     return (
@@ -273,15 +305,18 @@ export default function PurchaseOrderItemsPage({ params }) {
         </div>
 
         <div className="flex items-center gap-3">
-          {selectedItems.length > 0 && (
-            <button
-              onClick={handlePrintLabels}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all flex items-center gap-2"
-            >
-              <Printer className="w-4 h-4" />
-              PRINT LABELS ({selectedItems.length})
-            </button>
-          )}
+          <button
+            onClick={handlePrintLabels}
+            disabled={selectedItems.length === 0}
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${
+              selectedItems.length > 0 
+                ? "bg-blue-600 text-white hover:bg-blue-700" 
+                : "bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <Printer className="w-4 h-4" />
+            PRINT LABELS {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
+          </button>
           <ExportButton
             data={filteredItems}
             columns={[
@@ -454,8 +489,19 @@ export default function PurchaseOrderItemsPage({ params }) {
                                     <button 
                                         onClick={() => { setSelectedItem(item); setViewModalOpen(true); }}
                                         className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                                        title="View Details"
                                     >
                                         <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={() => { 
+                                          setSelectedItems([item.id]); 
+                                          setPrintLabelModalOpen(true); 
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                                        title="Print Label"
+                                    >
+                                        <Printer className="w-4 h-4" />
                                     </button>
                                     <div className="relative">
                                         <button 
@@ -482,6 +528,16 @@ export default function PurchaseOrderItemsPage({ params }) {
                                                         <Box className="w-4 h-4" /> Dismantle Item
                                                     </button>
                                                 )}
+                                                <button 
+                                                    onClick={() => {
+                                                        setSelectedItems([item.id]);
+                                                        setPrintLabelModalOpen(true);
+                                                        setMenuOpenId(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
+                                                >
+                                                    <Printer className="w-4 h-4" /> Print Label
+                                                </button>
                                                 <Link 
                                                     href={`/dashboard/inventory/purchase-orders/items/edit/${item.id}`}
                                                     onClick={() => setMenuOpenId(null)}

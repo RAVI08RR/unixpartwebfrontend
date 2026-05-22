@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { 
   BarChart3, Search, Filter, Download, 
   Eye, FileText, Calendar, User, 
@@ -17,6 +18,7 @@ import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 
 export default function AllInventoryPage() {
+  const router = useRouter();
   const [inventoryItems, setInventoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -76,6 +78,17 @@ export default function AllInventoryPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Handle direct stock number search/scan for navigation
+  useEffect(() => {
+    const query = filters.stockNumber.trim();
+    if (query.split('-').length >= 3 && query.length > 10) {
+      const match = inventoryItems.find(i => i.stock_number === query);
+      if (match) {
+        handleViewDetails(match);
+      }
+    }
+  }, [filters.stockNumber, inventoryItems]);
 
   // Filter logic
   const filteredData = useMemo(() => {
@@ -180,8 +193,7 @@ export default function AllInventoryPage() {
   };
 
   const handleViewDetails = (item) => {
-    setSelectedItem(item);
-    setViewModalOpen(true);
+    router.push(`/dashboard/inventory/all-inventory/view/${item.stock_number}`);
     setMenuOpenId(null);
   };
 
@@ -405,14 +417,26 @@ export default function AllInventoryPage() {
                         <span className="text-sm font-bold text-gray-900 dark:text-white">{item.current_branch?.branch_code || "-"}</span>
                       </td>
                       <td className="px-6 py-5">
-                        <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                          item.status === 'in_stock' 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                            : item.status === 'sold'
-                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        }`}>
-                          {item.status?.replace('_', ' ') || "unknown"}
+                        <div className="flex items-center gap-3">
+                          <div className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                            item.status?.toLowerCase() === 'in_stock' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              : item.status?.toLowerCase() === 'sold'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {item.status?.toLowerCase() === 'in_stock' ? 'Sell' : item.status?.toLowerCase() === 'sold' ? 'Sold' : item.status?.replace('_', ' ') || "unknown"}
+                          </div>
+                          
+                          {item.status?.toLowerCase() === 'in_stock' && (
+                            <button 
+                              onClick={() => router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`)}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm hover:shadow-md active:scale-95 flex items-center gap-1.5"
+                            >
+                              <DollarSign className="w-3 h-3" />
+                              Sell
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-5">
@@ -472,11 +496,20 @@ export default function AllInventoryPage() {
                                   <FileText className="w-4 h-4" />
                                   Edit Item
                                 </button>
-                                {item.status === 'in_stock' && (
-                                  <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                                    <Layers className="w-4 h-4" />
-                                    Dismantle Item
-                                  </button>
+                                {item.status?.toLowerCase() === 'in_stock' && (
+                                  <>
+                                    <button 
+                                      onClick={() => router.push(`/dashboard/sales/invoices/add?item=${item.id}&stock=${item.stock_number}`)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-xl transition-colors"
+                                    >
+                                      <DollarSign className="w-4 h-4" />
+                                      Sell Item
+                                    </button>
+                                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                                      <Layers className="w-4 h-4" />
+                                      Dismantle Item
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             )}
@@ -545,184 +578,7 @@ export default function AllInventoryPage() {
         </div>
       </div>
 
-      {/* View Details Modal */}
-      {viewModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-950 rounded-[32px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 flex items-center justify-between p-8 border-b border-gray-50 dark:border-zinc-900">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/20">
-                  <Package className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Inventory Item Details</h2>
-                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-1">
-                    Stock #: <span className="text-red-600">{selectedItem.stock_number}</span>
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setViewModalOpen(false)}
-                className="p-3 hover:bg-gray-100 dark:hover:bg-zinc-900 rounded-2xl transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white active:scale-90"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            <div className="p-8 space-y-10">
-              {/* Main Summary Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-gray-50 dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Quantity</p>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">
-                    {selectedItem.quantity}
-                  </p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Status</p>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">
-                    {selectedItem.status?.replace('_', ' ').toUpperCase()}
-                  </p>
-                </div>
-                <div className="bg-gray-50 dark:bg-zinc-900 rounded-3xl p-6 border border-gray-100 dark:border-zinc-800">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Branch</p>
-                  <p className="text-2xl font-black text-gray-900 dark:text-white">
-                    {selectedItem.current_branch?.branch_name}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                {/* Left Column: Product & Sale */}
-                <div className="space-y-8">
-                  <section>
-                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-                        <Package className="w-4 h-4 text-blue-600" />
-                      </div>
-                      Product Information
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center py-3 border-b border-gray-50 dark:border-zinc-900">
-                        <span className="text-sm font-bold text-gray-400">Item Name</span>
-                        <span className="text-sm font-black text-gray-900 dark:text-white">{selectedItem.stock_item?.name || "-"}</span>
-                      </div>
-                      <div className="flex justify-between items-center py-3 border-b border-gray-50 dark:border-zinc-900">
-                        <span className="text-sm font-bold text-gray-400">Stock Number</span>
-                        <span className="text-xs font-black text-red-600 bg-red-50 dark:bg-red-500/10 px-3 py-1.5 rounded-xl">
-                          {selectedItem.stock_number || "-"}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2 py-3">
-                        <span className="text-sm font-bold text-gray-400">PO Description</span>
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 italic bg-gray-50 dark:bg-zinc-900 p-4 rounded-2xl">
-                          {selectedItem.po_description || "No description provided."}
-                        </p>
-                      </div>
-                    </div>
-                  </section>
-
-                  {selectedItem.invoice_items?.length > 0 && (
-                     <section>
-                        <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-6">
-                           <div className="w-8 h-8 bg-green-50 dark:bg-green-900/20 rounded-xl flex items-center justify-center">
-                              <DollarSign className="w-4 h-4 text-green-600" />
-                           </div>
-                           Sale Information
-                        </h3>
-                        <div className="space-y-4">
-                           <div className="flex justify-between items-center py-3 border-b border-gray-50 dark:border-zinc-900">
-                              <span className="text-sm font-bold text-gray-400">Invoice Number</span>
-                              <span className="text-sm font-black text-blue-600">{selectedItem.invoice_items[0].invoice?.invoice_number}</span>
-                           </div>
-                           <div className="flex justify-between items-center py-3 border-b border-gray-50 dark:border-zinc-900">
-                              <span className="text-sm font-bold text-gray-400">Sale Amount</span>
-                              <span className="text-sm font-black text-gray-900 dark:text-white">{formatCurrency(selectedItem.invoice_items[0].sale_amount)}</span>
-                           </div>
-                           <div className="flex justify-between items-center py-3">
-                              <span className="text-sm font-bold text-gray-400">Sale Date</span>
-                              <span className="text-sm font-black text-gray-900 dark:text-white">{formatDate(selectedItem.invoice_items[0].sale_date)}</span>
-                           </div>
-                        </div>
-                     </section>
-                  )}
-                </div>
-
-                {/* Right Column: Branch & PO */}
-                <div className="space-y-8">
-                  <section>
-                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center">
-                        <Building2 className="w-4 h-4 text-purple-600" />
-                      </div>
-                      Branch Information
-                    </h3>
-                    <div className="bg-gray-50 dark:bg-zinc-900 rounded-[24px] p-6 border border-gray-100 dark:border-zinc-800">
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 rounded-full bg-white dark:bg-zinc-800 flex items-center justify-center font-black text-gray-400 border border-gray-100 dark:border-zinc-700 shadow-sm">
-                          {selectedItem.current_branch?.branch_code}
-                        </div>
-                        <div>
-                          <p className="text-lg font-black text-gray-900 dark:text-white leading-tight">
-                            {selectedItem.current_branch?.branch_name}
-                          </p>
-                          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-                            Branch ID: {selectedItem.current_branch_id}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-
-                  <section>
-                    <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest flex items-center gap-3 mb-6">
-                      <div className="w-8 h-8 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
-                        <Hash className="w-4 h-4 text-gray-600" />
-                      </div>
-                      Traceability
-                    </h3>
-                    <div className="space-y-4 bg-gray-50 dark:bg-zinc-900 p-6 rounded-[24px] border border-gray-100 dark:border-zinc-800">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">PO ID</span>
-                        <span className="text-sm font-black text-gray-900 dark:text-white">#{selectedItem.po_id}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Created At</span>
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
-                          {formatDate(selectedItem.created_at)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Last Updated</span>
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
-                          {formatDate(selectedItem.updated_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </section>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-8 border-t border-gray-50 dark:border-zinc-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-900 rounded-full border border-gray-100 dark:border-zinc-800">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Inventory Record</span>
-              </div>
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button 
-                  onClick={() => setViewModalOpen(false)}
-                  className="flex-1 sm:flex-none px-8 py-3.5 text-sm font-black text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed View Details Modal as it's now a dedicated page */}
 
       {/* Edit Item Modal */}
       {editModalOpen && selectedItem && (

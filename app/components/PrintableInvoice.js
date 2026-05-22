@@ -656,28 +656,6 @@ const PrintableInvoice = React.forwardRef(
         {/* ================= UI ================= */}
 
         <div ref={ref} className="invoice-wrapper">
-          {/* Preview */}
-          <div className="invoice-preview">
-            <h1
-              style={{
-                fontSize: "18px",
-                marginBottom: "5px",
-              }}
-            >
-              Invoice Template Preview
-            </h1>
-
-            <p
-              style={{
-                fontSize: "11px",
-                color: "#666",
-              }}
-            >
-              This is a preview of how your invoice
-              will look.
-            </p>
-          </div>
-
           {/* Invoice Box */}
           <div className="invoice-box">
             {/* Header */}
@@ -689,37 +667,36 @@ const PrintableInvoice = React.forwardRef(
                     "UNIXPARTS TRADING LLC"}
                 </h2>
 
-                {/* Branch Name - Dynamic */}
-                {invoiceData?.branch?.branch_name && (
+                {/* Branch Name - Dynamic from invoice or customer */}
+                {(invoiceData?.branch?.branch_name || customer?.branch_name) && (
                   <p style={{ fontWeight: "bold", fontSize: "12px" }}>
-                    {invoiceData.branch.branch_name}
+                    {invoiceData?.branch?.branch_name || customer?.branch_name}
                   </p>
                 )}
 
                 <p>
                   {invoiceData?.branch?.address || 
+                    customer?.address ||
                     templateSettings?.company_address ||
                     "PO Box 12345, Dubai, UAE"}
                 </p>
 
-                {(invoiceData?.branch?.phone || templateSettings?.contact_number_1) && (
+                {(invoiceData?.branch?.phone || customer?.phone || templateSettings?.contact_number_1) && (
                   <p>
-                    {invoiceData?.branch?.phone || templateSettings.contact_number_1}
+                    {invoiceData?.branch?.phone || customer?.phone || templateSettings?.contact_number_1}
                   </p>
                 )}
 
-                {(invoiceData?.branch?.email || templateSettings?.contact_email) && (
+                {(invoiceData?.branch?.email || customer?.email || templateSettings?.contact_email) && (
                   <p>
-                    {invoiceData?.branch?.email || templateSettings.contact_email}
+                    {invoiceData?.branch?.email || customer?.email || templateSettings?.contact_email}
                   </p>
                 )}
 
                 {templateSettings?.trn_number && (
                   <p>
                     TRN:{" "}
-                    {
-                      templateSettings.trn_number
-                    }
+                    {templateSettings.trn_number}
                   </p>
                 )}
               </div>
@@ -745,21 +722,18 @@ const PrintableInvoice = React.forwardRef(
 
                 <p>
                   <strong>
-                    Invoice #: {invoiceData.invoice_number || "INV-00123"}
+                    Invoice #: {invoiceData?.invoice_number || "N/A"}
                   </strong>
                 </p>
 
                 <p>
                   Date:{" "}
-                  {formatDate(
-                    invoiceData.invoice_date
-                  )}
+                  {formatDate(invoiceData?.invoice_date)}
                 </p>
 
                 <p>
                   <strong>Invoiced By:</strong>{" "}
-                  {invoiceData.created_by
-                    ?.name || "Admin User"}
+                  {invoiceData?.created_by?.name || "N/A"}
                 </p>
               </div>
             </div>
@@ -777,9 +751,14 @@ const PrintableInvoice = React.forwardRef(
                   </p>
 
                   <p>
-                    {customer?.full_name ||
-                      "Customer Name"}
+                    {customer?.full_name || invoiceData?.customer?.full_name || "N/A"}
                   </p>
+                  
+                  {(customer?.business_name || invoiceData?.customer?.business_name) && (
+                    <p style={{ fontStyle: "italic", marginTop: "5px" }}>
+                      {customer?.business_name || invoiceData?.customer?.business_name}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -790,9 +769,14 @@ const PrintableInvoice = React.forwardRef(
                   </p>
 
                   <p>
-                    {customer?.phone ||
-                      "Customer Phone"}
+                    {customer?.phone || invoiceData?.customer?.phone || "N/A"}
                   </p>
+                  
+                  {(customer?.customer_code || invoiceData?.customer?.customer_code) && (
+                    <p style={{ marginTop: "5px" }}>
+                      Code: {customer?.customer_code || invoiceData?.customer?.customer_code}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -804,8 +788,7 @@ const PrintableInvoice = React.forwardRef(
                 </p>
 
                 <p>
-                  {customer?.address ||
-                    "Customer Address"}
+                  {customer?.address || invoiceData?.customer?.address || "N/A"}
                 </p>
               </div>
             </div>
@@ -865,20 +848,20 @@ const PrintableInvoice = React.forwardRef(
                             <td>
                               {item.stock_number ||
                                 item.po_item?.stock_number ||
-                                "-"}
+                                "N/A"}
                             </td>
 
                             <td>
                               {item.item_name ||
                                 item.po_item?.stock_item?.name ||
-                                "-"}
+                                item.po_item?.po_description ||
+                                "N/A"}
                             </td>
 
                             <td>
                               {item.sale_description ||
-                                `Item ${
-                                  index + 1
-                                }`}
+                                item.po_item?.po_description ||
+                                "N/A"}
                             </td>
 
                             <td className="text-center">
