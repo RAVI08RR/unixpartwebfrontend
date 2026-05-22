@@ -498,7 +498,7 @@ export default function CustomersPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* View Customer Modal */}
       {viewModalOpen && selectedCustomer && (

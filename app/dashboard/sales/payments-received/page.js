@@ -375,7 +375,7 @@ export default function PaymentsReceivedPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* Invoice Details Modal */}
       {invoiceModalOpen && (

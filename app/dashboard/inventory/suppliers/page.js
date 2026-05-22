@@ -577,7 +577,7 @@ export default function SupplierManagementPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* View Supplier Modal */}
       <ViewSupplierModal 

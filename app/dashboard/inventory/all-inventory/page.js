@@ -431,7 +431,7 @@ export default function AllInventoryPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* Removed View Details Modal as it's now a dedicated page */}
 

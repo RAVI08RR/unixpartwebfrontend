@@ -451,7 +451,7 @@ export default function PurchaseOrdersPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && (

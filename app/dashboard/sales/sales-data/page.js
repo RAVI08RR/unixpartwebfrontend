@@ -652,7 +652,7 @@ export default function SalesDataPage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* View Details Modal */}
       {viewModalOpen && selectedItem && (

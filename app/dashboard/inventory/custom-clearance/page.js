@@ -452,7 +452,7 @@ export default function CustomClearancePage() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* View Details Modal */}
       {viewModalOpen && selectedContainer && (

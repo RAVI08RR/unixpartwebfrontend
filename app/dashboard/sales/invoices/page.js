@@ -620,7 +620,7 @@ function InvoiceManagementContent() {
             </button>
           </div>
         </div>
-      </div>
+
 
       {/* View Invoice Modal */}
       {viewModalOpen && selectedInvoice && (
