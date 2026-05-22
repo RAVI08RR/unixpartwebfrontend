@@ -15,8 +15,9 @@ import { useToast } from "@/app/components/Toast";
 import PrintableInvoice from "@/app/components/PrintableInvoice";
 import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocompleteWithCreate";
 import POItemAutocomplete from "@/app/components/POItemAutocomplete";
+import { Suspense } from "react";
 
-export default function AddInvoicePage() {
+function AddInvoiceContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -1131,6 +1132,18 @@ export default function AddInvoicePage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function AddInvoicePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <AddInvoiceContent />
+    </Suspense>
   );
 }
 

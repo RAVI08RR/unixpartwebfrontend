@@ -18,8 +18,9 @@ import ConfirmModal from "@/app/components/ConfirmModal";
 import ExportButton from "@/app/components/ExportButton";
 import PrintableLabel from "@/app/components/PrintableLabel";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
+import { Suspense } from "react";
 
-export default function PurchaseOrderItemsPage({ params }) {
+function PurchaseOrderItemsContent({ params }) {
   const [poId, setPoId] = useState(null);
   const { success, error: showError } = useToast();
   
@@ -937,6 +938,19 @@ export default function PurchaseOrderItemsPage({ params }) {
 
 
     </div>
+  );
+}
+
+export default function PurchaseOrderItemsPage({ params }) {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-400 font-black text-xs uppercase tracking-widest animate-pulse">Loading Items...</p>
+      </div>
+    }>
+      <PurchaseOrderItemsContent params={params} />
+    </Suspense>
   );
 }
 
