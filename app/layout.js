@@ -6,6 +6,16 @@ import ConfirmProvider from "./components/ConfirmModal";
 export const metadata = {
   title: "Unixparts Dashboard",
   description: "Internal system for Unixparts inventory and operations",
+  themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Unixparts",
+  },
+  icons: {
+    icon: "/pwa-icon.png",
+    apple: "/pwa-icon.png",
+  },
 };
 
 export default function RootLayout({ children }) {
