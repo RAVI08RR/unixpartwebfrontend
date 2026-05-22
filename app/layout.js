@@ -2,6 +2,7 @@ import "./globals.css";
 import { ThemeProvider } from "./ThemeContext";
 import ToastProvider from "./components/Toast";
 import ConfirmProvider from "./components/ConfirmModal";
+import PWARegistration from "./components/PWARegistration";
 
 export const metadata = {
   title: "Unixparts Dashboard",
@@ -33,6 +34,7 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <ToastProvider>
             <ConfirmProvider>
+              <PWARegistration />
               {children}
             </ConfirmProvider>
           </ToastProvider>
