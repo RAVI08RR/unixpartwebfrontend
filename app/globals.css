@@ -2177,5 +2177,6 @@ a.bg-black svg,
 @media (max-width: 1024px) {
 .invoice-table .dark tbody tr:hover {
     background-color: #f9fafb !important;
+  
 }
 }
