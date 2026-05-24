@@ -82,6 +82,19 @@ export const containerService = {
     }
   },
 
+  // Update container invoice status
+  updateInvoiceStatus: async (id, invoiceStatus) => {
+    try {
+      return await fetchApi(`/api/containers/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ invoice_status: invoiceStatus }),
+      });
+    } catch (error) {
+      console.warn('ðŸ“¦ Container invoice status update failed:', error.message);
+      throw new Error('Cannot update invoice status: ' + error.message);
+    }
+  },
+
   // Update existing container
   update: async (id, containerData) => {
     try {

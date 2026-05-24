@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { 
-  ArrowLeft, Plus, Search, Filter, MoreVertical, 
-  Pencil, Trash2, Package, Box, Building2, Hash, DollarSign, Calendar, Download
+  ArrowLeft, Plus, Search, MoreVertical, 
+  Trash2, Package, Box, DollarSign, Download, Save
 } from "lucide-react";
 import { containerItemService } from "@/app/lib/services/containerItemService";
 import { containerService } from "@/app/lib/services/containerService";
@@ -27,6 +26,7 @@ export default function ContainerItemsPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [savingInvoice, setSavingInvoice] = useState(false);
   
   const { success, error: showError } = useToast();
   const { stockItems: apiStockItems } = useStockItems(0, 100);
@@ -58,7 +58,7 @@ export default function ContainerItemsPage() {
     };
 
     fetchData();
-  }, [containerId]);
+  }, [containerId, showError]);
 
   const filteredItems = useMemo(() => {
     if (!items || !Array.isArray(items)) return [];
@@ -80,6 +80,26 @@ export default function ContainerItemsPage() {
       setItems(Array.isArray(itemsData) ? itemsData : []);
     } catch (err) {
       showError("Failed to delete item: " + err.message);
+    }
+  };
+
+  const handleSaveInvoiceStatus = async () => {
+    if (!containerId || savingInvoice) return;
+
+    try {
+      setSavingInvoice(true);
+      const updatedContainer = await containerService.updateInvoiceStatus(containerId, "published");
+
+      setContainer((current) => ({
+        ...current,
+        ...(updatedContainer && typeof updatedContainer === "object" ? updatedContainer : {}),
+        invoice_status: "published",
+      }));
+      success("Invoice status published successfully");
+    } catch (err) {
+      showError("Failed to update invoice status: " + err.message);
+    } finally {
+      setSavingInvoice(false);
     }
   };
 
@@ -191,6 +211,14 @@ export default function ContainerItemsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleSaveInvoiceStatus}
+            disabled={savingInvoice}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Save className="w-4 h-4" />
+            {savingInvoice ? "Saving..." : "Save"}
+          </button>
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}

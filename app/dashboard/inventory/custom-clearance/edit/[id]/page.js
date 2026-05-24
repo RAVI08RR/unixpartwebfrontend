@@ -321,6 +321,7 @@ export default function EditClearancePage({ params }) {
                   <option value="cleared">Cleared</option>
                 </select>
             </FormField>
+            
           </div>
 
           {/* Action Buttons */}
@@ -339,6 +340,13 @@ export default function EditClearancePage({ params }) {
               style={{ fontSize: '15px' }}
             >
               Cancel
+            </Link>
+            <Link 
+              href={`/dashboard/inventory/custom-clearance/items/${id}`}
+              className="px-6 py-3 bg-gray-50 dark:bg-zinc-800 text-gray-500 rounded-lg font-medium text-center hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              style={{ fontSize: '15px' }}
+            >
+              View items
             </Link>
           </div>
         </form>

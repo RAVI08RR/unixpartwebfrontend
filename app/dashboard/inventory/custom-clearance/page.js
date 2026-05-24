@@ -58,7 +58,7 @@ export default function CustomClearancePage() {
     return containers.filter(container => {
       const searchTarget = `${container.container_code || ''} ${container.container_number || ''} ${container.vessel_name || ''} ${container.shipping_agent || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "All" || container.status?.toLowerCase() === statusFilter.toLowerCase();
+      const matchesStatus = statusFilter === "All" || container.invoice_status?.toLowerCase() === statusFilter.toLowerCase();
       return matchesSearch && matchesStatus;
     });
   }, [searchQuery, statusFilter, containers]);
@@ -346,7 +346,7 @@ export default function CustomClearancePage() {
                     <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Ship className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</span></div><div className="flex items-center gap-2"><Navigation className="w-3.5 h-3.5 text-gray-400" /><span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Voy: {container.voyage_number}</span></div></div></td>
                     <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-black uppercase">{branches?.find(b => b.id === container.destination_branch_id)?.branch_name || 'Branch ' + container.destination_branch_id}</span></div><div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-bold text-gray-400">{container.port_of_discharging}</span></div></div></td>
                     <td className="px-6 py-6"><div className="flex items-center gap-2"><Anchor className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-600">{container.shipping_agent}</span></div></td>
-                    <td className="px-6 py-6">{getStatusBadge(container.status)}</td>
+                    <td className="px-6 py-6">{getStatusBadge(container.invoice_status)}</td>
                     <td className="px-6 py-6 text-right relative">
                         <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-all"><MoreVertical className="w-5 h-5" /></button>
                         {menuOpenId === container.id && (
@@ -383,7 +383,7 @@ export default function CustomClearancePage() {
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                   {getStatusBadge(container.status)}
+                   {getStatusBadge(container.invoice_status)}
                    <button onClick={() => toggleMenu(container.id)} className="p-2 -mr-2 text-gray-400 active:scale-90 transition-transform"><MoreVertical className="w-5 h-5" /></button>
                 </div>
               </div>
@@ -485,7 +485,7 @@ export default function CustomClearancePage() {
                 <ViewField label="Supplier" value={suppliers?.find(s => s.id === selectedContainer.supplier_id)?.company || selectedContainer.supplier_id} />
                 <ViewField label="Container Size" value={selectedContainer.container_size} />
                 <ViewField label="Total Packages" value={selectedContainer.total_packages} />
-                <ViewField label="Status" value={selectedContainer.status?.toUpperCase()} color="red" />
+                <ViewField label="Status" value={selectedContainer.invoice_status?.toUpperCase()} color="red" />
               </div>
 
               <div className="flex gap-4 pt-4">
