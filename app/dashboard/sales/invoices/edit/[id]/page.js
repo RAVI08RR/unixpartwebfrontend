@@ -571,6 +571,7 @@ export default function EditInvoicePage({ params }) {
               placeholder="INV-001"
               className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.invoice_number}
+              readOnly
               onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
             />
           </FormField>
