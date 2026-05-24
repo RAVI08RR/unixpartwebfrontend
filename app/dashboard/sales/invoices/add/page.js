@@ -25,6 +25,7 @@ function AddInvoiceContent() {
   const [customersLoading, setCustomersLoading] = useState(false);
   const [poItems, setPoItems] = useState([]);
   const [poItemsLoading, setPoItemsLoading] = useState(false);
+  const [invoiceNumberLoading, setInvoiceNumberLoading] = useState(false);
   // Add state for editing item index
   const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [itemModalOpen, setItemModalOpen] = useState(false);
@@ -50,6 +51,29 @@ function AddInvoiceContent() {
 
   // Selected customer details
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+
+  // Fetch suggested invoice number
+  useEffect(() => {
+    const fetchSuggestedInvoiceNumber = async () => {
+      setInvoiceNumberLoading(true);
+      try {
+        const data = await invoiceService.getSuggestedInvoiceNumber();
+        if (data?.suggested_invoice_number) {
+          setFormData(prev => ({
+            ...prev,
+            invoice_number: data.suggested_invoice_number,
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch suggested invoice number:", error);
+        showError("Failed to fetch suggested invoice number: " + error.message);
+      } finally {
+        setInvoiceNumberLoading(false);
+      }
+    };
+
+    fetchSuggestedInvoiceNumber();
+  }, [showError]);
 
   // Item form for modal
   const [itemForm, setItemForm] = useState({
@@ -152,7 +176,7 @@ function AddInvoiceContent() {
     if (formData.overall_load_status !== calculatedStatus) {
       setFormData(prev => ({ ...prev, overall_load_status: calculatedStatus }));
     }
-  }, [formData.items]);
+  }, [formData.items, formData.overall_load_status]);
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -242,7 +266,7 @@ function AddInvoiceContent() {
       };
       loadPreselectedItem();
     }
-  }, [searchParams]);
+  }, [searchParams, showError, success]);
 
   // Fetch PO Items
   useEffect(() => {
@@ -467,10 +491,11 @@ function AddInvoiceContent() {
           <FormField label="Invoice Number" required>
             <input 
               type="text"
-              placeholder="INV-001"
-              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              placeholder={invoiceNumberLoading ? "Loading invoice number..." : "Invoice number"}
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 cursor-not-allowed focus:outline-none transition-all"
               value={formData.invoice_number}
-              onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
+              readOnly
+              aria-busy={invoiceNumberLoading}
             />
           </FormField>
 

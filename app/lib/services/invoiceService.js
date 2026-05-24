@@ -3,6 +3,16 @@ import { getFallbackData, fallbackInvoices } from '../fallbackData';
 import { retryWithBackoff, shouldRetryError, shouldNotRetryError } from '../utils/retryUtils';
 
 export const invoiceService = {
+  // Get suggested invoice number for new invoices
+  getSuggestedInvoiceNumber: async () => {
+    try {
+      return await fetchApi('/api/invoices/suggest-invoice-number');
+    } catch (error) {
+      console.error("ðŸ“‹ Suggest invoice number failed:", error.message);
+      throw error;
+    }
+  },
+
   // Get all invoices with pagination and filters
   getAll: async (skip = 0, limit = 100, customer_id = null, status = null) => {
     try {
