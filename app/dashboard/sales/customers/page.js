@@ -435,9 +435,9 @@ export default function CustomersPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800">
                 <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
@@ -471,7 +471,7 @@ export default function CustomersPage() {
                     </td>
                     
                     {/* Contact */}
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5" data-label="Contact">
                       <div className="space-y-1">
                         {customer.phone && (
                           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -489,9 +489,9 @@ export default function CustomersPage() {
                     </td>
                     
                     {/* Business */}
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5" data-label="Business">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 font-mono">
                           <Building className="w-3.5 h-3.5" />
                           {customer.business_name || "-"}
                         </div>
@@ -502,7 +502,7 @@ export default function CustomersPage() {
                     </td>
                     
                     {/* Financial */}
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5" data-label="Financial">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                           <DollarSign className="w-3.5 h-3.5 text-blue-500" />
@@ -516,7 +516,7 @@ export default function CustomersPage() {
                     </td>
                     
                     {/* Status */}
-                    <td className="px-6 py-5">
+                    <td className="px-6 py-5" data-label="Status">
                       <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
                         customer.status 
                           ? 'bg-green-100/50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
@@ -563,7 +563,7 @@ export default function CustomersPage() {
                             {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />} 
                             {customer.status ? "Deactivate" : "Activate"}
                           </button>
-
+ 
                           <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
                             <Trash2 className="w-3.5 h-3.5" /> Delete
                           </button>

@@ -216,11 +216,11 @@ export default function PayrollPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
         {filteredPayrolls.length > 0 ? (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+              <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
                     <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -245,12 +245,12 @@ export default function PayrollPage() {
                           {payroll.month} {payroll.year}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Total Amount">
                         <span className="text-sm text-gray-600 dark:text-gray-400">
                           AED {payroll.total_amount || '0.00'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Status">
                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
                           payroll.status === 'paid'
                             ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'

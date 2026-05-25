@@ -4,14 +4,24 @@ import React, { useState, useMemo, useEffect } from "react";
 import { 
   Search, Filter, Download, 
   ChevronLeft, ChevronRight, 
-  Eye, DollarSign, Hash, Calendar, Building2, User, CreditCard, FileText, X
+  Eye, DollarSign, Hash, Calendar, Building2, User, CreditCard, FileText, X, RotateCcw
 } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
+import { useToast } from "@/app/components/Toast";
+import { useBranches } from "@/app/lib/hooks/useBranches";
+import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
+import { useUsers } from "@/app/lib/hooks/useUsers";
+import { exportToExcel } from "@/app/lib/utils/exportUtils";
 
 export default function PaymentsReceivedPage() {
+  const { success, error } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [branchFilter, setBranchFilter] = useState("All");
+  const [supplierFilter, setSupplierFilter] = useState("All");
+  const [userFilter, setUserFilter] = useState("All");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [payments, setPayments] = useState([]);
@@ -22,6 +32,15 @@ export default function PaymentsReceivedPage() {
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   
   const itemsPerPage = 10;
+
+  // Load dropdown lists
+  const { branches: apiBranches } = useBranches(0, 100, true);
+  const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
+  const { users: apiUsers } = useUsers(0, 100);
+
+  const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
+  const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
+  const users = useMemo(() => Array.isArray(apiUsers) ? apiUsers : [], [apiUsers]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -63,7 +82,7 @@ export default function PaymentsReceivedPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [payments.length, searchQuery, typeFilter, branchFilter]);
+  }, [payments.length, searchQuery, typeFilter, branchFilter, supplierFilter, userFilter, dateRange]);
 
   // Filter and search logic
   const filteredPayments = useMemo(() => {
@@ -73,20 +92,67 @@ export default function PaymentsReceivedPage() {
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === "All" || payment.payment_method?.toLowerCase().replace('_', ' ') === typeFilter.toLowerCase();
       const matchesBranch = branchFilter === "All" || payment.branch?.branch_code === branchFilter;
-      return matchesSearch && matchesType && matchesBranch;
+      
+      // Date range match
+      let matchesDateRange = true;
+      if (payment.payment_date) {
+        const pDate = new Date(payment.payment_date);
+        if (dateRange.start) {
+          const sDate = new Date(dateRange.start);
+          sDate.setHours(0,0,0,0);
+          if (pDate < sDate) matchesDateRange = false;
+        }
+        if (dateRange.end) {
+          const eDate = new Date(dateRange.end);
+          eDate.setHours(23,59,59,999);
+          if (pDate > eDate) matchesDateRange = false;
+        }
+      }
+      
+      // Supplier match
+      const matchesSupplier = supplierFilter === "All" || 
+        String(payment.invoice?.supplier_id) === String(supplierFilter) ||
+        payment.invoice?.supplier?.name === supplierFilter ||
+        payment.invoice?.supplier?.supplier_code === supplierFilter;
+      
+      // User match
+      const matchesUser = userFilter === "All" || 
+        String(payment.received_by_user?.id) === String(userFilter) ||
+        payment.received_by_user?.name === userFilter ||
+        payment.received_by_user?.user_code === userFilter;
+        
+      return matchesSearch && matchesType && matchesBranch && matchesDateRange && matchesSupplier && matchesUser;
     });
-  }, [searchQuery, typeFilter, branchFilter, payments]);
+  }, [searchQuery, typeFilter, branchFilter, dateRange, supplierFilter, userFilter, payments]);
 
   // Calculate total filtered amount
   const totalFilteredAmount = useMemo(() => {
     return filteredPayments.reduce((sum, payment) => sum + (parseFloat(payment.payment_amount) || 0), 0);
   }, [filteredPayments]);
 
-  // Get unique branches for filter
-  const branches = useMemo(() => {
-    const uniqueBranches = [...new Set(payments.map(p => p.branch?.branch_code).filter(Boolean))];
-    return uniqueBranches;
-  }, [payments]);
+  const handleExport = async () => {
+    try {
+      const exportColumns = [
+        { key: 'id', label: 'Payment ID', formatter: (val) => `PAY-${val}` },
+        { key: 'payment_date', label: 'Payment Date' },
+        { key: 'invoice.invoice_number', label: 'Invoice Number' },
+        { key: 'payment_amount', label: 'Amount', formatter: (val) => `AED ${parseFloat(val || 0).toFixed(2)}` },
+        { key: 'received_by_user.name', label: 'Collected By' },
+        { key: 'payment_method', label: 'Payment Method' },
+        { key: 'branch.branch_name', label: 'Branch' }
+      ];
+      
+      await exportToExcel(
+        filteredPayments,
+        exportColumns,
+        `payments-received-${new Date().toISOString().split('T')[0]}.xlsx`
+      );
+      success("Payments list exported successfully!");
+    } catch (err) {
+      console.error(err);
+      error("Failed to export to Excel: " + err.message);
+    }
+  };
 
   // Pagination logic
   const totalPages = Math.ceil(filteredPayments.length / itemsPerPage) || 1;
@@ -124,120 +190,189 @@ export default function PaymentsReceivedPage() {
   return (
     <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
-        <div className="shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div>
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Payments Received</h1>
-          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">A log of all payments received against invoices</p>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal mt-1">A log of all payments received against invoices.</p>
         </div>
         
-        {/* Total Filtered Amount */}
-        <div className="flex items-center gap-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 px-6 py-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/50">
-          <div className="w-12 h-12 bg-white dark:bg-zinc-900 rounded-xl flex items-center justify-center shadow-sm">
-            <DollarSign className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Total Filtered Amount</p>
-            <p className="text-2xl font-black text-emerald-900 dark:text-emerald-300">
+        {/* Total Filtered Amount & Export Button */}
+        <div className="flex items-center gap-6 justify-end">
+          <div className="text-right">
+            <p className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest leading-none mb-1">Total Filtered Amount</p>
+            <p className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
               AED {totalFilteredAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </p>
           </div>
+          <button 
+            onClick={handleExport}
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 active:scale-95"
+          >
+            <FileText className="w-4 h-4 text-emerald-600" />
+            <span>Export to Excel</span>
+          </button>
         </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="flex flex-col lg:flex-row items-center gap-3">
-        {/* Search Bar */}
-        <div className="relative w-full lg:max-w-xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search by Payment ID, Invoice #, Collected By..."
-            className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+      {/* Filters Section Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the payments list below.</p>
         </div>
-        
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3 shrink-0 w-full lg:w-auto">
-          <div className="relative flex-1 lg:flex-none">
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* Search by Invoice # */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search by Invoice #..."
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 dark:focus:ring-red-500/20 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {/* Pick Date Range */}
+          <div className="relative">
             <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="w-full flex items-center gap-2 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm justify-between"
             >
-              <Filter className="w-4 h-4" />
-              <span>Filters</span>
-            </button>
-            
-            {isFilterOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200 space-y-4">
-                {/* Type Filter */}
-                <div>
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Filter by Type</label>
-                  <div className="space-y-1">
-                    {['All', 'Cash', 'Bank Transfer', 'Credit Card', 'Cheque'].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setTypeFilter(type)}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                          typeFilter === type 
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Branch Filter */}
-                <div>
-                  <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Filter by Branch</label>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    <button
-                      onClick={() => setBranchFilter('All')}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        branchFilter === 'All' 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      All Branches
-                    </button>
-                    {branches.map((branch) => (
-                      <button
-                        key={branch}
-                        onClick={() => setBranchFilter(branch)}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                          branchFilter === branch 
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        {branch}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setTypeFilter('All');
-                    setBranchFilter('All');
-                    setSearchQuery('');
-                  }}
-                  className="w-full px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  Clear Filters
-                </button>
+              <div className="flex items-center gap-2 truncate">
+                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">
+                  {dateRange.start || dateRange.end 
+                    ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                    : "Pick a date range"
+                  }
+                </span>
               </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isDatePickerOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isDatePickerOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.start}
+                      onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.end}
+                      onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button 
+                      onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button 
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
-          <button className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
-            <Download className="w-4 h-4" />
-            <span>Export to Excel</span>
+          {/* Filter by Type */}
+          <div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Type</option>
+              <option value="Cash">Cash</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Cheque">Cheque</option>
+            </select>
+          </div>
+
+          {/* Filter by Branch */}
+          <div>
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Branch</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.branch_code || b.code || b.id}>
+                  {b.branch_name || b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter by Supplier */}
+          <div>
+            <select
+              value={supplierFilter}
+              onChange={(e) => setSupplierFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Supplier</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name || s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter by User */}
+          <div>
+            <select
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by User</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.name || u.id}>
+                  {u.name || u.username}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Clear Filters Button Row */}
+        <div className="flex items-center">
+          <button 
+            onClick={() => {
+              setSearchQuery('');
+              setTypeFilter('All');
+              setBranchFilter('All');
+              setSupplierFilter('All');
+              setUserFilter('All');
+              setDateRange({ start: '', end: '' });
+            }}
+            className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-600 transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Clear Filters</span>
           </button>
         </div>
       </div>

@@ -184,9 +184,9 @@ export default function BranchOwnersPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[800px]">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
@@ -227,10 +227,10 @@ export default function BranchOwnersPage() {
                           </div>
                         </div>
                       </td>
-
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Truck className="w-4 h-4 text-gray-400" />
+ 
+                      <td className="px-6 py-6" data-label="Supplier">
+                        <div className="flex items-center gap-2 md:justify-start justify-end w-full">
+                          <Truck className="w-4 h-4 text-gray-400 shrink-0" />
                           <div>
                             <p className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                               {supplier?.name || 'Unknown Supplier'}
@@ -241,10 +241,10 @@ export default function BranchOwnersPage() {
                           </div>
                         </div>
                       </td>
-
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Percent className="w-4 h-4 text-gray-400" />
+ 
+                      <td className="px-6 py-6" data-label="Share">
+                        <div className="flex items-center gap-2 md:justify-start justify-end w-full">
+                          <Percent className="w-4 h-4 text-gray-400 shrink-0" />
                           <div>
                             <p className="text-sm font-black text-blue-600 dark:text-blue-400">
                               {owner.share_percent}%
@@ -255,7 +255,7 @@ export default function BranchOwnersPage() {
                           </div>
                         </div>
                       </td>
-
+ 
                       <td className="px-6 py-6 text-center relative">
                         <div className="flex items-center justify-center gap-2">
                           <button

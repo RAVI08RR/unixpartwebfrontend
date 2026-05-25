@@ -179,9 +179,9 @@ export default function EmployeesPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+          <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -227,7 +227,7 @@ export default function EmployeesPage() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap" data-label="Contact">
                     <div className="text-sm text-gray-900 dark:text-white">
                       {employee.work_email || employee.personal_email || 'N/A'}
                     </div>
@@ -235,7 +235,7 @@ export default function EmployeesPage() {
                       {employee.mobile_number || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap" data-label="Position">
                     <div className="text-sm text-gray-900 dark:text-white">
                       {employee.actual_position || 'N/A'}
                     </div>
@@ -243,7 +243,7 @@ export default function EmployeesPage() {
                       Visa: {employee.visa_position || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap" data-label="Branch">
                     <div className="text-sm text-gray-900 dark:text-white">
                       {employee.current_branch?.branch_name || 'N/A'}
                     </div>
@@ -251,7 +251,7 @@ export default function EmployeesPage() {
                       {employee.current_branch?.branch_code || ''}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap" data-label="Visa Status">
                     <div className="text-sm text-gray-900 dark:text-white">
                       {employee.visa_status || 'N/A'}
                     </div>
@@ -259,7 +259,7 @@ export default function EmployeesPage() {
                       {employee.visa_type || 'N/A'}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap" data-label="Status">
                     <span className={`px-2 py-1 text-xs rounded-full ${
                       employee.status === 'active' 
                         ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
