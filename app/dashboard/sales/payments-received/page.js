@@ -8,10 +8,8 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
-import { useBranches } from "@/app/lib/hooks/useBranches";
-import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
-import { useUsers } from "@/app/lib/hooks/useUsers";
 import { exportToExcel } from "@/app/lib/utils/exportUtils";
+import useSWR from "swr";
 
 export default function PaymentsReceivedPage() {
   const { success, error } = useToast();
@@ -33,14 +31,14 @@ export default function PaymentsReceivedPage() {
   
   const itemsPerPage = 10;
 
-  // Load dropdown lists
-  const { branches: apiBranches } = useBranches(0, 100, true);
-  const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
-  const { users: apiUsers } = useUsers(0, 100);
+  // Load dropdown lists using dropdown spec
+  const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
+  const { data: dropdownSuppliers } = useSWR('/api/dropdown/suppliers', () => apiClient.get('/api/dropdown/suppliers'));
+  const { data: dropdownUsers } = useSWR('/api/dropdown/users', () => apiClient.get('/api/dropdown/users'));
 
-  const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
-  const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
-  const users = useMemo(() => Array.isArray(apiUsers) ? apiUsers : [], [apiUsers]);
+  const branches = useMemo(() => Array.isArray(dropdownBranches) ? dropdownBranches : [], [dropdownBranches]);
+  const suppliers = useMemo(() => Array.isArray(dropdownSuppliers) ? dropdownSuppliers : [], [dropdownSuppliers]);
+  const users = useMemo(() => Array.isArray(dropdownUsers) ? dropdownUsers : [], [dropdownUsers]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -91,7 +89,9 @@ export default function PaymentsReceivedPage() {
       const searchTarget = `${payment.id || ''} ${payment.invoice?.invoice_number || ''} ${payment.received_by_user?.name || ''} ${payment.payment_notes || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === "All" || payment.payment_method?.toLowerCase().replace('_', ' ') === typeFilter.toLowerCase();
-      const matchesBranch = branchFilter === "All" || payment.branch?.branch_code === branchFilter;
+      const matchesBranch = branchFilter === "All" || 
+        (payment.branch && String(payment.branch.id) === String(branchFilter)) ||
+        payment.branch?.branch_code === branchFilter;
       
       // Date range match
       let matchesDateRange = true;
@@ -111,13 +111,14 @@ export default function PaymentsReceivedPage() {
       
       // Supplier match
       const matchesSupplier = supplierFilter === "All" || 
-        String(payment.invoice?.supplier_id) === String(supplierFilter) ||
+        (payment.invoice && String(payment.invoice.supplier_id) === String(supplierFilter)) ||
+        (payment.invoice?.supplier && String(payment.invoice.supplier.id) === String(supplierFilter)) ||
         payment.invoice?.supplier?.name === supplierFilter ||
         payment.invoice?.supplier?.supplier_code === supplierFilter;
       
       // User match
       const matchesUser = userFilter === "All" || 
-        String(payment.received_by_user?.id) === String(userFilter) ||
+        (payment.received_by_user && String(payment.received_by_user.id) === String(userFilter)) ||
         payment.received_by_user?.name === userFilter ||
         payment.received_by_user?.user_code === userFilter;
         
@@ -318,8 +319,8 @@ export default function PaymentsReceivedPage() {
             >
               <option value="All">Filter by Branch</option>
               {branches.map((b) => (
-                <option key={b.id} value={b.branch_code || b.code || b.id}>
-                  {b.branch_name || b.name}
+                <option key={b.id} value={b.id}>
+                  {b.label}
                 </option>
               ))}
             </select>
@@ -335,7 +336,7 @@ export default function PaymentsReceivedPage() {
               <option value="All">Filter by Supplier</option>
               {suppliers.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name || s.label}
+                  {s.label}
                 </option>
               ))}
             </select>
@@ -350,8 +351,8 @@ export default function PaymentsReceivedPage() {
             >
               <option value="All">Filter by User</option>
               {users.map((u) => (
-                <option key={u.id} value={u.name || u.id}>
-                  {u.name || u.username}
+                <option key={u.id} value={u.id}>
+                  {u.label}
                 </option>
               ))}
             </select>
