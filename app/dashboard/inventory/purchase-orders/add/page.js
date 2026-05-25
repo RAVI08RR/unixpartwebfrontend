@@ -239,32 +239,21 @@ export default function AddPurchaseOrderPage() {
 
       {/* Add Item Modal - Simplified */}
       {itemModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-zinc-800">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add Item to Order</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">PO: {createdPo?.po_id}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
+            <form onSubmit={handleCreateItem} className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Add Item to Order</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">PO: {createdPo?.po_id}</p>
+                </div>
               </div>
-              <button 
-                onClick={() => {
-                  setItemModalOpen(false);
-                  router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
 
-            {/* Modal Content */}
-            <form onSubmit={handleCreateItem} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Category" required>
+              <div className="space-y-4">
+                <FormField label="Item Category" required>
                   <select 
                     required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={itemFormData.item_id}
                     onChange={e => setItemFormData({...itemFormData, item_id: e.target.value})}
                   >
@@ -276,7 +265,7 @@ export default function AddPurchaseOrderPage() {
                 <FormField label="Current Branch" required>
                   <select 
                     required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={itemFormData.current_branch_id}
                     onChange={e => setItemFormData({...itemFormData, current_branch_id: e.target.value})}
                   >
@@ -290,51 +279,50 @@ export default function AddPurchaseOrderPage() {
                     type="number"
                     required
                     min="1"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={itemFormData.quantity}
                     onChange={e => setItemFormData({...itemFormData, quantity: e.target.value})}
                   />
                 </FormField>
+
+                <FormField label="PO Description" required>
+                  <input 
+                    required
+                    placeholder="e.g. Engine Block - High quality part"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemFormData.po_description}
+                    onChange={e => setItemFormData({...itemFormData, po_description: e.target.value})}
+                  />
+                </FormField>
+
+                <FormField label="Stock Notes">
+                  <textarea 
+                    rows="3"
+                    placeholder="Optional notes..."
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                    value={itemFormData.stock_notes}
+                    onChange={e => setItemFormData({...itemFormData, stock_notes: e.target.value})}
+                  />
+                </FormField>
               </div>
 
-              <FormField label="PO Description" required>
-                <input 
-                  required
-                  placeholder="e.g. Engine Block - High quality part"
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                  value={itemFormData.po_description}
-                  onChange={e => setItemFormData({...itemFormData, po_description: e.target.value})}
-                />
-              </FormField>
-
-              <FormField label="Stock Notes">
-                <textarea 
-                  rows="3"
-                  placeholder="Optional notes..."
-                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
-                  value={itemFormData.stock_notes}
-                  onChange={e => setItemFormData({...itemFormData, stock_notes: e.target.value})}
-                />
-              </FormField>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4">
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  type="submit"
+                  disabled={submittingItem}
+                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  {submittingItem ? 'Adding...' : 'Add Item'}
+                </button>
                 <button 
                   type="button"
                   onClick={() => {
                     setItemModalOpen(false);
                     router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
                   }}
-                  className="px-6 py-3 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
                 >
                   Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={submittingItem}
-                  className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50"
-                >
-                  {submittingItem ? 'Adding Item...' : 'Add Item'}
                 </button>
               </div>
             </form>
@@ -347,9 +335,9 @@ export default function AddPurchaseOrderPage() {
 
 function FormField({ label, children, required }) {
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-        {label} {required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
     </div>

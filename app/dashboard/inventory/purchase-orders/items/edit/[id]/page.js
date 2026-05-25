@@ -246,9 +246,9 @@ export default function EditPOItemPage() {
 
 function FormField({ label, children, required }) {
   return (
-    <div className="space-y-1">
-      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-        {label} {required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
     </div>
