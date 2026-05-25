@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { 
   ArrowLeft, Plus, Search, MoreVertical, 
-  Trash2, Package, Box, DollarSign, Download, Save
+  Trash2, Package, Box, DollarSign, Download, Save, X, Tag
 } from "lucide-react";
 import { containerItemService } from "@/app/lib/services/containerItemService";
 import { containerService } from "@/app/lib/services/containerService";
