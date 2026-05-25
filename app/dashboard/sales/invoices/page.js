@@ -7,7 +7,7 @@ import {
   Receipt, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   DollarSign, Pencil, Trash2, Check, X, Eye, Calendar,
-  User, Building2, Printer, FileText
+  User, Building2, Printer, FileText, RefreshCcw
 } from "lucide-react";
 import { useInvoices } from "@/app/lib/hooks/useInvoices";
 import { invoiceService } from "@/app/lib/services/invoiceService";
@@ -15,6 +15,7 @@ import { customerService } from "@/app/lib/services/customerService";
 import { getAuthToken } from "@/app/lib/api";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
+import CancelReturnItemsModal from "@/app/components/CancelReturnItemsModal";
 
 function InvoiceManagementContent() {
   const router = useRouter();
@@ -131,6 +132,7 @@ function InvoiceManagementContent() {
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
 
@@ -176,6 +178,19 @@ function InvoiceManagementContent() {
     setSelectedInvoice(invoice);
     setDeleteModalOpen(true);
     setMenuOpenId(null);
+  };
+
+  const handleCancelReturnClick = async (invoice) => {
+    try {
+      // Ensure we have the full invoice details including items
+      const fullInvoice = await invoiceService.getById(invoice.id);
+      setSelectedInvoice(fullInvoice);
+      setCancelModalOpen(true);
+      setMenuOpenId(null);
+    } catch (error) {
+      console.error("Failed to fetch full invoice details", error);
+      alert("Failed to load invoice details");
+    }
   };
 
   const confirmDelete = async () => {
@@ -576,6 +591,13 @@ function InvoiceManagementContent() {
                                     </button>
                                     <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
                                     <button 
+                                      onClick={() => handleCancelReturnClick(invoice)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
+                                    >
+                                      <RefreshCcw className="w-4 h-4" />
+                                      Cancel / Return Items
+                                    </button>
+                                    <button 
                                       onClick={() => handleDeleteClick(invoice)} 
                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                     >
@@ -847,6 +869,14 @@ function InvoiceManagementContent() {
           </div>
         </>
       )}
+
+      {/* Cancel/Return Items Modal */}
+      <CancelReturnItemsModal 
+        isOpen={cancelModalOpen} 
+        onClose={() => setCancelModalOpen(false)} 
+        invoice={selectedInvoice}
+        onSuccess={() => mutate()}
+      />
     </div>
   );
 }

@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
+import { refundItemsService } from "@/app/lib/services/refundItemsService";
 
-const CancelReturnItemsModal = ({ isOpen, onClose, invoice }) => {
+const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectedItemDetails, setSelectedItemDetails] = useState(null);
   const [refundAmount, setRefundAmount] = useState(0);
   const [retainedProfit, setRetainedProfit] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
@@ -18,18 +21,35 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice }) => {
     // Initialize with item's sale amount
     setRefundAmount(parseFloat(item.sale_amount) || 0);
     setRetainedProfit(0);
+    setError("");
   };
 
-  const handleConfirm = () => {
-    // API call will be added later
-    console.log("Cancellation confirmed:", {
-      invoice_id: invoice.id,
-      invoice_number: invoice.invoice_number,
-      selected_item: selectedItemDetails,
-      refund_amount: refundAmount,
-      retained_profit: retainedProfit,
-    });
-    onClose();
+  const handleConfirm = async () => {
+    if (!selectedItemDetails) return;
+    
+    setIsLoading(true);
+    setError("");
+    
+    try {
+      await refundItemsService.create(selectedItemDetails.id, {
+        invoice_item_id: selectedItemDetails.id,
+        refund_amount: refundAmount,
+        refund_reason: "Customer Return",
+        refund_method: "Original Payment Method",
+        supplier_profit: retainedProfit,
+        refund_date: new Date().toISOString().split('T')[0]
+      });
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+      onClose();
+    } catch (err) {
+      console.error("Cancellation failed:", err);
+      setError(err.message || "Failed to process cancellation");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const totalRefund = refundAmount;
@@ -115,6 +135,12 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice }) => {
                 2. Specify Refund & Profit Details
               </h3>
 
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               {selectedItemDetails ? (
                 <div className="space-y-4">
                   {/* Selected Item Info */}
@@ -198,16 +224,24 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice }) => {
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors font-medium"
+            disabled={isLoading}
+            className="px-6 py-2.5 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors font-medium disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!selectedItemDetails}
-            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+            disabled={!selectedItemDetails || isLoading}
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium flex items-center gap-2"
           >
-            Confirm Cancellation
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Confirm Cancellation"
+            )}
           </button>
         </div>
       </div>
