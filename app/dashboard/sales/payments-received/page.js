@@ -35,10 +35,59 @@ export default function PaymentsReceivedPage() {
   const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
   const { data: dropdownSuppliers } = useSWR('/api/dropdown/suppliers', () => apiClient.get('/api/dropdown/suppliers'));
   const { data: dropdownUsers } = useSWR('/api/dropdown/users', () => apiClient.get('/api/dropdown/users'));
+  const { data: salesDataRaw } = useSWR('/api/invoices/sales-data?skip=0&limit=500', () => apiClient.get('/api/invoices/sales-data', { skip: 0, limit: 500 }));
 
   const branches = useMemo(() => Array.isArray(dropdownBranches) ? dropdownBranches : [], [dropdownBranches]);
   const suppliers = useMemo(() => Array.isArray(dropdownSuppliers) ? dropdownSuppliers : [], [dropdownSuppliers]);
   const users = useMemo(() => Array.isArray(dropdownUsers) ? dropdownUsers : [], [dropdownUsers]);
+  const salesData = useMemo(() => Array.isArray(salesDataRaw) ? salesDataRaw : [], [salesDataRaw]);
+
+  // Build a map of invoice_number -> resolved branch & supplier info from sales data
+  const invoiceBranchSupplierMap = useMemo(() => {
+    const map = {};
+    salesData.forEach(item => {
+      const invNum = item.invoice?.invoice_number;
+      if (!invNum) return;
+      
+      let branchCode = null;
+      let branchId = null;
+      let supplierCode = null;
+      let supplierId = null;
+      
+      // Parse branch code and ID from stock number
+      const stockNum = item.po_item?.stock_number;
+      if (stockNum) {
+        branchCode = stockNum.split('-')[0]?.toUpperCase();
+        if (branchCode === 'DXB') branchId = 1;
+        else if (branchCode === 'AUH') branchId = 2;
+        else if (branchCode === 'SHJ') branchId = 3;
+      }
+      
+      // Parse supplier code and ID from supplier_code
+      const supCode = item.po_item?.purchase_order?.container?.supplier?.supplier_code;
+      if (supCode) {
+        supplierCode = supCode;
+        const idNum = parseInt(supCode.replace('SUP-', ''));
+        if (!isNaN(idNum)) {
+          supplierId = idNum;
+        }
+      }
+      
+      if (!map[invNum]) {
+        map[invNum] = { branchCode, branchId, supplierCode, supplierId };
+      } else {
+        if (branchCode) {
+          map[invNum].branchCode = branchCode;
+          map[invNum].branchId = branchId;
+        }
+        if (supplierCode) {
+          map[invNum].supplierCode = supplierCode;
+          map[invNum].supplierId = supplierId;
+        }
+      }
+    });
+    return map;
+  }, [salesData]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -82,16 +131,23 @@ export default function PaymentsReceivedPage() {
     setCurrentPage(1);
   }, [payments.length, searchQuery, typeFilter, branchFilter, supplierFilter, userFilter, dateRange]);
 
-  // Filter and search logic
   const filteredPayments = useMemo(() => {
     if (!payments) return [];
     return payments.filter(payment => {
       const searchTarget = `${payment.id || ''} ${payment.invoice?.invoice_number || ''} ${payment.received_by_user?.name || ''} ${payment.payment_notes || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === "All" || payment.payment_method?.toLowerCase().replace('_', ' ') === typeFilter.toLowerCase();
+      
+      // Resolve branch & supplier IDs
+      const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
+      const paymentBranchId = payment.branch_id || payment.branch?.id || resolvedInfo?.branchId;
+      const paymentSupplierId = payment.supplier_id || payment.invoice?.supplier_id || payment.invoice?.supplier?.id || resolvedInfo?.supplierId;
+
       const matchesBranch = branchFilter === "All" || 
+        String(paymentBranchId) === String(branchFilter) ||
         (payment.branch && String(payment.branch.id) === String(branchFilter)) ||
-        payment.branch?.branch_code === branchFilter;
+        payment.branch?.branch_code === branchFilter ||
+        (payment.received_by_user?.branches && payment.received_by_user.branches.some(b => String(b.id) === String(branchFilter)));
       
       // Date range match
       let matchesDateRange = true;
@@ -111,7 +167,7 @@ export default function PaymentsReceivedPage() {
       
       // Supplier match
       const matchesSupplier = supplierFilter === "All" || 
-        (payment.invoice && String(payment.invoice.supplier_id) === String(supplierFilter)) ||
+        String(paymentSupplierId) === String(supplierFilter) ||
         (payment.invoice?.supplier && String(payment.invoice.supplier.id) === String(supplierFilter)) ||
         payment.invoice?.supplier?.name === supplierFilter ||
         payment.invoice?.supplier?.supplier_code === supplierFilter;
@@ -124,7 +180,7 @@ export default function PaymentsReceivedPage() {
         
       return matchesSearch && matchesType && matchesBranch && matchesDateRange && matchesSupplier && matchesUser;
     });
-  }, [searchQuery, typeFilter, branchFilter, dateRange, supplierFilter, userFilter, payments]);
+  }, [searchQuery, typeFilter, branchFilter, dateRange, supplierFilter, userFilter, payments, invoiceBranchSupplierMap]);
 
   // Calculate total filtered amount
   const totalFilteredAmount = useMemo(() => {
@@ -134,17 +190,28 @@ export default function PaymentsReceivedPage() {
   const handleExport = async () => {
     try {
       const exportColumns = [
-        { key: 'id', label: 'Payment ID', formatter: (val) => `PAY-${val}` },
+        { key: 'id', label: 'Pymt ID', formatter: (val) => `PAY-${val}` },
         { key: 'payment_date', label: 'Payment Date' },
-        { key: 'invoice.invoice_number', label: 'Invoice Number' },
-        { key: 'payment_amount', label: 'Amount', formatter: (val) => `AED ${parseFloat(val || 0).toFixed(2)}` },
+        { key: 'invoice.invoice_number', label: 'Invoice #' },
+        { key: 'payment_amount', label: 'Payment Amount', formatter: (val) => `AED ${parseFloat(val || 0).toFixed(2)}` },
         { key: 'received_by_user.name', label: 'Collected By' },
-        { key: 'payment_method', label: 'Payment Method' },
-        { key: 'branch.branch_name', label: 'Branch' }
+        { key: 'payment_method', label: 'Type' },
+        { key: 'payment_notes', label: 'Type Notes' },
+        { key: 'branch_code', label: 'Branch Code' },
+        { key: 'supplier_code', label: 'Supplier Code' }
       ];
       
+      const preparedData = filteredPayments.map(payment => {
+        const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
+        return {
+          ...payment,
+          branch_code: payment.branch?.branch_code || resolvedInfo?.branchCode || '-',
+          supplier_code: payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-'
+        };
+      });
+      
       await exportToExcel(
-        filteredPayments,
+        preparedData,
         exportColumns,
         `payments-received-${new Date().toISOString().split('T')[0]}.xlsx`
       );
@@ -388,34 +455,59 @@ export default function PaymentsReceivedPage() {
               <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
             </div>
           ) : paginatedPayments.length > 0 ? (
-            paginatedPayments.map((payment, index) => (
-              <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-black text-gray-900 dark:text-white uppercase">PAY-{payment.id}</span>
-                      {getPaymentTypeBadge(payment.payment_method)}
+            paginatedPayments.map((payment, index) => {
+              const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
+              const branchCode = payment.branch?.branch_code || resolvedInfo?.branchCode || '-';
+              const supplierCode = payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-';
+              
+              return (
+                <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-sm font-black text-gray-900 dark:text-white uppercase">PAY-{payment.id}</span>
+                        {getPaymentTypeBadge(payment.payment_method)}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium">
+                        Invoice: <span className="font-bold text-gray-700 dark:text-zinc-300">{payment.invoice?.invoice_number || '-'}</span>
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium mt-0.5">
+                        Date: {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-zinc-500">
-                      {payment.invoice?.invoice_number || '-'} • {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
-                    </p>
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-black text-gray-900 dark:text-white">AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-gray-400 font-medium">{payment.received_by_user?.name || '-'}</p>
+                    </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-base font-black text-gray-900 dark:text-white">AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                    <p className="text-xs text-gray-400">{payment.received_by_user?.name || '-'}</p>
+                  
+                  <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[11px] font-medium text-gray-500 dark:text-zinc-400">
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Branch Code</span>
+                      <span className="font-bold text-gray-700 dark:text-zinc-300">{branchCode}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Supplier Code</span>
+                      <span className="font-bold text-gray-700 dark:text-zinc-300">{supplierCode}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Type Notes</span>
+                      <span className="truncate block font-bold text-gray-700 dark:text-zinc-300">{payment.payment_notes || '-'}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleViewInvoice(payment.invoice_id)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View Invoice</span>
+                    </button>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <button
-                    onClick={() => handleViewInvoice(payment.invoice_id)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
-                  >
-                    <Eye className="w-4 h-4" />
-                    View Invoice
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="py-16 flex flex-col items-center gap-3">
               <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No payments found</p>
@@ -428,38 +520,46 @@ export default function PaymentsReceivedPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800">
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Payment ID</th>
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Collected By</th>
-                <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Method</th>
-                <th className="px-6 py-6 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Pymt ID</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Payment Date</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Invoice #</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Payment Amount</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Collected By</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Type</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Type Notes</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Branch Code</th>
+                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Supplier Code</th>
+                <th className="px-4 py-6 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">View Invoice</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="py-24 text-center">
+                  <td colSpan="10" className="py-24 text-center">
                     <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
                     <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
                   </td>
                 </tr>
               ) : paginatedPayments && paginatedPayments.length > 0 ? (
-                paginatedPayments.map((payment, index) => (
-                  <tr key={index} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-4 h-4 text-gray-400" />
+                paginatedPayments.map((payment, index) => {
+                  const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
+                  const branchCode = payment.branch?.branch_code || resolvedInfo?.branchCode || '-';
+                  const supplierCode = payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-';
+                  
+                  return (
+                    <tr key={index} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <Hash className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-black text-gray-900 dark:text-white uppercase">
                             PAY-{payment.id}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                             {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { 
                               day: '2-digit', 
@@ -470,62 +570,75 @@ export default function PaymentsReceivedPage() {
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-gray-400" />
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                             {payment.invoice?.invoice_number || '-'}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="w-3 h-3 text-gray-400" />
                           <span className="text-sm font-black dark:text-white">
                             AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-gray-400" />
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-gray-400" />
                           <div>
-                            <p className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                            <p className="text-sm font-bold text-gray-700 dark:text-zinc-300 leading-tight">
                               {payment.received_by_user?.name || '-'}
                             </p>
-                            <p className="text-xs text-gray-400 dark:text-zinc-500">
+                            <p className="text-[10px] text-gray-400 dark:text-zinc-500 leading-none">
                               {payment.received_by_user?.user_code || ''}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      <td className="px-6 py-6">
+                      <td className="px-4 py-5">
                         {getPaymentTypeBadge(payment.payment_method)}
                       </td>
 
-                      <td className="px-6 py-6">
-                        <span className="text-sm font-bold text-gray-600 dark:text-zinc-400 truncate max-w-[200px] block">
+                      <td className="px-4 py-5">
+                        <span className="text-sm font-medium text-gray-600 dark:text-zinc-400 truncate max-w-[150px] block">
                           {payment.payment_notes || '-'}
                         </span>
                       </td>
 
-                      <td className="px-6 py-6 text-right">
+                      <td className="px-4 py-5">
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {branchCode}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-5">
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {supplierCode}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-5 text-right">
                         <button 
                           onClick={() => handleViewInvoice(payment.invoice_id)}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all active:scale-95"
                         >
                           <Eye className="w-4 h-4" />
-                          View Invoice
+                          <span>View Invoice</span>
                         </button>
                       </td>
                     </tr>
-                  ))
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan="8" className="py-24 text-center">
+                  <td colSpan="10" className="py-24 text-center">
                     <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No payments found</p>
                   </td>
                 </tr>
