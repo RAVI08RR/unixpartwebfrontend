@@ -736,44 +736,45 @@ function PurchaseOrderItemsContent({ params }) {
 
       {/* Label Preview & Customization Modal */}
       {labelPreviewOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-100 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-6xl overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl my-8">
-            <div className="p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold dark:text-white">Label Preview & Customization</h2>
-                  <p className="text-sm text-gray-500 mt-1">Review all {getPrintData().length} selected label{getPrintData().length > 1 ? 's' : ''} and adjust styles as needed.</p>
-                </div>
-                <button onClick={() => setLabelPreviewOpen(false)} className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200 dark:border-zinc-800 shrink-0 flex items-center justify-between bg-white dark:bg-zinc-900">
+              <div>
+                <h2 className="text-xl font-bold dark:text-white">Label Preview & Customization</h2>
+                <p className="text-sm text-gray-500 mt-1">Review selected labels and adjust styles before printing.</p>
               </div>
+              <button onClick={() => setLabelPreviewOpen(false)} className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
 
-              {/* All Selected Items Cards */}
+            {/* Scrollable Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-8 bg-gray-50/30 dark:bg-zinc-950/30">
+              
+              {/* Selected Items (Horizontal Scroll) */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Package className="w-4 h-4 text-blue-600" />
                   Selected Items ({getPrintData().length})
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2">
+                <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
                   {getPrintData().map((item, index) => (
-                    <div key={item.id} className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg p-3 flex items-start gap-3 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
-                      <div className="shrink-0">
+                    <div key={item.id} className="shrink-0 w-[280px] snap-start bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 flex items-start gap-3 hover:border-blue-500 dark:hover:border-blue-500 transition-colors shadow-sm">
+                      <div className="shrink-0 bg-white p-1 rounded-lg border border-gray-100 dark:border-zinc-700">
                         <QRCodeSVG
                           value={item.qr_data}
-                          size={60}
+                          size={48}
                           level="H"
                           includeMargin={false}
                         />
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-white bg-blue-600 px-2 py-0.5 rounded">#{index + 1}</span>
-                          <span className="text-xs font-semibold text-gray-900 dark:text-white truncate">{item.stock_number}</span>
+                          <span className="text-[10px] font-black text-white bg-blue-600 px-1.5 py-0.5 rounded-md">#{index + 1}</span>
+                          <span className="text-xs font-bold text-gray-900 dark:text-white truncate">{item.stock_number}</span>
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{item.item_name}</p>
-                        {item.branch_code && (
-                          <p className="text-xs text-gray-500 dark:text-gray-500">Branch: {item.branch_code}</p>
-                        )}
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate font-medium">{item.item_name}</p>
                       </div>
                     </div>
                   ))}
@@ -782,41 +783,44 @@ function PurchaseOrderItemsContent({ params }) {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Preview */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">First Label Preview</h3>
-                  <div className="border-2 border-gray-300 dark:border-zinc-700 rounded-xl p-4 bg-gray-50 dark:bg-zinc-800/50">
-                    <div className="bg-white p-4 rounded-lg" style={{ width: `${labelSize.width * 96}px`, height: `${labelSize.height * 96}px` }}>
+                <div className="space-y-4 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-blue-600" />
+                    First Label Preview
+                  </h3>
+                  <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-zinc-950 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto min-h-[300px]">
+                    <div className="bg-white text-black p-4 rounded-xl shadow-lg border border-gray-200 flex" style={{ width: `${labelSize.width * 96}px`, height: `${labelSize.height * 96}px`, overflow: 'hidden' }}>
                       {getPrintData().length > 0 && (
-                        <div className="h-full flex items-start justify-between">
-                          <div className="flex-1 space-y-1 overflow-hidden">
+                        <div className="w-full h-full flex items-start justify-between gap-4">
+                          <div className="flex-1 flex flex-col justify-start space-y-1 overflow-hidden">
                             {getPrintData()[0].branch_code && (
-                              <div style={{ fontSize: `${labelStyles.branch.fontSize}px`, fontWeight: labelStyles.branch.bold ? 'bold' : 'normal', textDecoration: labelStyles.branch.underline ? 'underline' : 'none' }}>
+                              <div style={{ fontSize: `${labelStyles.branch.fontSize}px`, fontWeight: labelStyles.branch.bold ? 'bold' : 'normal', textDecoration: labelStyles.branch.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].branch_code}
                               </div>
                             )}
                             {getPrintData()[0].supplier_code && (
-                              <div style={{ fontSize: `${labelStyles.supplier.fontSize}px`, fontWeight: labelStyles.supplier.bold ? 'bold' : 'normal', textDecoration: labelStyles.supplier.underline ? 'underline' : 'none' }}>
+                              <div style={{ fontSize: `${labelStyles.supplier.fontSize}px`, fontWeight: labelStyles.supplier.bold ? 'bold' : 'normal', textDecoration: labelStyles.supplier.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].supplier_code}
                               </div>
                             )}
                             {getPrintData()[0].container_number && (
-                              <div style={{ fontSize: `${labelStyles.container.fontSize}px`, fontWeight: labelStyles.container.bold ? 'bold' : 'normal', textDecoration: labelStyles.container.underline ? 'underline' : 'none' }}>
+                              <div style={{ fontSize: `${labelStyles.container.fontSize}px`, fontWeight: labelStyles.container.bold ? 'bold' : 'normal', textDecoration: labelStyles.container.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].container_number}
                               </div>
                             )}
-                            <div style={{ fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none' }}>
+                            <div style={{ fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                               {getPrintData()[0].stock_number}
                             </div>
-                            <div style={{ fontSize: `${labelStyles.item.fontSize}px`, fontWeight: labelStyles.item.bold ? 'bold' : 'normal', textDecoration: labelStyles.item.underline ? 'underline' : 'none' }}>
+                            <div style={{ fontSize: `${labelStyles.item.fontSize}px`, fontWeight: labelStyles.item.bold ? 'bold' : 'normal', textDecoration: labelStyles.item.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
                               {getPrintData()[0].item_name}
                             </div>
                             {getPrintData()[0].po_description && (
-                              <div style={{ fontSize: `${labelStyles.poDescription.fontSize}px`, fontWeight: labelStyles.poDescription.bold ? 'bold' : 'normal', textDecoration: labelStyles.poDescription.underline ? 'underline' : 'none' }}>
+                              <div style={{ fontSize: `${labelStyles.poDescription.fontSize}px`, fontWeight: labelStyles.poDescription.bold ? 'bold' : 'normal', textDecoration: labelStyles.poDescription.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
                                 {getPrintData()[0].po_description}
                               </div>
                             )}
                           </div>
-                          <div className="ml-4 flex items-center justify-center">
+                          <div className="shrink-0 flex items-center justify-center">
                             <QRCodeSVG
                               value={getPrintData()[0].qr_data}
                               size={labelStyles.qrSize}
@@ -830,13 +834,13 @@ function PurchaseOrderItemsContent({ params }) {
                   </div>
                 </div>
 
-                {/* Customization */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Customize Styles</h3>
-                    <button className="text-xs text-blue-600 hover:text-blue-700 font-semibold">▲</button>
-                  </div>
-                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                {/* Customization Grid */}
+                <div className="space-y-4 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-blue-600" />
+                    Customize Styles
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {Object.entries({
                       branch: 'Branch',
                       supplier: 'Supplier Code',
@@ -845,57 +849,60 @@ function PurchaseOrderItemsContent({ params }) {
                       item: 'Item',
                       poDescription: 'PO Description',
                     }).map(([key, label]) => (
-                      <div key={key} className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-200 dark:border-zinc-700">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{label}</span>
+                      <div key={key} className="p-3.5 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50 flex flex-col gap-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{label}</span>
                           <input
                             type="number"
                             value={labelStyles[key].fontSize}
                             onChange={(e) => setLabelStyles(prev => ({ ...prev, [key]: { ...prev[key], fontSize: parseInt(e.target.value) } }))}
-                            className="w-16 px-2 py-1 text-xs bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded"
+                            className="w-14 px-2 py-1 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                           />
                         </div>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-gray-100 dark:border-zinc-800">
+                          <label className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={labelStyles[key].bold}
                               onChange={(e) => setLabelStyles(prev => ({ ...prev, [key]: { ...prev[key], bold: e.target.checked } }))}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                             />
                             Bold
                           </label>
-                          <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                          <div className="w-px h-3 bg-gray-200 dark:bg-zinc-700"></div>
+                          <label className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 cursor-pointer">
                             <input
                               type="checkbox"
                               checked={labelStyles[key].underline}
                               onChange={(e) => setLabelStyles(prev => ({ ...prev, [key]: { ...prev[key], underline: e.target.checked } }))}
-                              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                             />
-                            Under
+                            Underline
                           </label>
                         </div>
                       </div>
                     ))}
-                    <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-lg border border-gray-200 dark:border-zinc-700">
+                    <div className="p-3.5 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50 flex flex-col gap-3 justify-center">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">QR Code Size</span>
+                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">QR Code Size</span>
                         <input
                           type="number"
                           value={labelStyles.qrSize}
                           onChange={(e) => setLabelStyles(prev => ({ ...prev, qrSize: parseInt(e.target.value) }))}
-                          className="w-16 px-2 py-1 text-xs bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded"
+                          className="w-14 px-2 py-1 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         />
                       </div>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">Set the dimension (in pixels) for the QR code embedded on the right.</p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-zinc-800">
+            {/* Footer */}
+            <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-zinc-800 shrink-0 flex flex-col sm:flex-row items-center justify-end gap-3 bg-white dark:bg-zinc-900">
                 <button
                   onClick={() => {
-                    // Reset to printer defaults
                     setLabelStyles({
                       branch: { fontSize: 10, bold: false, underline: false },
                       supplier: { fontSize: 10, bold: false, underline: false },
@@ -906,24 +913,23 @@ function PurchaseOrderItemsContent({ params }) {
                       qrSize: 50,
                     });
                   }}
-                  className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  className="w-full sm:w-auto px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                 >
-                  Adjust by Printer Default Settings
+                  Reset Defaults
                 </button>
                 <button
                   onClick={() => setLabelPreviewOpen(false)}
-                  className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  className="w-full sm:w-auto px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePrint}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all flex items-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
                 >
                   <Printer className="w-4 h-4" />
                   Confirm Print
                 </button>
-              </div>
             </div>
           </div>
         </div>
