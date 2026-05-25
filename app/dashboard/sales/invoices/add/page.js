@@ -583,9 +583,9 @@ function AddInvoiceContent() {
 
         {/* Invoice Items */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice Items</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => {
@@ -641,7 +641,7 @@ function AddInvoiceContent() {
 
           {formData.items.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
@@ -750,12 +750,12 @@ function AddInvoiceContent() {
 
         {/* Payments */}
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payments</h3>
             <button
               type="button"
               onClick={addPayment}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               Add Payment Row
@@ -764,7 +764,7 @@ function AddInvoiceContent() {
 
           {formData.payments.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full min-w-[800px]">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
@@ -858,13 +858,13 @@ function AddInvoiceContent() {
         </FormField>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-zinc-800">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-zinc-800">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <button 
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+              className="flex-1 sm:flex-initial px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <Check className="w-4 h-4" />
               {loading ? 'Creating...' : 'Save'}
@@ -872,21 +872,21 @@ function AddInvoiceContent() {
             <button 
               type="button"
               onClick={handlePrint}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+              className="flex-1 sm:flex-initial px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
             >
               <Printer className="w-4 h-4" />
               Print
             </button>
             <Link 
               href="/dashboard/sales/invoices"
-              className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+              className="flex-1 sm:flex-initial px-6 py-3 text-center text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all border border-gray-150 dark:border-zinc-800 sm:border-0"
             >
               Cancel
             </Link>
           </div>
           
           {/* Status Change Dropdown */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
             <label className="text-sm font-bold text-gray-600 dark:text-gray-400">Change Status:</label>
             <select 
               className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
