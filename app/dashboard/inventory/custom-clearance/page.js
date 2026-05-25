@@ -94,8 +94,7 @@ export default function CustomClearancePage() {
     setContainerItems([]);
     setItemsLoading(true);
     try {
-      const { containerItemService } = await import('@/app/lib/services/containerItemService');
-      const itemsData = await containerItemService.getAll(0, 200, container.id);
+      const itemsData = await containerService.getContainerItems(container.id);
       setContainerItems(Array.isArray(itemsData) ? itemsData : []);
     } catch (err) {
       console.error('Failed to load container items:', err);
@@ -375,10 +374,11 @@ export default function CustomClearancePage() {
                     <td className="px-6 py-6 text-right relative">
                         <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-all"><MoreVertical className="w-5 h-5" /></button>
                         {menuOpenId === container.id && (
-                          <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                              <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><Package className="w-4 h-4" />View Items</Link>
                              <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4" />Documents</button>
                              <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
+                             <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-amber-50 rounded-xl"><Printer className="w-4 h-4" />Print Clearance</Link>
                              <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-red-50 rounded-xl"><Pencil className="w-4 h-4" />Edit Record</Link>
                              <div className="h-px bg-gray-100 my-1" /><button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" />Delete</button>
                           </div>
@@ -422,6 +422,7 @@ export default function CustomClearancePage() {
                 <div className="flex gap-2">
                   <button onClick={() => handleOpenDocuments(container)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-600"><FileText className="w-3.5 h-3.5" />Docs</button>
                   <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-600"><Package className="w-3.5 h-3.5" />Items</Link>
+                  <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-amber-600"><Printer className="w-3.5 h-3.5" />Print</Link>
                 </div>
                 <button onClick={() => { handleViewDetails(container); }} className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30 px-4 py-2 rounded-xl">View Details</button>
               </div>
@@ -589,13 +590,13 @@ export default function CustomClearancePage() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => setPrintPreviewOpen(true)}
+                  <Link
+                    href={`/dashboard/inventory/custom-clearance/print/${selectedContainer.id}`}
                     className="flex items-center justify-center gap-2 flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-200 rounded-2xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
                   >
                     <Printer className="w-4 h-4" />
                     Print Preview
-                  </button>
+                  </Link>
                   <Link 
                     href={`/dashboard/inventory/custom-clearance/edit/${selectedContainer.id}`}
                     className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center flex items-center justify-center"
