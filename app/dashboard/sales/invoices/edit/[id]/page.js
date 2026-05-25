@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle, Pencil, Printer
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle, Pencil, Printer, RotateCcw
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -34,6 +34,8 @@ export default function EditInvoicePage({ params }) {
   const [invoiceId, setInvoiceId] = useState(null);
   const { success, error: showError } = useToast();
   const printRef = useRef(null);
+  const [refundItems, setRefundItems] = useState([]);
+  const [refundLoading, setRefundLoading] = useState(false);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -312,6 +314,25 @@ export default function EditInvoicePage({ params }) {
       fetchInvoice();
     }
   }, [invoiceId, customers]);
+
+  // Fetch refund items (read-only, not part of update payload)
+  useEffect(() => {
+    const fetchRefundItems = async () => {
+      if (!invoiceId || invoiceId === "undefined") return;
+      setRefundLoading(true);
+      try {
+        const { fetchApi } = await import('@/app/lib/api');
+        const data = await fetchApi(`/api/refund-items/invoice/${invoiceId}`);
+        setRefundItems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to fetch refund items:', err);
+        setRefundItems([]);
+      } finally {
+        setRefundLoading(false);
+      }
+    };
+    fetchRefundItems();
+  }, [invoiceId]);
 
   // Add invoice item
   const addItem = () => {
@@ -904,6 +925,88 @@ export default function EditInvoicePage({ params }) {
               <p className="text-gray-500 dark:text-gray-400 text-sm">No payments added yet.</p>
             </div>
           )}
+        </div>
+
+        {/* Refund Items History - READ ONLY */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Refund Items History</h3>
+              <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest rounded-full">Read Only</span>
+            </div>
+            {refundLoading && (
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                <div className="w-4 h-4 rounded-full border-2 border-orange-400 border-t-transparent animate-spin" />
+                Loading...
+              </div>
+            )}
+          </div>
+
+          {!refundLoading && refundItems.length > 0 ? (
+            <div className="overflow-x-auto rounded-lg border border-orange-200 dark:border-orange-900/40">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-900/40">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund #</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Stock #</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Item</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Reason</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund Amount</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-orange-100 dark:divide-orange-900/20">
+                  {refundItems.map((refund, index) => (
+                    <tr key={refund.id || index} className="hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-black text-gray-900 dark:text-white">REF-{refund.id}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+                          {refund.po_item?.stock_number || refund.stock_number || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {refund.po_item?.stock_item?.name || refund.item_name || refund.po_item?.po_description || '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{refund.reason || refund.refund_reason || '-'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm font-black text-orange-600 dark:text-orange-400">
+                          {refund.refund_amount ? formatCurrency(refund.refund_amount) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          {refund.created_at ? new Date(refund.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                          refund.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          refund.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                          refund.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
+                        }`}>
+                          {refund.status || 'N/A'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : !refundLoading ? (
+            <div className="text-center py-10 bg-orange-50/50 dark:bg-orange-900/10 rounded-lg border border-dashed border-orange-200 dark:border-orange-900/40">
+              <RotateCcw className="w-10 h-10 text-orange-300 dark:text-orange-700 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 dark:text-gray-500">No refund items for this invoice.</p>
+            </div>
+          ) : null}
         </div>
 
         {/* Totals */}
