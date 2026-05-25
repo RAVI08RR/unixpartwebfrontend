@@ -221,7 +221,7 @@ export default function QuickSearch() {
       {/* Floating Quick Search Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl shadow-red-600/40 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-50 group"
+        className="fixed bottom-20 md:bottom-8 right-6 md:right-8 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl shadow-red-600/40 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-50 group"
         aria-label="Quick Search"
       >
         <Search className="w-7 h-7 group-hover:scale-110 transition-transform" />
@@ -260,12 +260,12 @@ export default function QuickSearch() {
 
             {/* Tabs */}
             <div className="px-8 pt-6">
-              <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 p-2 rounded-2xl">
+              <div className="flex items-center gap-2 bg-gray-50 dark:bg-zinc-800/50 p-2 rounded-2xl overflow-x-auto overflow-y-hidden whitespace-nowrap scrollbar-hide">
                 {tabs.map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all ${
+                    className={`flex-1 px-6 py-3 rounded-xl font-bold text-sm transition-all shrink-0 ${
                       activeTab === tab
                         ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-lg shadow-black/5"
                         : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"

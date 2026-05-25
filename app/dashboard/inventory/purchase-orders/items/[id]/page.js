@@ -386,8 +386,8 @@ function PurchaseOrderItemsContent({ params }) {
       </div>
 
       {/* Items Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto">
+        <table className="w-full min-w-[800px]">
             <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
                     <th className="px-6 py-4 text-left">

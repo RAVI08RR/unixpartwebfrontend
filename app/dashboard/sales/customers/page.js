@@ -434,10 +434,9 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Main Table / Mobile Cards */}
+      {/* Main Table */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
-        {/* Desktop Table View */}
-        <div className="hidden lg:block overflow-x-auto">
+        <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800">

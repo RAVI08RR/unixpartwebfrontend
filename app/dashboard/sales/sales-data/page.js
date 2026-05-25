@@ -37,7 +37,7 @@ export default function SalesDataPage() {
     loadStatus: "All"
   });
 
-  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
