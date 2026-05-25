@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { 
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, Check, X, 
   Eye, Package, Calendar, Building2, Ship, Hash, Truck, User as UserIcon,
-  Anchor, Navigation, MapPin, Shield, FileText, Upload, Trash, ExternalLink, AlertCircle
+  Anchor, Navigation, MapPin, Shield, FileText, Upload, Trash, ExternalLink, AlertCircle, Printer
 } from "lucide-react";
+import { useReactToPrint } from 'react-to-print';
+import PrintableClearance from "@/app/components/PrintableClearance";
 import { useContainers } from "@/app/lib/hooks/useContainers";
 import { containerService } from "@/app/lib/services/containerService";
 import { useToast } from "@/app/components/Toast";
@@ -39,7 +41,6 @@ export default function CustomClearancePage() {
     setCurrentPage(1);
   }, [containers.length, searchQuery, statusFilter]);
 
-  // Modal states
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -51,6 +52,13 @@ export default function CustomClearancePage() {
   const [uploadingDocument, setUploadingDocument] = useState(false);
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState(null);
+  // Print state
+  const [containerItems, setContainerItems] = useState([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
+  const printRef = useRef(null);
+
+  const handlePrint = useReactToPrint({ contentRef: printRef });
 
   // Filter and search logic
   const filteredContainers = useMemo(() => {
@@ -78,6 +86,23 @@ export default function CustomClearancePage() {
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
+  };
+
+  const handleViewDetails = async (container) => {
+    setSelectedContainer(container);
+    setViewModalOpen(true);
+    setContainerItems([]);
+    setItemsLoading(true);
+    try {
+      const { containerItemService } = await import('@/app/lib/services/containerItemService');
+      const itemsData = await containerItemService.getAll(0, 200, container.id);
+      setContainerItems(Array.isArray(itemsData) ? itemsData : []);
+    } catch (err) {
+      console.error('Failed to load container items:', err);
+      setContainerItems([]);
+    } finally {
+      setItemsLoading(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -353,7 +378,7 @@ export default function CustomClearancePage() {
                           <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                              <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><Package className="w-4 h-4" />View Items</Link>
                              <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4" />Documents</button>
-                             <button onClick={() => { setSelectedContainer(container); setViewModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
+                             <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
                              <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-red-50 rounded-xl"><Pencil className="w-4 h-4" />Edit Record</Link>
                              <div className="h-px bg-gray-100 my-1" /><button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" />Delete</button>
                           </div>
@@ -398,7 +423,7 @@ export default function CustomClearancePage() {
                   <button onClick={() => handleOpenDocuments(container)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-600"><FileText className="w-3.5 h-3.5" />Docs</button>
                   <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-600"><Package className="w-3.5 h-3.5" />Items</Link>
                 </div>
-                <button onClick={() => { setSelectedContainer(container); setViewModalOpen(true); }} className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30 px-4 py-2 rounded-xl">View Details</button>
+                <button onClick={() => { handleViewDetails(container); }} className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30 px-4 py-2 rounded-xl">View Details</button>
               </div>
 
               {menuOpenId === container.id && (
@@ -457,7 +482,7 @@ export default function CustomClearancePage() {
       {/* View Details Modal */}
       {viewModalOpen && selectedContainer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 rounded-[15px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
+          <div className="bg-white dark:bg-zinc-900 rounded-[15px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto">
             <div className="p-8 space-y-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -488,10 +513,92 @@ export default function CustomClearancePage() {
                 <ViewField label="Status" value={selectedContainer.invoice_status?.toUpperCase()} color="red" />
               </div>
 
-              <div className="flex gap-4 pt-4">
+              {/* Container Items Section */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Package className="w-4 h-4 text-gray-400" />
+                    Container Items
+                    {!itemsLoading && (
+                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 text-[10px] font-black rounded-full">
+                        {containerItems.length}
+                      </span>
+                    )}
+                  </h3>
+                  {itemsLoading && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-400 border-t-transparent animate-spin" />
+                      Loading...
+                    </div>
+                  )}
+                </div>
+
+                {!itemsLoading && containerItems.length > 0 ? (
+                  <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-zinc-800">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-700">
+                          <th className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider">#</th>
+                          <th className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider">Item</th>
+                          <th className="px-4 py-3 text-left text-[10px] font-black text-gray-400 uppercase tracking-wider">Description</th>
+                          <th className="px-4 py-3 text-center text-[10px] font-black text-gray-400 uppercase tracking-wider">Qty</th>
+                          <th className="px-4 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-wider">Unit Price</th>
+                          <th className="px-4 py-3 text-right text-[10px] font-black text-gray-400 uppercase tracking-wider">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                        {containerItems.map((item, idx) => {
+                          const unitPrice = parseFloat(item.unit_price || 0);
+                          const qty = parseInt(item.quantity || 1);
+                          return (
+                            <tr key={item.id || idx} className="hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                              <td className="px-4 py-3 text-xs text-gray-400 font-bold">{idx + 1}</td>
+                              <td className="px-4 py-3 font-bold text-gray-900 dark:text-white">
+                                {item.stock_item?.name || item.item?.name || item.item_name || '—'}
+                              </td>
+                              <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{item.item_description || '—'}</td>
+                              <td className="px-4 py-3 text-center font-bold text-gray-700 dark:text-gray-300">{qty}</td>
+                              <td className="px-4 py-3 text-right font-bold text-gray-700 dark:text-gray-300">
+                                {unitPrice > 0 ? `AED ${unitPrice.toFixed(2)}` : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-right font-black text-gray-900 dark:text-white">
+                                {unitPrice > 0 ? `AED ${(unitPrice * qty).toFixed(2)}` : '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {containerItems.some(i => parseFloat(i.unit_price || 0) > 0) && (
+                        <tfoot>
+                          <tr className="bg-gray-900 dark:bg-white text-white dark:text-black">
+                            <td colSpan={5} className="px-4 py-3 text-right text-xs font-black uppercase tracking-wider">Total Amount</td>
+                            <td className="px-4 py-3 text-right font-black text-sm">
+                              AED {containerItems.reduce((s, i) => s + parseFloat(i.unit_price || 0) * parseInt(i.quantity || 1), 0).toFixed(2)}
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
+                  </div>
+                ) : !itemsLoading ? (
+                  <div className="text-center py-6 bg-gray-50 dark:bg-zinc-800/30 rounded-xl border border-dashed border-gray-200 dark:border-zinc-700">
+                    <Package className="w-8 h-8 text-gray-300 dark:text-zinc-600 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">No items in this container.</p>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setPrintPreviewOpen(true)}
+                    className="flex items-center justify-center gap-2 flex-1 py-4 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-200 rounded-2xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 active:scale-95 transition-all"
+                  >
+                    <Printer className="w-4 h-4" />
+                    Print Preview
+                  </button>
                   <Link 
                     href={`/dashboard/inventory/custom-clearance/edit/${selectedContainer.id}`}
-                    className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center"
+                    className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center flex items-center justify-center"
                   >
                     Edit Record
                   </Link>
@@ -502,6 +609,48 @@ export default function CustomClearancePage() {
                     Close
                   </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Print Preview Overlay ── */}
+      {printPreviewOpen && selectedContainer && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex flex-col">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between px-6 py-4 bg-gray-900 text-white shrink-0">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-red-400" />
+              <span className="font-black tracking-tight">Print Preview — {selectedContainer.container_code}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm active:scale-95 transition-all shadow-lg shadow-red-600/30"
+              >
+                <Printer className="w-4 h-4" />
+                Print
+              </button>
+              <button
+                onClick={() => setPrintPreviewOpen(false)}
+                className="flex items-center gap-2 px-5 py-2.5 bg-zinc-700 hover:bg-zinc-600 text-white rounded-xl font-bold text-sm transition-all"
+              >
+                <X className="w-4 h-4" />
+                Close
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable preview area */}
+          <div className="flex-1 overflow-y-auto bg-gray-200 dark:bg-zinc-800 py-8 px-4">
+            <div className="shadow-2xl">
+              <PrintableClearance
+                ref={printRef}
+                container={selectedContainer}
+                items={containerItems}
+                branches={branches}
+                suppliers={suppliers}
+              />
             </div>
           </div>
         </div>
