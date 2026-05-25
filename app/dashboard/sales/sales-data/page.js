@@ -46,7 +46,7 @@ export default function SalesDataPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await invoiceService.getSalesData(0, 500);
+      const data = await invoiceService.getSalesData(0, 100);
       setSalesData(Array.isArray(data) ? data : []);
       
       // Debug: Log unique customer IDs in sales data
@@ -512,10 +512,13 @@ export default function SalesDataPage() {
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Item Sold</th>
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Stock #</th>
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Container No</th>
+                <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Sale Description</th>
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Invoice Number</th>
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Qty</th>
+                <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Unit Price</th>
                 <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Paid Amount</th>
-                <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Balance</th>
+                <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Balance Amount</th>
+                <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Load Status</th>
                 <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Load Date and Time</th>
                 <th className="px-6 py-5"></th>
               </tr>
@@ -523,7 +526,7 @@ export default function SalesDataPage() {
             <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
               {loading ? (
                 <tr>
-                   <td colSpan="14" className="px-6 py-20 text-center">
+                   <td colSpan="17" className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-3">
                          <RefreshCcw className="w-8 h-8 text-gray-300 animate-spin" />
                          <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Loading Sales Data...</p>
@@ -548,25 +551,31 @@ export default function SalesDataPage() {
                     <td className="px-6 py-5 text-sm font-black text-gray-900 dark:text-white truncate max-w-[200px]">{item.po_item?.stock_item?.name || "-"}</td>
                     <td className="px-6 py-5"><span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-md">{item.po_item?.stock_number || "-"}</span></td>
                     <td className="px-6 py-5 text-xs font-bold text-gray-500">{item.po_item?.purchase_order?.container?.container_number || "-"}</td>
+                    <td className="px-6 py-5 text-sm text-gray-500 max-w-xs truncate" title={item.sale_description || "-"}>{item.sale_description || "-"}</td>
                     <td className="px-6 py-5 font-bold text-blue-600 text-sm">{item.invoice?.invoice_number || "-"}</td>
                     <td className="px-6 py-5 font-black text-xs">{item.po_item?.quantity || "1"}</td>
+                    <td className="px-6 py-5 text-gray-900 dark:text-white font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0) + parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</td>
                     <td className="px-6 py-5 text-emerald-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0)).toLocaleString()}</td>
                     <td className="px-6 py-5 text-red-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</td>
+                    <td className="px-6 py-5">
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.load_status === 'loaded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {item.load_status || 'Pending'}
+                      </span>
+                    </td>
                     <td className="px-6 py-5 text-sm font-medium text-gray-500">{item.load_date ? formatDate(item.load_date) : "-"}</td>
                     <td className="px-6 py-5 text-right relative">
                         <button onClick={() => toggleMenu(idx)} className="p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all"><MoreVertical className="w-5 h-5" /></button>
                         {menuOpenId === idx && (
                           <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-50 p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
-                             <button onClick={() => handleOpenDetails(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
+                             <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
                              <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4 text-blue-600" />View Invoice</Link>
-                             <button onClick={() => handleOpenLoadModal(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-amber-50 rounded-xl"><RefreshCcw className="w-4 h-4 text-amber-600" />Update Load</button>
                           </div>
                         )}
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="14" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest italic animate-pulse">No sales data found</td></tr>
+                <tr><td colSpan="17" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest italic animate-pulse">No sales data found</td></tr>
               )}
             </tbody>
           </table>
@@ -600,13 +609,12 @@ export default function SalesDataPage() {
                     {item.load_status || 'Pending'}
                   </div>
                 </div>
-                <button onClick={() => handleOpenDetails(item)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 px-3 py-1 rounded-lg">Details</button>
+                <button onClick={() => handleViewDetails(item)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 px-3 py-1 rounded-lg">Details</button>
               </div>
 
               {menuOpenId === idx && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 duration-200">
-                   <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">View Invoice</span></Link>
-                   <button onClick={() => { handleOpenLoadModal(item); setMenuOpenId(null); }} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><RefreshCcw className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Update Load</span></button>
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-1 animate-in slide-in-from-top-2 duration-200">
+                   <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl w-full"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">View Invoice</span></Link>
                 </div>
               )}
             </div>

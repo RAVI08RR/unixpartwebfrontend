@@ -4,7 +4,7 @@ import React from "react";
 import { 
   BarChart3, LayoutDashboard, Box, Users, ShoppingCart, 
   FileText, Settings, LogOut, Layers, Package, Truck, 
-  DollarSign, X, Shield, Building2, UserCheck
+  DollarSign, X, Shield, Building2, UserCheck, FolderOpen
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -167,6 +167,7 @@ export function Sidebar() {
       permission: null,
       items: [
         { label: "General", href: "/dashboard/settings", icon: Settings, permission: null },
+        { label: "File Manager", href: "/dashboard/settings/file-manager", icon: FolderOpen, permission: null },
         { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield, permission: PERMISSIONS.PERMISSIONS.VIEW },
         { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null },
       ]

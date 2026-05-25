@@ -212,13 +212,36 @@ export const invoiceService = {
     }
   },
 
-  // Get sales data (consolidated sales items)
+  // Get sales data (consolidated  // Sales Data endpoints
   getSalesData: async (skip = 0, limit = 100) => {
     try {
-      return await fetchApi(`/api/invoices/sales-data?skip=${skip}&limit=${limit}`);
+      const response = await fetchApi(`/api/invoices/sales-data?skip=${skip}&limit=${limit}`);
+      
+      // WORKAROUND: The backend /api/invoices/sales-data endpoint does not return the actual invoice ID.
+      // We need to fetch the invoices and match them by invoice_number to attach the ID.
+      try {
+        const allInvoicesResp = await fetchApi('/api/invoices/?skip=0&limit=100');
+        const invoicesList = Array.isArray(allInvoicesResp) ? allInvoicesResp : 
+                            (allInvoicesResp.items || allInvoicesResp.invoices || []);
+        
+        if (Array.isArray(response) && invoicesList.length > 0) {
+          response.forEach(item => {
+            if (item.invoice && !item.invoice.id && item.invoice.invoice_number) {
+              const matched = invoicesList.find(inv => inv.invoice_number === item.invoice.invoice_number);
+              if (matched) {
+                item.invoice.id = matched.id;
+              }
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Could not patch sales data with invoice IDs:", e);
+      }
+      
+      return response;
     } catch (error) {
-      console.error("📋 Get sales data failed:", error.message);
-      return [];
+      console.error('Failed to fetch sales data:', error);
+      throw error;
     }
   },
 

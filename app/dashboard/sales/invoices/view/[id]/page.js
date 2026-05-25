@@ -27,7 +27,11 @@ export default function ViewInvoicePage({ params }) {
   useEffect(() => {
     // Unwrap params promise
     Promise.resolve(params).then((resolvedParams) => {
-      setInvoiceId(resolvedParams.id);
+      if (resolvedParams.id && resolvedParams.id !== 'undefined') {
+        setInvoiceId(resolvedParams.id);
+      } else {
+        setLoading(false);
+      }
     });
   }, [params]);
 

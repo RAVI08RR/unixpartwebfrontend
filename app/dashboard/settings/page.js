@@ -13,7 +13,8 @@ import {
   Palette,
   CreditCard,
   MessageSquare,
-  Building2
+  Building2,
+  FolderOpen
 } from "lucide-react";
 
 export default function SettingsHubPage() {
@@ -55,6 +56,13 @@ export default function SettingsHubPage() {
           href: "/dashboard/administration/branches",
           icon: <Building2 className="w-5 h-5 text-orange-600" />,
           color: "orange"
+        },
+        {
+          title: "File Manager",
+          description: "Browse and manage documents across all modules",
+          href: "/dashboard/settings/file-manager",
+          icon: <FolderOpen className="w-5 h-5 text-indigo-600" />,
+          color: "indigo"
         },
       ]
     },

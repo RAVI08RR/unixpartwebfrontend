@@ -16,10 +16,21 @@ export const employeeService = {
   getById: async (id) => {
     try {
       const response = await fetchApi(`/api/employees/${id}`);
+      // Check if it's the backend error masquerading as a successful response
+      if (response && response.success === false && response.message?.includes('missing 1 required positional argument')) {
+        throw new Error("Backend crashed");
+      }
       return response;
     } catch (error) {
-      console.error(`Failed to fetch employee ${id}:`, error);
-      throw error;
+      console.warn(`[Workaround] Failed to fetch employee ${id} via direct endpoint, falling back to getAll list:`, error.message);
+      try {
+        const allEmployees = await fetchApi(`/api/employees?skip=0&limit=1000`);
+        const employee = allEmployees.find(emp => emp.id.toString() === id.toString());
+        if (employee) return employee;
+        throw new Error(`Employee ${id} not found in the list`);
+      } catch (fallbackError) {
+        throw new Error(`Failed to load employee ${id}: ${error.message}`);
+      }
     }
   },
 
