@@ -244,6 +244,49 @@ export default function PaymentsReceivedPage() {
 
       {/* Main Table / Mobile Cards */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Mobile Cards */}
+        <div className="block lg:hidden divide-y divide-gray-100 dark:divide-zinc-800">
+          {loading ? (
+            <div className="py-16 flex flex-col items-center gap-3">
+              <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin" />
+              <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
+            </div>
+          ) : paginatedPayments.length > 0 ? (
+            paginatedPayments.map((payment, index) => (
+              <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-black text-gray-900 dark:text-white uppercase">PAY-{payment.id}</span>
+                      {getPaymentTypeBadge(payment.payment_method)}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-zinc-500">
+                      {payment.invoice?.invoice_number || '-'} • {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-base font-black text-gray-900 dark:text-white">AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                    <p className="text-xs text-gray-400">{payment.received_by_user?.name || '-'}</p>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <button
+                    onClick={() => handleViewInvoice(payment.invoice_id)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Invoice
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-16 flex flex-col items-center gap-3">
+              <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No payments found</p>
+            </div>
+          )}
+        </div>
+
         {/* Desktop Table View */}
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left">

@@ -356,8 +356,70 @@ export default function AllInventoryPage() {
         </div>
       )}
 
-        {/* Main Table / Mobile Cards */}
+      {/* Main Table / Mobile Cards */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+        {/* Mobile Cards */}
+        <div className="block md:hidden divide-y divide-gray-100 dark:divide-zinc-800">
+          {loading ? (
+            <div className="py-16 flex flex-col items-center gap-3">
+              <div className="w-8 h-8 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
+              <p className="text-red-600 font-bold text-sm tracking-widest uppercase">Loading...</p>
+            </div>
+          ) : paginatedData.length > 0 ? (
+            paginatedData.map((item) => (
+              <div key={item.id} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-10 h-10 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0">
+                      <Package className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-gray-900 dark:text-white truncate">{item.stock_item?.name || item.po_description || "-"}</p>
+                      <p className="text-xs text-gray-400 font-mono uppercase tracking-wider">{item.stock_number || "-"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${
+                      item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                      item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                      'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                    }`}>{item.status?.replace('_', ' ') || "-"}</span>
+                    <div className="relative">
+                      <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-all">
+                        <MoreVertical className="w-4 h-4 text-gray-400" />
+                      </button>
+                      {menuOpenId === item.id && (
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-50 py-1.5">
+                          <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
+                            <Eye className="w-4 h-4" />View Details
+                          </button>
+                          <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
+                            <FileText className="w-4 h-4" />Edit Item
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-4 pl-13">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-[10px] font-bold">
+                    <Building2 className="w-3 h-3" />{item.current_branch?.branch_code || "-"}
+                  </span>
+                  <span className="text-xs text-gray-400">Qty: <strong className="text-gray-700 dark:text-gray-300">{item.quantity || 1}</strong></span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-16 flex flex-col items-center gap-3">
+              <div className="w-14 h-14 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
+                <Package className="w-7 h-7 text-gray-300 dark:text-zinc-600" />
+              </div>
+              <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
+              <p className="text-xs text-gray-400">Try adjusting your filters.</p>
+            </div>
+          )}
+        </div>
+
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
@@ -410,27 +472,16 @@ export default function AllInventoryPage() {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="relative inline-block">
-                        <button
-                          onClick={() => toggleMenu(item.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
-                        >
+                        <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
                           <MoreVertical className="w-4 h-4 text-gray-400" />
                         </button>
                         {menuOpenId === item.id && (
                           <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                            <button
-                              onClick={() => handleViewDetails(item)}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                              View Details
+                            <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                              <Eye className="w-4 h-4" />View Details
                             </button>
-                            <button
-                              onClick={() => handleEditItem(item)}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-                            >
-                              <FileText className="w-4 h-4" />
-                              Edit Item
+                            <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                              <FileText className="w-4 h-4" />Edit Item
                             </button>
                           </div>
                         )}
