@@ -359,7 +359,7 @@ export default function AddClearancePage() {
                     required
                   >
                     <option value="">Select Item Category</option>
-                    {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
+                    {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
                   </select>
                 </FormField>
 
