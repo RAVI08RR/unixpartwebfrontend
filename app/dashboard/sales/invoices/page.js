@@ -12,7 +12,8 @@ import {
 import { useInvoices } from "@/app/lib/hooks/useInvoices";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
-import { getAuthToken } from "@/app/lib/api";
+import { getAuthToken, apiClient } from "@/app/lib/api";
+import useSWR from "swr";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 import CancelReturnItemsModal from "@/app/components/CancelReturnItemsModal";
@@ -24,6 +25,13 @@ function InvoiceManagementContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [customerFilter, setCustomerFilter] = useState("All");
+  const [branchFilter, setBranchFilter] = useState("All");
+  const [invoiceNumberFilter, setInvoiceNumberFilter] = useState("");
+  const [stockNumberFilter, setStockNumberFilter] = useState("");
+  const [userFilter, setUserFilter] = useState("All");
+  const [loadStatusFilter, setLoadStatusFilter] = useState("All");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
@@ -43,9 +51,8 @@ function InvoiceManagementContent() {
   
   // Convert status filter to API parameter
   const getApiStatusParam = (statusFilter) => {
-    if (statusFilter === "Active") return "true";
-    if (statusFilter === "Inactive") return "false";
-    return null; // "All" case
+    if (statusFilter === "All") return null;
+    return statusFilter.toLowerCase();
   };
   
   // Convert customer filter to API parameter
@@ -59,25 +66,73 @@ function InvoiceManagementContent() {
     getApiCustomerParam(customerFilter),
     getApiStatusParam(statusFilter)
   );
-  const [customers, setCustomers] = useState([]);
 
-  useEffect(() => {
-    customerService.getAll().then(data => {
-      if (data && data.length > 0) setCustomers(data);
-    }).catch(err => console.error("Failed to fetch customers", err));
-  }, []);
+  // Load dropdown lists using dropdown spec
+  const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
+  const { data: dropdownCustomers } = useSWR('/api/dropdown/customers', () => apiClient.get('/api/dropdown/customers'));
+  const { data: dropdownUsers } = useSWR('/api/dropdown/users', () => apiClient.get('/api/dropdown/users'));
+  const { data: salesDataRaw } = useSWR('/api/invoices/sales-data?skip=0&limit=500', () => apiClient.get('/api/invoices/sales-data', { skip: 0, limit: 500 }));
+
+  const branches = useMemo(() => Array.isArray(dropdownBranches) ? dropdownBranches : [], [dropdownBranches]);
+  const customers = useMemo(() => Array.isArray(dropdownCustomers) ? dropdownCustomers : [], [dropdownCustomers]);
+  const users = useMemo(() => Array.isArray(dropdownUsers) ? dropdownUsers : [], [dropdownUsers]);
+  const salesData = useMemo(() => Array.isArray(salesDataRaw) ? salesDataRaw : [], [salesDataRaw]);
+
+  // Build a map of invoice_number -> resolved branch & supplier & stock numbers info
+  const invoiceDetailsMap = useMemo(() => {
+    const map = {};
+    salesData.forEach(item => {
+      const invNum = item.invoice?.invoice_number;
+      if (!invNum) return;
+      
+      let branchCode = null;
+      let branchId = null;
+      let supplierCode = null;
+      let supplierId = null;
+      const stockNum = item.po_item?.stock_number;
+      
+      if (stockNum) {
+        branchCode = stockNum.split('-')[0]?.toUpperCase();
+        if (branchCode === 'DXB') branchId = 1;
+        else if (branchCode === 'AUH') branchId = 2;
+        else if (branchCode === 'SHJ') branchId = 3;
+      }
+      
+      const supCode = item.po_item?.purchase_order?.container?.supplier?.supplier_code;
+      if (supCode) {
+        supplierCode = supCode;
+        const idNum = parseInt(supCode.replace('SUP-', ''));
+        if (!isNaN(idNum)) {
+          supplierId = idNum;
+        }
+      }
+      
+      if (!map[invNum]) {
+        map[invNum] = {
+          branchId,
+          supplierId,
+          stockNumbers: new Set()
+        };
+      }
+      if (stockNum) map[invNum].stockNumbers.add(stockNum);
+      if (branchId) map[invNum].branchId = branchId;
+      if (supplierId) map[invNum].supplierId = supplierId;
+    });
+    
+    // Convert sets to arrays
+    Object.keys(map).forEach(key => {
+      map[key].stockNumbers = Array.from(map[key].stockNumbers);
+    });
+    
+    return map;
+  }, [salesData]);
 
   // Update URL parameters when filters change
   const updateUrlParams = (status, customer) => {
     const params = new URLSearchParams();
     
-    // Map status names to boolean values for API
     if (status !== "All") {
-      if (status === "Active") {
-        params.set('status', 'true');
-      } else if (status === "Inactive") {
-        params.set('status', 'false');
-      }
+      params.set('status', status.toLowerCase());
     }
     
     if (customer !== "All") params.set('customer', customer);
@@ -124,10 +179,10 @@ function InvoiceManagementContent() {
     setIsMounted(true);
   }, []);
 
-  // Reset to first page when invoices list changes
+  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [invoices.length]);
+  }, [invoices.length, searchQuery, statusFilter, customerFilter, branchFilter, invoiceNumberFilter, stockNumberFilter, userFilter, loadStatusFilter, dateRange]);
 
   // Modal states
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -136,17 +191,68 @@ function InvoiceManagementContent() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [menuOpenId, setMenuOpenId] = useState(null);
 
-  // Filter and search logic (API handles status and customer filtering)
+  // Filter and search logic
   const filteredInvoices = useMemo(() => {
     if (!invoices) return [];
     return invoices.filter(invoice => {
-      const matchesSearch = 
+      // Resolve branch, supplier, and stock numbers from sales data mapping
+      const resolvedInfo = invoiceDetailsMap[invoice.invoice_number];
+      const invoiceBranchId = resolvedInfo?.branchId;
+      const invoiceStockNumbers = resolvedInfo?.stockNumbers || [];
+
+      // Status check (local filter fallback)
+      const matchesStatus = statusFilter === "All" || invoice.invoice_status?.toLowerCase() === statusFilter.toLowerCase();
+
+      // Customer check (local filter fallback)
+      const matchesCustomer = customerFilter === "All" || String(invoice.customer_id) === String(customerFilter);
+
+      // Branch check
+      const matchesBranch = branchFilter === "All" || 
+        String(invoiceBranchId) === String(branchFilter) ||
+        (invoice.created_by?.branches && invoice.created_by.branches.some(b => String(b.id) === String(branchFilter)));
+
+      // Invoice Number check
+      const matchesInvoiceNumber = !invoiceNumberFilter || (invoice.invoice_number?.toLowerCase() || "").includes(invoiceNumberFilter.toLowerCase());
+
+      // Stock Number check
+      const matchesStockNumber = !stockNumberFilter || invoiceStockNumbers.some(sn => sn.toLowerCase().includes(stockNumberFilter.toLowerCase()));
+
+      // User check
+      const matchesUser = userFilter === "All" || 
+        String(invoice.invoice_by) === String(userFilter) || 
+        String(invoice.created_by?.id) === String(userFilter);
+
+      // Load Status check
+      const matchesLoadStatus = loadStatusFilter === "All" || invoice.overall_load_status?.toLowerCase() === loadStatusFilter.replace(' ', '_').toLowerCase();
+
+      // Date range match
+      let matchesDateRange = true;
+      if (invoice.invoice_date) {
+        const pDate = new Date(invoice.invoice_date);
+        if (dateRange.start) {
+          const sDate = new Date(dateRange.start);
+          sDate.setHours(0,0,0,0);
+          if (pDate < sDate) matchesDateRange = false;
+        }
+        if (dateRange.end) {
+          const eDate = new Date(dateRange.end);
+          eDate.setHours(23,59,59,999);
+          if (pDate > eDate) matchesDateRange = false;
+        }
+      }
+
+      // Generic search bar fallback check
+      const matchesSearch = !searchQuery || 
         (invoice.invoice_number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (invoice.invoice_notes?.toLowerCase() || "").includes(searchQuery.toLowerCase());
-      
-      return matchesSearch;
+
+      return matchesStatus && matchesCustomer && matchesBranch && matchesInvoiceNumber && 
+             matchesStockNumber && matchesUser && matchesLoadStatus && matchesDateRange && matchesSearch;
     });
-  }, [searchQuery, invoices]);
+  }, [
+    invoices, statusFilter, customerFilter, branchFilter, invoiceNumberFilter, 
+    stockNumberFilter, userFilter, loadStatusFilter, dateRange, searchQuery, invoiceDetailsMap
+  ]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
@@ -212,9 +318,11 @@ function InvoiceManagementContent() {
   };
 
   // Helper function to get customer name
-  const getCustomerName = (customerId) => {
+  const getCustomerName = (customerId, customerObj = null) => {
+    if (customerObj?.full_name) return customerObj.full_name;
+    if (customerObj?.label) return customerObj.label;
     const customer = customers.find(c => c.id === customerId);
-    return customer ? customer.full_name : `Customer #${customerId}`;
+    return customer ? (customer.label || customer.full_name) : `Customer #${customerId}`;
   };
 
   // Helper function to get customer invoice link
@@ -331,98 +439,6 @@ function InvoiceManagementContent() {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
-            <div className="relative flex-1 sm:flex-none">
-              <button 
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
-              
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {/* Status Filter */}
-                  <div className="mb-4">
-                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Status</h4>
-                    <div className="space-y-1">
-                      {["All", "Active", "Inactive"].map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => {
-                            setStatusFilter(status);
-                            setCurrentPage(1);
-                            updateUrlParams(status, customerFilter);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            statusFilter === status 
-                              ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {status === "All" ? "All Status" : status}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Customer Filter */}
-                  <div className="mb-3">
-                    <h4 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Customer</h4>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      <button
-                        onClick={() => {
-                          setCustomerFilter("All");
-                          setCurrentPage(1);
-                          updateUrlParams(statusFilter, "All");
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          customerFilter === "All" 
-                            ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        All Customers
-                      </button>
-                      {customers.map((customer) => (
-                        <button
-                          key={customer.id}
-                          onClick={() => {
-                            setCustomerFilter(customer.id.toString());
-                            setCurrentPage(1);
-                            updateUrlParams(statusFilter, customer.id.toString());
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            customerFilter === customer.id.toString() 
-                              ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {customer.full_name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Clear Filters */}
-                  <div className="pt-2 border-t border-gray-100 dark:border-zinc-800">
-                    <button
-                      onClick={() => {
-                        setStatusFilter("All");
-                        setCustomerFilter("All");
-                        setCurrentPage(1);
-                        setIsFilterOpen(false);
-                        updateUrlParams("All", "All");
-                      }}
-                      className="w-full px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
             <ExportButton
               data={filteredInvoices}
               columns={[
@@ -442,6 +458,197 @@ function InvoiceManagementContent() {
               <span className="whitespace-nowrap font-black">Add Invoice</span>
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Filters Section Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in duration-300">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the invoice list below.</p>
+        </div>
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Filter by Branch */}
+          <div>
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Branch</option>
+              {branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Pick Date Range */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="w-full flex items-center gap-2 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm justify-between"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">
+                  {dateRange.start || dateRange.end 
+                    ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                    : "Pick a date range"
+                  }
+                </span>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isDatePickerOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isDatePickerOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.start}
+                      onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.end}
+                      onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button 
+                      onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button 
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Filter by Invoice # */}
+          <div>
+            <input 
+              type="text" 
+              placeholder="Filter by Invoice #..."
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+              value={invoiceNumberFilter}
+              onChange={(e) => setInvoiceNumberFilter(e.target.value)}
+            />
+          </div>
+
+          {/* Filter by Customer */}
+          <div>
+            <select
+              value={customerFilter}
+              onChange={(e) => setCustomerFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Customer</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter by Stock Number */}
+          <div>
+            <input 
+              type="text" 
+              placeholder="Filter by Stock Number..."
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+              value={stockNumberFilter}
+              onChange={(e) => setStockNumberFilter(e.target.value)}
+            />
+          </div>
+
+          {/* Filter by Invoice Status */}
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Invoice Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Partial">Partial</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Pending">Pending</option>
+            </select>
+          </div>
+
+          {/* Filter by User */}
+          <div>
+            <select
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by User</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter by Load Status */}
+          <div>
+            <select
+              value={loadStatusFilter}
+              onChange={(e) => setLoadStatusFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Load Status</option>
+              <option value="Not Loaded">Not Loaded</option>
+              <option value="Pending">Pending</option>
+              <option value="Loaded">Loaded</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Clear Filters Button Row */}
+        <div className="flex items-center pt-2">
+          <button 
+            onClick={() => {
+              setSearchQuery('');
+              setStatusFilter('All');
+              setCustomerFilter('All');
+              setBranchFilter('All');
+              setInvoiceNumberFilter('');
+              setStockNumberFilter('');
+              setUserFilter('All');
+              setLoadStatusFilter('All');
+              setDateRange({ start: '', end: '' });
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-950/20 border border-gray-200/65 dark:border-zinc-700/50 rounded-xl text-sm font-bold text-gray-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 shadow-sm active:scale-95 transition-all animate-in fade-in duration-200"
+          >
+            <RefreshCcw className="w-4 h-4" />
+            <span>Clear Filters</span>
+          </button>
         </div>
       </div>
 
@@ -476,7 +683,7 @@ function InvoiceManagementContent() {
                       {/* Customer */}
                       <td className="px-6 py-5" data-label="Customer">
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                          {getCustomerName(invoice.customer_id)}
+                          {getCustomerName(invoice.customer_id, invoice.customer)}
                         </span>
                       </td>
 
@@ -705,7 +912,7 @@ function InvoiceManagementContent() {
                   
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Customer</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id)}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
                   </div>
                   
                   <div>
@@ -824,7 +1031,7 @@ function InvoiceManagementContent() {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{getCustomerName(selectedInvoice.customer_id)}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-700">

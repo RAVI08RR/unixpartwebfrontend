@@ -13,6 +13,8 @@ import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
+import { useBranches } from "@/app/lib/hooks/useBranches";
 
 export default function PurchaseOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,6 +22,20 @@ export default function PurchaseOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
+  
+  // Custom filter states matching visual specs
+  const [containerCodeFilter, setContainerCodeFilter] = useState("");
+  const [supplierFilter, setSupplierFilter] = useState("All");
+  const [branchFilter, setBranchFilter] = useState("All");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // Dropdown list data using dropdown spec hooks
+  const { suppliers } = useSuppliers(0, 100, null, true);
+  const { branches } = useBranches(0, 100, true);
+
+  const supplierList = useMemo(() => Array.isArray(suppliers) ? suppliers : [], [suppliers]);
+  const branchList = useMemo(() => Array.isArray(branches) ? branches : [], [branches]);
   
   // Data Fetching
   const itemsPerPage = 6;
@@ -33,7 +49,7 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [purchaseOrders.length, searchQuery, statusFilter]);
+  }, [purchaseOrders.length, searchQuery, statusFilter, containerCodeFilter, supplierFilter, branchFilter, dateRange]);
 
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -51,12 +67,48 @@ export default function PurchaseOrdersPage() {
   const filteredPOs = useMemo(() => {
     if (!purchaseOrders) return [];
     return purchaseOrders.filter(po => {
-      const searchTarget = `${po.po_id} ${po.notes}`.toLowerCase();
+      // 1. Search Query (PO ID, Notes)
+      const searchTarget = `${po.po_id || ''} ${po.notes || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
+      
+      // 2. Container Code Filter
+      const containerCode = (po.container?.container_code || '').toLowerCase();
+      const matchesContainerCode = !containerCodeFilter || containerCode.includes(containerCodeFilter.toLowerCase());
+      
+      // 3. Supplier Filter
+      const poSupplierId = po.container?.supplier?.id || po.supplier?.id || po.supplier_id;
+      const matchesSupplier = supplierFilter === "All" || String(poSupplierId) === String(supplierFilter);
+      
+      // 4. Branch Filter
+      const poBranchId = po.container?.destination_branch?.id || po.branch?.id || po.destination_branch_id;
+      const matchesBranch = branchFilter === "All" || String(poBranchId) === String(branchFilter);
+      
+      // 5. Date Range Filter
+      let matchesDate = true;
+      if (dateRange.start || dateRange.end) {
+        const poDate = po.created_at ? new Date(po.created_at) : null;
+        if (poDate) {
+          if (dateRange.start && new Date(dateRange.start) > poDate) {
+            matchesDate = false;
+          }
+          if (dateRange.end) {
+            const endDate = new Date(dateRange.end);
+            endDate.setHours(23, 59, 59, 999);
+            if (poDate > endDate) {
+              matchesDate = false;
+            }
+          }
+        } else {
+          matchesDate = false;
+        }
+      }
+
+      // 6. Status Filter
       const matchesStatus = statusFilter === "All" || po.status?.toLowerCase() === statusFilter.toLowerCase();
-      return matchesSearch && matchesStatus;
+      
+      return matchesSearch && matchesContainerCode && matchesSupplier && matchesBranch && matchesDate && matchesStatus;
     });
-  }, [searchQuery, statusFilter, purchaseOrders]);
+  }, [searchQuery, containerCodeFilter, supplierFilter, branchFilter, dateRange, statusFilter, purchaseOrders]);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredPOs.length / itemsPerPage) || 1;
@@ -252,7 +304,7 @@ export default function PurchaseOrdersPage() {
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orders</h1>
-          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Manage inventory procurement and stock arrivals</p>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Create and manage purchase orders for stock replenishment.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
@@ -270,37 +322,6 @@ export default function PurchaseOrdersPage() {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
-            <div className="relative flex-1 sm:flex-none">
-              <button 
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
-              
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {['All', 'Pending', 'In_Stock', 'Cancelled'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter(status);
-                        setIsFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        statusFilter === status 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      {status === "All" ? "All Orders" : status.replace('_', ' ')}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             <ExportButton
               data={filteredPOs}
               columns={exportColumns}
@@ -314,9 +335,140 @@ export default function PurchaseOrdersPage() {
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
             >
               <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add order</span>
+              <span className="whitespace-nowrap font-black">New Purchase Order</span>
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Filters Section Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in duration-300">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the purchase orders list below.</p>
+        </div>
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          {/* Search by Container Code */}
+          <div>
+            <input 
+              type="text" 
+              placeholder="Search by Container Code..."
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+              value={containerCodeFilter}
+              onChange={(e) => setContainerCodeFilter(e.target.value)}
+            />
+          </div>
+
+          {/* Filter by Supplier */}
+          <div>
+            <select
+              value={supplierFilter}
+              onChange={(e) => setSupplierFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Supplier</option>
+              {supplierList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label || s.name || s.supplier_code}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filter by Branch */}
+          <div>
+            <select
+              value={branchFilter}
+              onChange={(e) => setBranchFilter(e.target.value)}
+              className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+            >
+              <option value="All">Filter by Branch</option>
+              {branchList.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label || b.branch_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Pick Date Range */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+              className="w-full flex items-center gap-2 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm justify-between"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                <span className="truncate">
+                  {dateRange.start || dateRange.end 
+                    ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                    : "Pick a date range"
+                  }
+                </span>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isDatePickerOpen ? 'rotate-90' : ''}`} />
+            </button>
+
+            {isDatePickerOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.start}
+                      onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
+                    <input 
+                      type="date"
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      value={dateRange.end}
+                      onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button 
+                      onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
+                    >
+                      Clear
+                    </button>
+                    <button 
+                      onClick={() => setIsDatePickerOpen(false)}
+                      className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Clear Filters Button Row */}
+        <div className="flex items-center pt-2">
+          <button 
+            onClick={() => {
+              setSearchQuery('');
+              setContainerCodeFilter('');
+              setSupplierFilter('All');
+              setBranchFilter('All');
+              setDateRange({ start: '', end: '' });
+              setStatusFilter('All');
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-950/20 border border-gray-200/65 dark:border-zinc-700/50 rounded-xl text-sm font-bold text-gray-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 shadow-sm active:scale-95 transition-all animate-in fade-in duration-200"
+          >
+            <X className="w-4 h-4" />
+            <span>Clear Filters</span>
+          </button>
         </div>
       </div>
 
