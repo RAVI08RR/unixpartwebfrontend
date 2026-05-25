@@ -794,28 +794,28 @@ function PurchaseOrderItemsContent({ params }) {
                         <div className="w-full h-full flex items-start justify-between gap-4">
                           <div className="flex-1 flex flex-col justify-start space-y-1 overflow-hidden">
                             {getPrintData()[0].branch_code && (
-                              <div style={{ fontSize: `${labelStyles.branch.fontSize}px`, fontWeight: labelStyles.branch.bold ? 'bold' : 'normal', textDecoration: labelStyles.branch.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
+                              <div style={{ color: '#000000', fontSize: `${labelStyles.branch.fontSize}px`, fontWeight: labelStyles.branch.bold ? 'bold' : 'normal', textDecoration: labelStyles.branch.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].branch_code}
                               </div>
                             )}
                             {getPrintData()[0].supplier_code && (
-                              <div style={{ fontSize: `${labelStyles.supplier.fontSize}px`, fontWeight: labelStyles.supplier.bold ? 'bold' : 'normal', textDecoration: labelStyles.supplier.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
+                              <div style={{ color: '#000000', fontSize: `${labelStyles.supplier.fontSize}px`, fontWeight: labelStyles.supplier.bold ? 'bold' : 'normal', textDecoration: labelStyles.supplier.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].supplier_code}
                               </div>
                             )}
                             {getPrintData()[0].container_number && (
-                              <div style={{ fontSize: `${labelStyles.container.fontSize}px`, fontWeight: labelStyles.container.bold ? 'bold' : 'normal', textDecoration: labelStyles.container.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
+                              <div style={{ color: '#000000', fontSize: `${labelStyles.container.fontSize}px`, fontWeight: labelStyles.container.bold ? 'bold' : 'normal', textDecoration: labelStyles.container.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                                 {getPrintData()[0].container_number}
                               </div>
                             )}
-                            <div style={{ fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
+                            <div style={{ color: '#000000', fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
                               {getPrintData()[0].stock_number}
                             </div>
-                            <div style={{ fontSize: `${labelStyles.item.fontSize}px`, fontWeight: labelStyles.item.bold ? 'bold' : 'normal', textDecoration: labelStyles.item.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
+                            <div style={{ color: '#000000', fontSize: `${labelStyles.item.fontSize}px`, fontWeight: labelStyles.item.bold ? 'bold' : 'normal', textDecoration: labelStyles.item.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
                               {getPrintData()[0].item_name}
                             </div>
                             {getPrintData()[0].po_description && (
-                              <div style={{ fontSize: `${labelStyles.poDescription.fontSize}px`, fontWeight: labelStyles.poDescription.bold ? 'bold' : 'normal', textDecoration: labelStyles.poDescription.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
+                              <div style={{ color: '#000000', fontSize: `${labelStyles.poDescription.fontSize}px`, fontWeight: labelStyles.poDescription.bold ? 'bold' : 'normal', textDecoration: labelStyles.poDescription.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">
                                 {getPrintData()[0].po_description}
                               </div>
                             )}
@@ -882,6 +882,32 @@ function PurchaseOrderItemsContent({ params }) {
                         </div>
                       </div>
                     ))}
+                    <div className="p-3.5 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50 flex flex-col gap-3 justify-center">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Label Size (in)</span>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            step="0.25"
+                            value={labelSize.width}
+                            onChange={(e) => setLabelSize(prev => ({ ...prev, width: parseFloat(e.target.value) || 0 }))}
+                            className="w-16 px-1 py-1 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            title="Width (inches)"
+                          />
+                          <span className="text-gray-400 text-xs">×</span>
+                          <input
+                            type="number"
+                            step="0.25"
+                            value={labelSize.height}
+                            onChange={(e) => setLabelSize(prev => ({ ...prev, height: parseFloat(e.target.value) || 0 }))}
+                            className="w-16 px-1 py-1 text-xs font-semibold bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            title="Height (inches)"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">Set the label print width and height in inches.</p>
+                    </div>
+
                     <div className="p-3.5 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700/50 flex flex-col gap-3 justify-center">
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">QR Code Size</span>
