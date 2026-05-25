@@ -310,7 +310,7 @@ export default function AddPurchaseOrderPage() {
               <FormField label="Stock Notes">
                 <textarea 
                   rows="3"
-                  placeholder="Enter any internal notes..."
+                  placeholder="Optional notes..."
                   className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
                   value={itemFormData.stock_notes}
                   onChange={e => setItemFormData({...itemFormData, stock_notes: e.target.value})}
@@ -347,9 +347,9 @@ export default function AddPurchaseOrderPage() {
 
 function FormField({ label, children, required }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-        {label} {required && <span className="text-red-500">*</span>}
+    <div className="space-y-1">
+      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+        {label} {required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
       </label>
       {children}
     </div>

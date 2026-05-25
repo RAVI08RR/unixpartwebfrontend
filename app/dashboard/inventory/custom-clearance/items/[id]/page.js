@@ -471,76 +471,90 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black dark:text-white">Add Item to Container</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Container ID: {containerId}</p>
-            </div>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl max-w-2xl w-full border border-gray-200 dark:border-zinc-800">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add Item to Container</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Container ID: {containerId}</p>
           </div>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
 
-          <div className="space-y-4">
-            <FormField label="Item Category" required>
-              <select 
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                value={formData.item_id}
-                onChange={(e) => setFormData({...formData, item_id: e.target.value})}
-                required
-              >
-                <option value="">Select Item Category</option>
-                {stockItems.map(si => <option key={si.id} value={si.id}>{si.name}</option>)}
-              </select>
+        {/* Modal Content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Category" required>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                <select 
+                  required
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                  value={formData.item_id}
+                  onChange={e => setFormData({...formData, item_id: e.target.value})}
+                >
+                  <option value="">Select Item Category</option>
+                  {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
+                </select>
+              </div>
             </FormField>
 
             <FormField label="Quantity" required>
               <input 
                 type="number"
-                min="1"
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                value={formData.quantity}
-                onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                 required
-              />
-            </FormField>
-
-            <FormField label="Unit Price (AED)">
-              <input 
-                type="number"
-                step="0.01"
-                min="0"
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                value={formData.unit_price}
-                onChange={(e) => setFormData({...formData, unit_price: e.target.value})}
-              />
-            </FormField>
-
-            <FormField label="Item Description">
-              <textarea 
-                rows="3"
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
-                value={formData.item_description}
-                onChange={(e) => setFormData({...formData, item_description: e.target.value})}
-                placeholder="Optional description..."
+                min="1"
+                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                placeholder="1"
+                value={formData.quantity}
+                onChange={e => setFormData({...formData, quantity: e.target.value})}
               />
             </FormField>
           </div>
 
-          <div className="flex items-center gap-3 pt-4">
-            <button 
-              type="submit"
-              disabled={submitting}
-              className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
-            >
-              {submitting ? 'Adding...' : 'Add Item'}
-            </button>
+          <FormField label="Item Description" required>
+            <input 
+              required
+              placeholder="e.g. Engine Block - High quality part"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+              value={formData.item_description}
+              onChange={e => setFormData({...formData, item_description: e.target.value})}
+            />
+          </FormField>
+
+          <FormField label="Unit Price (AED)">
+            <input 
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+              value={formData.unit_price}
+              onChange={e => setFormData({...formData, unit_price: e.target.value})}
+            />
+          </FormField>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4">
             <button 
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+              className="px-6 py-3 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
             >
               Cancel
+            </button>
+            <button 
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all disabled:opacity-50"
+            >
+              {submitting ? 'Adding Item...' : 'Add Item'}
             </button>
           </div>
         </form>
@@ -551,9 +565,9 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
 
 function FormField({ label, children, required }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-        {label} {required && <span className="text-red-500">*</span>}
+    <div className="space-y-1">
+      <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">
+        {label} {required ? <span className="text-red-500">*</span> : <span className="text-gray-400 font-normal text-[10px]">(Optional)</span>}
       </label>
       {children}
     </div>
