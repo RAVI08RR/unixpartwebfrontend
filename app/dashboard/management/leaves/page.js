@@ -213,7 +213,7 @@ export default function LeavesPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
                 {filteredLeaves.map((leave) => (
                   <tr key={leave.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" data-label="Employee">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
                         {leave.employee ? `${leave.employee.first_name} ${leave.employee.last_name}` : 'N/A'}
                       </p>
@@ -245,7 +245,7 @@ export default function LeavesPage() {
                         {leave.status || 'pending'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" data-label="Actions">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setViewModal({ isOpen: true, leave })}

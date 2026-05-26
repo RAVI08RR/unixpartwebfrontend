@@ -240,7 +240,7 @@ export default function PayrollPage() {
                 <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
                   {paginatedPayrolls.map((payroll) => (
                     <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Period">
                         <p className="text-sm font-bold text-gray-900 dark:text-white">
                           {payroll.month} {payroll.year}
                         </p>
@@ -261,7 +261,7 @@ export default function PayrollPage() {
                           {payroll.status || 'pending'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Actions">
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/dashboard/management/payroll/${payroll.id}`}

@@ -179,7 +179,7 @@ export default function AttendancePage() {
               <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
                 {filteredAttendance.map((record) => (
                   <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" data-label="Employee">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
                         {record.employee ? `${record.employee.first_name} ${record.employee.last_name}` : 'N/A'}
                       </p>
@@ -209,7 +209,7 @@ export default function AttendancePage() {
                         {record.status || 'pending'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4" data-label="Actions">
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/dashboard/management/attendance/${record.id}`}

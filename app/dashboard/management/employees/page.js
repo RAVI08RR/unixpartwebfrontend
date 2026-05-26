@@ -219,8 +219,8 @@ export default function EmployeesPage() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm w-full max-w-full">
-        <div className="overflow-x-auto scrollbar-hide">
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm w-full max-w-full responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
@@ -239,7 +239,7 @@ export default function EmployeesPage() {
                   const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
                   return (
                     <tr key={employee.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Employee">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
                             <UserCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -254,7 +254,7 @@ export default function EmployeesPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Contact">
                         <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {employee.work_email || employee.personal_email || 'N/A'}
                         </div>
@@ -262,7 +262,7 @@ export default function EmployeesPage() {
                           {employee.mobile_number || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Position">
                         <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {employee.actual_position || 'N/A'}
                         </div>
@@ -270,7 +270,7 @@ export default function EmployeesPage() {
                           Visa: {employee.visa_position || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Branch">
                         <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {employee.current_branch?.branch_name || 'N/A'}
                         </div>
@@ -278,7 +278,7 @@ export default function EmployeesPage() {
                           {employee.current_branch?.branch_code || ''}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Visa Status">
                         <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
                           {employee.visa_status || 'N/A'}
                         </div>
@@ -286,7 +286,7 @@ export default function EmployeesPage() {
                           {employee.visa_type || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4" data-label="Status">
                         <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${
                           employee.status === 'active' 
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
@@ -295,7 +295,7 @@ export default function EmployeesPage() {
                           {employee.status || 'N/A'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right" data-label="Actions">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleViewEmployee(employee)}
