@@ -14,8 +14,8 @@ export const metadata = {
     title: "Unixparts",
   },
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: "/icon-192x192.png",
+    apple: "/maskable-icon-192x192.png",
   },
 };
 
