@@ -41,7 +41,11 @@ export async function GET(request, { params }) {
     });
   } catch (error) {
     console.error('❌ Dropdown Proxy Error:', error);
-    return new Response(JSON.stringify({ error: error.message }), { 
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      message: error.message,
+      detail: error.message 
+    }), { 
       status: 500, 
       headers: { 'Content-Type': 'application/json' } 
     });

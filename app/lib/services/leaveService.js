@@ -78,11 +78,11 @@ export const leaveService = {
   },
 
   // Reject leave
-  reject: async (id, notes = '') => {
+  reject: async (id, reason = '') => {
     try {
       return await fetchApi(`/api/leaves/${id}/reject`, {
         method: 'PUT',
-        body: JSON.stringify({ notes }),
+        body: JSON.stringify({ reason }),
       });
     } catch (error) {
       throw new Error('Cannot reject leave: ' + error.message);
