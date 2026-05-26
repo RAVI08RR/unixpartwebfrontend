@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer, Pencil
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer, Pencil, Camera
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -15,6 +15,7 @@ import { useToast } from "@/app/components/Toast";
 import PrintableInvoice from "@/app/components/PrintableInvoice";
 import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocompleteWithCreate";
 import POItemAutocomplete from "@/app/components/POItemAutocomplete";
+import QRScannerModal from "@/app/components/QRScannerModal";
 import { Suspense } from "react";
 
 function AddInvoiceContent() {
@@ -30,6 +31,8 @@ function AddInvoiceContent() {
   const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [isScanningItem, setIsScanningItem] = useState(false);
   const { success, error: showError } = useToast();
   const printRef = useRef(null);
   
@@ -349,6 +352,57 @@ function AddInvoiceContent() {
         po_description: "",
         sale_description: ""
       });
+    }
+  };
+
+  // Handle QR Scan success
+  const handleQrScanSuccess = async (decodedText) => {
+    setQrModalOpen(false);
+    
+    // Extract stock number if it's a URL
+    let stockNumber = decodedText.trim();
+    if (stockNumber.startsWith("http://") || stockNumber.startsWith("https://")) {
+      try {
+        const urlObj = new URL(stockNumber);
+        const paths = urlObj.pathname.split('/');
+        stockNumber = paths[paths.length - 1];
+      } catch (err) {
+        const parts = stockNumber.split('/');
+        stockNumber = parts[parts.length - 1];
+      }
+    }
+
+    if (!stockNumber) {
+      showError("Could not parse stock number from scanned code.");
+      return;
+    }
+
+    setIsScanningItem(true);
+    try {
+      const fetchedItem = await poItemService.getByStockNumber(stockNumber);
+      if (fetchedItem) {
+        if (fetchedItem.status?.toLowerCase() === 'sold' || fetchedItem.po_item_status?.toLowerCase() === 'sold') {
+          showError(`Item ${stockNumber} is already sold.`);
+          return;
+        }
+        
+        setItemForm({
+          ...itemForm,
+          po_item_id: fetchedItem.id,
+          stock_number: fetchedItem.stock_number || "",
+          item_name: fetchedItem.label || fetchedItem.item_name || fetchedItem.stock_item?.name || "",
+          po_description: fetchedItem.po_description || fetchedItem.label || fetchedItem.item_name || "",
+          sale_description: fetchedItem.po_description || fetchedItem.label || fetchedItem.item_name || ""
+        });
+        success(`Scanned item: ${stockNumber} loaded successfully!`);
+      } else {
+        showError(`Item not found with stock number: ${stockNumber}`);
+      }
+    } catch (err) {
+      console.error("QR Scan item fetch failed:", err);
+      showError(err.message || `Failed to retrieve details for item: ${stockNumber}`);
+    } finally {
+      setIsScanningItem(false);
     }
   };
 
@@ -921,25 +975,39 @@ function AddInvoiceContent() {
               <div className="space-y-4">
                 {/* 1st: Stock Number */}
                 <FormField label="Stock Number" required>
-                  <POItemAutocomplete
-                    value={itemForm.po_item_id}
-                    onChange={(poItemId) => setItemForm({...itemForm, po_item_id: poItemId})}
-                    onSelect={handlePoItemSelect}
-                    placeholder="Search by stock number..."
-                    disabled={poItemsLoading}
-                    initialDisplayText={
-                      itemForm.stock_number && itemForm.item_name 
-                        ? `${itemForm.stock_number} - ${itemForm.item_name}` 
-                        : itemForm.stock_number 
-                        ? itemForm.stock_number 
-                        : itemForm.item_name 
-                        ? itemForm.item_name 
-                        : ""
-                    }
-                  />
+                  <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <POItemAutocomplete
+                        value={itemForm.po_item_id}
+                        onChange={(poItemId) => setItemForm({...itemForm, po_item_id: poItemId})}
+                        onSelect={handlePoItemSelect}
+                        placeholder="Search by stock number..."
+                        disabled={poItemsLoading || isScanningItem}
+                        initialDisplayText={
+                          itemForm.stock_number && itemForm.item_name 
+                            ? `${itemForm.stock_number} - ${itemForm.item_name}` 
+                            : itemForm.stock_number 
+                            ? itemForm.stock_number 
+                            : itemForm.item_name 
+                            ? itemForm.item_name 
+                            : ""
+                        }
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setQrModalOpen(true)}
+                      disabled={isScanningItem}
+                      className="p-3.5 bg-gray-50 hover:bg-gray-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-800 rounded-[15px] transition-all disabled:opacity-50 flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 shadow-sm shrink-0"
+                      title="Scan QR Code"
+                    >
+                      <Camera className="w-5 h-5 text-gray-600 dark:text-zinc-400" />
+                    </button>
+                  </div>
                   {poItemsLoading && <p className="text-xs text-gray-500 mt-1">Loading items...</p>}
-                  {!poItemsLoading && (
-                    <p className="text-xs text-gray-500 mt-1">Type to search available PO items</p>
+                  {isScanningItem && <p className="text-xs text-red-500 mt-1 animate-pulse font-bold">Fetching scanned item details...</p>}
+                  {!poItemsLoading && !isScanningItem && (
+                    <p className="text-xs text-gray-500 mt-1">Type to search or scan QR code</p>
                   )}
                 </FormField>
 
@@ -1166,6 +1234,13 @@ function AddInvoiceContent() {
           customer={selectedCustomer} 
         />
       </div>
+
+      {/* QR Scanner Modal */}
+      <QRScannerModal 
+        isOpen={qrModalOpen} 
+        onClose={() => setQrModalOpen(false)} 
+        onScanSuccess={handleQrScanSuccess} 
+      />
     </div>
   );
 }

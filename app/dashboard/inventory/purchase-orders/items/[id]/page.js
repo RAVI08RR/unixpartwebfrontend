@@ -386,7 +386,8 @@ function PurchaseOrderItemsContent({ params }) {
       </div>
 
       {/* Items Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto responsive-table-container">
+        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
         <table className="w-full min-w-[800px]">
             <thead>
                 <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
@@ -440,7 +441,7 @@ function PurchaseOrderItemsContent({ params }) {
                     const isSelected = selectedItems.includes(item.id);
                     return (
                         <tr key={item.id} className={`group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4" data-label="Select">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -485,7 +486,7 @@ function PurchaseOrderItemsContent({ params }) {
                                     )}
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-right relative">
+                            <td className="px-6 py-4 text-right relative" data-label="Actions">
                                 <div className="flex items-center justify-end gap-2">
                                     <button 
                                         onClick={() => { setSelectedItem(item); setViewModalOpen(true); }}
@@ -567,6 +568,7 @@ function PurchaseOrderItemsContent({ params }) {
                 })}
             </tbody>
         </table>
+        </div>
 
         {/* PAGINATION */}
         <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 dark:border-zinc-800">
@@ -662,21 +664,21 @@ function PurchaseOrderItemsContent({ params }) {
       {/* Print Label Size Modal */}
       {printLabelModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-100 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl">
-            <div className="p-6 space-y-6">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl w-full max-w-md overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold dark:text-white">Print Labels</h2>
-                  <p className="text-sm text-gray-500 mt-1">Set the dimensions for the labels to be printed.</p>
+                  <h2 className="text-lg sm:text-xl font-bold dark:text-white">Print Labels</h2>
+                  <p className="text-xs sm:text-sm text-gray-500 mt-1">Set the dimensions for the labels to be printed.</p>
                 </div>
-                <button onClick={() => setPrintLabelModalOpen(false)} className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-                  <X className="w-5 h-5 text-gray-500" />
+                <button onClick={() => setPrintLabelModalOpen(false)} className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shrink-0">
+                  <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Label Width (in)
                   </label>
                   <input
@@ -684,12 +686,12 @@ function PurchaseOrderItemsContent({ params }) {
                     step="0.25"
                     value={labelSize.width}
                     onChange={(e) => setLabelSize(prev => ({ ...prev, width: parseFloat(e.target.value) }))}
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border-2 border-blue-500 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-zinc-800 border-2 border-blue-500 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Label Height (in)
                   </label>
                   <input
@@ -697,7 +699,7 @@ function PurchaseOrderItemsContent({ params }) {
                     step="0.25"
                     value={labelSize.height}
                     onChange={(e) => setLabelSize(prev => ({ ...prev, height: parseFloat(e.target.value) }))}
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   />
                 </div>
 
@@ -709,22 +711,22 @@ function PurchaseOrderItemsContent({ params }) {
                     onChange={(e) => setRememberSize(e.target.checked)}
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label htmlFor="rememberSize" className="text-sm text-gray-600 dark:text-gray-400">
+                  <label htmlFor="rememberSize" className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                     Remember label size
                   </label>
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setPrintLabelModalOpen(false)}
-                  className="flex-1 px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePreviewLabel}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all"
                 >
                   Preview Label
                 </button>
@@ -736,29 +738,29 @@ function PurchaseOrderItemsContent({ params }) {
 
       {/* Label Preview & Customization Modal */}
       {labelPreviewOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden border border-gray-200 dark:border-zinc-800 shadow-2xl">
             {/* Header */}
-            <div className="p-6 border-b border-gray-200 dark:border-zinc-800 shrink-0 flex items-center justify-between bg-white dark:bg-zinc-900">
+            <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-zinc-800 shrink-0 flex items-center justify-between bg-white dark:bg-zinc-900">
               <div>
-                <h2 className="text-xl font-bold dark:text-white">Label Preview & Customization</h2>
-                <p className="text-sm text-gray-500 mt-1">Review selected labels and adjust styles before printing.</p>
+                <h2 className="text-base sm:text-xl font-bold dark:text-white">Label Preview & Customization</h2>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">Review selected labels and adjust styles before printing.</p>
               </div>
-              <button onClick={() => setLabelPreviewOpen(false)} className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
-                <X className="w-5 h-5 text-gray-500" />
+              <button onClick={() => setLabelPreviewOpen(false)} className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 dark:bg-zinc-800 rounded-lg sm:rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shrink-0">
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
               </button>
             </div>
 
             {/* Scrollable Body */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-8 bg-gray-50/30 dark:bg-zinc-950/30">
+            <div className="p-3 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-8 bg-gray-50/30 dark:bg-zinc-950/30">
               
               {/* Selected Items (Horizontal Scroll) */}
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <Package className="w-4 h-4 text-blue-600" />
+              <div className="space-y-2 sm:space-y-3">
+                <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Package className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
                   Selected Items ({getPrintData().length})
                 </h3>
-                <div className="flex gap-4 overflow-x-auto pb-4 snap-x">
+                <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 sm:pb-4 snap-x scrollbar-hide">
                   {getPrintData().map((item, index) => (
                     <div key={item.id} className="shrink-0 w-[280px] snap-start bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 flex items-start gap-3 hover:border-blue-500 dark:hover:border-blue-500 transition-colors shadow-sm">
                       <div className="shrink-0 bg-white p-1 rounded-lg border border-gray-100 dark:border-zinc-700">
@@ -781,14 +783,14 @@ function PurchaseOrderItemsContent({ params }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Preview */}
-                <div className="space-y-4 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                    <Eye className="w-4 h-4 text-blue-600" />
+                <div className="space-y-3 sm:space-y-4 border border-gray-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
                     First Label Preview
                   </h3>
-                  <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-zinc-950 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto min-h-[300px]">
+                  <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gray-50 dark:bg-zinc-950 rounded-lg sm:rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto min-h-[200px] sm:min-h-[300px]">
                     <div className="bg-white text-black p-4 rounded-xl shadow-lg border border-gray-200 flex" style={{ width: `${labelSize.width * 96}px`, height: `${labelSize.height * 96}px`, overflow: 'hidden' }}>
                       {getPrintData().length > 0 && (
                         <div className="w-full h-full flex items-start justify-between gap-4">
@@ -835,12 +837,12 @@ function PurchaseOrderItemsContent({ params }) {
                 </div>
 
                 {/* Customization Grid */}
-                <div className="space-y-4 border border-gray-200 dark:border-zinc-800 rounded-2xl p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-blue-600" />
+                <div className="space-y-3 sm:space-y-4 border border-gray-200 dark:border-zinc-800 rounded-xl sm:rounded-2xl p-3 sm:p-6 bg-white dark:bg-zinc-900 shadow-sm flex flex-col">
+                  <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                    <Filter className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
                     Customize Styles
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {Object.entries({
                       branch: 'Branch',
                       supplier: 'Supplier Code',
@@ -926,7 +928,7 @@ function PurchaseOrderItemsContent({ params }) {
             </div>
 
             {/* Footer */}
-            <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-zinc-800 shrink-0 flex flex-col sm:flex-row items-center justify-end gap-3 bg-white dark:bg-zinc-900">
+            <div className="p-3 sm:p-4 lg:p-6 border-t border-gray-200 dark:border-zinc-800 shrink-0 flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-3 bg-white dark:bg-zinc-900">
                 <button
                   onClick={() => {
                     setLabelStyles({
@@ -939,21 +941,21 @@ function PurchaseOrderItemsContent({ params }) {
                       qrSize: 50,
                     });
                   }}
-                  className="w-full sm:w-auto px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                 >
                   Reset Defaults
                 </button>
                 <button
                   onClick={() => setLabelPreviewOpen(false)}
-                  className="w-full sm:w-auto px-6 py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePrint}
-                  className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl font-semibold text-xs sm:text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
                 >
-                  <Printer className="w-4 h-4" />
+                  <Printer className="w-3 h-3 sm:w-4 sm:h-4" />
                   Confirm Print
                 </button>
             </div>

@@ -22,9 +22,7 @@ export default function POItemAutocomplete({
 
   // Update search query when initialDisplayText changes
   useEffect(() => {
-    if (initialDisplayText && !searchQuery) {
-      setSearchQuery(initialDisplayText);
-    }
+    setSearchQuery(initialDisplayText);
   }, [initialDisplayText]);
 
   // Fetch PO item suggestions
