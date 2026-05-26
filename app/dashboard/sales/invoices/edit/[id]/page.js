@@ -777,7 +777,8 @@ export default function EditInvoicePage({ params }) {
           </div>
 
           {formData.items.length > 0 ? (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px]">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-zinc-800">
@@ -881,6 +882,7 @@ export default function EditInvoicePage({ params }) {
                 Add Item
               </button>
             </div>
+          </>
           ) : (
             <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
