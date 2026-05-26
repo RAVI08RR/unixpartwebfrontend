@@ -32,11 +32,6 @@ function AddInvoiceContent() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const { success, error: showError } = useToast();
   const printRef = useRef(null);
-
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: formData?.invoice_number || "Invoice",
-  });
   
   const [formData, setFormData] = useState({
     invoice_number: "",
@@ -48,6 +43,11 @@ function AddInvoiceContent() {
     invoice_notes: "",
     items: [],
     payments: []
+  });
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: formData?.invoice_number || "Invoice",
   });
 
   // Selected customer details

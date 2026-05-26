@@ -36,11 +36,6 @@ export default function EditInvoicePage({ params }) {
   const printRef = useRef(null);
   const [refundItems, setRefundItems] = useState([]);
   const [refundLoading, setRefundLoading] = useState(false);
-
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: formData?.invoice_number || "Invoice",
-  });
   
   // Unwrap params promise
   useEffect(() => {
@@ -59,6 +54,11 @@ export default function EditInvoicePage({ params }) {
     invoice_notes: "",
     items: [],
     payments: []
+  });
+
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: formData?.invoice_number || "Invoice",
   });
 
   // Selected customer details
