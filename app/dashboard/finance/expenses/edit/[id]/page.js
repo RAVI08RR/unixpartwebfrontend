@@ -29,6 +29,7 @@ export default function EditExpensePage({ params }) {
     supplier_id: "",
     amount: "",
     document_path: "",
+    branch_id: "",
   });
 
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function EditExpensePage({ params }) {
           supplier_id: data.supplier_id || "",
           amount: data.amount || "",
           document_path: data.document_path || "",
+          branch_id: data.branch_id || "",
         });
       } catch (err) {
         console.error("Failed to fetch expense:", err);
@@ -142,13 +144,17 @@ export default function EditExpensePage({ params }) {
       formDataToSend.append("description", trimmedDescription);
       formDataToSend.append("type", formData.type);
       formDataToSend.append("category", formData.category.trim());
+      formDataToSend.append("amount", amountFloat);
       
+      if (formData.date) {
+        formDataToSend.append("date", formData.date);
+      }
+      if (formData.branch_id) {
+        formDataToSend.append("branch_id", parseInt(formData.branch_id, 10));
+      }
       if (formData.supplier_id) {
         formDataToSend.append("supplier_id", parseInt(formData.supplier_id, 10));
       }
-      
-      formDataToSend.append("amount", amountFloat);
-      
       if (formData.document_path) {
         formDataToSend.append("document_path", formData.document_path.trim());
       }
@@ -400,19 +406,6 @@ export default function EditExpensePage({ params }) {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                Document Reference
-              </label>
-              <input
-                type="text"
-                name="document_path"
-                value={formData.document_path}
-                onChange={handleChange}
-                placeholder="e.g., Receipt number, invoice reference"
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm"
-              />
-            </div>
 
             {error && (
               <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
