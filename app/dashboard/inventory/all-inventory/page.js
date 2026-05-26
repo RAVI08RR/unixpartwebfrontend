@@ -434,7 +434,7 @@ export default function AllInventoryPage() {
             {isDatePickerOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
                     <input 
@@ -511,7 +511,7 @@ export default function AllInventoryPage() {
       </div>
 
       {/* Main Table / Mobile Cards */}
-      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">
         {/* Mobile Cards */}
         <div className="block md:hidden divide-y divide-gray-100 dark:divide-zinc-800">
           {loading ? (
@@ -543,7 +543,7 @@ export default function AllInventoryPage() {
                         <MoreVertical className="w-4 h-4 text-gray-400" />
                       </button>
                       {menuOpenId === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-50 py-1.5">
+                        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5">
                           <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
                             <Eye className="w-4 h-4" />View Details
                           </button>
@@ -630,7 +630,7 @@ export default function AllInventoryPage() {
                           <MoreVertical className="w-4 h-4 text-gray-400" />
                         </button>
                         {menuOpenId === item.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-50 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                             <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                               <Eye className="w-4 h-4" />View Details
                             </button>

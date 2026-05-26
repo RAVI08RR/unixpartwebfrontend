@@ -216,7 +216,7 @@ export default function PayrollPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         {filteredPayrolls.length > 0 ? (
           <>
             <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
@@ -380,7 +380,7 @@ export default function PayrollPage() {
 
       {/* Approve Modal */}
       {approveModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Mark as Paid</h3>
@@ -428,7 +428,7 @@ export default function PayrollPage() {
 
       {/* Delete Modal */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Payroll</h3>

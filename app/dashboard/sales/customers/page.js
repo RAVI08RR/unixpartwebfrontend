@@ -259,7 +259,7 @@ export default function CustomersPage() {
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!customers || customers.length === 0))) {
     return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      <div className="space-y-6 pb-12 w-full max-w-full">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Customer Management</h1>
@@ -274,7 +274,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -310,7 +310,7 @@ export default function CustomersPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-4 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">Filters</h3>
                     {hasActiveFilters && (
@@ -435,7 +435,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -534,7 +534,7 @@ export default function CustomersPage() {
                       </button>
                       
                       {menuOpenId === customer.id && (
-                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                           index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                         }`}>
                           <button onClick={() => handleViewCustomer(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
@@ -628,7 +628,7 @@ export default function CustomersPage() {
 
       {/* View Customer Modal */}
       {viewModalOpen && selectedCustomer && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
@@ -769,7 +769,7 @@ export default function CustomersPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedCustomer && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
             {/* Modal Header */}
             <div className="p-6 text-center">

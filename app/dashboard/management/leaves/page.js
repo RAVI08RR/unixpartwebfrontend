@@ -184,7 +184,7 @@ export default function LeavesPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         {filteredLeaves.length > 0 ? (
           <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
             <table className="w-full text-left border-collapse">
@@ -307,7 +307,7 @@ export default function LeavesPage() {
 
       {/* View Modal */}
       {viewModal.isOpen && viewModal.leave && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-2xl w-full border border-gray-200 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Leave Details</h3>
@@ -382,7 +382,7 @@ export default function LeavesPage() {
 
       {/* Approve Modal */}
       {approveModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Approve Leave</h3>
@@ -432,7 +432,7 @@ export default function LeavesPage() {
 
       {/* Reject Modal */}
       {rejectModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Reject Leave</h3>
@@ -482,7 +482,7 @@ export default function LeavesPage() {
 
       {/* Delete Modal */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
             <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Leave</h3>

@@ -153,7 +153,7 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -203,7 +203,7 @@ export default function RolesPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
           <table className="w-full lg:min-w-[800px]">
             <thead>
@@ -277,7 +277,7 @@ export default function RolesPage() {
                             </button>
                             
                             {menuOpenId === role.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
@@ -365,7 +365,7 @@ export default function RolesPage() {
 
       {/* View Role Modal */}
       {viewModalOpen && selectedRole && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
@@ -463,7 +463,7 @@ export default function RolesPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedRole && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
             {/* Modal Header */}
             <div className="p-6 text-center">

@@ -150,7 +150,7 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         {filteredAttendance.length > 0 ? (
           <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
             <table className="w-full text-left border-collapse">

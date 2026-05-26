@@ -324,7 +324,7 @@ export default function PaymentsReceivedPage() {
             {isDatePickerOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
                     <input 
@@ -446,7 +446,7 @@ export default function PaymentsReceivedPage() {
       </div>
 
       {/* Main Table / Mobile Cards */}
-      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">
         {/* Mobile Cards */}
         <div className="block lg:hidden divide-y divide-gray-100 dark:divide-zinc-800">
           {loading ? (
@@ -693,7 +693,7 @@ export default function PaymentsReceivedPage() {
 
       {/* Invoice Details Modal */}
       {invoiceModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in zoom-in duration-200 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in zoom-in duration-200 overflow-y-auto">
           <div className="bg-white dark:bg-zinc-900 rounded-[32px] max-w-4xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl my-8">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-8 border-b border-gray-100 dark:border-zinc-800">

@@ -276,7 +276,7 @@ export default function PermissionsManagementPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   {modules.map((module) => (
                     <button
                       key={module}
@@ -317,7 +317,7 @@ export default function PermissionsManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full">
         <div className="overflow-x-auto w-full scrollbar-hide">
           <table className="w-full min-w-[800px]">
             <thead>
@@ -408,7 +408,7 @@ export default function PermissionsManagementPage() {
                             </button>
                             
                             {menuOpenId === permission.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedPermissions.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
@@ -496,7 +496,7 @@ export default function PermissionsManagementPage() {
 
       {/* Add/Edit Permission Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
@@ -613,7 +613,7 @@ export default function PermissionsManagementPage() {
 
       {/* View Permission Modal */}
       {viewModalOpen && selectedPermission && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
@@ -705,7 +705,7 @@ export default function PermissionsManagementPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedPermission && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
             {/* Modal Header */}
             <div className="p-6 text-center">

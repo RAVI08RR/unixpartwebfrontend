@@ -283,7 +283,7 @@ export default function SalesDataPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div>
@@ -493,7 +493,7 @@ export default function SalesDataPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl">
         <div className="p-8 border-b border-gray-50 dark:border-zinc-800/50">
           <h3 className="text-lg font-black text-gray-900 dark:text-white">Sales Table</h3>
           <p className="text-sm text-gray-500 mt-1">All sales data from invoices and inventory.</p>
@@ -566,7 +566,7 @@ export default function SalesDataPage() {
                     <td className="px-6 py-5 text-right relative">
                         <button onClick={() => toggleMenu(idx)} className="p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all"><MoreVertical className="w-5 h-5" /></button>
                         {menuOpenId === idx && (
-                          <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-50 p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-[200] p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                              <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
                              <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4 text-blue-600" />View Invoice</Link>
                           </div>
@@ -666,7 +666,7 @@ export default function SalesDataPage() {
 
       {/* View Details Modal */}
       {viewModalOpen && selectedItem && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-950 rounded-[32px] shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-zinc-800 animate-in fade-in zoom-in-95 duration-300">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md z-10 flex items-center justify-between p-8 border-b border-gray-50 dark:border-zinc-900">

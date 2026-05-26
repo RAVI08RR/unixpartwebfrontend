@@ -135,7 +135,7 @@ export default function CustomerPurchaseHistoryPage() {
       </div>
 
       {/* Invoices Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

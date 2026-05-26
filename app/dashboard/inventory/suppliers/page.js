@@ -287,7 +287,7 @@ export default function SupplierManagementPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   {["All", "Active", "Inactive"].map((status) => (
                     <button
                       key={status}
@@ -500,7 +500,7 @@ export default function SupplierManagementPage() {
                             </button>
                             
                             {menuOpenId === supplier.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedSuppliers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button onClick={() => handleView(supplier)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">

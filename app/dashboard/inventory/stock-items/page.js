@@ -312,7 +312,7 @@ export default function StockItemsManagementPage() {
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!stockItems || stockItems.length === 0))) {
     return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      <div className="space-y-6 pb-12 w-full max-w-full">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Stock Items Management</h1>
@@ -327,7 +327,7 @@ export default function StockItemsManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -363,7 +363,7 @@ export default function StockItemsManagementPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   {["All", "Active", "Inactive"].map((status) => (
                     <button
                       key={status}
@@ -500,7 +500,7 @@ export default function StockItemsManagementPage() {
                                </button>
                                
                                {menuOpenId === item.id && (
-                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200">
+                                 <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200">
                                    <button 
                                      onClick={() => handleViewStockItem(item)}
                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"
@@ -544,7 +544,7 @@ export default function StockItemsManagementPage() {
 
       {/* View Stock Item Modal */}
       {viewModalOpen && selectedStockItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-700">
@@ -635,7 +635,7 @@ export default function StockItemsManagementPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedStockItem && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
             {/* Modal Header */}
             <div className="p-6 text-center">
@@ -685,7 +685,7 @@ export default function StockItemsManagementPage() {
 
       {/* Add Category Modal */}
       {addCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-zinc-900 rounded-[28px] shadow-2xl max-w-lg w-full border border-gray-100 dark:border-zinc-800 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-8 border-b border-gray-100 dark:border-zinc-800">

@@ -182,7 +182,7 @@ export default function UserManagementPage() {
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!users || users.length === 0))) {
     return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      <div className="space-y-6 pb-12 w-full max-w-full">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">User Management</h1>
@@ -197,7 +197,7 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -233,7 +233,7 @@ export default function UserManagementPage() {
               </button>
               
               {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   {["All", "Active", "Inactive"].map((status) => (
                     <button
                       key={status}
@@ -271,7 +271,7 @@ export default function UserManagementPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
           <table className="w-full lg:min-w-[800px]">
             <thead>
@@ -389,7 +389,7 @@ export default function UserManagementPage() {
                             </button>
                             
                             {menuOpenId === user.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                 index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                               }`}>
                                 <button 
@@ -478,7 +478,7 @@ export default function UserManagementPage() {
 
       {/* View User Modal */}
       {viewModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-zinc-800">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-8 border-b border-gray-200 dark:border-zinc-800">
@@ -691,7 +691,7 @@ export default function UserManagementPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full">
             {/* Modal Header */}
             <div className="p-6 text-center">

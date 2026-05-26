@@ -382,7 +382,7 @@ function InvoiceManagementContent() {
   // Show loading state only after component is mounted to prevent hydration mismatch
   if (!isMounted || (isLoading && (!invoices || invoices.length === 0))) {
     return (
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      <div className="space-y-6 pb-12 w-full max-w-full">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
@@ -413,7 +413,7 @@ function InvoiceManagementContent() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -507,7 +507,7 @@ function InvoiceManagementContent() {
             {isDatePickerOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
                     <input 
@@ -653,7 +653,7 @@ function InvoiceManagementContent() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -769,7 +769,7 @@ function InvoiceManagementContent() {
                             </button>
                                 
                                 {menuOpenId === invoice.id && (
-                                  <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                  <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
                                     index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
                                   }`}>
                                     <Link
@@ -880,7 +880,7 @@ function InvoiceManagementContent() {
             className="fixed inset-0 bg-black/50 z-50" 
             onClick={() => setViewModalOpen(false)}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
                 <div className="flex items-center justify-between">
@@ -1011,7 +1011,7 @@ function InvoiceManagementContent() {
             className="fixed inset-0 bg-black/50 z-50" 
             onClick={() => setDeleteModalOpen(false)}
           />
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-md w-full">
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-4">
@@ -1091,7 +1091,7 @@ function InvoiceManagementContent() {
 export default function InvoiceManagementPage() {
   return (
     <Suspense fallback={
-      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+      <div className="space-y-6 pb-12 w-full max-w-full">
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
             <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>

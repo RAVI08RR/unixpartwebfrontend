@@ -444,7 +444,7 @@ export default function CustomClearancePage() {
             {isDatePickerOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                   <div>
                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
                     <input 
@@ -536,7 +536,7 @@ export default function CustomClearancePage() {
                     <td className="px-6 py-6 text-right relative">
                         <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-all"><MoreVertical className="w-5 h-5" /></button>
                         {menuOpenId === container.id && (
-                          <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
                              <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><Package className="w-4 h-4" />View Items</Link>
                              <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4" />Documents</button>
                              <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>

@@ -219,7 +219,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm overflow-hidden w-full max-w-full">
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm w-full max-w-full">
         <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -328,7 +328,7 @@ export default function EmployeesPage() {
                                   className="fixed inset-0 z-10" 
                                   onClick={() => setMenuOpenId(null)}
                                 />
-                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-20 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                                   <Link
                                     href={`/dashboard/management/employees/${employee.id}/position-history`}
                                     className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
