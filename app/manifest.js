@@ -5,8 +5,10 @@ export default function manifest() {
     description: 'Internal system for Unixparts inventory and operations',
     start_url: '/',
     display: 'standalone',
+    orientation: 'any',
     background_color: '#ffffff',
     theme_color: '#000000',
+    scope: '/',
     icons: [
       {
         src: '/icon-192x192.png',
@@ -33,5 +35,8 @@ export default function manifest() {
         purpose: 'maskable',
       }
     ],
+    categories: ['business', 'productivity'],
+    prefer_related_applications: false,
   }
 }
+

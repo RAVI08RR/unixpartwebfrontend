@@ -8,15 +8,26 @@ export const metadata = {
   title: "Unixparts Dashboard",
   description: "Internal system for Unixparts inventory and operations",
   themeColor: "#000000",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Unixparts",
+  },
+  formatDetection: {
+    telephone: false,
   },
   icons: {
     icon: "/icon-192x192.png",
     apple: "/maskable-icon-192x192.png",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({ children }) {
