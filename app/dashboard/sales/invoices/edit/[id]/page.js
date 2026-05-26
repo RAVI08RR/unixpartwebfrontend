@@ -773,14 +773,6 @@ export default function EditInvoicePage({ params }) {
                 <X className="w-4 h-4" />
                 All Unloaded
               </button>
-              <button
-                type="button"
-                onClick={addItem}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Item
-              </button>
             </div>
           </div>
 
@@ -876,6 +868,18 @@ export default function EditInvoicePage({ params }) {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Add Item Button after listing */}
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={addItem}
+                className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-full sm:w-auto justify-center animate-pulse-once"
+              >
+                <Plus className="w-4 h-4" />
+                Add Item
+              </button>
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
