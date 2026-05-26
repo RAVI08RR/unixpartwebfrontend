@@ -38,15 +38,25 @@ export async function POST(request) {
   try {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
-    const body = await request.text();
+    const contentType = request.headers.get('content-type');
+    
+    let body;
+    if (contentType && contentType.includes('multipart/form-data')) {
+      body = await request.formData();
+    } else {
+      body = await request.text();
+    }
     
     const backendUrl = `${apiBaseUrl}/api/expenses/`;
     
     const headers = {
-      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
+    
+    if (contentType && !contentType.includes('multipart/form-data')) {
+      headers['Content-Type'] = contentType;
+    }
     
     const response = await fetch(backendUrl, { method: 'POST', headers, body });
     const data = await response.text();

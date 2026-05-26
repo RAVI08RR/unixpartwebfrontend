@@ -182,7 +182,7 @@ function LayoutContent({ children }) {
         <Topbar />
 
         {/* Page Content */}
-        <div className="p-4 md:p-8 max-w-[94%] mx-auto w-full">
+        <div className="p-4 md:p-8 max-w-full md:max-w-[94%] mx-auto w-full">
           {children}
         </div>
       </main>

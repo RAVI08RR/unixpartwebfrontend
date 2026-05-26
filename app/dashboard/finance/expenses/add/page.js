@@ -95,22 +95,36 @@ export default function AddExpensePage() {
     setError("");
 
     try {
-      const submitData = {
-        date: formData.date,
-        description: formData.description.trim(),
-        type: formData.type,
-        category: formData.category.trim(),
-        supplier_id: formData.supplier_id ? parseInt(formData.supplier_id) : null,
-        amount: parseFloat(formData.amount),
-        document_path: formData.document_path.trim() || null,
-      };
+      const trimmedDescription = formData.description.trim();
+      const amountFloat = parseFloat(formData.amount);
 
-      if (!submitData.description || !submitData.amount || submitData.amount <= 0) {
+      if (!trimmedDescription || !amountFloat || amountFloat <= 0) {
         setError("Description and valid amount are required");
+        setIsLoading(false);
         return;
       }
 
-      await expenseService.create(submitData);
+      const formDataToSend = new FormData();
+      formDataToSend.append("date", formData.date);
+      formDataToSend.append("description", trimmedDescription);
+      formDataToSend.append("type", formData.type);
+      formDataToSend.append("category", formData.category.trim());
+      
+      if (formData.supplier_id) {
+        formDataToSend.append("supplier_id", parseInt(formData.supplier_id, 10));
+      }
+      
+      formDataToSend.append("amount", amountFloat);
+      
+      if (formData.document_path) {
+        formDataToSend.append("document_path", formData.document_path.trim());
+      }
+
+      if (uploadedFile) {
+        formDataToSend.append("file", uploadedFile);
+      }
+
+      await expenseService.create(formDataToSend);
       success("Expense created successfully!");
       router.push("/dashboard/finance/expenses");
       

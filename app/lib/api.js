@@ -117,6 +117,11 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Remove Content-Type for FormData to let fetch set it with boundary
+  if (options.body instanceof FormData) {
+    delete headers['Content-Type'];
+  }
+
   const config = {
     method: 'GET',
     ...options,

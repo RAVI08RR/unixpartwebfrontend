@@ -12,16 +12,18 @@ export const expenseService = {
   },
 
   async create(expenseData) {
+    const isFormData = expenseData instanceof FormData;
     return fetchApi('/api/expenses', {
       method: 'POST',
-      body: JSON.stringify(expenseData),
+      body: isFormData ? expenseData : JSON.stringify(expenseData),
     });
   },
 
   async update(id, expenseData) {
+    const isFormData = expenseData instanceof FormData;
     return fetchApi(`/api/expenses/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(expenseData),
+      body: isFormData ? expenseData : JSON.stringify(expenseData),
     });
   },
 
