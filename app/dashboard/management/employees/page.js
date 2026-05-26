@@ -5,13 +5,15 @@ import Link from "next/link";
 import { 
   Search, Filter, Download, Plus, MoreVertical,
   UserCheck, Mail, Phone, Building2, Calendar,
-  Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X, DollarSign
+  Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X, DollarSign,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { PermissionAlert } from "@/app/components/PermissionAlert";
+import ExportButton from "@/app/components/ExportButton";
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -30,7 +32,7 @@ export default function EmployeesPage() {
   
   const { success, error } = useToast();
   const { hasPermission } = usePermission();
-  const itemsPerPage = 10;
+  const itemsPerPage = 6;
 
   // Fetch employees
   useEffect(() => {
@@ -124,289 +126,338 @@ export default function EmployeesPage() {
     }
   };
 
+  const exportColumns = [
+    { key: 'employee_id', label: 'Employee ID' },
+    { 
+      key: 'name', 
+      label: 'Name', 
+      formatter: (val, row) => `${row.first_name || ''} ${row.last_name || ''}`.trim() 
+    },
+    { key: 'work_email', label: 'Work Email' },
+    { key: 'personal_email', label: 'Personal Email' },
+    { key: 'mobile_number', label: 'Mobile Number' },
+    { key: 'actual_position', label: 'Position' },
+    { 
+      key: 'current_branch', 
+      label: 'Branch', 
+      formatter: (val, row) => row.current_branch?.branch_name || 'N/A' 
+    },
+    { key: 'visa_status', label: 'Visa Status' },
+    { key: 'visa_type', label: 'Visa Type' },
+    { key: 'status', label: 'Status' }
+  ];
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-gray-500">Loading employees...</div>
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-gray-500 dark:text-zinc-500 font-black text-xs uppercase tracking-[0.2em]">Loading Employees...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Employees</h1>
-          <p className="text-gray-500 text-sm">Manage employee information and records</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Employees</h1>
+            <ExportButton
+              data={filteredEmployees}
+              columns={exportColumns}
+              filename={`employees-${new Date().toISOString().split('T')[0]}`}
+              onSuccess={(format) => success(`Employees exported successfully as ${format}!`)}
+              onError={(err) => error(`Export failed: ${err.message}`)}
+            />
+          </div>
+          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Manage employee information and records</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
           <button
             onClick={handleAddClick}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors flex items-center gap-2"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" />
-            Add Employee
+            <span className="whitespace-nowrap font-black">Add Employee</span>
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search employees..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+      {/* Filters Section Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm p-6 space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+          <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the employees list below.</p>
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="All">All Status</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+
+        {/* Filters Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Search Input */}
+          <div className="relative col-span-2">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search employees by name, email, or ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-blue-500/30 dark:focus:ring-blue-500/20 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-blue-500/30 transition-all text-gray-900 dark:text-white"
+          >
+            <option value="All">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+      {/* Table Section */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm overflow-hidden w-full max-w-full">
+        <div className="overflow-x-auto scrollbar-hide">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50 dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Employee
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Position
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Branch
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Visa Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
+            <thead>
+              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Employee</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Position</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Visa Status</th>
+                <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                <th className="px-6 py-4 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-              {paginatedEmployees.map((employee) => {
-                const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
-                return (
-                <tr key={employee.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
-                        <UserCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
-                          {fullName || 'N/A'}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {employee.employee_id || 'No ID'}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap" data-label="Contact">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {employee.work_email || employee.personal_email || 'N/A'}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {employee.mobile_number || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap" data-label="Position">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {employee.actual_position || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Visa: {employee.visa_position || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap" data-label="Branch">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {employee.current_branch?.branch_name || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {employee.current_branch?.branch_code || ''}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap" data-label="Visa Status">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {employee.visa_status || 'N/A'}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {employee.visa_type || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap" data-label="Status">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      employee.status === 'active' 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-                    }`}>
-                      {employee.status || 'N/A'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleViewEmployee(employee)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      </button>
-                      <Link
-                        href={`/dashboard/management/employees/edit/${employee.id}`}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                      </Link>
-                      
-                      {/* More Actions Dropdown */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
-                          className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
-                          title="More Actions"
-                        >
-                          <MoreVertical className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        
-                        {menuOpenId === employee.id && (
-                          <>
-                            <div 
-                              className="fixed inset-0 z-10" 
-                              onClick={() => setMenuOpenId(null)}
-                            />
-                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 z-20">
-                              <div className="py-1">
-                                <Link
-                                  href={`/dashboard/management/employees/${employee.id}/position-history`}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                >
-                                  <Briefcase className="w-4 h-4" />
-                                  Position History
-                                </Link>
-                                <Link
-                                  href={`/dashboard/management/employees/${employee.id}/salary-history`}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                >
-                                  <DollarSign className="w-4 h-4" />
-                                  Salary History
-                                </Link>
-                                <Link
-                                  href={`/dashboard/management/employees/${employee.id}/visa-history`}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Visa History
-                                </Link>
-                                <Link
-                                  href={`/dashboard/management/employees/${employee.id}/documents`}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Documents
-                                </Link>
-                                <Link
-                                  href={`/dashboard/management/employees/${employee.id}/bank-details`}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                >
-                                  <CreditCard className="w-4 h-4" />
-                                  Bank Details
-                                </Link>
-                                <div className="border-t border-gray-200 dark:border-zinc-700 my-1"></div>
-                                <button
-                                  onClick={() => {
-                                    setSelectedEmployee(employee);
-                                    setDeleteModalOpen(true);
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Employee
-                                </button>
-                              </div>
+            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              {paginatedEmployees.length > 0 ? (
+                paginatedEmployees.map((employee) => {
+                  const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
+                  return (
+                    <tr key={employee.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <UserCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
+                              {fullName || 'N/A'}
                             </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                            <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                              {employee.employee_id || 'No ID'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.work_email || employee.personal_email || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.mobile_number || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.actual_position || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          Visa: {employee.visa_position || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.current_branch?.branch_name || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.current_branch?.branch_code || ''}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.visa_status || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.visa_type || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${
+                          employee.status === 'active' 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                        }`}>
+                          {employee.status || 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleViewEmployee(employee)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all animate-in fade-in"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                          </button>
+                          <Link
+                            href={`/dashboard/management/employees/edit/${employee.id}`}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                          </Link>
+                          
+                          {/* More Actions Dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                              title="More Actions"
+                            >
+                              <MoreVertical className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                            </button>
+                            
+                            {menuOpenId === employee.id && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={() => setMenuOpenId(null)}
+                                />
+                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-20 py-1.5 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                                  <Link
+                                    href={`/dashboard/management/employees/${employee.id}/position-history`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                  >
+                                    <Briefcase className="w-4 h-4 text-gray-400" />
+                                    Position History
+                                  </Link>
+                                  <Link
+                                    href={`/dashboard/management/employees/${employee.id}/salary-history`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                  >
+                                    <DollarSign className="w-4 h-4 text-gray-400" />
+                                    Salary History
+                                  </Link>
+                                  <Link
+                                    href={`/dashboard/management/employees/${employee.id}/visa-history`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                  >
+                                    <FileText className="w-4 h-4 text-gray-400" />
+                                    Visa History
+                                  </Link>
+                                  <Link
+                                    href={`/dashboard/management/employees/${employee.id}/documents`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                  >
+                                    <FileText className="w-4 h-4 text-gray-400" />
+                                    Documents
+                                  </Link>
+                                  <Link
+                                    href={`/dashboard/management/employees/${employee.id}/bank-details`}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                  >
+                                    <CreditCard className="w-4 h-4 text-gray-400" />
+                                    Bank Details
+                                  </Link>
+                                  <div className="border-t border-gray-100 dark:border-zinc-800 my-1"></div>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedEmployee(employee);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 w-full transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Employee
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
+              ) : (
+                <tr>
+                  <td colSpan="7" className="py-24 text-center">
+                    <p className="text-gray-500 font-bold text-sm">No employees found.</p>
                   </td>
                 </tr>
-              )})}
+              )}
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredEmployees.length)} of {filteredEmployees.length} employees
-          </div>
-          <div className="flex gap-2">
-            <button
+        {/* Pagination Footer */}
+        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+            Showing <span className="text-gray-900 dark:text-white font-black">{filteredEmployees.length === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(currentPage * itemsPerPage, filteredEmployees.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredEmployees.length}</span> entries
+          </p>
+          
+          <div className="flex items-center gap-3">
+            <button 
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg disabled:opacity-50"
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
             >
-              Previous
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
             </button>
-            <button
+            
+            <div className="hidden sm:flex items-center gap-1.5">
+              {[...Array(totalPages)].map((_, i) => (
+                <button 
+                  key={i}
+                  onClick={() => setCurrentPage(i + 1)}
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+                    currentPage === i + 1 
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
+                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            
+            <button 
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg disabled:opacity-50"
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
             >
-              Next
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Delete Modal */}
       {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Delete Employee</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-2xl p-6 max-w-md w-full mx-auto animate-in scale-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Employee</h3>
+            <p className="text-gray-500 dark:text-zinc-400 text-sm font-medium mb-6">
               Are you sure you want to delete {selectedEmployee?.first_name} {selectedEmployee?.last_name}? This action cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700"
+                className="px-5 py-2.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-400 rounded-xl font-bold text-sm transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-red-600/20"
               >
                 Delete
               </button>
@@ -425,34 +476,34 @@ export default function EmployeesPage() {
 
       {/* View Employee Modal */}
       {viewModalOpen && selectedEmployee && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in scale-in duration-200">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-zinc-800">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-zinc-800">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-xl font-black text-gray-900 dark:text-white">
                   {selectedEmployee.first_name} {selectedEmployee.last_name}
                 </h3>
-                <p className="text-sm text-gray-500">{selectedEmployee.employee_id}</p>
+                <p className="text-xs font-bold text-gray-400 dark:text-zinc-500 tracking-wider mt-0.5">{selectedEmployee.employee_id || 'No ID'}</p>
               </div>
               <button
                 onClick={() => setViewModalOpen(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 dark:border-zinc-800 px-6">
+            <div className="flex border-b border-gray-100 dark:border-zinc-800 px-6">
               {['personal', 'visa', 'salary', 'contact'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  className={`px-4 py-3.5 text-sm font-bold border-b-2 transition-all relative ${
                     activeTab === tab
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                      ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-755 dark:hover:text-zinc-300'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -461,133 +512,134 @@ export default function EmployeesPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] scrollbar-hide">
               {loadingDetails ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-gray-500">Loading...</div>
+                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-gray-500 dark:text-zinc-500 font-black text-xs uppercase tracking-[0.2em]">Loading Details...</p>
                 </div>
               ) : (
                 <>
                   {activeTab === 'personal' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500">First Name</label>
-                        <p className="text-sm font-medium">{selectedEmployee.first_name}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">First Name</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.first_name || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Last Name</label>
-                        <p className="text-sm font-medium">{selectedEmployee.last_name}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Last Name</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.last_name || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Nationality</label>
-                        <p className="text-sm font-medium">{selectedEmployee.nationality}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Nationality</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.nationality || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Passport Number</label>
-                        <p className="text-sm font-medium">{selectedEmployee.passport_number}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Passport Number</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.passport_number || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Passport Expiry</label>
-                        <p className="text-sm font-medium">{selectedEmployee.passport_expiry}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Passport Expiry</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.passport_expiry || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">EID Number</label>
-                        <p className="text-sm font-medium">{selectedEmployee.eid_number}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">EID Number</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.eid_number || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">EID Expiry</label>
-                        <p className="text-sm font-medium">{selectedEmployee.eid_expiry}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">EID Expiry</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.eid_expiry || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Status</label>
-                        <p className="text-sm font-medium capitalize">{selectedEmployee.status}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Status</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">{selectedEmployee.status || '-'}</p>
                       </div>
                     </div>
                   )}
 
                   {activeTab === 'visa' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500">Visa Number</label>
-                        <p className="text-sm font-medium">{selectedEmployee.visa_number}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Visa Number</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.visa_number || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Visa Expiry</label>
-                        <p className="text-sm font-medium">{selectedEmployee.visa_expiry}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Visa Expiry</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.visa_expiry || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Visa Status</label>
-                        <p className="text-sm font-medium">{selectedEmployee.visa_status}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Visa Status</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.visa_status || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Visa Type</label>
-                        <p className="text-sm font-medium capitalize">{selectedEmployee.visa_type}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Visa Type</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white capitalize">{selectedEmployee.visa_type || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Visa Position</label>
-                        <p className="text-sm font-medium">{selectedEmployee.visa_position}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Visa Position</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.visa_position || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Branch on Visa</label>
-                        <p className="text-sm font-medium">{selectedEmployee.branch_on_visa?.branch_name}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Branch on Visa</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.branch_on_visa?.branch_name || '-'}</p>
                       </div>
                     </div>
                   )}
 
                   {activeTab === 'salary' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500">Starting Salary</label>
-                        <p className="text-sm font-medium">AED {selectedEmployee.starting_salary}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Starting Salary</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">AED {selectedEmployee.starting_salary || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Current Salary</label>
-                        <p className="text-sm font-medium">AED {selectedEmployee.current_salary}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Current Salary</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">AED {selectedEmployee.current_salary || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Actual Position</label>
-                        <p className="text-sm font-medium">{selectedEmployee.actual_position}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Actual Position</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.actual_position || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Position Start Date</label>
-                        <p className="text-sm font-medium">{selectedEmployee.position_start_date}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Position Start Date</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.position_start_date || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Annual Leave</label>
-                        <p className="text-sm font-medium">{selectedEmployee.annual_leave_entitlement} days</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Annual Leave</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.annual_leave_entitlement || '-'} days</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Current Branch</label>
-                        <p className="text-sm font-medium">{selectedEmployee.current_branch?.branch_name}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Current Branch</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.current_branch?.branch_name || '-'}</p>
                       </div>
                     </div>
                   )}
 
                   {activeTab === 'contact' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500">Mobile Number</label>
-                        <p className="text-sm font-medium">{selectedEmployee.mobile_number}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Mobile Number</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.mobile_number || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Emergency Contact</label>
-                        <p className="text-sm font-medium">{selectedEmployee.emergency_contact}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Emergency Contact</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.emergency_contact || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Personal Email</label>
-                        <p className="text-sm font-medium">{selectedEmployee.personal_email}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Personal Email</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.personal_email || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Work Email</label>
-                        <p className="text-sm font-medium">{selectedEmployee.work_email}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Work Email</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.work_email || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Insurance Policy</label>
-                        <p className="text-sm font-medium">{selectedEmployee.insurance_policy_number}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Policy</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.insurance_policy_number || '-'}</p>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500">Insurance Expiry</label>
-                        <p className="text-sm font-medium">{selectedEmployee.insurance_expiry}</p>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Expiry</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.insurance_expiry || '-'}</p>
                       </div>
                     </div>
                   )}
@@ -596,16 +648,16 @@ export default function EmployeesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-zinc-800">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-zinc-800">
               <button
                 onClick={() => setViewModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700"
+                className="px-5 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-xl font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
               >
                 Close
               </button>
               <Link
                 href={`/dashboard/management/employees/edit/${selectedEmployee.id}`}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
               >
                 Edit Employee
               </Link>

@@ -86,18 +86,18 @@ export default function DashboardPage() {
       {/* Top Section: Balance and ROI */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Overall Balance */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
-          <div className="flex items-center justify-between mb-8">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <p className="text-gray-400 dark:text-white text-[10px] font-bold mb-1 uppercase tracking-[0.2em]">Overall Balance</p>
               <div className="flex items-center gap-3">
-                <h3 className="text-4xl font-black dark:text-white">$2,538,942</h3>
+                <h3 className="text-3xl sm:text-4xl font-black dark:text-white">$2,538,942</h3>
                 <span className="text-green-500 text-xs font-bold flex items-center bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-full border border-green-100 dark:border-green-500/20">
                   <ArrowUpRight className="w-3 h-3 mr-0.5" /> 16.2%
                 </span>
               </div>
             </div>
-            <div className="flex gap-4 border-b border-gray-100 dark:border-zinc-800 pb-1">
+            <div className="flex gap-4 border-b border-gray-100 dark:border-zinc-800 pb-1 self-start sm:self-auto">
               <button className="text-red-600 font-bold border-b-2 border-red-600 pb-1 -mb-[5px] transition-all">Orders</button>
               <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 font-medium transition-all">Expenses</button>
             </div>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           
           <div className="flex flex-col lg:flex-row gap-8">
             <div className="flex-1">
-              <div className="h-[250px] w-full">
+              <div className="h-[220px] sm:h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={overallBalanceData} margin={{ top: 10, right: 10, left: -30, bottom: 0 }}>
                     <defs>
@@ -124,37 +124,37 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="lg:w-48 space-y-4 pt-4">
-              <div className="bg-red-600 p-4 rounded-2xl text-white shadow-lg shadow-red-600/20 group hover:-translate-y-1 transition-all cursor-pointer">
-                 <div className="flex items-center gap-3">
-                   <div className="bg-white/20 p-2 rounded-xl">
-                      <ShoppingBag className="w-5 h-5" />
+            <div className="grid grid-cols-3 lg:grid-cols-1 lg:w-48 gap-3 lg:gap-4 lg:pt-4">
+              <div className="bg-red-600 p-3 sm:p-4 rounded-2xl text-white shadow-lg shadow-red-600/20 group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-2 sm:gap-3">
+                   <div className="bg-white/20 p-1.5 sm:p-2 rounded-xl shrink-0">
+                      <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
                    </div>
-                   <div>
-                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Total Orders</p>
-                      <p className="text-lg font-black">$4,291</p>
-                   </div>
-                 </div>
-              </div>
-              <div className="bg-black p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
-                 <div className="flex items-center gap-3">
-                   <div className="bg-white/20 p-2 rounded-xl">
-                      <Users className="w-5 h-5" />
-                   </div>
-                   <div>
-                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Customers</p>
-                      <p className="text-lg font-black">44%</p>
+                   <div className="min-w-0">
+                      <p className="text-[9px] sm:text-[10px] opacity-70 font-bold tracking-wider truncate">Total Orders</p>
+                      <p className="text-base sm:text-lg font-black">$4,291</p>
                    </div>
                  </div>
               </div>
-              <div className="bg-gray-700 p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
-                 <div className="flex items-center gap-3">
-                   <div className="bg-white/20 p-2 rounded-xl">
-                      <CreditCard className="w-5 h-5" />
+              <div className="bg-black p-3 sm:p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-2 sm:gap-3">
+                   <div className="bg-white/20 p-1.5 sm:p-2 rounded-xl shrink-0">
+                      <Users className="w-4 h-4 sm:w-5 sm:h-5" />
                    </div>
-                   <div>
-                      <p className="text-[10px] opacity-70 font-bold tracking-wider">Total Income</p>
-                      <p className="text-lg font-black">$4,679</p>
+                   <div className="min-w-0">
+                      <p className="text-[9px] sm:text-[10px] opacity-70 font-bold tracking-wider truncate">Customers</p>
+                      <p className="text-base sm:text-lg font-black">44%</p>
+                   </div>
+                 </div>
+              </div>
+              <div className="bg-gray-700 p-3 sm:p-4 rounded-2xl text-white shadow-lg group hover:-translate-y-1 transition-all cursor-pointer">
+                 <div className="flex items-center gap-2 sm:gap-3">
+                   <div className="bg-white/20 p-1.5 sm:p-2 rounded-xl shrink-0">
+                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+                   </div>
+                   <div className="min-w-0">
+                      <p className="text-[9px] sm:text-[10px] opacity-70 font-bold tracking-wider truncate">Total Income</p>
+                      <p className="text-base sm:text-lg font-black">$4,679</p>
                    </div>
                  </div>
               </div>
@@ -164,12 +164,12 @@ export default function DashboardPage() {
 
 
         {/* ROI */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow transition-colors">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow transition-colors">
           <div className="flex justify-between mb-8">
             <div>
               <p className="text-gray-900 dark:text-white text-sm font-bold mb-2 uppercase tracking-wide">RETURN ON INVESTMENT</p>
-              <div className="flex items-center gap-4">
-                <h3 className="text-5xl font-black dark:text-white">283%</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-4xl sm:text-5xl font-black dark:text-white">283%</h3>
                 <div className="flex items-center gap-1 text-gray-900 dark:text-white font-bold">
                    <ArrowUpRight className="w-4 h-4" /> 
                    <span>+24%</span>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
               <p className="text-gray-400 text-sm mt-3 font-medium">monthly</p>
             </div>
 
-            <MoreVertical className="text-gray-300 w-5 h-5 cursor-pointer" />
+            <MoreVertical className="text-gray-300 w-5 h-5 cursor-pointer shrink-0" />
           </div>
           
           <div className="h-[200px] w-full flex items-end gap-6 mt-4 justify-between px-2">
@@ -195,8 +195,8 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 2: Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow relative overflow-hidden">
            <div className="flex justify-between items-start mb-6">
               <div className="bg-black p-3 rounded-xl text-white">
                  <Users className="w-6 h-6" />
@@ -221,7 +221,7 @@ export default function DashboardPage() {
         </div>
 
 
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer sm:col-span-1">
            <div className="flex justify-between items-start mb-6">
               <div className="bg-black dark:bg-white p-3 rounded-xl text-white dark:text-black shadow-lg">
                  <TrendingUp className="w-6 h-6" />
@@ -240,7 +240,7 @@ export default function DashboardPage() {
            </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer sm:col-span-2 md:col-span-1">
            <div className="flex justify-between items-start mb-6">
               <div className="bg-black dark:bg-white p-3 rounded-full text-white dark:text-black shadow-lg">
                  <Wallet className="w-6 h-6" />
@@ -269,9 +269,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 3: Marketing and Payment */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Marketing Report */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow">
           <div className="flex justify-between mb-8">
             <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm">Marketing Report</h5>
             <MoreVertical className="text-gray-400 w-5 h-5" />
@@ -317,7 +317,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Payment Methods */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow">
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow">
           <div className="flex justify-between mb-8">
             <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm">Payment Methods</h5>
             <MoreVertical className="text-gray-400 w-5 h-5" />
@@ -378,17 +378,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 4: Recent Projects Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow">
-        <div className="flex justify-between items-center mb-8">
+      <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm">Recent Projects</h5>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400">Date</button>
-            <button className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400">Website</button>
-            <button className="px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400">Others</button>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-xs sm:text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">Date</button>
+            <button className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-xs sm:text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">Website</button>
+            <button className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-zinc-800 text-xs sm:text-sm font-medium rounded-lg text-gray-600 dark:text-gray-400 whitespace-nowrap">Others</button>
           </div>
         </div>
-        <div className="overflow-x-auto lg:overflow-x-visible responsive-table-container">
-          <table className="w-full lg:min-w-[800px]">
+        <div className="overflow-x-auto responsive-table-container">
+          <table className="w-full min-w-[640px]">
             <thead className="text-left border-b border-gray-50 dark:border-zinc-800">
               <tr>
                 <th className="pb-4 text-xs font-medium text-gray-400 uppercase tracking-widest">#</th>
@@ -442,9 +442,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Row 5: Delivery and Earning */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 sm:gap-8">
         {/* Delivery Analytics */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow">
           <div className="flex justify-between mb-8">
             <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm">Delivery Analytics</h5>
             <MoreVertical className="text-gray-400 w-5 h-5" />
@@ -499,18 +499,18 @@ export default function DashboardPage() {
         </div>
 
         {/* Earning Report */}
-        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-3xl p-8 card-shadow">
-          <div className="flex justify-between items-center mb-8">
+        <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-3xl p-6 sm:p-8 card-shadow">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
               <h5 className="font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest text-sm mb-2">Earning Report</h5>
               <p className="text-xs text-gray-400">Monthly earnings overview</p>
             </div>
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-3 items-center self-start sm:self-auto">
               <div className="flex items-center gap-2 bg-gray-100 dark:bg-zinc-800 p-1 rounded-lg">
                 <button className="px-3 py-1 bg-white dark:bg-zinc-700 text-xs font-bold rounded-md shadow-sm dark:text-white">Monthly</button>
                 <button className="px-3 py-1 text-xs text-gray-400 font-bold">Yearly</button>
               </div>
-              <MoreVertical className="text-gray-400 w-5 h-5" />
+              <MoreVertical className="text-gray-400 w-5 h-5 shrink-0" />
             </div>
           </div>
           <div className="h-64 w-full mb-8">
