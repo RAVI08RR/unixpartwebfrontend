@@ -68,7 +68,10 @@ export default function CustomClearancePage() {
   const [printPreviewOpen, setPrintPreviewOpen] = useState(false);
   const printRef = useRef(null);
 
-  const handlePrint = useReactToPrint({ contentRef: printRef });
+  const handlePrint = useReactToPrint({ 
+    contentRef: printRef,
+    documentTitle: selectedContainer?.invoice_number || selectedContainer?.container_code || 'custom-clearance'
+  });
 
   // Filter and search logic
   const filteredContainers = useMemo(() => {

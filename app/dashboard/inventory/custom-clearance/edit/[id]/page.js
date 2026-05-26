@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Ship, Hash, Navigation, Anchor, MapPin, 
-  Package, Calendar, Building2, User as UserIcon
+  Package, Calendar, Building2, User as UserIcon, FileText, StickyNote
 } from "lucide-react";
 import { containerService } from "@/app/lib/services/containerService";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
@@ -30,6 +30,7 @@ export default function EditClearancePage({ params }) {
   const [formData, setFormData] = useState({
     container_code: "",
     container_number: "",
+    invoice_number: "",
     supplier_id: "",
     destination_branch_id: "",
     vessel_name: "",
@@ -41,7 +42,8 @@ export default function EditClearancePage({ params }) {
     total_packages: 1,
     notify_user_id: 1,
     status: "draft",
-    invoice_date: ""
+    invoice_date: "",
+    notes: ""
   });
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function EditClearancePage({ params }) {
           setFormData({
             container_code: data.container_code || "",
             container_number: data.container_number || "",
+            invoice_number: data.invoice_number || "",
             supplier_id: data.supplier_id ? String(data.supplier_id) : "",
             destination_branch_id: data.destination_branch_id ? String(data.destination_branch_id) : "",
             vessel_name: data.vessel_name || "",
@@ -65,7 +68,8 @@ export default function EditClearancePage({ params }) {
             total_packages: data.total_packages || 1,
             notify_user_id: data.notify_user_id || 1,
             status: data.status || "draft",
-            invoice_date: data.invoice_date || ""
+            invoice_date: data.invoice_date || "",
+            notes: data.notes || ""
           });
         }
       } catch (err) {
@@ -321,7 +325,37 @@ export default function EditClearancePage({ params }) {
                   <option value="cleared">Cleared</option>
                 </select>
             </FormField>
+
+            <FormField label="Invoice Number">
+              <div className="relative">
+                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="e.g. INV-2024-001"
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white"
+                  style={{ height: '45px' }}
+                  value={formData.invoice_number}
+                  onChange={(e) => setFormData({...formData, invoice_number: e.target.value})}
+                />
+              </div>
+            </FormField>
             
+          </div>
+
+          {/* Notes - Full Width */}
+          <div>
+            <FormField label="Notes">
+              <div className="relative">
+                <StickyNote className="absolute left-3 top-3 w-3.5 h-3.5 text-gray-400" />
+                <textarea
+                  placeholder="Add any notes or remarks about this shipment..."
+                  rows={3}
+                  className="w-full pl-9 pr-3 py-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white resize-none"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                />
+              </div>
+            </FormField>
           </div>
 
           {/* Action Buttons */}

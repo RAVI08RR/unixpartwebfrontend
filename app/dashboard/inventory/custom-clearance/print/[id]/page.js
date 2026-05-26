@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useReactToPrint } from "react-to-print";
 import { containerService } from "@/app/lib/services/containerService";
+import { supplierService } from "@/app/lib/services/supplierService";
 import { ArrowLeft, Printer } from "lucide-react";
 
 export default function PrintClearancePage() {
@@ -12,10 +13,14 @@ export default function PrintClearancePage() {
   const printRef = useRef(null);
 
   const [container, setContainer] = useState(null);
+  const [supplier, setSupplier] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const handlePrint = useReactToPrint({ contentRef: printRef });
+  const handlePrint = useReactToPrint({ 
+    contentRef: printRef,
+    documentTitle: container?.invoice_number || container?.container_code || 'custom-clearance'
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -28,6 +33,16 @@ export default function PrintClearancePage() {
         ]);
         setContainer(containerData);
         setItems(Array.isArray(itemsData) ? itemsData : []);
+
+        // Fetch supplier details if supplier_id exists
+        if (containerData?.supplier_id) {
+          try {
+            const supplierData = await supplierService.getById(containerData.supplier_id);
+            setSupplier(supplierData);
+          } catch (err) {
+            console.error("Failed to load supplier:", err);
+          }
+        }
       } catch (err) {
         console.error("Failed to load print data:", err);
       } finally {
@@ -63,6 +78,13 @@ export default function PrintClearancePage() {
       sum + parseFloat(item.unit_price || 0) * parseInt(item.quantity || 1),
     0
   );
+
+  // Build supplier display info
+  const supplierName = supplier?.company || supplier?.name || "—";
+  const supplierContact = supplier?.contact_person || supplier?.contact_number || supplier?.contact_email || "";
+  const supplierPhone = supplier?.contact_number || "";
+  const supplierEmail = supplier?.contact_email || "";
+  const supplierAddress = supplier?.address || "";
 
   return (
     <div className="min-h-screen bg-gray-200 flex flex-col">
@@ -113,7 +135,7 @@ export default function PrintClearancePage() {
               marginBottom: 16,
             }}
           >
-            {/* Left: Title */}
+            {/* Left: Title + Invoice Number + Date */}
             <div>
               <div
                 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.5px" }}
@@ -122,11 +144,16 @@ export default function PrintClearancePage() {
               </div>
               <div style={{ marginTop: 8 }}>
                 <div style={{ fontSize: 12 }}>
-                  <strong>CODE:</strong> {container.container_code || "—"}
+                  <strong>INVOICE NO:</strong> {container.invoice_number || container.container_code || "—"}
                 </div>
                 <div style={{ fontSize: 12 }}>
                   <strong>DATE:</strong>{" "}
-                  {container.created_at
+                  {container.invoice_date
+                    ? new Date(container.invoice_date).toLocaleDateString(
+                        "en-GB",
+                        { day: "2-digit", month: "long", year: "numeric" }
+                      )
+                    : container.created_at
                     ? new Date(container.created_at).toLocaleDateString(
                         "en-GB",
                         { day: "2-digit", month: "long", year: "numeric" }
@@ -136,17 +163,18 @@ export default function PrintClearancePage() {
               </div>
             </div>
 
-            {/* Right: Company */}
+            {/* Right: Supplier Info */}
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: 16, fontWeight: 900 }}>
-                UNIXPARTS TRADING LLC
+                {supplierName}
               </div>
               <div style={{ fontSize: 11, color: "#555", marginTop: 4, lineHeight: 1.7 }}>
-                P.O. Box 12345, Dubai, UAE
-                <br />
-                Phone: +971 XX XXX XXXX
-                <br />
-                Email: info@unixparts.com
+                {supplierAddress && <>{supplierAddress}<br /></>}
+                {supplierPhone && <>Phone: {supplierPhone}<br /></>}
+                {supplierEmail && <>Email: {supplierEmail}</>}
+                {!supplierAddress && !supplierPhone && !supplierEmail && (
+                  <span style={{ color: "#aaa" }}>No contact info</span>
+                )}
               </div>
             </div>
           </div>
@@ -229,16 +257,17 @@ export default function PrintClearancePage() {
             </div>
           </div>
 
-          {/* ── Shipping Route Banner ── */}
+          {/* ── Shipping Route Banner — no yellow ── */}
           <div
             style={{
-              background: "#FFE600",
+              background: "#f0f0f0",
               padding: "10px 14px",
               marginBottom: 20,
               fontWeight: 900,
               fontSize: 11,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
+              borderLeft: "4px solid #111",
             }}
           >
             SHIPPED FROM ({container.port_of_loading || "SUPPLIER PORT CITY, COUNTRY"}) →
@@ -391,7 +420,7 @@ export default function PrintClearancePage() {
                   );
                 })
               ) : (
-                /* Empty rows to match the invoice style */
+                /* Empty rows */
                 [...Array(4)].map((_, i) => (
                   <tr key={i} style={{ height: 36 }}>
                     <td style={{ border: "1px solid #ccc", padding: "8px 10px" }} />
@@ -440,45 +469,34 @@ export default function PrintClearancePage() {
             </table>
           </div>
 
-          {/* ── Container Size / Notes ── */}
+          {/* ── Container Size / Total Packages / Notes ── */}
           <div style={{ marginTop: 28 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>
-              {container.container_size || "—"}
+            {/* Total Packages above container size */}
+            <div style={{ fontSize: 12, marginBottom: 6 }}>
+              <strong>TOTAL PACKAGES:</strong>{" "}
+              {container.total_packages || "—"} × {container.container_size || "—"}
             </div>
             <div style={{ fontSize: 12, marginBottom: 8 }}>
               <strong>CONTAINER NO:</strong>{" "}
               ({container.container_number || "STANDARD CONTAINER NUMBER"})
             </div>
+
+            {/* Notes — clean, no yellow */}
             {container.notes && (
               <div
                 style={{
-                  background: "#FFE600",
-                  display: "inline-block",
-                  padding: "4px 12px",
-                  fontWeight: 900,
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  border: "1px solid #ccc",
+                  borderLeft: "4px solid #111",
+                  background: "#fafafa",
                   fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginTop: 4,
                 }}
               >
-                NOTES: {container.notes}
-              </div>
-            )}
-            {!container.notes && (
-              <div
-                style={{
-                  background: "#FFE600",
-                  display: "inline-block",
-                  padding: "4px 12px",
-                  fontWeight: 900,
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  marginTop: 4,
-                }}
-              >
-                NOTES:
+                <strong style={{ textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  NOTES:
+                </strong>{" "}
+                {container.notes}
               </div>
             )}
           </div>

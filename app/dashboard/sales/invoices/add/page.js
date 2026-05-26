@@ -503,17 +503,18 @@ function AddInvoiceContent() {
           <FormField label="Date & Time" required>
             <input 
               type="date"
-              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              className="w-full px-4 py-3 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none cursor-not-allowed opacity-60"
               value={formData.invoice_date}
-              onChange={(e) => setFormData({...formData, invoice_date: e.target.value})}
+              readOnly
+              disabled
             />
           </FormField>
 
           <FormField label="Invoice Status" required>
             <select 
-              className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
+              className="w-full px-4 py-3 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none cursor-not-allowed opacity-60"
               value={formData.invoice_status}
-              onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
+              disabled
             >
               <option value="pending">Pending</option>
               <option value="paid">Paid</option>
@@ -698,7 +699,7 @@ function AddInvoiceContent() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
+                            {item.load_status === 'loaded' && item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
                               day: '2-digit', 
                               month: 'short', 
                               year: 'numeric',
@@ -885,22 +886,6 @@ function AddInvoiceContent() {
               Cancel
             </Link>
           </div>
-          
-          {/* Status Change Dropdown */}
-          <div className="flex items-center justify-between sm:justify-start gap-3 w-full sm:w-auto">
-            <label className="text-sm font-bold text-gray-600 dark:text-gray-400">Change Status:</label>
-            <select 
-              className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
-              value={formData.invoice_status}
-              onChange={(e) => setFormData({...formData, invoice_status: e.target.value})}
-            >
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
         </div>
       </div>
 
@@ -928,12 +913,13 @@ function AddInvoiceContent() {
               </div>
 
               <div className="space-y-4">
-                <FormField label="Select PO Item" required>
+                {/* 1st: Stock Number */}
+                <FormField label="Stock Number" required>
                   <POItemAutocomplete
                     value={itemForm.po_item_id}
                     onChange={(poItemId) => setItemForm({...itemForm, po_item_id: poItemId})}
                     onSelect={handlePoItemSelect}
-                    placeholder="Search by stock number or item name..."
+                    placeholder="Search by stock number..."
                     disabled={poItemsLoading}
                     initialDisplayText={
                       itemForm.stock_number && itemForm.item_name 
@@ -967,30 +953,7 @@ function AddInvoiceContent() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Sale Amount" required>
-                    <input 
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                      value={itemForm.sale_amount}
-                      onChange={(e) => setItemForm({...itemForm, sale_amount: e.target.value})}
-                    />
-                  </FormField>
-
-                  <FormField label="Discount">
-                    <input 
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                      value={itemForm.discount}
-                      onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
-                    />
-                  </FormField>
-                </div>
-
+                {/* 2nd: Sale Description */}
                 <FormField label="Sale Description">
                   <input 
                     type="text"
@@ -1001,38 +964,78 @@ function AddInvoiceContent() {
                   />
                 </FormField>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="Discount Details">
-                    <input 
-                      type="text"
-                      placeholder="Optional discount details"
-                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                      value={itemForm.discount_details}
-                      onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
-                    />
-                  </FormField>
-
-                  <FormField label="Load Status">
-                    <select 
-                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
-                      value={itemForm.load_status}
-                      onChange={(e) => setItemForm({...itemForm, load_status: e.target.value})}
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="loaded">Loaded</option>
-                      <option value="delivered">Delivered</option>
-                    </select>
-                  </FormField>
-                </div>
-
-                <FormField label="Load Date & Time">
+                {/* 3rd: Sale Amount */}
+                <FormField label="Sale Amount" required>
                   <input 
-                    type="datetime-local"
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemForm.load_date}
-                    onChange={(e) => setItemForm({...itemForm, load_date: e.target.value})}
+                    value={itemForm.sale_amount}
+                    onChange={(e) => setItemForm({...itemForm, sale_amount: e.target.value})}
                   />
                 </FormField>
+
+                {/* 4th: Discount Amount */}
+                <FormField label="Discount Amount">
+                  <input 
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.discount}
+                    onChange={(e) => setItemForm({...itemForm, discount: e.target.value})}
+                  />
+                </FormField>
+
+                {/* 5th: Discount Description */}
+                <FormField label="Discount Description">
+                  <input 
+                    type="text"
+                    placeholder="Discount description"
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemForm.discount_details}
+                    onChange={(e) => setItemForm({...itemForm, discount_details: e.target.value})}
+                  />
+                </FormField>
+
+                {/* 6th: Load Status */}
+                <FormField label="Load Status">
+                  <select 
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={itemForm.load_status}
+                    onChange={(e) => {
+                      const status = e.target.value;
+                      let newLoadDate = itemForm.load_date;
+                      if (status === 'loaded' && !itemForm.load_date) {
+                        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+                        newLoadDate = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+                      } else if (status !== 'loaded') {
+                        newLoadDate = "";
+                      }
+                      setItemForm({
+                        ...itemForm,
+                        load_status: status,
+                        load_date: newLoadDate
+                      });
+                    }}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="loaded">Loaded</option>
+                  </select>
+                </FormField>
+
+                {/* 7th: Load Date and Time */}
+                {itemForm.load_status === 'loaded' && (
+                  <FormField label="Load Date & Time (Auto Generated)">
+                    <input 
+                      type="datetime-local"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemForm.load_date}
+                      onChange={(e) => setItemForm({...itemForm, load_date: e.target.value})}
+                    />
+                  </FormField>
+                )}
               </div>
 
               <div className="flex items-center gap-3 pt-4">

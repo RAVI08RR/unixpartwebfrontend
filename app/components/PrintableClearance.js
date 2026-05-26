@@ -14,11 +14,10 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
     year: "numeric",
   });
 
-  const supplierName =
-    suppliers?.find((s) => s.id === container.supplier_id)?.company ||
-    suppliers?.find((s) => s.id === container.supplier_id)?.name ||
-    container.supplier_id ||
-    "—";
+  const supplier = suppliers?.find((s) => s.id === container.supplier_id);
+  const supplierName = supplier?.company || supplier?.name || container.supplier_id || "—";
+  const supplierContact = supplier?.contact_number || supplier?.phone || "—";
+  const supplierAddress = supplier?.address || "—";
 
   const branchName =
     branches?.find((b) => b.id === container.destination_branch_id)
@@ -59,11 +58,11 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
           </div>
         </div>
         <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: "#c00" }}>UNIXPARTS TRADING LLC</div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: "#c00" }}>{supplierName}</div>
           <div style={{ fontSize: 11, color: "#555", marginTop: 4, lineHeight: 1.6 }}>
-            P.O. Box 12345, Dubai, UAE<br />
-            Phone: +971 50 300 0000<br />
-            Email: info@unixparts.com
+            {supplierAddress}<br />
+            Phone: {supplierContact}<br />
+            {supplier?.email && `Email: ${supplier.email}`}
           </div>
         </div>
       </div>
@@ -71,8 +70,8 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
       {/* ── Container Identity ── */}
       <div style={{ display: "flex", gap: 24, marginBottom: 28 }}>
         <div style={{ flex: 1, background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8, padding: "16px 20px" }}>
-          <div style={{ fontSize: 9, fontWeight: 900, color: "#999", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>Container Code</div>
-          <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", textTransform: "uppercase" }}>{container.container_code || "—"}</div>
+          <div style={{ fontSize: 9, fontWeight: 900, color: "#999", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>Invoice Number</div>
+          <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: "-0.5px", textTransform: "uppercase" }}>{container.invoice_number || "—"}</div>
         </div>
         <div style={{ flex: 1, background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8, padding: "16px 20px" }}>
           <div style={{ fontSize: 9, fontWeight: 900, color: "#999", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>Container Number</div>
@@ -87,15 +86,15 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
       {/* ── Details Grid ── */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0", border: "1px solid #e5e5e5", borderRadius: 8, overflow: "hidden", marginBottom: 28 }}>
         {[
+          { label: "Total Packages", value: container.total_packages },
+          { label: "Container Size", value: container.container_size },
           { label: "Vessel Name", value: container.vessel_name },
           { label: "Voyage Number", value: container.voyage_number },
           { label: "Shipping Agent", value: container.shipping_agent },
           { label: "Port of Loading", value: container.port_of_loading },
           { label: "Port of Discharging", value: container.port_of_discharging },
-          { label: "Container Size", value: container.container_size },
           { label: "Destination Branch", value: branchName },
           { label: "Supplier", value: supplierName },
-          { label: "Total Packages", value: container.total_packages },
         ].map((field, i) => (
           <div
             key={i}
@@ -103,7 +102,7 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
               padding: "14px 16px",
               borderRight: (i + 1) % 3 !== 0 ? "1px solid #e5e5e5" : "none",
               borderBottom: i < 6 ? "1px solid #e5e5e5" : "none",
-              background: i % 2 === 0 ? "#fafafa" : "#fff",
+              background: "#fff",
             }}
           >
             <div style={{ fontSize: 9, fontWeight: 900, color: "#999", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 5 }}>
@@ -184,6 +183,18 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
               </tfoot>
             )}
           </table>
+        </div>
+      )}
+
+      {/* ── Notes Section ── */}
+      {container.notes && (
+        <div style={{ marginBottom: 28, padding: "16px 20px", background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8 }}>
+          <div style={{ fontSize: 9, fontWeight: 900, color: "#999", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 8 }}>
+            Notes
+          </div>
+          <div style={{ fontSize: 12, color: "#333", lineHeight: 1.6 }}>
+            {container.notes}
+          </div>
         </div>
       )}
 
