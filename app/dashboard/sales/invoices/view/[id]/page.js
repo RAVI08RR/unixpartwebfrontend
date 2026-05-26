@@ -22,6 +22,7 @@ export default function ViewInvoicePage({ params }) {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
+    documentTitle: invoice?.invoice_number || "Invoice",
   });
 
   useEffect(() => {

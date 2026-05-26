@@ -39,6 +39,7 @@ export default function EditInvoicePage({ params }) {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
+    documentTitle: formData?.invoice_number || "Invoice",
   });
   
   // Unwrap params promise

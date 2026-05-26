@@ -35,6 +35,7 @@ function AddInvoiceContent() {
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
+    documentTitle: formData?.invoice_number || "Invoice",
   });
   
   const [formData, setFormData] = useState({
