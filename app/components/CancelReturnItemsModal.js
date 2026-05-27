@@ -18,10 +18,23 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
 
   const handleItemSelect = (item) => {
     setSelectedItemDetails(item);
-    // Initialize with item's sale amount
-    setRefundAmount(parseFloat(item.sale_amount) || 0);
+    const itemPaid = parseFloat(item.paid_amount || item.paid_amount_calculated || item.sale_amount || 0);
+    // Initialize with item's paid amount
+    setRefundAmount(itemPaid);
     setRetainedProfit(0);
     setError("");
+  };
+
+  const handleRefundAmountChange = (val) => {
+    const amount = parseFloat(val);
+    const numericAmount = isNaN(amount) ? 0 : amount;
+    setRefundAmount(val); // Keep raw value in input state
+    
+    if (selectedItemDetails) {
+      const itemPaid = parseFloat(selectedItemDetails.paid_amount || selectedItemDetails.paid_amount_calculated || selectedItemDetails.sale_amount || 0);
+      const computedProfit = itemPaid - numericAmount;
+      setRetainedProfit(computedProfit > 0 ? computedProfit : 0);
+    }
   };
 
   const handleConfirm = async () => {
@@ -151,9 +164,12 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
                     <p className="text-base font-bold text-gray-900 dark:text-white mt-1">
                       {selectedItemDetails.item_name || selectedItemDetails.po_item?.stock_item?.name}
                     </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Stock #: {selectedItemDetails.stock_number || selectedItemDetails.po_item?.stock_number}
-                    </p>
+                    <div className="flex flex-wrap justify-between mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      <span>Stock #: {selectedItemDetails.stock_number || selectedItemDetails.po_item?.stock_number}</span>
+                      <span className="font-bold text-green-600 dark:text-green-400">
+                        Paid Amount: AED {parseFloat(selectedItemDetails.paid_amount || selectedItemDetails.paid_amount_calculated || selectedItemDetails.sale_amount || 0).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Refund Amount */}
@@ -165,7 +181,7 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
                       type="number"
                       step="0.01"
                       value={refundAmount}
-                      onChange={(e) => setRefundAmount(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleRefundAmountChange(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                       placeholder="0.00"
                     />

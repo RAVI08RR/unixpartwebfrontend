@@ -832,98 +832,100 @@ export default function EditInvoicePage({ params }) {
 
           {formData.items.length > 0 ? (
             <>
-              <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px]">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount Details</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Date & Time</th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {totals.itemsWithPaidAmounts.map((item, index) => {
-                    const netAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
-                    return (
-                      <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.stock_number || '-'}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_name || item.item_description || '-'}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.sale_amount)}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-red-600 dark:text-red-400">{formatCurrency(item.discount)}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">{item.discount_details || '-'}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            {item.paid_amount_calculated ? formatCurrency(item.paid_amount_calculated) : formatCurrency(0)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
-                            item.load_status === 'delivered' 
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : item.load_status === 'loaded'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                          }`}>
-                            {item.load_status === 'loaded' ? 'Loaded' : item.load_status === 'delivered' ? 'Delivered' : 'Unloaded'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {item.load_status === 'loaded' && item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
-                              day: '2-digit', 
-                              month: 'short', 
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }) : '-'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => editItem(index)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                              title="Edit item"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeItem(index)}
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                              title="Delete item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
+              <div className="responsive-table-container w-full max-w-full">
+                <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-zinc-800">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Stock #</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Item</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Desc</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Sale Amt</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Discount Details</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Paid Amt</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Load Date & Time</th>
+                        <th className="px-4 py-3"></th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                      {totals.itemsWithPaidAmounts.map((item, index) => {
+                        const netAmount = (parseFloat(item.sale_amount) || 0) - (parseFloat(item.discount) || 0);
+                        return (
+                          <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                            <td className="px-4 py-3" data-label="Stock #">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">{item.stock_number || '-'}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Item">
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{item.item_name || item.item_description || '-'}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Sale Desc">
+                              <span className="text-sm text-gray-700 dark:text-gray-300">{item.sale_description || '-'}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Sale Amt">
+                              <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(item.sale_amount)}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Discount">
+                              <span className="text-sm text-red-600 dark:text-red-400">{formatCurrency(item.discount)}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Discount Details">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">{item.discount_details || '-'}</span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Paid Amt">
+                              <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                                {item.paid_amount_calculated ? formatCurrency(item.paid_amount_calculated) : formatCurrency(0)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Load Status">
+                              <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                                item.load_status === 'delivered' 
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  : item.load_status === 'loaded'
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                              }`}>
+                                {item.load_status === 'loaded' ? 'Loaded' : item.load_status === 'delivered' ? 'Delivered' : 'Unloaded'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Load Date & Time">
+                              <span className="text-sm text-gray-700 dark:text-gray-300">
+                                {item.load_status === 'loaded' && item.load_date ? new Date(item.load_date).toLocaleString('en-GB', { 
+                                  day: '2-digit', 
+                                  month: 'short', 
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : '-'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3" data-label="Actions">
+                              <div className="flex items-center gap-2 lg:justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => editItem(index)}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                  title="Edit item"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeItem(index)}
+                                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                                  title="Delete item"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
             {/* Add Item Button after listing */}
             <div className="mt-4 flex justify-end">
@@ -957,78 +959,92 @@ export default function EditInvoicePage({ params }) {
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payments</h3>
-            <button
-              type="button"
-              onClick={addPayment}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
-            >
-              <Plus className="w-4 h-4" />
-              Add Payment Row
-            </button>
           </div>
 
           {formData.payments.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.payments.map((payment, index) => (
-                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
-                          <CreditCard className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
-                            {payment.payment_method.replace('_', ' ')}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                          {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-black text-green-600 dark:text-green-400">
-                          {formatCurrency(payment.payment_amount)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                          {payment.received_by?.name || payment.received_by_name || payment.created_by?.name || "Admin User"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {payment.payment_notes || '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => removePayment(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="responsive-table-container w-full max-w-full">
+                <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-zinc-800">
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
+                        <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
+                        <th className="px-4 py-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                      {formData.payments.map((payment, index) => (
+                        <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                          <td className="px-4 py-3" data-label="Method">
+                            <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
+                              <CreditCard className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
+                                {payment.payment_method.replace('_', ' ')}
+                              </span>
+                            </span>
+                          </td>
+                          <td className="px-4 py-3" data-label="Date">
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                              {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3" data-label="Amount">
+                            <span className="text-sm font-black text-green-600 dark:text-green-400">
+                              {formatCurrency(payment.payment_amount)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3" data-label="Received By">
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                              {payment.received_by?.name || payment.received_by_name || payment.created_by?.name || "Admin User"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3" data-label="Notes">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {payment.payment_notes || '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3" data-label="Actions">
+                            <button
+                              type="button"
+                              onClick={() => removePayment(index)}
+                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={addPayment}
+                  className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Payment Row
+                </button>
+              </div>
+            </>
           ) : (
             <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
               <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400 text-sm">No payments added yet.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">No payments added yet.</p>
+              <button
+                type="button"
+                onClick={addPayment}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Payment Row
+              </button>
             </div>
           )}
         </div>
@@ -1050,62 +1066,64 @@ export default function EditInvoicePage({ params }) {
           </div>
 
           {!refundLoading && refundItems.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg border border-orange-200 dark:border-orange-900/40">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-900/40">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund #</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Stock #</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Item</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Reason</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-orange-100 dark:divide-orange-900/20">
-                  {refundItems.map((refund, index) => (
-                    <tr key={refund.id || index} className="hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">REF-{refund.id}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
-                          {refund.po_item?.stock_number || refund.stock_number || '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-700 dark:text-gray-300">
-                          {refund.po_item?.stock_item?.name || refund.item_name || refund.po_item?.po_description || '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{refund.reason || refund.refund_reason || '-'}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-black text-orange-600 dark:text-orange-400">
-                          {refund.refund_amount ? formatCurrency(refund.refund_amount) : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {refund.created_at ? new Date(refund.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
-                          refund.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                          refund.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                          refund.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
-                        }`}>
-                          {refund.status || 'N/A'}
-                        </span>
-                      </td>
+            <div className="responsive-table-container w-full max-w-full">
+              <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide rounded-lg border border-orange-200 dark:border-orange-900/40">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-900/40">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund #</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Stock #</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Item</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Reason</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Refund Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-orange-100 dark:divide-orange-900/20">
+                    {refundItems.map((refund, index) => (
+                      <tr key={refund.id || index} className="hover:bg-orange-50/50 dark:hover:bg-orange-900/10 transition-colors">
+                        <td className="px-4 py-3" data-label="Refund #">
+                          <span className="text-sm font-black text-gray-900 dark:text-white">REF-{refund.id}</span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Stock #">
+                          <span className="text-sm font-mono text-gray-700 dark:text-gray-300">
+                            {refund.po_item?.stock_number || refund.stock_number || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Item">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {refund.po_item?.stock_item?.name || refund.item_name || refund.po_item?.po_description || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Reason">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">{refund.reason || refund.refund_reason || '-'}</span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Refund Amount">
+                          <span className="text-sm font-black text-orange-600 dark:text-orange-400">
+                            {refund.refund_amount ? formatCurrency(refund.refund_amount) : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Date">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {refund.created_at ? new Date(refund.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3" data-label="Status">
+                          <span className={`inline-flex px-2 py-1 rounded-full text-xs font-bold ${
+                            refund.status === 'approved' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                            refund.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                            refund.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                            'bg-gray-100 text-gray-600 dark:bg-zinc-800 dark:text-gray-400'
+                          }`}>
+                            {refund.status || 'N/A'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : !refundLoading ? (
             <div className="text-center py-10 bg-orange-50/50 dark:bg-orange-900/10 rounded-lg border border-dashed border-orange-200 dark:border-orange-900/40">
@@ -1116,19 +1134,19 @@ export default function EditInvoicePage({ params }) {
         </div>
 
         {/* Totals */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-800/50 dark:to-zinc-800/30 rounded-lg p-6 border border-gray-200 dark:border-zinc-700">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-center">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Total Amount:</span>
-              <span className="text-xl font-black text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</span>
+        <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-zinc-800/50 dark:to-zinc-800/30 rounded-[20px] p-6 border border-gray-200 dark:border-zinc-800">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
+              <span className="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Total Amount:</span>
+              <span className="text-2xl font-black text-gray-900 dark:text-white">{formatCurrency(totals.itemsTotal)}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Total Paid:</span>
-              <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.totalPaid)}</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 border-t border-gray-200 dark:border-zinc-800 sm:border-t-0 sm:border-x sm:px-4">
+              <span className="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Total Paid:</span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(totals.totalPaid)}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Balance Due:</span>
-              <span className="text-xl font-black text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</span>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 border-t border-gray-200 dark:border-zinc-800 sm:border-t-0">
+              <span className="text-xs font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Balance Due:</span>
+              <span className="text-2xl font-black text-red-600 dark:text-red-400">{formatCurrency(totals.balanceDue)}</span>
             </div>
           </div>
         </div>
@@ -1146,7 +1164,7 @@ export default function EditInvoicePage({ params }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-zinc-800">
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <button 
               type="button"
               onClick={handleSubmit}
@@ -1158,7 +1176,7 @@ export default function EditInvoicePage({ params }) {
             </button>
             <button 
               type="button"
-              onClick={handlePrint}
+              onClick={() => handlePrint()}
               className="flex-1 sm:flex-initial px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
             >
               <Printer className="w-4 h-4" />
@@ -1516,7 +1534,7 @@ export default function EditInvoicePage({ params }) {
       )}
 
       {/* Hidden Printable Invoice */}
-      <div style={{ display: 'none' }}>
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <PrintableInvoice 
           ref={printRef} 
           invoice={{

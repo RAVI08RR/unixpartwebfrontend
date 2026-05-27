@@ -140,7 +140,7 @@ export function Sidebar() {
         { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign, permission: null },
         { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText, permission: PERMISSIONS.EXPENSES?.VIEW },
         { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers, permission: PERMISSIONS.FUND_TRANSFERS?.VIEW },
-        // { label: "Transactions", href: "/dashboard/finance/transactions", icon: Layers, permission: null },
+        { label: "Retained Profit", href: "/dashboard/finance/retained-profit", icon: BarChart3, permission: null },
       ]
     },
     {

@@ -231,16 +231,15 @@ export default function EditPurchaseOrderPage() {
         {/* PO ID */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            PO ID <span className="text-red-500">*</span>
+            PO ID (Read Only)
           </label>
           <div className="relative">
             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input 
               type="text"
-              placeholder="e.g., PO-2024-001"
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+              className="w-full pl-9 pr-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none text-gray-500 dark:text-zinc-400 cursor-not-allowed"
               value={formData.po_id}
-              onChange={(e) => setFormData({...formData, po_id: e.target.value})}
+              readOnly={true}
             />
           </div>
         </div>
@@ -324,41 +323,6 @@ export default function EditPurchaseOrderPage() {
           </div>
         </div>
 
-        {/* Total Container Revenue */}
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            Total Container Revenue (AED)
-          </label>
-          <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input 
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.total_container_revenue}
-              onChange={(e) => setFormData({...formData, total_container_revenue: e.target.value})}
-            />
-          </div>
-        </div>
-
-        {/* Items in Stock */}
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-            Items in Stock
-          </label>
-          <div className="relative">
-            <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-            <input 
-              type="number"
-              placeholder="0"
-              className="w-full pl-9 pr-3 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.items_in_stock}
-              onChange={(e) => setFormData({...formData, items_in_stock: e.target.value})}
-            />
-          </div>
-        </div>
-
         {/* Status */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -370,10 +334,8 @@ export default function EditPurchaseOrderPage() {
               value={formData.status}
               onChange={(e) => setFormData({...formData, status: e.target.value})}
             >
-              <option value="pending">Pending</option>
-              <option value="in_transit">In Transit</option>
-              <option value="arrived">Arrived</option>
-              <option value="completed">Completed</option>
+              <option value="draft">Draft</option>
+              <option value="saved_published">Saved & Published</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           </div>

@@ -87,6 +87,9 @@ function PurchaseOrderItemsContent({ params }) {
       const itemsData = await poItemService.getAll(0, 100, poId);
       console.log('📦 Fetched PO Items:', itemsData);
       console.log('📦 Items count:', itemsData?.length || 0);
+      console.log('📦 First item structure:', itemsData?.[0]);
+      console.log('📦 First item container:', itemsData?.[0]?.container);
+      console.log('📦 First item destination_branch:', itemsData?.[0]?.container?.destination_branch);
       setItems(itemsData || []);
     } catch (err) {
       console.error("Failed to fetch PO data:", err);
@@ -195,14 +198,16 @@ function PurchaseOrderItemsContent({ params }) {
     return items
       .filter(item => selectedItems.includes(item.id))
       .map(item => {
-        const stockItem = stockItems.find(si => si.id === item.item_id);
-        const branch = branches.find(b => b.id === item.current_branch_id);
+        const stockItem = stockItems.find(si => String(si.id) === String(item.item_id));
+        const branch = branches.find(b => String(b.id) === String(item.current_branch_id));
+        // Use branch name/code from API response if available
+        const branchCode = item.current_branch?.branch_code || item.container?.destination_branch?.branch_code || branch?.branch_code || '';
         return {
           id: item.id,
           stock_number: item.stock_number,
           item_name: stockItem?.name || 'Unknown Item',
           po_description: item.po_description,
-          branch_code: branch?.branch_code || '',
+          branch_code: branchCode,
           supplier_code: purchaseOrder?.supplier_code || '',
           container_number: purchaseOrder?.container_number || '',
           qr_data: `${window.location.origin}/dashboard/inventory/all-inventory/view/${item.stock_number}`,
@@ -436,8 +441,8 @@ function PurchaseOrderItemsContent({ params }) {
                     </td>
                   </tr>
                 ) : paginatedItems.map((item, idx) => {
-                    const stockItem = stockItems.find(si => si.id === item.item_id);
-                    const branch = branches.find(b => b.id === item.current_branch_id);
+                    const stockItem = stockItems.find(si => String(si.id) === String(item.item_id));
+                    const branch = branches.find(b => String(b.id) === String(item.current_branch_id));
                     const isSelected = selectedItems.includes(item.id);
                     return (
                         <tr key={item.id} className={`group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}>
@@ -469,7 +474,9 @@ function PurchaseOrderItemsContent({ params }) {
                             <td className="px-6 py-4" data-label="Branch">
                                 <div className="flex items-center gap-2">
                                     <Building2 className="w-4 h-4 text-gray-400" />
-                                    <span className="text-xs text-gray-600 dark:text-gray-400">{branch?.branch_name || `Branch ${item.current_branch_id}`}</span>
+                                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                                        {item.current_branch?.branch_name || item.current_branch?.branch_code || item.container?.destination_branch?.branch_name || branch?.branch_name || `Branch ${item.current_branch_id}`}
+                                    </span>
                                 </div>
                             </td>
                             <td className="px-6 py-4" data-label="Status">
@@ -643,8 +650,8 @@ function PurchaseOrderItemsContent({ params }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <DetailBox label="PO Description" value={selectedItem.po_description} />
-                <DetailBox label="Category" value={stockItems.find(si => si.id === selectedItem.item_id)?.name || selectedItem.item_id} />
-                <DetailBox label="Current Branch" value={branches.find(b => b.id === selectedItem.current_branch_id)?.branch_name || selectedItem.current_branch_id} />
+                <DetailBox label="Category" value={stockItems.find(si => String(si.id) === String(selectedItem.item_id))?.name || selectedItem.item_id} />
+                <DetailBox label="Current Branch" value={selectedItem.current_branch?.branch_name || selectedItem.current_branch?.branch_code || selectedItem.container?.destination_branch?.branch_name || branches.find(b => String(b.id) === String(selectedItem.current_branch_id))?.branch_name || selectedItem.current_branch_id} />
                 <DetailBox label="Status" value={selectedItem.status.toUpperCase()} />
                 <DetailBox label="Quantity" value={`${selectedItem.quantity} units`} />
                 <DetailBox label="Is Dismantled" value={selectedItem.is_dismantled ? "YES" : "NO"} />
@@ -952,7 +959,7 @@ function PurchaseOrderItemsContent({ params }) {
                   Cancel
                 </button>
                 <button
-                  onClick={handlePrint}
+                  onClick={() => handlePrint()}
                   className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl font-semibold text-xs sm:text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
                 >
                   <Printer className="w-3 h-3 sm:w-4 sm:h-4" />

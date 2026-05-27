@@ -73,11 +73,13 @@ export default function EditPOItemPage() {
     
     try {
       const payload = {
-        ...formData,
+        po_id: parseInt(formData.po_id),
         item_id: parseInt(formData.item_id),
+        po_description: formData.po_description || null,
+        stock_notes: formData.stock_notes || null,
         current_branch_id: parseInt(formData.current_branch_id),
-        quantity: parseInt(formData.quantity),
-        po_id: parseInt(formData.po_id)
+        status: formData.status,
+        quantity: parseInt(formData.quantity)
       };
       
       await poItemService.update(itemId, payload);
@@ -192,7 +194,7 @@ export default function EditPOItemPage() {
             </FormField>
           </div>
 
-          <FormField label="Order Description" required>
+          <FormField label="Order Description">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
               <input 
@@ -201,7 +203,6 @@ export default function EditPOItemPage() {
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.po_description}
                 onChange={(e) => setFormData({...formData, po_description: e.target.value})}
-                required
               />
             </div>
           </FormField>

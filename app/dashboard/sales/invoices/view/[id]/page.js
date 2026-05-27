@@ -173,7 +173,7 @@ export default function ViewInvoicePage({ params }) {
         
         <div className="flex items-center gap-3">
           <button
-            onClick={handlePrint}
+            onClick={() => handlePrint()}
             className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
           >
             <Printer className="w-4 h-4" />
@@ -196,7 +196,7 @@ export default function ViewInvoicePage({ params }) {
       </div>
 
       {/* Hidden Printable Invoice for actual printing */}
-      <div style={{ display: 'none' }}>
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <PrintableInvoice ref={printRef} invoice={invoice} customer={customer} invoiceId={invoiceId} />
       </div>
     </div>

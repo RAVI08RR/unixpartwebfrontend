@@ -9,7 +9,7 @@ export default function PWARegistration() {
   useEffect(() => {
     // 1. Register Service Worker
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
+      const registerSW = () => {
         navigator.serviceWorker.register('/sw.js').then(
           function(registration) {
             console.log('PWA SW registered: ', registration.scope);
@@ -18,7 +18,13 @@ export default function PWARegistration() {
             console.log('PWA SW failed: ', err);
           }
         );
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+      }
     }
 
     // 2. Intercept Chrome's "Add to Home Screen" event

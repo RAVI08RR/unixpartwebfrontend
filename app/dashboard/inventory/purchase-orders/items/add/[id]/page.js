@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, Package, Hash, FileText, Building2, Box } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
+import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
@@ -56,6 +57,27 @@ export default function AddPOItemPage({ params }) {
       
       await poItemService.create(payload);
       success("Item added successfully");
+
+      // Auto-update purchase order status to Saved & Published
+      try {
+        const poData = await purchaseOrderService.getById(poId);
+        if (poData && poData.status !== 'saved_published') {
+          await purchaseOrderService.update(poId, {
+            po_id: poData.po_id,
+            container_id: poData.container_id,
+            supplier_id: poData.supplier_id,
+            arrival_date: poData.arrival_date,
+            arrival_branch_id: poData.arrival_branch_id,
+            total_container_revenue: poData.total_container_revenue,
+            items_in_stock: poData.items_in_stock,
+            status: "saved_published",
+            notes: poData.notes
+          });
+        }
+      } catch (statusErr) {
+        console.error("Auto-status transition failed:", statusErr);
+      }
+
       router.push(`/dashboard/inventory/purchase-orders/items/${poId}`);
     } catch (err) {
       showError(err.message || "Failed to add item");
@@ -158,7 +180,7 @@ export default function AddPOItemPage({ params }) {
             </FormField>
           </div>
 
-          <FormField label="Order Description" required>
+          <FormField label="Order Description">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
               <input 
@@ -167,7 +189,6 @@ export default function AddPOItemPage({ params }) {
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.po_description}
                 onChange={(e) => setFormData({...formData, po_description: e.target.value})}
-                required
               />
             </div>
           </FormField>

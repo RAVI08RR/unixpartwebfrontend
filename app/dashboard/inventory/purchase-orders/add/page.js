@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -12,6 +12,7 @@ import { useContainers } from "@/app/lib/hooks/useContainers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
+import { fetchApi } from "@/app/lib/api";
 
 export default function AddPurchaseOrderPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function AddPurchaseOrderPage() {
     container_id: "",
     total_container_revenue: "0.00",
     items_in_stock: 0,
-    status: "",
+    status: "draft",
     notes: ""
   });
 
@@ -46,6 +47,21 @@ export default function AddPurchaseOrderPage() {
     current_branch_id: "",
     quantity: 1
   });
+
+  // Auto-generate unique PO ID on component mount
+  useEffect(() => {
+    const fetchSuggestedPoId = async () => {
+      try {
+        const res = await fetchApi('/api/purchase-orders/suggest-po-id');
+        if (res && res.suggested_po_id) {
+          setFormData(prev => ({ ...prev, po_id: res.suggested_po_id }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch suggested PO ID:", err);
+      }
+    };
+    fetchSuggestedPoId();
+  }, []);
 
   const handleCreateOrder = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
@@ -100,6 +116,18 @@ export default function AddPurchaseOrderPage() {
 
         await poItemService.create(payload);
         showSuccess("Item added successfully!");
+        
+        // Auto-update purchase order status to Saved & Published
+        try {
+            await purchaseOrderService.update(createdPo.id, {
+                po_id: createdPo.po_id,
+                container_id: createdPo.container_id,
+                status: "saved_published"
+            });
+        } catch (statusErr) {
+            console.error("Auto-status transition failed:", statusErr);
+        }
+        
         router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
     } catch (err) {
         showError(`Failed to add item: ${err.message}`);
@@ -129,15 +157,15 @@ export default function AddPurchaseOrderPage() {
         <form onSubmit={(e) => handleCreateOrder(e, true)} className="p-8 space-y-8">
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="PO ID" required>
+            <FormField label="PO ID (Auto-Generated)">
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Enter PO ID"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                  placeholder="Generating PO ID..."
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none dark:text-white cursor-not-allowed"
                   value={formData.po_id}
-                  onChange={(e) => setFormData({...formData, po_id: e.target.value})}
+                  readOnly={true}
                   required
                 />
               </div>
@@ -160,45 +188,15 @@ export default function AddPurchaseOrderPage() {
               </div>
             </FormField>
 
-            <FormField label="Total Container Revenue (AED)">
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="number" 
-                  step="0.01"
-                  placeholder="1110"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                  value={formData.total_container_revenue}
-                  onChange={(e) => setFormData({...formData, total_container_revenue: e.target.value})}
-                />
-              </div>
-            </FormField>
-
-            <FormField label="Items in Stock">
-              <div className="relative">
-                <Layout className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="number" 
-                  placeholder="15"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                  value={formData.items_in_stock}
-                  onChange={(e) => setFormData({...formData, items_in_stock: e.target.value})}
-                />
-              </div>
-            </FormField>
-
-            <FormField label="Status">
+            <FormField label="Status" required>
               <select 
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                 value={formData.status}
                 onChange={(e) => setFormData({...formData, status: e.target.value})}
+                required
               >
-                <option value="">Select Status</option>
                 <option value="draft">Draft</option>
-                <option value="pending">Pending</option>
-                <option value="active">Active</option>
-                <option value="in_stock">In Stock</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="saved_published">Saved & Published</option>
               </select>
             </FormField>
           </div>
@@ -285,9 +283,8 @@ export default function AddPurchaseOrderPage() {
                   />
                 </FormField>
 
-                <FormField label="PO Description" required>
+                <FormField label="PO Description">
                   <input 
-                    required
                     placeholder="e.g. Engine Block - High quality part"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={itemFormData.po_description}

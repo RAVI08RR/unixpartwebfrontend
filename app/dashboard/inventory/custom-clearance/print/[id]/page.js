@@ -103,7 +103,7 @@ export default function PrintClearancePage() {
           </span>
         </div>
         <button
-          onClick={handlePrint}
+          onClick={() => handlePrint()}
           className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm active:scale-95 transition-all shadow-lg shadow-red-600/30"
         >
           <Printer className="w-4 h-4" />

@@ -814,78 +814,90 @@ function AddInvoiceContent() {
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Payments</h3>
-            <button
-              type="button"
-              onClick={addPayment}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
-            >
-              <Plus className="w-4 h-4" />
-              Add Payment Row
-            </button>
           </div>
 
           {formData.payments.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formData.payments.map((payment, index) => (
-                    <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
-                          <CreditCard className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
-                            {payment.payment_method.replace('_', ' ')}
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                          {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-black text-green-600 dark:text-green-400">
-                          {formatCurrency(payment.payment_amount)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                          {payment.received_by?.name || payment.received_by_name || payment.created_by?.name || "Admin User"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {payment.payment_notes || '-'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => removePayment(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-zinc-800">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Method</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Received By</th>
+                      <th className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase">Notes</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {formData.payments.map((payment, index) => (
+                      <tr key={index} className="border-b border-gray-100 dark:border-zinc-800/50">
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg">
+                            <CreditCard className="w-4 h-4 text-gray-500" />
+                            <span className="text-sm font-bold text-gray-900 dark:text-white capitalize">
+                              {payment.payment_method.replace('_', ' ')}
+                            </span>
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                            {new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-black text-green-600 dark:text-green-400">
+                            {formatCurrency(payment.payment_amount)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                            {payment.received_by?.name || payment.received_by_name || payment.created_by?.name || "Admin User"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {payment.payment_notes || '-'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            onClick={() => removePayment(index)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={addPayment}
+                  className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Payment Row
+                </button>
+              </div>
+            </>
           ) : (
             <div className="text-center py-12 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
               <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-500 dark:text-gray-400 text-sm">No payments added yet.</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">No payments added yet.</p>
+              <button
+                type="button"
+                onClick={addPayment}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold text-sm transition-all inline-flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Payment Row
+              </button>
             </div>
           )}
         </div>
@@ -933,7 +945,7 @@ function AddInvoiceContent() {
             </button>
             <button 
               type="button"
-              onClick={handlePrint}
+              onClick={() => handlePrint()}
               className="flex-1 sm:flex-initial px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
             >
               <Printer className="w-4 h-4" />
@@ -1221,7 +1233,7 @@ function AddInvoiceContent() {
       )}
 
       {/* Hidden Printable Invoice */}
-      <div style={{ display: 'none' }}>
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <PrintableInvoice 
           ref={printRef} 
           invoice={{
