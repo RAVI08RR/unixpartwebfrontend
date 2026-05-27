@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Package, Hash, FileText, Building2, Box } from "lucide-react";
+import { ArrowLeft, Save, Package, Hash, FileText, Building2, Box, RefreshCw } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -21,6 +21,10 @@ export default function AddPOItemPage({ params }) {
   }, [params]);
   
   const [submitting, setSubmitting] = useState(false);
+  const [purchaseOrder, setPurchaseOrder] = useState(null);
+  const [allPoItems, setAllPoItems] = useState([]);
+  const [poItemsLoaded, setPoItemsLoaded] = useState(false);
+  const [stockNumberTouched, setStockNumberTouched] = useState(false);
   const { success, error: showError } = useToast();
   
   const { branches: apiBranches } = useBranches(0, 100, true);
@@ -42,13 +46,110 @@ export default function AddPOItemPage({ params }) {
     quantity: 1
   });
 
+  const normalizeStockNumber = (stockNumber) => (stockNumber || "").trim().toUpperCase();
+  const padNumber = (value, size) => String(value).padStart(size, "0");
+  const getBranchCode = (branchId = formData.current_branch_id) => {
+    const branch = branches.find(b => String(b.id) === String(branchId));
+    const fallback = branch?.label || branch?.branch_name || "STK";
+    return normalizeStockNumber(branch?.branch_code || branch?.code || fallback)
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 3) || "STK";
+  };
+
+  const getPoSegment = () => {
+    const rawPoId = purchaseOrder?.po_id || poId || "0";
+    const numericPart = String(rawPoId).match(/\d+/g)?.join("") || poId || "0";
+    return padNumber(numericPart, 3).slice(-3);
+  };
+
+  const generateStockNumber = (branchId = formData.current_branch_id, items = allPoItems) => {
+    const branchCode = getBranchCode(branchId);
+    const poSegment = getPoSegment();
+    const prefix = `${branchCode}-${poSegment}-`;
+    const existingStockNumbers = new Set(items.map(item => normalizeStockNumber(item.stock_number)));
+    const maxSequence = items.reduce((max, item) => {
+      const stockNumber = normalizeStockNumber(item.stock_number);
+      if (!stockNumber.startsWith(prefix)) return max;
+      const sequence = parseInt(stockNumber.slice(prefix.length), 10);
+      return Number.isFinite(sequence) ? Math.max(max, sequence) : max;
+    }, 0);
+
+    let nextSequence = maxSequence + 1;
+    let nextStockNumber = `${prefix}${padNumber(nextSequence, 6)}`;
+    while (existingStockNumbers.has(nextStockNumber)) {
+      nextSequence += 1;
+      nextStockNumber = `${prefix}${padNumber(nextSequence, 6)}`;
+    }
+
+    return nextStockNumber;
+  };
+
+  const refreshStockNumber = (branchId = formData.current_branch_id) => {
+    setFormData(prev => ({
+      ...prev,
+      stock_number: generateStockNumber(branchId),
+    }));
+    setStockNumberTouched(true);
+  };
+
+  useEffect(() => {
+    if (!poId) return;
+
+    const loadPurchaseOrder = async () => {
+      try {
+        const poData = await purchaseOrderService.getById(poId);
+        setPurchaseOrder(poData);
+        if (poData?.arrival_branch_id) {
+          setFormData(prev => ({
+            ...prev,
+            current_branch_id: prev.current_branch_id || String(poData.arrival_branch_id),
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load purchase order for stock number generation:", err);
+      }
+    };
+
+    loadPurchaseOrder();
+  }, [poId]);
+
+  useEffect(() => {
+    const loadPoItems = async () => {
+      const items = await poItemService.getAll(0, 1000);
+      setAllPoItems(items);
+      setPoItemsLoaded(true);
+    };
+
+    loadPoItems();
+  }, []);
+
+  useEffect(() => {
+    if (!poId || branches.length === 0 || !poItemsLoaded) return;
+    if (formData.stock_number && stockNumberTouched) return;
+
+    setFormData(prev => ({
+      ...prev,
+      stock_number: generateStockNumber(prev.current_branch_id, allPoItems),
+    }));
+  }, [poId, branches, allPoItems, poItemsLoaded, purchaseOrder, formData.current_branch_id, formData.stock_number, stockNumberTouched]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
+      const latestItems = await poItemService.getAll(0, 1000);
+      const existingStockNumbers = new Set(latestItems.map(item => normalizeStockNumber(item.stock_number)));
+      let stockNumber = normalizeStockNumber(formData.stock_number) || generateStockNumber(formData.current_branch_id, latestItems);
+
+      if (existingStockNumbers.has(stockNumber)) {
+        stockNumber = generateStockNumber(formData.current_branch_id, latestItems);
+        setFormData(prev => ({ ...prev, stock_number: stockNumber }));
+      }
+
       const payload = {
         ...formData,
+        stock_number: stockNumber,
         po_id: parseInt(poId),
         item_id: parseInt(formData.item_id),
         current_branch_id: parseInt(formData.current_branch_id),
@@ -56,6 +157,7 @@ export default function AddPOItemPage({ params }) {
       };
       
       await poItemService.create(payload);
+      setAllPoItems([...latestItems, { ...payload }]);
       success("Item added successfully");
 
       // Auto-update purchase order status to Saved & Published
@@ -112,13 +214,24 @@ export default function AddPOItemPage({ params }) {
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="e.g. DXB-001-000001"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
+                  placeholder="Auto-generating..."
+                  className="w-full pl-10 pr-14 py-3 bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-black tracking-wider focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
                   value={formData.stock_number}
-                  onChange={(e) => setFormData({...formData, stock_number: e.target.value})}
+                  readOnly
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => refreshStockNumber()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                  title="Generate new unique stock number"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
               </div>
+              <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">
+                Auto-generated from branch code, PO number, and next available sequence.
+              </p>
             </FormField>
 
             <FormField label="Category" required>
@@ -142,7 +255,15 @@ export default function AddPOItemPage({ params }) {
                 <select 
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.current_branch_id}
-                  onChange={(e) => setFormData({...formData, current_branch_id: e.target.value})}
+                  onChange={(e) => {
+                    const branchId = e.target.value;
+                    setFormData(prev => ({
+                      ...prev,
+                      current_branch_id: branchId,
+                      stock_number: generateStockNumber(branchId),
+                    }));
+                    setStockNumberTouched(true);
+                  }}
                   required
                 >
                   <option value="">Select Branch</option>
