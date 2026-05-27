@@ -92,6 +92,33 @@ export default function AddPOItemPage({ params }) {
     setStockNumberTouched(true);
   };
 
+  const stockNumberExists = async (stockNumber) => {
+    try {
+      await poItemService.getByStockNumber(stockNumber);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const getUniqueStockNumber = async (branchId = formData.current_branch_id) => {
+    let latestItems = await poItemService.getAll(0, 5000);
+    let stockNumber = generateStockNumber(branchId, latestItems);
+    let attempts = 0;
+
+    while (attempts < 50 && await stockNumberExists(stockNumber)) {
+      latestItems = [...latestItems, { stock_number: stockNumber }];
+      stockNumber = generateStockNumber(branchId, latestItems);
+      attempts += 1;
+    }
+
+    if (attempts >= 50) {
+      throw new Error("Could not generate a unique stock number. Please try again.");
+    }
+
+    return { stockNumber, latestItems };
+  };
+
   useEffect(() => {
     if (!poId) return;
 
@@ -138,14 +165,8 @@ export default function AddPOItemPage({ params }) {
     setSubmitting(true);
 
     try {
-      const latestItems = await poItemService.getAll(0, 1000);
-      const existingStockNumbers = new Set(latestItems.map(item => normalizeStockNumber(item.stock_number)));
-      let stockNumber = normalizeStockNumber(formData.stock_number) || generateStockNumber(formData.current_branch_id, latestItems);
-
-      if (existingStockNumbers.has(stockNumber)) {
-        stockNumber = generateStockNumber(formData.current_branch_id, latestItems);
-        setFormData(prev => ({ ...prev, stock_number: stockNumber }));
-      }
+      const { stockNumber, latestItems } = await getUniqueStockNumber(formData.current_branch_id);
+      setFormData(prev => ({ ...prev, stock_number: stockNumber }));
 
       const payload = {
         ...formData,
@@ -156,7 +177,22 @@ export default function AddPOItemPage({ params }) {
         quantity: parseInt(formData.quantity)
       };
       
-      await poItemService.create(payload);
+      try {
+        await poItemService.create(payload);
+      } catch (createErr) {
+        const duplicateError = /duplicate|already|unique|stock/i.test(createErr.message || "");
+        if (!duplicateError) throw createErr;
+
+        const retry = await getUniqueStockNumber(formData.current_branch_id);
+        const retryPayload = { ...payload, stock_number: retry.stockNumber };
+        setFormData(prev => ({ ...prev, stock_number: retry.stockNumber }));
+        await poItemService.create(retryPayload);
+        setAllPoItems([...retry.latestItems, { ...retryPayload }]);
+        success(`Item added successfully with stock number ${retry.stockNumber}`);
+        router.push(`/dashboard/inventory/purchase-orders/items/${poId}`);
+        return;
+      }
+
       setAllPoItems([...latestItems, { ...payload }]);
       success("Item added successfully");
 
