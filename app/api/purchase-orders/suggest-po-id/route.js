@@ -8,8 +8,8 @@ export async function GET(request) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     
-    // Fetch a large page of POs to calculate the next sequence number
-    const backendUrl = `${apiBaseUrl}/api/purchase-orders/?skip=0&limit=1000`;
+    // Fetch a page of POs to calculate the next sequence number (backend cap is 100)
+    const backendUrl = `${apiBaseUrl}/api/purchase-orders/?skip=0&limit=100`;
     
     const headers = {
       'Content-Type': 'application/json',

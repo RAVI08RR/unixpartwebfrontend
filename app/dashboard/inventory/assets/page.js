@@ -312,11 +312,11 @@ export default function AssetsPage() {
             />
           </div>
           
-          <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <div className="relative flex-1 sm:flex-none">
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
+                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
               >
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
@@ -354,7 +354,7 @@ export default function AssetsPage() {
 
             <Link 
               href="/dashboard/inventory/assets/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span className="whitespace-nowrap font-black">Add Asset</span>
@@ -366,7 +366,7 @@ export default function AssetsPage() {
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
         <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full min-w-[1000px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-50 dark:border-zinc-800/50">
                 <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Asset Info</th>

@@ -115,7 +115,7 @@ export default function CustomersPage() {
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuOpenId && !event.target.closest('.actions-menu-container')) {
+      if (menuOpenId && !event.target.closest('.customer-actions-menu')) {
         setMenuOpenId(null);
       }
     };
@@ -528,7 +528,7 @@ export default function CustomersPage() {
                     </td>
                     
                     {/* Actions */}
-                    <td className="px-6 py-5 text-right relative">
+                    <td className="px-6 py-5 text-right relative customer-actions-menu">
                       <button onClick={() => toggleMenu(customer.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
                         <MoreVertical className="w-5 h-5" />
                       </button>
@@ -541,7 +541,7 @@ export default function CustomersPage() {
                             <Eye className="w-3.5 h-3.5" /> View Details
                           </button>
                           
-                          <Link href={`/dashboard/sales/customers/history/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
+                          <Link href={`/dashboard/sales/customers/purchase-history/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
                             <History className="w-3.5 h-3.5" /> Purchase History
                           </Link>
                           
@@ -624,6 +624,8 @@ export default function CustomersPage() {
           </div>
         </div>
         </div>
+
+
 
 
       {/* View Customer Modal */}

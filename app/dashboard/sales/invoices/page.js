@@ -779,69 +779,69 @@ function InvoiceManagementContent() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-6 py-5 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(invoice.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                menuOpenId === invoice.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                              }`}
-                            >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                                
-                                {menuOpenId === invoice.id && (
-                                  <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                    index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                    <Link
-                                      href={`/dashboard/sales/invoices/view/${invoice.id}`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                    >
-                                      <Eye className="w-4 h-4" />
-                                      View/Modify Invoice
-                                    </Link>
-                                    <Link
-                                      href={`/dashboard/sales/invoices/edit/${invoice.id}`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Invoice
-                                    </Link>
-                                    <button
-                                      onClick={() => {
-                                        // Open print preview
-                                        window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
-                                    >
-                                      <FileText className="w-4 h-4" />
-                                      Print Preview
-                                    </button>
-                                    <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
-                                    <button 
-                                      onClick={() => handleCancelReturnClick(invoice)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
-                                    >
-                                      <RefreshCcw className="w-4 h-4" />
-                                      Cancel / Return Items
-                                    </button>
-                                    <button 
-                                      onClick={() => handleDeleteClick(invoice)} 
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Invoice
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                        </div>
-                      </td>
+                       <td className="px-6 py-5 text-right relative" data-label="Actions">
+                         <div className="flex items-center justify-end gap-2">
+                           <div className="relative">
+                             <button 
+                               onClick={() => toggleMenu(invoice.id)}
+                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
+                                 menuOpenId === invoice.id 
+                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                   : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                               }`}
+                             >
+                               <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                               <MoreVertical className="w-5 h-5" />
+                             </button>
+                                 
+                                 {menuOpenId === invoice.id && (
+                                   <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                     index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                   }`}>
+                                     <Link
+                                       href={`/dashboard/sales/invoices/view/${invoice.id}`}
+                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                     >
+                                       <Eye className="w-4 h-4" />
+                                       View/Modify Invoice
+                                     </Link>
+                                     <Link
+                                       href={`/dashboard/sales/invoices/edit/${invoice.id}`}
+                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                     >
+                                       <Pencil className="w-4 h-4" />
+                                       Edit Invoice
+                                     </Link>
+                                     <button
+                                       onClick={() => {
+                                         window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
+                                         setMenuOpenId(null);
+                                       }}
+                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
+                                     >
+                                       <FileText className="w-4 h-4" />
+                                       Print Preview
+                                     </button>
+                                     <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
+                                     <button 
+                                       onClick={() => handleCancelReturnClick(invoice)}
+                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
+                                     >
+                                       <RefreshCcw className="w-4 h-4" />
+                                       Cancel / Return Items
+                                     </button>
+                                     <button 
+                                       onClick={() => handleDeleteClick(invoice)} 
+                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                     >
+                                       <Trash2 className="w-4 h-4" />
+                                       Delete Invoice
+                                     </button>
+                                   </div>
+                                 )}
+                               </div>
+                         </div>
+                       </td>
                     </tr>
                   );
                 })
@@ -897,6 +897,7 @@ function InvoiceManagementContent() {
           </div>
         </div>
         </div>
+
 
 
       {/* View Invoice Modal */}
