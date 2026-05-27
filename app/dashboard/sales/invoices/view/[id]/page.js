@@ -155,33 +155,33 @@ export default function ViewInvoicePage({ params }) {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 px-4 sm:px-6">
+    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 w-full overflow-hidden">
       {/* Header - Hide in print mode */}
-      <div className="flex items-center justify-between no-print">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print">
+        <div className="flex items-center gap-4 min-w-0">
           <Link 
             href="/dashboard/sales/invoices" 
-            className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
+            className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Details</h1>
-            <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">{invoice.invoice_number}</p>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-black dark:text-white tracking-tight">Invoice Details</h1>
+            <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium truncate">{invoice.invoice_number}</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => handlePrint()}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2"
           >
             <Printer className="w-4 h-4" />
             Print
           </button>
           <Link
             href={`/dashboard/sales/invoices/edit/${invoiceId}`}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
           >
             <FileText className="w-4 h-4" />
             Edit Invoice
@@ -190,7 +190,7 @@ export default function ViewInvoicePage({ params }) {
       </div>
 
       {/* Invoice Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm p-8">
+      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm p-0 sm:p-4 lg:p-8 overflow-hidden">
         {/* Show PrintableInvoice component directly in the page */}
         <PrintableInvoice invoice={invoice} customer={customer} invoiceId={invoiceId} />
       </div>

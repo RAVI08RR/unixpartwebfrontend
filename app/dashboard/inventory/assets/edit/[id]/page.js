@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { 
-  Package, Hash, FileText, DollarSign, Calendar, Building2, 
+import {
+  Package, Hash, FileText, DollarSign, Calendar, Building2,
   ChevronDown, Check, ArrowLeft, Tag, Layers, Loader2, ArrowRightLeft, History, ChevronUp, Users, Percent
 } from "lucide-react";
 import { assetService } from "@/app/lib/services/assetService";
@@ -18,7 +18,7 @@ export default function EditAssetPage() {
   const router = useRouter();
   const params = useParams();
   const { success, error } = useToast();
-  
+
   const [branches, setBranches] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -34,7 +34,7 @@ export default function EditAssetPage() {
   const [ownershipHistory, setOwnershipHistory] = useState([]);
   const [loadingOwnershipHistory, setLoadingOwnershipHistory] = useState(false);
   const [showOwnershipHistory, setShowOwnershipHistory] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     asset_id: "",
     asset_name: "",
@@ -75,7 +75,7 @@ export default function EditAssetPage() {
         const fetchedAssetData = await assetService.getById(params.id);
         console.log('Asset data loaded:', fetchedAssetData);
         setAssetData(fetchedAssetData);
-        
+
         setFormData({
           asset_id: fetchedAssetData.asset_id || "",
           asset_name: fetchedAssetData.asset_name || "",
@@ -121,10 +121,10 @@ export default function EditAssetPage() {
           try {
             const ownershipHistory = await assetService.getOwnershipHistory(params.id);
             console.log('📊 Ownership history API response:', ownershipHistory);
-            
+
             if (ownershipHistory && Array.isArray(ownershipHistory) && ownershipHistory.length > 0) {
               console.log(`📋 Total ownership records: ${ownershipHistory.length}`);
-              
+
               // Show all records for debugging
               ownershipHistory.forEach((record, idx) => {
                 console.log(`  Record ${idx + 1}:`, {
@@ -136,11 +136,11 @@ export default function EditAssetPage() {
                   is_active: !record.to_date
                 });
               });
-              
+
               // Filter for active ownership (where to_date is null or undefined)
               const activeOwnership = ownershipHistory.filter(o => !o.to_date);
               console.log(`✓ Active ownership records: ${activeOwnership.length}`);
-              
+
               if (activeOwnership.length > 0) {
                 const mappedOwners = activeOwnership.map(o => ({
                   supplier_id: o.supplier_id?.toString() || "",
@@ -157,11 +157,11 @@ export default function EditAssetPage() {
                   const dateB = new Date(b.to_date || '9999-12-31');
                   return dateB - dateA;
                 });
-                
+
                 // Get the most recent ownership set (same to_date)
                 const mostRecentDate = sortedHistory[0]?.to_date;
                 const mostRecentOwnership = sortedHistory.filter(o => o.to_date === mostRecentDate);
-                
+
                 if (mostRecentOwnership.length > 0) {
                   console.log('📌 Loading most recent historical ownership:', mostRecentOwnership);
                   setOwners(mostRecentOwnership.map(o => ({
@@ -185,7 +185,7 @@ export default function EditAssetPage() {
 
         // Fetch transfer history
         await fetchTransferHistory();
-        
+
         // Fetch ownership history
         await fetchOwnershipHistory();
       } catch (err) {
@@ -234,7 +234,7 @@ export default function EditAssetPage() {
       await assetService.transfer(params.id, transferData);
       success("Asset transferred successfully!");
       setTransferModalOpen(false);
-      
+
       // Refresh asset data
       const updatedAsset = await assetService.getById(params.id);
       setAssetData(updatedAsset);
@@ -242,7 +242,7 @@ export default function EditAssetPage() {
         ...formData,
         current_operating_branch_id: updatedAsset.current_operating_branch_id || ""
       });
-      
+
       // Refresh transfer history
       await fetchTransferHistory();
     } catch (err) {
@@ -313,33 +313,33 @@ export default function EditAssetPage() {
       if (owners.length > 0) {
         // First update the asset
         await assetService.update(params.id, payload);
-        
+
         // Get current ownership to determine what changed
         const currentOwnership = ownershipHistory.filter(o => !o.to_date);
-        
+
         // Calculate amount_share based on current asset value
         const assetValue = parseFloat(formData.current_value) || parseFloat(formData.purchase_price) || 0;
-        
+
         // Prepare ownership changes for history tracking
         const newOwners = owners.map(owner => {
           const percentShare = parseFloat(owner.ownership_percentage);
           const amountShare = (assetValue * percentShare) / 100;
-          
+
           return {
             supplier_id: parseInt(owner.supplier_id),
             percent_share: percentShare,
             amount_share: amountShare
           };
         });
-        
+
         // Determine which suppliers to create, update, or delete
         const currentSupplierIds = currentOwnership.map(o => o.supplier_id);
         const newSupplierIds = newOwners.map(o => o.supplier_id);
-        
+
         const create_ownerships = newOwners.filter(o => !currentSupplierIds.includes(o.supplier_id));
         const update_ownerships = newOwners.filter(o => currentSupplierIds.includes(o.supplier_id));
         const delete_supplier_ids = currentSupplierIds.filter(id => !newSupplierIds.includes(id));
-        
+
         const ownershipPayload = {
           create_ownerships,
           update_ownerships,
@@ -347,12 +347,12 @@ export default function EditAssetPage() {
           effective_date: new Date().toISOString().split('T')[0],
           reason: "Ownership updated via edit form"
         };
-        
+
         console.log('📝 Ownership update payload:', ownershipPayload);
-        
+
         // Update ownership with history tracking
         await assetService.updateOwnershipWithHistory(params.id, ownershipPayload);
-        
+
         // Refresh ownership history
         await fetchOwnershipHistory();
       } else {
@@ -381,26 +381,26 @@ export default function EditAssetPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 md:space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/dashboard/inventory/assets" 
-            className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
+      <div className="flex flex-col gap-4 md:gap-6">
+        <div className="flex items-center gap-3 md:gap-4">
+          <Link
+            href="/dashboard/inventory/assets"
+            className="flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 text-gray-600 dark:text-gray-400" />
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Asset</h1>
-            <p className="text-gray-500 text-sm">Update asset information</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-0.5 md:mb-1 truncate">Edit Asset</h1>
+            <p className="text-gray-500 text-xs md:text-sm">Update asset information</p>
           </div>
         </div>
-        
+
         {/* Transfer Button */}
         <button
           onClick={() => setTransferModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
+          className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 md:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
         >
           <ArrowRightLeft className="w-4 h-4" />
           Transfer Asset
@@ -408,7 +408,7 @@ export default function EditAssetPage() {
       </div>
 
       {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-6">
         {/* Asset ID */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -416,7 +416,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="text"
               placeholder="e.g. AST-001"
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
@@ -433,7 +433,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="text"
               placeholder="e.g. Toyota Forklift"
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
@@ -450,7 +450,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
+            <select
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.category}
               onChange={(e) => setFormData({...formData, category: e.target.value})}
@@ -467,13 +467,13 @@ export default function EditAssetPage() {
         </div>
 
         {/* Description */}
-        <div className="space-y-1.5 lg:col-span-2">
+        <div className="space-y-1.5 md:col-span-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Description <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
           <div className="relative">
             <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-            <textarea 
+            <textarea
               placeholder="Enter detailed asset description"
               rows={3}
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
@@ -490,7 +490,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="number"
               step="0.01"
               placeholder="0.00"
@@ -508,7 +508,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="number"
               step="0.01"
               placeholder="0.00"
@@ -526,7 +526,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
+            <input
               type="date"
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
               value={formData.purchase_date}
@@ -542,7 +542,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
+            <select
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.purchase_branch_id}
               onChange={(e) => setFormData({...formData, purchase_branch_id: e.target.value})}
@@ -566,7 +566,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
+            <select
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.current_operating_branch_id}
               onChange={(e) => setFormData({...formData, current_operating_branch_id: e.target.value})}
@@ -590,7 +590,7 @@ export default function EditAssetPage() {
           </label>
           <div className="relative">
             <Layers className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select 
+            <select
               className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.status}
               onChange={(e) => setFormData({...formData, status: e.target.value})}
@@ -605,13 +605,13 @@ export default function EditAssetPage() {
         </div>
 
         {/* Notes */}
-        <div className="space-y-1.5 lg:col-span-2">
+        <div className="space-y-1.5 md:col-span-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Notes <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
           <div className="relative">
             <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-            <textarea 
+            <textarea
               placeholder="Additional notes about the asset"
               rows={3}
               className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
@@ -622,7 +622,7 @@ export default function EditAssetPage() {
         </div>
 
         {/* Ownership Section */}
-        <div className="lg:col-span-2">
+        <div className="md:col-span-2">
           <OwnershipSection
             owners={owners}
             setOwners={setOwners}
@@ -636,14 +636,14 @@ export default function EditAssetPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+          className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
               <History className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <div className="text-left">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Transfer History</h3>
+            <div className="text-left min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">Transfer History</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {transferHistory.length} transfer{transferHistory.length !== 1 ? 's' : ''} recorded
               </p>
@@ -659,80 +659,149 @@ export default function EditAssetPage() {
         {showHistory && (
           <div className="border-t border-gray-200 dark:border-zinc-800">
             {loadingHistory ? (
-              <div className="p-12 flex flex-col items-center justify-center">
+              <div className="p-6 sm:p-12 flex flex-col items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-3" />
                 <p className="text-sm text-gray-500">Loading transfer history...</p>
               </div>
             ) : transferHistory.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        From Branch
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        To Branch
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Reason
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Responsible Person
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                    {transferHistory.map((transfer, index) => (
-                      <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {transfer.transfer_date ? new Date(transfer.transfer_date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              }) : 'N/A'}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <Building2 className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {getBranchName(transfer.from_branch_id)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <ArrowRightLeft className="w-4 h-4 text-blue-500" />
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                              {getBranchName(transfer.to_branch_id)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {transfer.reason || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {transfer.responsible_person || 'N/A'}
-                          </span>
-                        </td>
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          From Branch
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          To Branch
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Reason
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Responsible Person
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                      {transferHistory.map((transfer, index) => (
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {transfer.transfer_date ? new Date(transfer.transfer_date).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : 'N/A'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {getBranchName(transfer.from_branch_id)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-2">
+                              <ArrowRightLeft className="w-4 h-4 text-blue-500" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {getBranchName(transfer.to_branch_id)}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {transfer.reason || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {transfer.responsible_person || 'N/A'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200 dark:divide-zinc-800">
+                  {transferHistory.map((transfer, index) => (
+                    <div key={index} className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-900 dark:text-white">
+                            {transfer.transfer_date ? new Date(transfer.transfer_date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }) : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">From Branch</p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                              {getBranchName(transfer.from_branch_id)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2">
+                          <ArrowRightLeft className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">To Branch</p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                              {getBranchName(transfer.to_branch_id)}
+                            </p>
+                          </div>
+                        </div>
+
+                        {transfer.reason && (
+                          <div className="flex items-start gap-2">
+                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Reason</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
+                                {transfer.reason}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {transfer.responsible_person && (
+                          <div className="flex items-start gap-2">
+                            <Users className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Responsible Person</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                                {transfer.responsible_person}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             ) : (
-              <div className="p-12 text-center">
+              <div className="p-6 sm:p-12 text-center">
                 <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
                   <History className="w-8 h-8 text-gray-400" />
                 </div>
@@ -750,14 +819,14 @@ export default function EditAssetPage() {
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-hidden">
         <button
           onClick={() => setShowOwnershipHistory(!showOwnershipHistory)}
-          className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+          className="w-full px-4 sm:px-6 py-4 flex items-center justify-between gap-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center shrink-0">
               <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
-            <div className="text-left">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ownership History</h3>
+            <div className="text-left min-w-0">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white truncate">Ownership History</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {ownershipHistory.length} ownership record{ownershipHistory.length !== 1 ? 's' : ''} tracked
               </p>
@@ -773,105 +842,193 @@ export default function EditAssetPage() {
         {showOwnershipHistory && (
           <div className="border-t border-gray-200 dark:border-zinc-800">
             {loadingOwnershipHistory ? (
-              <div className="p-12 flex flex-col items-center justify-center">
+              <div className="p-6 sm:p-12 flex flex-col items-center justify-center">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500 mb-3" />
                 <p className="text-sm text-gray-500">Loading ownership history...</p>
               </div>
             ) : ownershipHistory.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Supplier
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Ownership %
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        From Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        To Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Reason
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                    {ownershipHistory.map((ownership, index) => {
-                      const isActive = !ownership.to_date;
-                      return (
-                        <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10' : ''}`}>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <Users className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <>
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Supplier
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Ownership %
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          From Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          To Date
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Reason
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                      {ownershipHistory.map((ownership, index) => {
+                        const isActive = !ownership.to_date;
+                        return (
+                          <tr key={index} className={`hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors ${isActive ? 'bg-green-50/50 dark:bg-green-900/10' : ''}`}>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <Users className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {getSupplierName(ownership.supplier_id)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                  {ownership.percent_share || ownership.ownership_percentage || 0}
+                                </span>
+                                <Percent className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {ownership.from_date ? new Date(ownership.from_date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  }) : 'N/A'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                  {ownership.to_date ? new Date(ownership.to_date).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  }) : '-'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              {isActive ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
+                                  Active
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                  Historical
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {ownership.reason || 'N/A'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden divide-y divide-gray-200 dark:divide-zinc-800">
+                  {ownershipHistory.map((ownership, index) => {
+                    const isActive = !ownership.to_date;
+                    return (
+                      <div key={index} className={`p-4 space-y-3 ${isActive ? 'bg-green-50/50 dark:bg-green-900/10' : ''}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 flex-1 min-w-0">
+                            <Users className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Supplier</p>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white break-words">
                                 {getSupplierName(ownership.supplier_id)}
-                              </span>
+                              </p>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                                {ownership.percent_share || ownership.ownership_percentage || 0}
-                              </span>
-                              <Percent className="w-3 h-3 text-purple-600 dark:text-purple-400" />
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {ownership.from_date ? new Date(ownership.from_date).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                }) : 'N/A'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {ownership.to_date ? new Date(ownership.to_date).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'short',
-                                  day: 'numeric'
-                                }) : '-'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            {isActive ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                                Historical
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {ownership.reason || 'N/A'}
+                          </div>
+
+                          {isActive ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex-shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-400"></span>
+                              Active
                             </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 flex-shrink-0">
+                              Historical
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
+                          <div className="flex items-start gap-2">
+                            <Percent className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Ownership</p>
+                              <p className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                                {ownership.percent_share || ownership.ownership_percentage || 0}%
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">From Date</p>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {ownership.from_date ? new Date(ownership.from_date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: '2-digit'
+                                }) : 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-start gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">To Date</p>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {ownership.to_date ? new Date(ownership.to_date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: '2-digit'
+                                }) : '-'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {ownership.reason && (
+                          <div className="flex items-start gap-2">
+                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Reason</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
+                                {ownership.reason}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
-              <div className="p-12 text-center">
+              <div className="p-6 sm:p-12 text-center">
                 <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-gray-400" />
                 </div>
@@ -886,18 +1043,18 @@ export default function EditAssetPage() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
-        <button 
-          onClick={handleSubmit} 
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-6 md:pt-8">
+        <button
+          onClick={handleSubmit}
           disabled={loading}
-          className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 btn-primary"
+          className="w-full sm:w-auto px-6 py-3 md:py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50 btn-primary"
         >
           <Check className="w-4 h-4" />
           <span>{loading ? "Updating..." : "Update Asset"}</span>
         </button>
-        <Link 
-          href="/dashboard/inventory/assets" 
-          className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center"
+        <Link
+          href="/dashboard/inventory/assets"
+          className="w-full sm:w-auto px-6 py-3 md:py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center"
         >
           Cancel
         </Link>

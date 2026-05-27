@@ -174,15 +174,15 @@ function LayoutContent({ children }) {
   const { isSidebarOpen } = useSidebar();
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
+    <div className="flex min-h-screen min-w-0 bg-gray-50 dark:bg-zinc-950 transition-colors duration-300 overflow-x-hidden">
       <Sidebar />
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[320px]' : 'lg:ml-[88px]'}`}>
+      <main className={`flex-1 min-w-0 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'lg:ml-[320px]' : 'lg:ml-[88px]'}`}>
         <Topbar />
 
         {/* Page Content */}
-        <div className="p-4 md:p-8 max-w-full md:max-w-[94%] mx-auto w-full">
+        <div className="p-3 sm:p-4 md:p-8 max-w-full md:max-w-[94%] mx-auto w-full min-w-0">
           {children}
         </div>
       </main>

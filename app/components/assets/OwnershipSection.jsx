@@ -47,20 +47,20 @@ export default function OwnershipSection({
 
     return (
         <div className="pt-6 border-t border-gray-100 dark:border-zinc-800">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                        <Truck className="w-5 h-5 text-blue-600" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+                <div className="flex-1">
+                    <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <Truck className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                         Ownership Structure
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Add owner suppliers and their ownership percentage (Total must equal 100%)
                     </p>
                 </div>
                 <button
                     type="button"
                     onClick={handleAddOwner}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
                 >
                     <Plus className="w-4 h-4" />
                     <span>Add Owner</span>
@@ -100,9 +100,9 @@ export default function OwnershipSection({
                         return (
                             <div
                                 key={index}
-                                className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${isDuplicate
-                                        ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
-                                        : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700'
+                                className={`flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border transition-all ${isDuplicate
+                                    ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800'
+                                    : 'bg-gray-50 dark:bg-zinc-800/50 border-gray-200 dark:border-zinc-700'
                                     }`}
                             >
                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -115,8 +115,8 @@ export default function OwnershipSection({
                                             value={owner.supplier_id}
                                             onChange={(e) => handleOwnerChange(index, 'supplier_id', e.target.value)}
                                             className={`w-full px-3 py-2 bg-white dark:bg-zinc-800 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm ${isDuplicate
-                                                    ? 'border-red-300 dark:border-red-700'
-                                                    : 'border-gray-200 dark:border-zinc-700'
+                                                ? 'border-red-300 dark:border-red-700'
+                                                : 'border-gray-200 dark:border-zinc-700'
                                                 }`}
                                             disabled={suppliersLoading}
                                         >
@@ -159,7 +159,7 @@ export default function OwnershipSection({
                                 <button
                                     type="button"
                                     onClick={() => handleRemoveOwner(index)}
-                                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete mt-7"
+                                    className="w-full sm:w-auto flex items-center justify-center p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete sm:mt-7"
                                     title="Remove owner"
                                 >
                                     <Trash2 className="w-4 h-4 text-gray-400 group-hover/delete:text-red-600" />
@@ -169,18 +169,18 @@ export default function OwnershipSection({
                     })}
 
                     {/* Total Percentage Display */}
-                    <div className={`flex items-center justify-end gap-2 px-4 py-3 rounded-xl border ${isValid
-                            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                            : totalPercentage > 100
-                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                                : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
+                    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-end gap-1 sm:gap-2 px-4 py-3 rounded-xl border ${isValid
+                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                        : totalPercentage > 100
+                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                            : 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800'
                         }`}>
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Total Ownership:</span>
                         <span className={`text-lg font-black ${isValid
-                                ? 'text-green-600 dark:text-green-400'
-                                : totalPercentage > 100
-                                    ? 'text-red-600 dark:text-red-400'
-                                    : 'text-orange-600 dark:text-orange-400'
+                            ? 'text-green-600 dark:text-green-400'
+                            : totalPercentage > 100
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-orange-600 dark:text-orange-400'
                             }`}>
                             {totalPercentage.toFixed(2)}% / 100%
                         </span>

@@ -83,6 +83,31 @@ export default function EditInvoicePage({ params }) {
     load_date: ""
   });
 
+  const normalizeStockNumber = (stockNumber) => (stockNumber || "").trim().toLowerCase();
+
+  const findDuplicateInvoiceItem = (candidate, ignoreIndex = null) => {
+    const candidatePoItemId = candidate?.po_item_id || candidate?.id;
+    const candidateStockNumber = normalizeStockNumber(candidate?.stock_number);
+
+    return formData.items.find((item, index) => {
+      if (ignoreIndex !== null && index === ignoreIndex) return false;
+
+      const samePoItem =
+        candidatePoItemId &&
+        item.po_item_id &&
+        String(item.po_item_id) === String(candidatePoItemId);
+      const sameStockNumber =
+        candidateStockNumber &&
+        normalizeStockNumber(item.stock_number) === candidateStockNumber;
+
+      return samePoItem || sameStockNumber;
+    });
+  };
+
+  const showDuplicateStockError = (stockNumber) => {
+    showError(`Stock ${stockNumber || "item"} is already added in the current invoice item list.`);
+  };
+
   // Payment form for modal
   const [paymentForm, setPaymentForm] = useState({
     payment_method: "cash",
@@ -299,14 +324,34 @@ export default function EditInvoicePage({ params }) {
             updated_at: invoiceData.updated_at || null
           });
           
-          // Set selected customer with full details
+          // Set selected customer without forcing a detail fetch for stale/deleted IDs.
           if (invoiceData.customer_id) {
-            try {
-              const fullCustomer = await customerService.getById(invoiceData.customer_id);
-              setSelectedCustomer(fullCustomer);
-            } catch (e) {
-              const customer = customers.find(c => c.id === parseInt(invoiceData.customer_id));
-              setSelectedCustomer(customer);
+            const embeddedCustomer = invoiceData.customer || invoiceData.customer_details;
+            const dropdownCustomer = customers.find(c => c.id === parseInt(invoiceData.customer_id));
+
+            if (embeddedCustomer || dropdownCustomer) {
+              const customer = {
+                ...(dropdownCustomer || {}),
+                ...(embeddedCustomer || {}),
+                id: invoiceData.customer_id,
+              };
+
+              setSelectedCustomer({
+                ...customer,
+                full_name: customer.full_name || customer.label || customer.name || "Customer",
+                customer_code: customer.customer_code || customer.code || "",
+                phone: customer.phone || "",
+                outstanding_balance: customer.outstanding_balance || 0,
+              });
+            } else {
+              setSelectedCustomer({
+                id: invoiceData.customer_id,
+                full_name: `Customer ID ${invoiceData.customer_id}`,
+                customer_code: "",
+                phone: "",
+                outstanding_balance: 0,
+                _missing: true,
+              });
             }
           }
         }
@@ -386,6 +431,12 @@ export default function EditInvoicePage({ params }) {
   // Handle PO Item selection
   const handlePoItemSelect = (selectedPoItem) => {
     if (selectedPoItem) {
+      const duplicateItem = findDuplicateInvoiceItem(selectedPoItem, editingItemIndex);
+      if (duplicateItem) {
+        showDuplicateStockError(selectedPoItem.stock_number || duplicateItem.stock_number);
+        return;
+      }
+
       setItemForm({
         ...itemForm,
         po_item_id: selectedPoItem.id,
@@ -436,6 +487,12 @@ export default function EditInvoicePage({ params }) {
           showError(`Item ${stockNumber} is already sold.`);
           return;
         }
+
+        const duplicateItem = findDuplicateInvoiceItem(fetchedItem, editingItemIndex);
+        if (duplicateItem) {
+          showDuplicateStockError(fetchedItem.stock_number || stockNumber);
+          return;
+        }
         
         setItemForm({
           ...itemForm,
@@ -461,6 +518,12 @@ export default function EditInvoicePage({ params }) {
   const saveItem = () => {
     if (!itemForm.po_item_id || !itemForm.sale_amount) {
       showError("Please select a PO Item and enter Sale Amount");
+      return;
+    }
+
+    const duplicateItem = findDuplicateInvoiceItem(itemForm, editingItemIndex);
+    if (duplicateItem) {
+      showDuplicateStockError(itemForm.stock_number || duplicateItem.stock_number);
       return;
     }
 

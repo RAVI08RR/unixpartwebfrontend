@@ -333,42 +333,42 @@ const PrintableInvoice = React.forwardRef(
 
                         return (
                           <tr key={index}>
-                            <td>
+                            <td data-label="Stock Number">
                               {item.stock_number ||
                                 item.po_item?.stock_number ||
                                 "N/A"}
                             </td>
 
-                            <td>
+                            <td data-label="Item">
                               {item.item_name ||
                                 item.po_item?.stock_item?.name ||
                                 item.po_item?.po_description ||
                                 "N/A"}
                             </td>
 
-                            <td>
+                            <td data-label="Sale Description">
                               {item.sale_description ||
                                 item.po_item?.po_description ||
                                 "N/A"}
                             </td>
 
-                            <td className="text-center">
+                            <td className="text-center" data-label="Qty">
                               {item.quantity || 1}
                             </td>
 
-                            <td className="text-right">
+                            <td className="text-right" data-label="Unit Price">
                               {formatCurrency(
                                 saleAmount
                               )}
                             </td>
 
-                            <td className="text-right">
+                            <td className="text-right" data-label="Discount">
                               {formatCurrency(
                                 discount
                               )}
                             </td>
 
-                            <td className="text-right">
+                            <td className="text-right" data-label="Total">
                               <strong>
                                 {formatCurrency(
                                   itemTotal
@@ -376,7 +376,7 @@ const PrintableInvoice = React.forwardRef(
                               </strong>
                             </td>
 
-                            <td className="text-right">
+                            <td className="text-right" data-label="Reservation Fee">
                               {formatCurrency(
                                 reservationFee
                               )}

@@ -93,6 +93,31 @@ function AddInvoiceContent() {
     load_date: ""
   });
 
+  const normalizeStockNumber = (stockNumber) => (stockNumber || "").trim().toLowerCase();
+
+  const findDuplicateInvoiceItem = (candidate, ignoreIndex = null) => {
+    const candidatePoItemId = candidate?.po_item_id || candidate?.id;
+    const candidateStockNumber = normalizeStockNumber(candidate?.stock_number);
+
+    return formData.items.find((item, index) => {
+      if (ignoreIndex !== null && index === ignoreIndex) return false;
+
+      const samePoItem =
+        candidatePoItemId &&
+        item.po_item_id &&
+        String(item.po_item_id) === String(candidatePoItemId);
+      const sameStockNumber =
+        candidateStockNumber &&
+        normalizeStockNumber(item.stock_number) === candidateStockNumber;
+
+      return samePoItem || sameStockNumber;
+    });
+  };
+
+  const showDuplicateStockError = (stockNumber) => {
+    showError(`Stock ${stockNumber || "item"} is already added in the current invoice item list.`);
+  };
+
   // Payment form for modal
   const [paymentForm, setPaymentForm] = useState({
     payment_method: "cash",
@@ -335,6 +360,12 @@ function AddInvoiceContent() {
   // Handle PO Item selection
   const handlePoItemSelect = (selectedPoItem) => {
     if (selectedPoItem) {
+      const duplicateItem = findDuplicateInvoiceItem(selectedPoItem, editingItemIndex);
+      if (duplicateItem) {
+        showDuplicateStockError(selectedPoItem.stock_number || duplicateItem.stock_number);
+        return;
+      }
+
       setItemForm({
         ...itemForm,
         po_item_id: selectedPoItem.id,
@@ -385,6 +416,12 @@ function AddInvoiceContent() {
           showError(`Item ${stockNumber} is already sold.`);
           return;
         }
+
+        const duplicateItem = findDuplicateInvoiceItem(fetchedItem, editingItemIndex);
+        if (duplicateItem) {
+          showDuplicateStockError(fetchedItem.stock_number || stockNumber);
+          return;
+        }
         
         setItemForm({
           ...itemForm,
@@ -410,6 +447,12 @@ function AddInvoiceContent() {
   const saveItem = () => {
     if (!itemForm.po_item_id || !itemForm.sale_amount) {
       showError("Please select a PO Item and enter Sale Amount");
+      return;
+    }
+
+    const duplicateItem = findDuplicateInvoiceItem(itemForm, editingItemIndex);
+    if (duplicateItem) {
+      showDuplicateStockError(itemForm.stock_number || duplicateItem.stock_number);
       return;
     }
 
