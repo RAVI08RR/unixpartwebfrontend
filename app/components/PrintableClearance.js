@@ -19,9 +19,18 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
   const supplierContact = supplier?.contact_number || supplier?.phone || "—";
   const supplierAddress = supplier?.address || "—";
 
+  const embeddedBranch = container.destination_branch || container.branch;
+  const branch = branches?.find((b) => String(b.id) === String(container.destination_branch_id));
   const branchName =
-    branches?.find((b) => b.id === container.destination_branch_id)
-      ?.branch_name || container.destination_branch_id || "—";
+    embeddedBranch?.branch_name ||
+    embeddedBranch?.label ||
+    embeddedBranch?.name ||
+    embeddedBranch?.branch_code ||
+    branch?.branch_name ||
+    branch?.label ||
+    branch?.name ||
+    branch?.branch_code ||
+    (container.destination_branch_id ? `Branch ${container.destination_branch_id}` : "—");
 
   const statusColor = {
     draft: "#6b7280",

@@ -41,6 +41,21 @@ export default function CustomClearancePage() {
   const supplierList = useMemo(() => Array.isArray(suppliers) ? suppliers : [], [suppliers]);
   const branchList = useMemo(() => Array.isArray(branches) ? branches : [], [branches]);
 
+  const getBranchName = (containerOrBranchId) => {
+    const isContainer = containerOrBranchId && typeof containerOrBranchId === "object";
+    const branchId = isContainer ? containerOrBranchId.destination_branch_id : containerOrBranchId;
+    const embeddedBranch = isContainer
+      ? containerOrBranchId.destination_branch || containerOrBranchId.branch
+      : null;
+
+    if (embeddedBranch) {
+      return embeddedBranch.branch_name || embeddedBranch.label || embeddedBranch.name || embeddedBranch.branch_code || "—";
+    }
+
+    const branch = branchList.find((b) => String(b.id) === String(branchId));
+    return branch?.branch_name || branch?.label || branch?.name || branch?.branch_code || (branchId ? `Branch ${branchId}` : "—");
+  };
+
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -301,7 +316,7 @@ export default function CustomClearancePage() {
     { 
       key: 'destination_branch_id', 
       label: 'Destination Branch',
-      formatter: (branchId) => branches?.find(b => b.id === branchId)?.branch_name || `Branch ${branchId}`
+      formatter: (branchId) => getBranchName(branchId)
     },
     { 
       key: 'supplier_id', 
@@ -558,7 +573,7 @@ export default function CustomClearancePage() {
                       </div>
                     </td>
                     <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Ship className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</span></div><div className="flex items-center gap-2"><Navigation className="w-3.5 h-3.5 text-gray-400" /><span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Voy: {container.voyage_number}</span></div></div></td>
-                    <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-black uppercase">{branches?.find(b => b.id === container.destination_branch_id)?.branch_name || 'Branch ' + container.destination_branch_id}</span></div><div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-bold text-gray-400">{container.port_of_discharging}</span></div></div></td>
+                    <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-black uppercase">{getBranchName(container)}</span></div><div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-bold text-gray-400">{container.port_of_discharging}</span></div></div></td>
                     <td className="px-6 py-6"><div className="flex items-center gap-2"><Anchor className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-600">{container.shipping_agent}</span></div></td>
                     <td className="px-6 py-6">{getStatusBadge(container.invoice_status)}</td>
                     <td className="px-6 py-6 text-right relative">
@@ -605,7 +620,7 @@ export default function CustomClearancePage() {
 
               <div className="grid grid-cols-2 gap-4 mb-5">
                  <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Vessel / Voyage</p><p className="text-[13px] font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</p><p className="text-[10px] font-black text-gray-400 italic">Voy: {container.voyage_number}</p></div>
-                 <div className="space-y-1 text-right"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Destination</p><p className="text-[13px] font-black text-gray-900 dark:text-white uppercase leading-tight">{branches?.find(b => b.id === container.destination_branch_id)?.branch_name || 'Branch ' + container.destination_branch_id}</p><p className="text-[10px] font-bold text-gray-400 italic">{container.port_of_discharging}</p></div>
+                 <div className="space-y-1 text-right"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Destination</p><p className="text-[13px] font-black text-gray-900 dark:text-white uppercase leading-tight">{getBranchName(container)}</p><p className="text-[10px] font-bold text-gray-400 italic">{container.port_of_discharging}</p></div>
               </div>
 
               <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-zinc-800/50">
@@ -697,7 +712,7 @@ export default function CustomClearancePage() {
                 <ViewField label="Shipping Agent" value={selectedContainer.shipping_agent} />
                 <ViewField label="Port of Loading" value={selectedContainer.port_of_loading} />
                 <ViewField label="Port of Discharging" value={selectedContainer.port_of_discharging} />
-                <ViewField label="Destination Branch" value={branches?.find(b => b.id === selectedContainer.destination_branch_id)?.branch_name || selectedContainer.destination_branch_id} />
+                <ViewField label="Destination Branch" value={getBranchName(selectedContainer)} />
                 <ViewField label="Supplier" value={suppliers?.find(s => s.id === selectedContainer.supplier_id)?.company || selectedContainer.supplier_id} />
                 <ViewField label="Container Size" value={selectedContainer.container_size} />
                 <ViewField label="Total Packages" value={selectedContainer.total_packages} />
