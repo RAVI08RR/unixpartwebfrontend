@@ -626,6 +626,7 @@ function AddInvoiceContent() {
             <select 
               className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all"
               value={formData.overall_load_status}
+              disabled
               onChange={(e) => setFormData({...formData, overall_load_status: e.target.value})}
             >
               <option value="not_loaded">Unloaded</option>
@@ -1215,6 +1216,7 @@ function AddInvoiceContent() {
                     type="date"
                     className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                     value={paymentForm.payment_date}
+                    disabled
                     onChange={(e) => setPaymentForm({...paymentForm, payment_date: e.target.value})}
                   />
                 </FormField>
