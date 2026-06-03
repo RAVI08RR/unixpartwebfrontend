@@ -119,52 +119,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
+    <div className="min-h-screen justify-center flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
       {/* Left Panel - Branding with Abstract Background */}
-      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{backgroundImage: 'url(/abuinix.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center'}}>
-        {/* Custom gradient overlay for better visual appeal */}
-        <div className="absolute inset-0" style={{background: 'linear-gradient(180deg, rgba(30, 30, 30, 0) 0%, #1E1E1E 100%)'}}></div>
-        
-        <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
-          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1">
-             <img 
-                src="/logo.png" 
-                alt="Unixparts Logo" 
-                className="w-full h-full object-contain"
-             />
-          </div>
-          
-          <h1 className="text-3xl md:text-3xl font-bold tracking-tight drop-shadow-2xl text-white">
-            Welcome to Unixparts
-          </h1>
-          
-          <p className="text-gray-100 text-lg leading-relaxed drop-shadow-xl">
-            Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows across all branches—securely and efficiently.
-          </p>
-
-          <div className="space-y-6 pt-6">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
-                <Check className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-gray-100 drop-shadow-lg">Inventory, containers, and warehouse operations</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
-                <Check className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-gray-100 drop-shadow-lg">Sales, invoicing, and customer accounts</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="bg-white/30 p-2 rounded-lg backdrop-blur-sm border border-white/20">
-                <Check className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-gray-100 drop-shadow-lg">Supplier settlements and expense tracking</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Right Panel - Clean Login Form */}
       <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
         <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
