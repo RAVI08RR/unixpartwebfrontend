@@ -14,8 +14,12 @@ import { getAuthToken } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { usePermission } from "@/app/lib/hooks/usePermission";
 
 export default function StockItemsManagementPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -327,7 +331,8 @@ export default function StockItemsManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full">
+    <ProtectedRoute permission={PERMISSIONS.STOCK_ITEMS.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -392,17 +397,21 @@ export default function StockItemsManagementPage() {
               onSuccess={(format) => success(`Stock items exported successfully as ${format}!`)}
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
-            <button 
-              onClick={handleAddCategoryClick}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-95 transition-all"
-            >
-              <Tag className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Category</span>
-            </button>
-            <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Stock Item</span>
-            </Link>
+            {hasPermission(PERMISSIONS.STOCK_ITEMS.CREATE) && (
+              <>
+                <button 
+                  onClick={handleAddCategoryClick}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-95 transition-all"
+                >
+                  <Tag className="w-4 h-4" />
+                  <span className="whitespace-nowrap font-black">Add Category</span>
+                </button>
+                <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
+                  <Plus className="w-4 h-4" />
+                  <span className="whitespace-nowrap font-black">Add Stock Item</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -508,21 +517,27 @@ export default function StockItemsManagementPage() {
                                      <Eye className="w-4 h-4" />
                                      View Details
                                    </button>
-                                   <Link 
-                                     href={`/dashboard/inventory/stock-items/edit/${item.id}`}
-                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"
-                                   >
-                                     <Pencil className="w-4 h-4" />
-                                     Edit Item
-                                   </Link>
-                                   <div className="h-px bg-gray-100 my-1" />
-                                   <button 
-                                     onClick={() => handleDeleteClick(item)} 
-                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"
-                                   >
-                                     <Trash2 className="w-4 h-4" />
-                                     Delete Item
-                                   </button>
+                                    {hasPermission(PERMISSIONS.STOCK_ITEMS.UPDATE) && (
+                                      <Link 
+                                        href={`/dashboard/inventory/stock-items/edit/${item.id}`}
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                        Edit Item
+                                      </Link>
+                                    )}
+                                    {hasPermission(PERMISSIONS.STOCK_ITEMS.DELETE) && (
+                                      <>
+                                        <div className="h-px bg-gray-100 my-1" />
+                                        <button 
+                                          onClick={() => handleDeleteClick(item)} 
+                                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                          Delete Item
+                                        </button>
+                                      </>
+                                    )}
                                  </div>
                                )}
                              </div>
@@ -621,13 +636,15 @@ export default function StockItemsManagementPage() {
               >
                 Close
               </button>
-              <Link 
-                href={`/dashboard/inventory/stock-items/edit/${selectedStockItem.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
-                onClick={handleViewClose}
-              >
-                Edit Stock Item
-              </Link>
+              {hasPermission(PERMISSIONS.STOCK_ITEMS.UPDATE) && (
+                <Link 
+                  href={`/dashboard/inventory/stock-items/edit/${selectedStockItem.id}`}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
+                  onClick={handleViewClose}
+                >
+                  Edit Stock Item
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -786,6 +803,7 @@ export default function StockItemsManagementPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

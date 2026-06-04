@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Calendar, Clock, Edit, Trash2 } from "lucide-react";
 import { attendanceService } from "@/app/lib/services/attendanceService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AttendanceDetailPage() {
   const params = useParams();
@@ -55,7 +57,8 @@ export default function AttendanceDetailPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.ATTENDANCE.VIEW}>
+      <div className="space-y-8 pb-12">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/management/attendance" className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
@@ -115,6 +118,7 @@ export default function AttendanceDetailPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

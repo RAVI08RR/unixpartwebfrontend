@@ -12,6 +12,8 @@ import { supplierService } from "../../../../../lib/services/supplierService";
 import { branchService } from "../../../../../lib/services/branchService";
 import { useContainers } from "../../../../../lib/hooks/useContainers";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditPurchaseOrderPage() {
   const router = useRouter();
@@ -82,8 +84,8 @@ export default function EditPurchaseOrderPage() {
     const fetchData = async () => {
       try {
         const [suppliersData, branchesData] = await Promise.all([
-          supplierService.getAll().catch(() => []),
-          branchService.getAll().catch(() => [])
+          supplierService.getDropdown().catch(() => []),
+          branchService.getDropdown().catch(() => [])
         ]);
         
         console.log("📋 Suppliers loaded:", suppliersData);
@@ -98,6 +100,23 @@ export default function EditPurchaseOrderPage() {
     
     fetchData();
   }, []);
+
+  const handleContainerChange = (containerId) => {
+    const selectedContainer = containers?.find(c => String(c.id) === String(containerId));
+    if (selectedContainer) {
+      const supplierId = selectedContainer.supplier_id || selectedContainer.supplier?.id || "";
+      const branchId = selectedContainer.destination_branch_id || selectedContainer.destination_branch?.id || selectedContainer.branch?.id || "";
+      
+      setFormData(prev => ({
+        ...prev,
+        container_id: containerId,
+        supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
+        arrival_branch_id: branchId ? String(branchId) : prev.arrival_branch_id
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, container_id: containerId }));
+    }
+  };
 
   const handleSubmit = async () => {
     // Basic validation
@@ -209,7 +228,8 @@ export default function EditPurchaseOrderPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.PURCHASE_ORDERS.UPDATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -254,11 +274,15 @@ export default function EditPurchaseOrderPage() {
             <select 
               className="w-full pl-9 pr-8 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
               value={formData.container_id}
-              onChange={(e) => setFormData({...formData, container_id: e.target.value})}
+              onChange={(e) => handleContainerChange(e.target.value)}
             >
               <option value="">Select Container</option>
               {containers?.map(c => (
-                <option key={c.id} value={c.id}>{c.label || c.container_code}</option>
+                <option key={c.id} value={c.id}>
+                  {c.container_code && c.container_number 
+                    ? `${c.container_code} - ${c.container_number}` 
+                    : (c.container_code || c.container_number || c.label || `Container #${c.id}`)}
+                </option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -279,7 +303,9 @@ export default function EditPurchaseOrderPage() {
             >
               <option value="">Select Supplier</option>
               {suppliers.map(supplier => (
-                <option key={supplier.id} value={supplier.id}>{supplier.label || supplier.name}</option>
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.supplier_name || supplier.name || supplier.label || (supplier.supplier_code ? `Supplier ${supplier.supplier_code}` : `Supplier #${supplier.id}`)}
+                </option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -316,7 +342,9 @@ export default function EditPurchaseOrderPage() {
             >
               <option value="">Select Branch</option>
               {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>{branch.label || branch.branch_name}</option>
+                <option key={branch.id} value={branch.id}>
+                  {branch.label || branch.branch_name || branch.name || `Branch #${branch.id}`}
+                </option>
               ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -373,6 +401,7 @@ export default function EditPurchaseOrderPage() {
           Cancel
         </Link>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

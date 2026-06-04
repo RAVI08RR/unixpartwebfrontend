@@ -14,6 +14,8 @@ import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddClearancePage() {
   const router = useRouter();
@@ -113,8 +115,9 @@ export default function AddClearancePage() {
   };
 
   return (
-    <div className="mx-auto space-y-8 pb-12 w-full animate-in fade-in duration-500">
-      {/* Header Section */}
+    <ProtectedRoute permissions={[PERMISSIONS.CUSTOM_CLEARANCE.CREATE, PERMISSIONS.CONTAINERS.CREATE]}>
+      <div className="mx-auto space-y-8 pb-12 w-full animate-in fade-in duration-500">
+        {/* Header Section */}
       <div className="flex items-center gap-5">
         <Link 
           href="/dashboard/inventory/custom-clearance" 
@@ -419,7 +422,8 @@ export default function AddClearancePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

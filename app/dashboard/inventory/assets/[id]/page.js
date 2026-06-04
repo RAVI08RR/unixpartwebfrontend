@@ -15,10 +15,14 @@ import { useToast } from "@/app/components/Toast";
 import TransferModal from "@/app/components/assets/TransferModal";
 import SellAssetModal from "@/app/components/assets/SellAssetModal";
 import SaleDetailsModal from "@/app/components/assets/SaleDetailsModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AssetDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { hasPermission } = usePermission();
   const { success, error: showError } = useToast();
   
   const [asset, setAsset] = useState(null);
@@ -256,7 +260,8 @@ export default function AssetDetailsPage() {
   ];
 
   return (
-    <div className="space-y-6 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.ASSETS.VIEW}>
+      <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
@@ -283,37 +288,43 @@ export default function AssetDetailsPage() {
               {loadingSaleDetails ? "Loading..." : "View Sale Details"}
             </button>
           ) : (
-            <>
-              <button
-                onClick={() => setSellModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition-all"
-              >
-                <DollarSign className="w-4 h-4" />
-                Sell Asset
-              </button>
-              <button
-                onClick={() => setTransferModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-              >
-                <ArrowRightLeft className="w-4 h-4" />
-                Transfer
-              </button>
-            </>
+            hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+              <>
+                <button
+                  onClick={() => setSellModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  <DollarSign className="w-4 h-4" />
+                  Sell Asset
+                </button>
+                <button
+                  onClick={() => setTransferModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                  Transfer
+                </button>
+              </>
+            )
           )}
-          <Link
-            href={`/dashboard/inventory/assets/edit/${asset.id}`}
-            className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-sm transition-all"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit
-          </Link>
-          <button
-            onClick={() => setDeleteModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-all"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </button>
+          {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+            <Link
+              href={`/dashboard/inventory/assets/edit/${asset.id}`}
+              className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-bold text-sm transition-all"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit
+            </Link>
+          )}
+          {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
+            <button
+              onClick={() => setDeleteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
+          )}
         </div>
       </div>
 
@@ -400,9 +411,11 @@ export default function AssetDetailsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ownership History</h3>
-                <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all">
-                  Modify Ownership
-                </button>
+                {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all">
+                    Modify Ownership
+                  </button>
+                )}
               </div>
 
               {/* Current Ownership Summary */}
@@ -587,7 +600,7 @@ export default function AssetDetailsPage() {
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   Documents ({documents.length}/5)
                 </h3>
-                {documents.length < 5 && (
+                {documents.length < 5 && hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
                   <label className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm cursor-pointer transition-all">
                     <Upload className="w-4 h-4" />
                     Upload Document
@@ -637,17 +650,19 @@ export default function AssetDetailsPage() {
                 <div className="text-center py-12">
                   <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">No documents uploaded yet</p>
-                  <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm cursor-pointer transition-all">
-                    <Upload className="w-4 h-4" />
-                    Upload First Document
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      disabled={uploadingDoc}
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                    />
-                  </label>
+                  {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                    <label className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm cursor-pointer transition-all">
+                      <Upload className="w-4 h-4" />
+                      Upload First Document
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                        disabled={uploadingDoc}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      />
+                    </label>
+                  )}
                 </div>
               )}
             </div>
@@ -713,7 +728,8 @@ export default function AssetDetailsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

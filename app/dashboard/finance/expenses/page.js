@@ -14,8 +14,12 @@ import { expenseService } from "@/app/lib/services/expenseService";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function ExpensesPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -231,7 +235,8 @@ export default function ExpensesPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.EXPENSES.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-6 justify-between">
         <div className="shrink-0 flex items-center gap-4">
@@ -250,15 +255,17 @@ export default function ExpensesPage() {
           </div>
         </div>
         
-        <div className="shrink-0">
-          <Link 
-            href="/dashboard/finance/expenses/add"
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="whitespace-nowrap font-black">Add Expense</span>
-          </Link>
-        </div>
+        {hasPermission(PERMISSIONS.EXPENSES.CREATE) && (
+          <div className="shrink-0">
+            <Link 
+              href="/dashboard/finance/expenses/add"
+              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-full sm:w-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="whitespace-nowrap font-black">Add Expense</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Filters Section Card */}
@@ -546,25 +553,29 @@ export default function ExpensesPage() {
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
-                                <Link 
-                                  href={`/dashboard/finance/expenses/edit/${expense.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Expense
-                                </Link>
+                                {hasPermission(PERMISSIONS.EXPENSES.UPDATE) && (
+                                  <Link 
+                                    href={`/dashboard/finance/expenses/edit/${expense.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Expense
+                                  </Link>
+                                )}
                                 <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => {
-                                    setSelectedExpense(expense);
-                                    setDeleteModalOpen(true);
-                                    setMenuOpenId(null);
-                                  }} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Expense
-                                </button>
+                                {hasPermission(PERMISSIONS.EXPENSES.DELETE) && (
+                                  <button 
+                                    onClick={() => {
+                                      setSelectedExpense(expense);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }} 
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Expense
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -807,13 +818,15 @@ export default function ExpensesPage() {
 
             {/* Footer Actions */}
             <div className="flex items-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
-              <Link
-                href={`/dashboard/finance/expenses/edit/${selectedExpense.id}`}
-                className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
-              >
-                <Pencil className="w-4 h-4" />
-                <span>Edit Expense</span>
-              </Link>
+              {hasPermission(PERMISSIONS.EXPENSES.UPDATE) && (
+                <Link
+                  href={`/dashboard/finance/expenses/edit/${selectedExpense.id}`}
+                  className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span>Edit Expense</span>
+                </Link>
+              )}
               
               <button
                 onClick={() => {
@@ -830,5 +843,6 @@ export default function ExpensesPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

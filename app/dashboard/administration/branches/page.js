@@ -16,8 +16,12 @@ import { getAuthToken } from "@/app/lib/api";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 import BranchActivateDeactivateModal from "@/app/components/BranchActivateDeactivateModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function BranchManagementPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -274,7 +278,8 @@ export default function BranchManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -339,10 +344,12 @@ export default function BranchManagementPage() {
               onSuccess={(format) => success(`Branches exported successfully as ${format}!`)}
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
-            <Link href="/dashboard/administration/branches/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Branch</span>
-            </Link>
+            {hasPermission(PERMISSIONS.BRANCHES.CREATE) && (
+              <Link href="/dashboard/administration/branches/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Branch</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -504,32 +511,40 @@ export default function BranchManagementPage() {
                                     <Eye className="w-4 h-4" />
                                     View Details
                                   </button>
-                                  <Link 
-                                    href={`/dashboard/administration/branches/edit/${branch.id}`}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                    Edit Branch
-                                  </Link>
-                                  <button 
-                                    onClick={() => handleActivateDeactivateClick(branch)}
-                                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-xl transition-colors ${
-                                      branch.status 
-                                        ? 'text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
-                                    }`}
-                                  >
-                                    <Power className="w-4 h-4" />
-                                    {branch.status ? 'Deactivate' : 'Activate'}
-                                  </button>
-                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                  <button 
-                                    onClick={() => handleDeleteClick(branch)} 
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Branch
-                                  </button>
+                                  {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                                    <>
+                                      <Link 
+                                        href={`/dashboard/administration/branches/edit/${branch.id}`}
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                      >
+                                        <Pencil className="w-4 h-4" />
+                                        Edit Branch
+                                      </Link>
+                                      <button 
+                                        onClick={() => handleActivateDeactivateClick(branch)}
+                                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-xl transition-colors ${
+                                          branch.status 
+                                            ? 'text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
+                                            : 'text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
+                                        }`}
+                                      >
+                                        <Power className="w-4 h-4" />
+                                        {branch.status ? 'Deactivate' : 'Activate'}
+                                      </button>
+                                    </>
+                                  )}
+                                  {hasPermission(PERMISSIONS.BRANCHES.DELETE) && (
+                                    <>
+                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                      <button 
+                                        onClick={() => handleDeleteClick(branch)} 
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Branch
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </div>
@@ -579,13 +594,15 @@ export default function BranchManagementPage() {
                                           </span>
                                         </div>
                                       </div>
-                                      <Link
-                                        href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
-                                        className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
-                                        title="Edit"
-                                      >
-                                        <Pencil className="w-3 h-3 text-gray-400 hover:text-blue-600" />
-                                      </Link>
+                                      {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                                        <Link
+                                          href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
+                                          className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                          title="Edit"
+                                        >
+                                          <Pencil className="w-3 h-3 text-gray-400 hover:text-blue-600" />
+                                        </Link>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -744,13 +761,15 @@ export default function BranchManagementPage() {
               >
                 Close
               </button>
-              <Link 
-                href={`/dashboard/administration/branches/edit/${selectedBranch.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
-                onClick={handleViewClose}
-              >
-                Edit Branch
-              </Link>
+              {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                <Link 
+                  href={`/dashboard/administration/branches/edit/${selectedBranch.id}`}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
+                  onClick={handleViewClose}
+                >
+                  Edit Branch
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -816,6 +835,7 @@ export default function BranchManagementPage() {
         }}
         onSuccess={handleActivateDeactivateSuccess}
       />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

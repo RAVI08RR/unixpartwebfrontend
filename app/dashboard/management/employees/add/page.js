@@ -7,6 +7,8 @@ import { User, Mail, Phone, Calendar, Briefcase, ArrowLeft, Check, Loader2 } fro
 import { employeeService } from "@/app/lib/services/employeeService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddEmployeePage() {
   const router = useRouter();
@@ -110,7 +112,8 @@ export default function AddEmployeePage() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.EMPLOYEES.CREATE}>
+      <div className="space-y-8 pb-12">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/management/employees" className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -301,6 +304,7 @@ export default function AddEmployeePage() {
           <Link href="/dashboard/management/employees" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all">Cancel</Link>
         </div>
       </form>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -14,7 +14,9 @@ export const containerService = {
       const data = await fetchApi(`/api/containers?${queryParams}`);
       console.log('📦 Containers API response:', data);
       
-      const containersData = Array.isArray(data) ? data : (data?.containers || []);
+      const containersData = Array.isArray(data) 
+        ? data 
+        : (data?.containers || data?.items || data?.data || []);
       
       if (containersData.length > 0) {
         console.log('✅ Containers fetched successfully:', containersData.length);
@@ -32,7 +34,8 @@ export const containerService = {
   // Get dropdown containers
   getDropdown: async () => {
     try {
-      return await fetchApi('/api/dropdown/containers');
+      const data = await fetchApi('/api/dropdown/containers');
+      return Array.isArray(data) ? data : (data?.containers || data?.items || data?.data || []);
     } catch (error) {
       console.error("📦 Containers Dropdown API failed:", error.message);
       return containerService.getAll(0, 100); // Fallback to getAll with max limit of 100

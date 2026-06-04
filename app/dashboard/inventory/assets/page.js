@@ -18,8 +18,12 @@ import SaleDetailsModal from "@/app/components/assets/SaleDetailsModal";
 import TransferHistoryModal from "@/app/components/assets/TransferHistoryModal";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
 
 export default function AssetsPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -292,8 +296,9 @@ export default function AssetsPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
-      {/* Header Section */}
+    <ProtectedRoute permission={PERMISSIONS.ASSETS.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
+        {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Assets Management</h1>
@@ -352,13 +357,15 @@ export default function AssetsPage() {
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
 
-            <Link 
-              href="/dashboard/inventory/assets/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Asset</span>
-            </Link>
+            {hasPermission(PERMISSIONS.ASSETS.CREATE) && (
+              <Link 
+                href="/dashboard/inventory/assets/add"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Asset</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -498,37 +505,45 @@ export default function AssetsPage() {
                                   View Sale Details
                                 </button>
                               ) : (
-                                <button
-                                  onClick={() => {
-                                    setSelectedAsset(asset);
-                                    setSellModalOpen(true);
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
-                                >
-                                  <ShoppingCart className="w-4 h-4" />
-                                  Sell Asset
-                                </button>
+                                hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAsset(asset);
+                                      setSellModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                  >
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Sell Asset
+                                  </button>
+                                )
                               )}
-                              <Link 
-                                href={`/dashboard/inventory/assets/edit/${asset.id}`}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                              >
-                                <Pencil className="w-4 h-4" />
-                                Edit Asset
-                              </Link>
-                              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                              <button 
-                                onClick={() => {
-                                  setSelectedAsset(asset);
-                                  setDeleteModalOpen(true);
-                                  setMenuOpenId(null);
-                                }} 
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                                Delete Asset
-                              </button>
+                              {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                <Link 
+                                  href={`/dashboard/inventory/assets/edit/${asset.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Asset
+                                </Link>
+                              )}
+                              {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
+                                <>
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                  <button 
+                                    onClick={() => {
+                                      setSelectedAsset(asset);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }} 
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Asset
+                                  </button>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
@@ -620,12 +635,14 @@ export default function AssetsPage() {
               </div>
 
               <div className="flex gap-4 pt-4">
-                  <Link 
-                    href={`/dashboard/inventory/assets/edit/${selectedAsset.id}`}
-                    className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center"
-                  >
-                    Edit Asset
-                  </Link>
+                  {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                    <Link 
+                      href={`/dashboard/inventory/assets/edit/${selectedAsset.id}`}
+                      className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center"
+                    >
+                      Edit Asset
+                    </Link>
+                  )}
                   <button 
                     onClick={() => setViewModalOpen(false)}
                     className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
@@ -760,16 +777,18 @@ export default function AssetsPage() {
                             <Download className="w-3.5 h-3.5" />
                             Download
                           </button>
-                          <button
-                            onClick={() => {
-                              setDocToDelete(doc);
-                              setDeleteDocModalOpen(true);
-                            }}
-                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
-                          >
-                            <Trash className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
+                           {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                            <button
+                              onClick={() => {
+                                setDocToDelete(doc);
+                                setDeleteDocModalOpen(true);
+                              }}
+                              className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <Trash className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -781,28 +800,30 @@ export default function AssetsPage() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
-                  <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
-                    <Upload className="w-4 h-4" />
-                    Upload New Document
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const docName = file.name.split('.').slice(0, -1).join('.');
-                          handleFileUpload(e, docName);
-                        }
-                      }}
-                      disabled={uploadingDocument}
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                    Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
-                  </p>
-                </div>
+                {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
+                    <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                      <Upload className="w-4 h-4" />
+                      Upload New Document
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const docName = file.name.split('.').slice(0, -1).join('.');
+                            handleFileUpload(e, docName);
+                          }
+                        }}
+                        disabled={uploadingDocument}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                      Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -894,7 +915,8 @@ export default function AssetsPage() {
         branches={branches}
         loading={loadingTransferHistory}
       />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

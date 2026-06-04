@@ -8,6 +8,8 @@ import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddBranchOwnerPage() {
   const router = useRouter();
@@ -19,6 +21,7 @@ export default function AddBranchOwnerPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [suppliersLoading, setSuppliersLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   
   const [formData, setFormData] = useState({
     branch_id: "",
@@ -29,6 +32,7 @@ export default function AddBranchOwnerPage() {
 
   // Fetch branches and suppliers on component mount
   useEffect(() => {
+    setIsMounted(true);
     const fetchData = async () => {
       // Fetch branches
       setBranchesLoading(true);
@@ -112,8 +116,11 @@ export default function AddBranchOwnerPage() {
     }
   };
 
+  if (!isMounted) return null;
+
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.CREATE}>
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -257,5 +264,6 @@ export default function AddBranchOwnerPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

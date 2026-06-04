@@ -52,11 +52,9 @@ export function Sidebar() {
       icon: LayoutDashboard,
       customIcon: "/icons/dashboard-icon.svg",
       label: "Dashboards",
-      permission: null, // Always visible
+      permission: null, // Always visible to all authenticated users
       items: [
         { label: "CRM", href: "/dashboard", icon: BarChart3, permission: null },
-        // { label: "Analytics", href: "/dashboard/analytics", icon: Layers, permission: null },
-        // { label: "eCommerce", href: "/dashboard/ecommerce", icon: ShoppingCart, permission: null },
       ]
     },
     {
@@ -64,14 +62,14 @@ export function Sidebar() {
       icon: Users,
       customIcon: "/icons/Button-5.svg",
       label: "Management",
-      permission: null, // Show if any sub-item is visible
+      permission: null, // Group visibility driven by sub-item filtering
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users, permission: PERMISSIONS.USERS.VIEW },
         { label: "Role Management", href: "/dashboard/roles", icon: Shield, permission: PERMISSIONS.ROLES.VIEW },
-        { label: "Employees", href: "/dashboard/management/employees", icon: UserCheck, permission: PERMISSIONS.EMPLOYEES?.VIEW },
-        { label: "Attendance", href: "/dashboard/management/attendance", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE?.VIEW },
-        { label: "Leaves", href: "/dashboard/management/leaves", icon: FileText, permission: PERMISSIONS.LEAVES?.VIEW },
-        { label: "Payroll", href: "/dashboard/management/payroll", icon: DollarSign, permission: PERMISSIONS.PAYROLL?.VIEW },
+        { label: "Employees", href: "/dashboard/management/employees", icon: UserCheck, permission: PERMISSIONS.EMPLOYEES.VIEW },
+        { label: "Attendance", href: "/dashboard/management/attendance", icon: UserCheck, permission: PERMISSIONS.ATTENDANCE.VIEW },
+        { label: "Leaves", href: "/dashboard/management/leaves", icon: FileText, permission: PERMISSIONS.LEAVES.VIEW },
+        { label: "Payroll", href: "/dashboard/management/payroll", icon: DollarSign, permission: PERMISSIONS.PAYROLL.VIEW },
       ]
     },
     {
@@ -102,7 +100,6 @@ export function Sidebar() {
       permission: null,
       items: [
         { label: "Customers", href: "/dashboard/sales/customers", icon: UserCheck, permission: PERMISSIONS.CUSTOMERS.VIEW },
-        // { label: "Orders", href: "/dashboard/orders", icon: ShoppingCart, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3, permission: PERMISSIONS.INVOICES.VIEW },
@@ -115,8 +112,8 @@ export function Sidebar() {
       label: "Approvals",
       permission: null,
       items: [
-        { label: "Pending", href: "/dashboard/approvals/pending", icon: FileText, permission: null },
-        { label: "History", href: "/dashboard/approvals/history", icon: Layers, permission: null },
+        { label: "Pending", href: "/dashboard/approvals/pending", icon: FileText, permission: PERMISSIONS.APPROVALS.VIEW },
+        { label: "History", href: "/dashboard/approvals/history", icon: Layers, permission: PERMISSIONS.APPROVALS.VIEW },
       ]
     },
     {
@@ -126,8 +123,8 @@ export function Sidebar() {
       label: "Reports",
       permission: null,
       items: [
-        { label: "Daily", href: "/dashboard/reports/daily", icon: BarChart3, permission: null },
-        { label: "Monthly", href: "/dashboard/reports/monthly", icon: Layers, permission: null },
+        { label: "Daily", href: "/dashboard/reports/daily", icon: BarChart3, permission: PERMISSIONS.REPORTS.VIEW },
+        { label: "Monthly", href: "/dashboard/reports/monthly", icon: Layers, permission: PERMISSIONS.REPORTS.VIEW },
       ]
     },
     {
@@ -137,10 +134,10 @@ export function Sidebar() {
       label: "Finance",
       permission: null,
       items: [
-        { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign, permission: null },
-        { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText, permission: PERMISSIONS.EXPENSES?.VIEW },
-        { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers, permission: PERMISSIONS.FUND_TRANSFERS?.VIEW },
-        { label: "Retained Profit", href: "/dashboard/finance/retained-profit", icon: BarChart3, permission: null },
+        { label: "Overview", href: "/dashboard/finance/overview", icon: DollarSign, permission: PERMISSIONS.FINANCE.VIEW },
+        { label: "Expenses", href: "/dashboard/finance/expenses", icon: FileText, permission: PERMISSIONS.EXPENSES.VIEW },
+        { label: "Fund Transfers", href: "/dashboard/finance/fund-transfers", icon: Layers, permission: PERMISSIONS.FUND_TRANSFERS.VIEW },
+        { label: "Retained Profit", href: "/dashboard/finance/retained-profit", icon: BarChart3, permission: PERMISSIONS.FINANCE.VIEW },
       ]
     },
     {
@@ -150,8 +147,8 @@ export function Sidebar() {
       label: "Security",
       permission: null,
       items: [
-        { label: "Alerts", href: "/dashboard/security/alerts", icon: Shield, permission: null },
-        { label: "Logs", href: "/dashboard/security/logs", icon: Layers, permission: null },
+        { label: "Alerts", href: "/dashboard/security/alerts", icon: Shield, permission: PERMISSIONS.SECURITY.VIEW },
+        { label: "Logs", href: "/dashboard/security/logs", icon: Layers, permission: PERMISSIONS.SECURITY.VIEW },
       ]
     },
     {
@@ -171,10 +168,10 @@ export function Sidebar() {
       label: "Settings",
       permission: null,
       items: [
-        { label: "General", href: "/dashboard/settings", icon: Settings, permission: null },
-        { label: "File Manager", href: "/dashboard/settings/file-manager", icon: FolderOpen, permission: null },
+        { label: "General", href: "/dashboard/settings", icon: Settings, permission: null }, // Always accessible
+        { label: "File Manager", href: "/dashboard/settings/file-manager", icon: FolderOpen, permission: null }, // Always accessible
         { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield, permission: PERMISSIONS.PERMISSIONS.VIEW },
-        { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null },
+        { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null }, // Always accessible
       ]
     },
   ];

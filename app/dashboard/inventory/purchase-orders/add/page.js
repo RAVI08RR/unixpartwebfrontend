@@ -4,15 +4,18 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Plus, Package, Hash, DollarSign, FileText, Layout, Check, X, Building2, Box
+  ArrowLeft, Plus, Package, Hash, DollarSign, FileText, Layout, Check, X, Building2, Box, Calendar
 } from "lucide-react";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useContainers } from "@/app/lib/hooks/useContainers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
+import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useToast } from "@/app/components/Toast";
 import { fetchApi } from "@/app/lib/api";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddPurchaseOrderPage() {
   const router = useRouter();
@@ -23,8 +26,10 @@ export default function AddPurchaseOrderPage() {
   const { containers } = useContainers(0, 100, null, null, null, true);
   const { branches: apiBranches } = useBranches(0, 100, true);
   const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
+  const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
+  const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
@@ -33,6 +38,9 @@ export default function AddPurchaseOrderPage() {
   const [formData, setFormData] = useState({
     po_id: "",
     container_id: "",
+    supplier_id: "",
+    arrival_date: new Date().toISOString().split('T')[0],
+    arrival_branch_id: "",
     total_container_revenue: "0.00",
     items_in_stock: 0,
     status: "draft",
@@ -63,11 +71,28 @@ export default function AddPurchaseOrderPage() {
     fetchSuggestedPoId();
   }, []);
 
+  const handleContainerChange = (containerId) => {
+    const selectedContainer = containers?.find(c => String(c.id) === String(containerId));
+    if (selectedContainer) {
+      const supplierId = selectedContainer.supplier_id || selectedContainer.supplier?.id || "";
+      const branchId = selectedContainer.destination_branch_id || selectedContainer.destination_branch?.id || selectedContainer.branch?.id || "";
+      
+      setFormData(prev => ({
+        ...prev,
+        container_id: containerId,
+        supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
+        arrival_branch_id: branchId ? String(branchId) : prev.arrival_branch_id
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, container_id: containerId }));
+    }
+  };
+
   const handleCreateOrder = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
     
-    if(!formData.po_id || !formData.container_id) {
-        showError("Please fill in PO ID and select a Container");
+    if(!formData.po_id || !formData.container_id || !formData.supplier_id || !formData.arrival_date || !formData.arrival_branch_id) {
+        showError("Please fill in all required fields");
         return;
     }
 
@@ -76,6 +101,8 @@ export default function AddPurchaseOrderPage() {
         const payload = {
             ...formData,
             container_id: parseInt(formData.container_id),
+            supplier_id: parseInt(formData.supplier_id),
+            arrival_branch_id: parseInt(formData.arrival_branch_id),
             items_in_stock: parseInt(formData.items_in_stock),
             total_container_revenue: formData.total_container_revenue.toString()
         };
@@ -137,7 +164,8 @@ export default function AddPurchaseOrderPage() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.PURCHASE_ORDERS.CREATE}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -177,12 +205,67 @@ export default function AddPurchaseOrderPage() {
                 <select 
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.container_id}
-                  onChange={(e) => setFormData({...formData, container_id: e.target.value})}
+                  onChange={(e) => handleContainerChange(e.target.value)}
                   required
                 >
                   <option value="">Select Container Code</option>
                   {containers?.map(c => (
-                    <option key={c.id} value={c.id}>{c.label || c.container_code}</option>
+                    <option key={c.id} value={c.id}>
+                      {c.container_code && c.container_number 
+                        ? `${c.container_code} - ${c.container_number}` 
+                        : (c.container_code || c.container_number || c.label || `Container #${c.id}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </FormField>
+
+            <FormField label="Supplier" required>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select 
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                  value={formData.supplier_id}
+                  onChange={(e) => setFormData({...formData, supplier_id: e.target.value})}
+                  required
+                >
+                  <option value="">Select Supplier</option>
+                  {suppliers.map(supplier => (
+                    <option key={supplier.id} value={supplier.id}>
+                      {supplier.supplier_name || supplier.name || supplier.label || (supplier.supplier_code ? `Supplier ${supplier.supplier_code}` : `Supplier #${supplier.id}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </FormField>
+
+            <FormField label="Arrival Date" required>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="date"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                  value={formData.arrival_date}
+                  onChange={(e) => setFormData({...formData, arrival_date: e.target.value})}
+                  required
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Arrival Branch" required>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select 
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                  value={formData.arrival_branch_id}
+                  onChange={(e) => setFormData({...formData, arrival_branch_id: e.target.value})}
+                  required
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map(branch => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.label || branch.branch_name || branch.name || `Branch #${branch.id}`}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -326,7 +409,8 @@ export default function AddPurchaseOrderPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

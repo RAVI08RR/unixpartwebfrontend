@@ -8,6 +8,8 @@ import { fundTransferService } from "@/app/lib/services/fundTransferService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditFundTransferPage({ params }) {
   const router = useRouter();
@@ -20,6 +22,11 @@ export default function EditFundTransferPage({ params }) {
   const [suppliers, setSuppliers] = useState([]);
   const [branches, setBranches] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const [formData, setFormData] = useState({
     date: "",
@@ -137,8 +144,11 @@ export default function EditFundTransferPage({ params }) {
     }
   };
 
+  if (!isMounted) return null;
+
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.FUND_TRANSFERS.UPDATE}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 px-4 sm:px-6">
       <div className="flex items-center gap-4">
         <Link 
           href="/dashboard/finance/fund-transfers"
@@ -313,5 +323,6 @@ export default function EditFundTransferPage({ params }) {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

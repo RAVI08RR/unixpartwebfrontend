@@ -11,6 +11,8 @@ import {
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { apiClient } from "@/app/lib/api";
 import Link from "next/link";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function SalesDataPage() {
   const [salesData, setSalesData] = useState([]);
@@ -283,7 +285,8 @@ export default function SalesDataPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div>
@@ -876,7 +879,7 @@ export default function SalesDataPage() {
                   Close
                 </button>
                 <Link 
-                  href={(selectedItem.invoice?.id || selectedItem.invoice_id) ? `/dashboard/sales/invoices/edit/${selectedItem.invoice?.id || selectedItem.invoice_id}` : "#"}
+                  href={(selectedItem.invoice?.id || selectedItem.invoice_id) ? `/dashboard/sales/invoices/view/${selectedItem.invoice?.id || selectedItem.invoice_id}` : "#"}
                   onClick={(e) => {
                     if (!selectedItem.invoice?.id && !selectedItem.invoice_id) {
                       e.preventDefault();
@@ -897,6 +900,7 @@ export default function SalesDataPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

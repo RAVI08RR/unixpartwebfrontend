@@ -12,6 +12,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
 import OwnershipSection from "@/app/components/assets/OwnershipSection";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddAssetPage() {
   const router = useRouter();
@@ -141,8 +143,9 @@ export default function AddAssetPage() {
   };
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
+    <ProtectedRoute permission={PERMISSIONS.ASSETS.CREATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+        {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <Link 
@@ -476,6 +479,7 @@ export default function AddAssetPage() {
           Cancel
         </Link>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

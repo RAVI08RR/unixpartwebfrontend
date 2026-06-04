@@ -16,6 +16,8 @@ import PrintableInvoice from "@/app/components/PrintableInvoice";
 import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocompleteWithCreate";
 import POItemAutocomplete from "@/app/components/POItemAutocomplete";
 import QRScannerModal from "@/app/components/QRScannerModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditInvoicePage({ params }) {
   const router = useRouter();
@@ -689,7 +691,8 @@ export default function EditInvoicePage({ params }) {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.UPDATE}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -1619,7 +1622,8 @@ export default function EditInvoicePage({ params }) {
         onClose={() => setQrModalOpen(false)} 
         onScanSuccess={handleQrScanSuccess} 
       />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

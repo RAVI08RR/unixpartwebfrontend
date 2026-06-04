@@ -8,6 +8,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddBranchPage() {
   const router = useRouter();
@@ -135,7 +137,8 @@ export default function AddBranchPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.CREATE}>
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -394,6 +397,7 @@ export default function AddBranchPage() {
           </form>
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

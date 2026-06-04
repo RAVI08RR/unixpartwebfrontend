@@ -13,8 +13,12 @@ import { fundTransferService } from "@/app/lib/services/fundTransferService";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function FundTransfersPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [methodFilter, setMethodFilter] = useState("All");
   const [branchFilter, setBranchFilter] = useState("All");
@@ -202,7 +206,8 @@ export default function FundTransfersPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.FUND_TRANSFERS.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -338,13 +343,15 @@ export default function FundTransfersPage() {
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
 
-            <Link 
-              href="/dashboard/finance/fund-transfers/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Transfer</span>
-            </Link>
+            {hasPermission(PERMISSIONS.FUND_TRANSFERS.CREATE) && (
+              <Link 
+                href="/dashboard/finance/fund-transfers/add"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Transfer</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -486,25 +493,31 @@ export default function FundTransfersPage() {
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
-                                <Link 
-                                  href={`/dashboard/finance/fund-transfers/edit/${transfer.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Transfer
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => {
-                                    setSelectedTransfer(transfer);
-                                    setDeleteModalOpen(true);
-                                    setMenuOpenId(null);
-                                  }} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Transfer
-                                </button>
+                                {hasPermission(PERMISSIONS.FUND_TRANSFERS.UPDATE) && (
+                                  <Link 
+                                    href={`/dashboard/finance/fund-transfers/edit/${transfer.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Transfer
+                                  </Link>
+                                )}
+                                {hasPermission(PERMISSIONS.FUND_TRANSFERS.UPDATE) && hasPermission(PERMISSIONS.FUND_TRANSFERS.DELETE) && (
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                )}
+                                {hasPermission(PERMISSIONS.FUND_TRANSFERS.DELETE) && (
+                                  <button 
+                                    onClick={() => {
+                                      setSelectedTransfer(transfer);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }} 
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Transfer
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -757,13 +770,15 @@ export default function FundTransfersPage() {
 
             {/* Footer Actions */}
             <div className="flex items-center gap-4 mt-8 pt-6 border-t border-gray-100 dark:border-zinc-800">
-              <Link
-                href={`/dashboard/finance/fund-transfers/edit/${selectedTransfer.id}`}
-                className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
-              >
-                <Pencil className="w-4 h-4" />
-                <span>Edit Transfer</span>
-              </Link>
+              {hasPermission(PERMISSIONS.FUND_TRANSFERS.UPDATE) && (
+                <Link
+                  href={`/dashboard/finance/fund-transfers/edit/${selectedTransfer.id}`}
+                  className="flex items-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-lg shadow-black/10 hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span>Edit Transfer</span>
+                </Link>
+              )}
               
               <button
                 onClick={() => {
@@ -780,5 +795,6 @@ export default function FundTransfersPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

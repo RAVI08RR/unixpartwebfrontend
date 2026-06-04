@@ -13,6 +13,8 @@ import { useToast } from "@/app/components/Toast";
 import OwnershipSection from "@/app/components/assets/OwnershipSection";
 import { supplierService } from "@/app/lib/services/supplierService";
 import TransferModal from "@/app/components/assets/TransferModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditAssetPage() {
   const router = useRouter();
@@ -381,8 +383,9 @@ export default function EditAssetPage() {
   }
 
   return (
-    <div className="space-y-6 md:space-y-8 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
+    <ProtectedRoute permission={PERMISSIONS.ASSETS.UPDATE}>
+      <div className="space-y-6 md:space-y-8 pb-12 w-full max-w-full overflow-hidden">
+        {/* Header Section */}
       <div className="flex flex-col gap-4 md:gap-6">
         <div className="flex items-center gap-3 md:gap-4">
           <Link
@@ -1069,6 +1072,7 @@ export default function EditAssetPage() {
         onTransfer={handleTransfer}
         isLoading={transferring}
       />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

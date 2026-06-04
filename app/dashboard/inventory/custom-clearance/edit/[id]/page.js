@@ -11,6 +11,8 @@ import { containerService } from "@/app/lib/services/containerService";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditClearancePage({ params }) {
   const [id, setId] = useState(null);
@@ -119,8 +121,9 @@ export default function EditClearancePage({ params }) {
   }
 
   return (
-    <div className="mx-auto space-y-6 pb-12 w-full animate-in fade-in duration-500">
-      {/* Header Section */}
+    <ProtectedRoute permissions={[PERMISSIONS.CUSTOM_CLEARANCE.UPDATE, PERMISSIONS.CONTAINERS.UPDATE]}>
+      <div className="mx-auto space-y-6 pb-12 w-full animate-in fade-in duration-500">
+        {/* Header Section */}
       <div className="flex items-center gap-4">
         <Link 
           href="/dashboard/inventory/custom-clearance" 
@@ -385,7 +388,8 @@ export default function EditClearancePage({ params }) {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

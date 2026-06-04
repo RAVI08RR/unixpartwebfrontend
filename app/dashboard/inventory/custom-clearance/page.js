@@ -17,8 +17,12 @@ import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function CustomClearancePage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -345,8 +349,9 @@ export default function CustomClearancePage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
-      {/* Header Section */}
+    <ProtectedRoute permissions={[PERMISSIONS.CUSTOM_CLEARANCE.VIEW, PERMISSIONS.CONTAINERS.VIEW]}>
+      <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
+        {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Custom Clearance</h1>
@@ -375,13 +380,15 @@ export default function CustomClearancePage() {
               onError={(err) => showError(`Export failed: ${err.message}`)}
             />
 
-            <Link 
-              href="/dashboard/inventory/custom-clearance/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Clearance</span>
-            </Link>
+            {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.CREATE) || hasPermission(PERMISSIONS.CONTAINERS.CREATE)) && (
+              <Link 
+                href="/dashboard/inventory/custom-clearance/add"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Clearance</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -584,8 +591,15 @@ export default function CustomClearancePage() {
                              <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4" />Documents</button>
                              <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
                              <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-amber-50 rounded-xl"><Printer className="w-4 h-4" />Print Clearance</Link>
-                             <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-red-50 rounded-xl"><Pencil className="w-4 h-4" />Edit Record</Link>
-                             <div className="h-px bg-gray-100 my-1" /><button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" />Delete</button>
+                             {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
+                               <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-red-50 rounded-xl"><Pencil className="w-4 h-4" />Edit Record</Link>
+                             )}
+                             {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
+                               <>
+                                 <div className="h-px bg-gray-100 my-1" />
+                                 <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" />Delete</button>
+                               </>
+                             )}
                           </div>
                         )}
                     </td>
@@ -632,10 +646,17 @@ export default function CustomClearancePage() {
                 <button onClick={() => { handleViewDetails(container); }} className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30 px-4 py-2 rounded-xl">View Details</button>
               </div>
 
-              {menuOpenId === container.id && (
-                <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-2 animate-in slide-in-from-top-2 duration-200">
-                   <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600"><Pencil className="w-3.5 h-3.5" />Edit</Link>
-                   <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 py-3 bg-red-50 dark:bg-red-900/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-600"><Trash2 className="w-3.5 h-3.5" />Delete</button>
+              {menuOpenId === container.id && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE) || hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
+                <div className={`mt-4 pt-4 border-t border-gray-100 grid ${
+                  ((hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE))) 
+                    ? 'grid-cols-2' : 'grid-cols-1'
+                } gap-2 animate-in slide-in-from-top-2 duration-200`}>
+                   {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
+                     <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600"><Pencil className="w-3.5 h-3.5" />Edit</Link>
+                   )}
+                   {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
+                     <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 py-3 bg-red-50 dark:bg-red-900/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-600"><Trash2 className="w-3.5 h-3.5" />Delete</button>
+                   )}
                 </div>
               )}
             </div>
@@ -1010,17 +1031,19 @@ export default function CustomClearancePage() {
                             <Download className="w-3.5 h-3.5" />
                             Download
                           </button>
-                          <button
-                            onClick={() => {
-                              setDocToDelete(doc);
-                              setDeleteDocModalOpen(true);
-                            }}
-                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
-                            title="Delete document"
-                          >
-                            <Trash className="w-3.5 h-3.5" />
-                            Delete
-                          </button>
+                          {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
+                            <button
+                              onClick={() => {
+                                setDocToDelete(doc);
+                                setDeleteDocModalOpen(true);
+                              }}
+                              className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                              title="Delete document"
+                            >
+                              <Trash className="w-3.5 h-3.5" />
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -1033,29 +1056,31 @@ export default function CustomClearancePage() {
                 )}
 
                 {/* Upload new document section */}
-                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
-                  <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
-                    <Upload className="w-4 h-4" />
-                    Upload New Document
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Use filename without extension as document_name
-                          const docName = file.name.split('.').slice(0, -1).join('.');
-                          handleFileUpload(e, docName);
-                        }
-                      }}
-                      disabled={uploadingDocument}
-                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
-                    />
-                  </label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                    Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
-                  </p>
-                </div>
+                {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
+                    <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                      <Upload className="w-4 h-4" />
+                      Upload New Document
+                      <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            // Use filename without extension as document_name
+                            const docName = file.name.split('.').slice(0, -1).join('.');
+                            handleFileUpload(e, docName);
+                          }
+                        }}
+                        disabled={uploadingDocument}
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                      />
+                    </label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                      Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1109,7 +1134,8 @@ export default function CustomClearancePage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

@@ -17,6 +17,8 @@ import DropdownSearch from "@/app/components/DropdownSearch";
 import PhoneInput from "@/app/components/PhoneInput";
 import PasswordInput from "@/app/components/PasswordInput";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -404,7 +406,8 @@ export default function AddUserPage() {
   };
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.USERS.CREATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -714,6 +717,7 @@ export default function AddUserPage() {
           Cancel
         </Link>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

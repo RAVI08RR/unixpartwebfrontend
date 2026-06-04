@@ -11,7 +11,9 @@ export const supplierService = {
       const data = await fetchApi(`/api/suppliers?${queryParams}`);
       console.log('🏭 Suppliers API response:', data);
       
-      const suppliersData = Array.isArray(data) ? data : (data?.suppliers || []);
+      const suppliersData = Array.isArray(data) 
+        ? data 
+        : (data?.suppliers || data?.items || data?.data || []);
       
       if (suppliersData.length > 0) {
         console.log('✅ Suppliers fetched successfully:', suppliersData.length);
@@ -30,7 +32,7 @@ export const supplierService = {
   getDropdown: async () => {
     try {
       const data = await fetchApi('/api/dropdown/suppliers');
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data : (data?.suppliers || data?.items || data?.data || []);
     } catch (error) {
       // Silently handle permission errors (403) - these are expected when user lacks permissions
       if (error.message.includes('Not authorized') || error.message.includes('403')) {

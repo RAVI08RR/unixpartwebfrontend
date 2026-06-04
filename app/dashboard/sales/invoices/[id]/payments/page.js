@@ -9,11 +9,15 @@ import {
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function InvoicePaymentsPage() {
   const router = useRouter();
   const params = useParams();
   const invoiceId = params?.id;
+  const { hasPermission } = usePermission();
   
   const [invoice, setInvoice] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -136,29 +140,32 @@ export default function InvoicePaymentsPage() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => router.push('/dashboard/sales/invoices')}
-          className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Payments</h1>
-          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">
-            {invoice.invoice_number} - {invoice.customer?.full_name || `Customer #${invoice.customer_id}`}
-          </p>
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push('/dashboard/sales/invoices')}
+            className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Payments</h1>
+            <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">
+              {invoice.invoice_number} - {invoice.customer?.full_name || `Customer #${invoice.customer_id}`}
+            </p>
+          </div>
+          {hasPermission(PERMISSIONS.INVOICES.ADD_PAYMENT) && (
+            <button
+              onClick={() => setAddModalOpen(true)}
+              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Payment
+            </button>
+          )}
         </div>
-        <button
-          onClick={() => setAddModalOpen(true)}
-          className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Payment
-        </button>
-      </div>
 
       {/* Invoice Summary Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6">
@@ -353,6 +360,7 @@ export default function InvoicePaymentsPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }
 

@@ -7,9 +7,13 @@ import {
 } from "lucide-react";
 import { leaveService } from "@/app/lib/services/leaveService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function LeavesPage() {
   const { success, error } = useToast();
+  const { hasPermission } = usePermission();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,7 +109,8 @@ export default function LeavesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute permission={PERMISSIONS.LEAVES.VIEW}>
+      <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Leaves</h1>
@@ -113,13 +118,15 @@ export default function LeavesPage() {
             Manage employee leave requests
           </p>
         </div>
-        <Link
-          href="/dashboard/management/leaves/submit"
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
-        >
-          <Plus className="w-4 h-4" />
-          Submit Leave
-        </Link>
+        {hasPermission(PERMISSIONS.LEAVES.CREATE) && (
+          <Link
+            href="/dashboard/management/leaves/submit"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Submit Leave
+          </Link>
+        )}
       </div>
 
       <div className="relative">
@@ -254,38 +261,46 @@ export default function LeavesPage() {
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                         </button>
-                        <Link
-                          href={`/dashboard/management/leaves/edit/${leave.id}`}
-                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                        </Link>
+                        {hasPermission(PERMISSIONS.LEAVES.UPDATE) && (
+                          <Link
+                            href={`/dashboard/management/leaves/edit/${leave.id}`}
+                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                          </Link>
+                        )}
                         {leave.status === 'pending' && (
                           <>
-                            <button
-                              onClick={() => setApproveModal({ isOpen: true, leave, notes: '' })}
-                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                            </button>
-                            <button
-                              onClick={() => setRejectModal({ isOpen: true, leave, notes: '' })}
-                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                              title="Reject"
-                            >
-                              <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                            </button>
+                            {hasPermission(PERMISSIONS.LEAVES.APPROVE) && (
+                              <button
+                                onClick={() => setApproveModal({ isOpen: true, leave, notes: '' })}
+                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                                title="Approve"
+                              >
+                                <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                              </button>
+                            )}
+                            {hasPermission(PERMISSIONS.LEAVES.REJECT) && (
+                              <button
+                                onClick={() => setRejectModal({ isOpen: true, leave, notes: '' })}
+                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                                title="Reject"
+                              >
+                                <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                              </button>
+                            )}
                           </>
                         )}
-                        <button
-                          onClick={() => setDeleteModal({ isOpen: true, leave })}
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                        </button>
+                        {hasPermission(PERMISSIONS.LEAVES.DELETE) && (
+                          <button
+                            onClick={() => setDeleteModal({ isOpen: true, leave })}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -516,6 +531,7 @@ export default function LeavesPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

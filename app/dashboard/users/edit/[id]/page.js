@@ -16,6 +16,8 @@ import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import DropdownSearch from "@/app/components/DropdownSearch";
 import PhoneInput from "@/app/components/PhoneInput";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -449,7 +451,8 @@ export default function EditUserPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.USERS.UPDATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
@@ -822,6 +825,7 @@ export default function EditUserPage() {
           Cancel
         </Link>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

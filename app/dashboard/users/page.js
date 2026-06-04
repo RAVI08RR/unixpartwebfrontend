@@ -14,8 +14,12 @@ import { getAuthToken } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { usePermission } from "@/app/lib/hooks/usePermission";
 
 export default function UserManagementPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -197,7 +201,8 @@ export default function UserManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full">
+    <ProtectedRoute permission={PERMISSIONS.USERS.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -262,10 +267,12 @@ export default function UserManagementPage() {
               onSuccess={(format) => success(`Users exported successfully as ${format}!`)}
               onError={(error) => error(`Export failed: ${error.message}`)}
             />
-            <Link href="/dashboard/users/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add User</span>
-            </Link>
+            {hasPermission(PERMISSIONS.USERS.CREATE) && (
+              <Link href="/dashboard/users/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add User</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -399,21 +406,27 @@ export default function UserManagementPage() {
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
-                                <Link 
-                                  href={`/dashboard/users/edit/${user.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit User
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(user)} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete User
-                                </button>
+                                  {hasPermission(PERMISSIONS.USERS.UPDATE) && (
+                                    <Link 
+                                      href={`/dashboard/users/edit/${user.id}`}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit User
+                                    </Link>
+                                  )}
+                                  {hasPermission(PERMISSIONS.USERS.DELETE) && (
+                                    <>
+                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                      <button 
+                                        onClick={() => handleDeleteClick(user)} 
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete User
+                                      </button>
+                                    </>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -675,14 +688,16 @@ export default function UserManagementPage() {
                 >
                   Close
                 </button>
-                <Link 
-                  href={`/dashboard/users/edit/${selectedUser.id}`}
-                  className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2 btn-primary"
-                  onClick={handleViewClose}
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit User
-                </Link>
+                {hasPermission(PERMISSIONS.USERS.UPDATE) && (
+                  <Link 
+                    href={`/dashboard/users/edit/${selectedUser.id}`}
+                    className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2 btn-primary"
+                    onClick={handleViewClose}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit User
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -743,6 +758,7 @@ export default function UserManagementPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

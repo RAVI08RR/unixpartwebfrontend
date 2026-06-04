@@ -10,10 +10,14 @@ import {
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
 import PrintableInvoice from "@/app/components/PrintableInvoice";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function ViewInvoicePage({ params }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { hasPermission } = usePermission();
   const [invoiceId, setInvoiceId] = useState(null);
   const [invoice, setInvoice] = useState(null);
   const [customer, setCustomer] = useState(null);
@@ -155,7 +159,8 @@ export default function ViewInvoicePage({ params }) {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-6 pb-12 w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.VIEW}>
+      <div className="max-w-[1200px] mx-auto space-y-6 pb-12 w-full overflow-hidden">
       {/* Header - Hide in print mode */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 no-print">
         <div className="flex items-center gap-4 min-w-0">
@@ -179,13 +184,15 @@ export default function ViewInvoicePage({ params }) {
             <Printer className="w-4 h-4" />
             Print
           </button>
-          <Link
-            href={`/dashboard/sales/invoices/edit/${invoiceId}`}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
-          >
-            <FileText className="w-4 h-4" />
-            Edit Invoice
-          </Link>
+          {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+            <Link
+              href={`/dashboard/sales/invoices/edit/${invoiceId}`}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              Edit Invoice
+            </Link>
+          )}
         </div>
       </div>
 
@@ -199,6 +206,7 @@ export default function ViewInvoicePage({ params }) {
       <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <PrintableInvoice ref={printRef} invoice={invoice} customer={customer} invoiceId={invoiceId} />
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

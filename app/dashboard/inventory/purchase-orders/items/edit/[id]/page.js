@@ -35,7 +35,8 @@ export default function EditPOItemPage() {
     current_branch_id: "",
     status: "in_stock",
     quantity: 1,
-    po_id: ""
+    po_id: "",
+    is_dismantled: false
   });
 
   useEffect(() => {
@@ -52,7 +53,8 @@ export default function EditPOItemPage() {
           current_branch_id: item.current_branch_id ? String(item.current_branch_id) : "",
           status: item.status || "in_stock",
           quantity: item.quantity || 1,
-          po_id: item.po_id || ""
+          po_id: item.po_id || "",
+          is_dismantled: typeof item.is_dismantled === 'boolean' ? item.is_dismantled : false
         });
       } catch (err) {
         console.error("Failed to load item:", err);
@@ -73,14 +75,27 @@ export default function EditPOItemPage() {
     
     try {
       const payload = {
-        po_id: parseInt(formData.po_id),
-        item_id: parseInt(formData.item_id),
         po_description: formData.po_description || null,
         stock_notes: formData.stock_notes || null,
-        current_branch_id: parseInt(formData.current_branch_id),
         status: formData.status,
-        quantity: parseInt(formData.quantity)
+        quantity: parseInt(formData.quantity) || 1,
+        is_dismantled: formData.is_dismantled
       };
+
+      const poId = parseInt(formData.po_id);
+      if (!isNaN(poId)) {
+        payload.po_id = poId;
+      }
+
+      const itemId = parseInt(formData.item_id);
+      if (!isNaN(itemId)) {
+        payload.item_id = itemId;
+      }
+
+      const branchId = parseInt(formData.current_branch_id);
+      if (!isNaN(branchId)) {
+        payload.current_branch_id = branchId;
+      }
       
       await poItemService.update(itemId, payload);
       success("Item updated successfully");

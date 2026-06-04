@@ -13,8 +13,12 @@ import { customerBranchService } from "../../../lib/services/customerBranchServi
 import { getAuthToken } from "../../../lib/api";
 import CustomerDeactivateModal from "../../../components/CustomerDeactivateModal";
 import CustomerCreditLimitModal from "../../../components/CustomerCreditLimitModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function CustomersPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -274,8 +278,9 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full">
-      {/* Header Section */}
+    <ProtectedRoute permission={PERMISSIONS.CUSTOMERS.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full">
+        {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Customer Management</h1>
@@ -426,10 +431,12 @@ export default function CustomersPage() {
               <Download className="w-4 h-4" />
               <span>Export</span>
             </button>
-            <Link href="/dashboard/sales/customers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Customer</span>
-            </Link>
+            {hasPermission(PERMISSIONS.CUSTOMERS.CREATE) && (
+              <Link href="/dashboard/sales/customers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Customer</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -545,28 +552,35 @@ export default function CustomersPage() {
                             <History className="w-3.5 h-3.5" /> Purchase History
                           </Link>
                           
-                          <Link href={`/dashboard/sales/customers/edit/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
-                            <Pencil className="w-3.5 h-3.5" /> Edit Customer
-                          </Link>
-                          
-                          <button onClick={() => handleCreditLimitClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors">
-                            <DollarSign className="w-3.5 h-3.5" /> Set Credit Limit
-                          </button>
-                          
-                          <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                          
-                          <button onClick={() => handleDeactivateClick(customer)} className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${
-                            customer.status 
-                              ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20' 
-                              : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                          }`}>
-                            {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />} 
-                            {customer.status ? "Deactivate" : "Activate"}
-                          </button>
+                          {hasPermission(PERMISSIONS.CUSTOMERS.UPDATE) && (
+                            <>
+                              <Link href={`/dashboard/sales/customers/edit/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
+                                <Pencil className="w-3.5 h-3.5" /> Edit Customer
+                              </Link>
+                              
+                              <button onClick={() => handleCreditLimitClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors">
+                                <DollarSign className="w-3.5 h-3.5" /> Set Credit Limit
+                              </button>
+                              
+                              <button onClick={() => handleDeactivateClick(customer)} className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${
+                                customer.status 
+                                  ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20' 
+                                  : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                              }`}>
+                                {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />} 
+                                {customer.status ? "Deactivate" : "Activate"}
+                              </button>
+                            </>
+                          )}
  
-                          <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
+                          {hasPermission(PERMISSIONS.CUSTOMERS.DELETE) && (
+                            <>
+                              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                              <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </td>
@@ -757,13 +771,15 @@ export default function CustomersPage() {
               >
                 Close
               </button>
-              <Link 
-                href={`/dashboard/sales/customers/edit/${selectedCustomer.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
-                onClick={handleViewClose}
-              >
-                Edit Customer
-              </Link>
+              {hasPermission(PERMISSIONS.CUSTOMERS.UPDATE) && (
+                <Link 
+                  href={`/dashboard/sales/customers/edit/${selectedCustomer.id}`}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                  onClick={handleViewClose}
+                >
+                  Edit Customer
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -846,6 +862,8 @@ export default function CustomersPage() {
           onSuccess={handleCreditLimitSuccess}
         />
       )}
-    </div>
+
+      </div>
+    </ProtectedRoute>
   );
 }

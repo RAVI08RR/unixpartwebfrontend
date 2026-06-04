@@ -154,22 +154,32 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     if (response.status === 500) {
       console.error('🚨 Server Error (500):', url);
       
-      // Try to get the error details from the response
-      let errorDetails = 'Backend server error.';
+      let errorDetails = '';
       try {
-        const errorData = await response.json();
-        if (errorData.detail) {
-          errorDetails = typeof errorData.detail === 'string' 
-            ? errorData.detail 
-            : JSON.stringify(errorData.detail);
-        } else if (errorData.message) {
-          errorDetails = errorData.message;
+        const rawText = await response.text();
+        errorDetails = rawText;
+        try {
+          const errorData = JSON.parse(rawText);
+          if (errorData.detail) {
+            errorDetails = typeof errorData.detail === 'string' 
+              ? errorData.detail 
+              : JSON.stringify(errorData.detail);
+          } else if (errorData.message) {
+            errorDetails = errorData.message;
+          } else if (errorData.error) {
+            errorDetails = errorData.error;
+          }
+        } catch (e) {
+          // If not JSON, use raw text truncated
+          if (errorDetails.length > 200) {
+            errorDetails = errorDetails.substring(0, 200) + '...';
+          }
         }
-        console.error('🚨 Server Error Details:', errorDetails);
       } catch (e) {
-        // Could not parse error response
+        errorDetails = 'Backend server error.';
       }
       
+      console.error('🚨 Server Error Details:', errorDetails);
       throw new Error(`Backend server error: ${errorDetails}`);
     }
 

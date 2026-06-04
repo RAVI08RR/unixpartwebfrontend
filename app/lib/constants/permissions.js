@@ -128,6 +128,23 @@ export const PERMISSIONS = {
     UPDATE: 'fund_transfers.update',
     DELETE: 'fund_transfers.delete',
   },
+  CONTAINER_DOCUMENTS: {
+    VIEW: 'container_documents.view',
+    UPLOAD: 'container_documents.upload',
+    DELETE: 'container_documents.delete',
+  },
+  APPROVALS: {
+    VIEW: 'approvals.view',
+  },
+  REPORTS: {
+    VIEW: 'reports.view',
+  },
+  FINANCE: {
+    VIEW: 'finance.view',
+  },
+  SECURITY: {
+    VIEW: 'security.view',
+  },
 };
 
 // Helper to get all permission slugs as a flat array

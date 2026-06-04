@@ -45,6 +45,8 @@ export const branchService = {
           return allBranches;
         } else if (allBranches?.branches && Array.isArray(allBranches.branches)) {
           return allBranches.branches;
+        } else if (allBranches?.items && Array.isArray(allBranches.items)) {
+          return allBranches.items;
         } else if (allBranches?.data && Array.isArray(allBranches.data)) {
           return allBranches.data;
         }

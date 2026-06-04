@@ -20,13 +20,18 @@ const useAuthStore = create(
 
       // Actions
       setAuth: (data) => {
-        const allPermissions = [
-          ...(data.role?.permissions || []),
-          ...(data.permissions || []),
-        ];
+        // Merge role-level permissions and user-specific permissions, deduplicating by slug
+        const rolePermissions = data.role?.permissions || [];
+        const userPermissions = data.permissions || [];
+        const seen = new Set();
+        const allPermissions = [...rolePermissions, ...userPermissions].filter(p => {
+          if (seen.has(p.slug)) return false;
+          seen.add(p.slug);
+          return true;
+        });
         
         set({
-          userId: data.user_id,
+          userId: data.user_id || data.id || null, // support both shapes
           role: data.role,
           permissions: allPermissions,
           branches: data.branches || [],

@@ -12,8 +12,12 @@ import { supplierService } from "@/app/lib/services/supplierService";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function BranchOwnersPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { success, error } = useToast();
@@ -140,7 +144,8 @@ export default function BranchOwnersPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -161,13 +166,15 @@ export default function BranchOwnersPage() {
           </div>
           
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
-            <Link
-              href="/dashboard/administration/branch-owners/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Branch Owner</span>
-            </Link>
+            {hasPermission(PERMISSIONS.BRANCHES.CREATE) && (
+              <Link
+                href="/dashboard/administration/branch-owners/add"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 active:scale-95 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Branch Owner</span>
+              </Link>
+            )}
             <ExportButton
               data={filteredOwners.map(owner => ({
                 ...owner,
@@ -265,20 +272,24 @@ export default function BranchOwnersPage() {
                           >
                             <Eye className="w-4 h-4 text-gray-400 group-hover/view:text-green-600" />
                           </button>
-                          <Link
-                            href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group/edit"
-                            title="Edit"
-                          >
-                            <Pencil className="w-4 h-4 text-gray-400 group-hover/edit:text-blue-600" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(owner.id)}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 group-hover/delete:text-red-600" />
-                          </button>
+                          {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                            <Link
+                              href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
+                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group/edit"
+                              title="Edit"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-400 group-hover/edit:text-blue-600" />
+                            </Link>
+                          )}
+                          {hasPermission(PERMISSIONS.BRANCHES.DELETE) && (
+                            <button
+                              onClick={() => handleDelete(owner.id)}
+                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 group-hover/delete:text-red-600" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -434,13 +445,15 @@ export default function BranchOwnersPage() {
             </div>
 
             <div className="p-6 border-t border-gray-100 dark:border-zinc-800 flex justify-end gap-3">
-              <Link
-                href={`/dashboard/administration/branch-owners/edit/${selectedOwner.id}`}
-                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-                onClick={() => setViewModalOpen(false)}
-              >
-                Edit
-              </Link>
+              {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                <Link
+                  href={`/dashboard/administration/branch-owners/edit/${selectedOwner.id}`}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                  onClick={() => setViewModalOpen(false)}
+                >
+                  Edit
+                </Link>
+              )}
               <button
                 onClick={() => setViewModalOpen(false)}
                 className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg font-bold text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
@@ -452,5 +465,6 @@ export default function BranchOwnersPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

@@ -7,6 +7,8 @@ import { ArrowLeft, Save, Loader2, Calendar, Clock } from "lucide-react";
 import { attendanceService } from "@/app/lib/services/attendanceService";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function SubmitAttendancePage() {
   const router = useRouter();
@@ -61,7 +63,8 @@ export default function SubmitAttendancePage() {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.ATTENDANCE.CREATE}>
+      <div className="space-y-8 pb-12">
       <div className="flex items-center gap-4">
         <Link href="/dashboard/management/attendance" className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors">
           <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -201,6 +204,7 @@ export default function SubmitAttendancePage() {
           </Link>
         </div>
       </form>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

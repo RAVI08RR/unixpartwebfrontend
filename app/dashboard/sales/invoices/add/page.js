@@ -17,6 +17,8 @@ import CustomerAutocompleteWithCreate from "@/app/components/CustomerAutocomplet
 import POItemAutocomplete from "@/app/components/POItemAutocomplete";
 import QRScannerModal from "@/app/components/QRScannerModal";
 import { Suspense } from "react";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 function AddInvoiceContent() {
   const router = useRouter();
@@ -1304,13 +1306,15 @@ function AddInvoiceContent() {
 
 export default function AddInvoicePage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    }>
-      <AddInvoiceContent />
-    </Suspense>
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.CREATE}>
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      }>
+        <AddInvoiceContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
 

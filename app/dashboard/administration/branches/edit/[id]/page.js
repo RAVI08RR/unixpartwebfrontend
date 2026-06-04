@@ -10,6 +10,8 @@ import { branchService } from "@/app/lib/services/branchService";
 import { supplierService } from "@/app/lib/services/supplierService";
 import { branchOwnerService } from "@/app/lib/services/branchOwnerService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditBranchPage() {
   const router = useRouter();
@@ -197,7 +199,8 @@ export default function EditBranchPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.UPDATE}>
+      <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -457,6 +460,7 @@ export default function EditBranchPage() {
           </button>
         </div>
       </form>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

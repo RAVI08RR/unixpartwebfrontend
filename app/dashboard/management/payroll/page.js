@@ -7,9 +7,13 @@ import {
 } from "lucide-react";
 import { payrollService } from "@/app/lib/services/payrollService";
 import { useToast } from "@/app/components/Toast";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function PayrollPage() {
   const { success, error } = useToast();
+  const { hasPermission } = usePermission();
   const [payrolls, setPayrolls] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -146,321 +150,329 @@ export default function PayrollPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage employee payroll and salaries
-          </p>
-        </div>
-        <Link
-          href="/dashboard/management/payroll/prepare"
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
-        >
-          <Plus className="w-4 h-4" />
-          Prepare Payroll
-        </Link>
-      </div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by month, year, or status..."
-          className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {summary && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Payroll</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{payrolls.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Paid</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {payrolls.filter(p => p.status === 'paid').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {payrolls.filter(p => p.status === 'pending').length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        {filteredPayrolls.length > 0 ? (
-          <>
-            <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Period
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Total Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                  {paginatedPayrolls.map((payroll) => (
-                    <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4" data-label="Period">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">
-                          {payroll.month} {payroll.year}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4" data-label="Total Amount">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          AED {payroll.total_amount || '0.00'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Status">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          payroll.status === 'paid'
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            : payroll.status === 'calculated'
-                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                        }`}>
-                          {payroll.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/dashboard/management/payroll/${payroll.id}`}
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                          </Link>
-                          <Link
-                            href={`/dashboard/management/payroll/edit/${payroll.id}`}
-                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                          </Link>
-                          {payroll.status === 'pending' && (
-                            <button
-                              onClick={() => handleCalculate(payroll.id)}
-                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                              title="Calculate"
-                            >
-                              <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                            </button>
-                          )}
-                          {payroll.status === 'calculated' && (
-                            <button
-                              onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
-                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                              title="Mark as Paid"
-                            >
-                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => setDeleteModal({ isOpen: true, payroll })}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Footer */}
-            <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/20 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Showing <span className="text-gray-900 dark:text-white font-bold">{startIndex + 1}</span> to{' '}
-                <span className="text-gray-900 dark:text-white font-bold">
-                  {Math.min(startIndex + itemsPerPage, filteredPayrolls.length)}
-                </span>{' '}
-                of <span className="text-gray-900 dark:text-white font-bold">{filteredPayrolls.length}</span> entries
-              </p>
-              
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </button>
-                
-                <div className="flex items-center gap-1">
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
-                        currentPage === i + 1 
-                        ? 'bg-blue-600 text-white shadow-lg' 
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
-                
-                <button 
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
-              <DollarSign className="w-8 h-8 text-gray-400" />
-            </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-              {searchTerm ? "No payroll found matching your search" : "No payroll records yet"}
+    <ProtectedRoute permission={PERMISSIONS.PAYROLL.VIEW}>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payroll</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Manage employee payroll and salaries
             </p>
-            {!searchTerm && (
-              <Link
-                href="/dashboard/management/payroll/prepare"
-                className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Prepare First Payroll
-              </Link>
-            )}
+          </div>
+          {hasPermission(PERMISSIONS.PAYROLL.CREATE) && (
+            <Link
+              href="/dashboard/management/payroll/prepare"
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              Prepare Payroll
+            </Link>
+          )}
+        </div>
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by month, year, or status..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
+        {summary && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Payroll</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{payrolls.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Paid</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {payrolls.filter(p => p.status === 'paid').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Pending</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {payrolls.filter(p => p.status === 'pending').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
+          {filteredPayrolls.length > 0 ? (
+            <>
+              <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Period
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Total Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+                    {paginatedPayrolls.map((payroll) => (
+                      <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4" data-label="Period">
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                            {payroll.month} {payroll.year}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4" data-label="Total Amount">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            AED {payroll.total_amount || '0.00'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4" data-label="Status">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                            payroll.status === 'paid'
+                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                              : payroll.status === 'calculated'
+                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                              : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                          }`}>
+                            {payroll.status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4" data-label="Actions">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/dashboard/management/payroll/${payroll.id}`}
+                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                            </Link>
+                            {hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
+                              <Link
+                                href={`/dashboard/management/payroll/edit/${payroll.id}`}
+                                className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                                title="Edit"
+                              >
+                                <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                              </Link>
+                            )}
+                            {payroll.status === 'pending' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
+                              <button
+                                onClick={() => handleCalculate(payroll.id)}
+                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                                title="Calculate"
+                              >
+                                <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                              </button>
+                            )}
+                            {payroll.status === 'calculated' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
+                              <button
+                                onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
+                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                                title="Mark as Paid"
+                              >
+                                <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                              </button>
+                            )}
+                            {hasPermission(PERMISSIONS.PAYROLL.DELETE) && (
+                              <button
+                                onClick={() => setDeleteModal({ isOpen: true, payroll })}
+                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Footer */}
+              <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/20 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Showing <span className="text-gray-900 dark:text-white font-bold">{startIndex + 1}</span> to{' '}
+                  <span className="text-gray-900 dark:text-white font-bold">
+                    {Math.min(startIndex + itemsPerPage, filteredPayrolls.length)}
+                  </span>{' '}
+                  of <span className="text-gray-900 dark:text-white font-bold">{filteredPayrolls.length}</span> entries
+                </p>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handlePrevPage}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button 
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`w-10 h-10 rounded-lg text-sm font-bold transition-all ${
+                          currentPage === i + 1 
+                          ? 'bg-blue-600 text-white shadow-lg' 
+                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button 
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-4 py-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-medium text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+                <DollarSign className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+                {searchTerm ? "No payroll found matching your search" : "No payroll records yet"}
+              </p>
+              {!searchTerm && hasPermission(PERMISSIONS.PAYROLL.CREATE) && (
+                <Link
+                  href="/dashboard/management/payroll/prepare"
+                  className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  Prepare First Payroll
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Approve Modal */}
+        {approveModal.isOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Mark as Paid</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Are you sure you want to mark this payroll as paid?
+                </p>
+                {approveModal.payroll && (
+                  <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-2">
+                    <p className="text-sm"><span className="font-bold">Period:</span> {approveModal.payroll.month} {approveModal.payroll.year}</p>
+                    <p className="text-sm"><span className="font-bold">Amount:</span> AED {approveModal.payroll.total_amount}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={approveModal.notes}
+                    onChange={(e) => setApproveModal({ ...approveModal, notes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    rows="3"
+                    placeholder="Add any notes..."
+                  />
+                </div>
+              </div>
+              <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+                <button
+                  onClick={() => setApproveModal({ isOpen: false, payroll: null, notes: '' })}
+                  className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMarkAsPaid}
+                  className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+                >
+                  Confirm Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Modal */}
+        {deleteModal.isOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
+              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Payroll</h3>
+              </div>
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Are you sure you want to delete this payroll? This action cannot be undone.
+                </p>
+                {deleteModal.payroll && (
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2">
+                    <p className="text-sm"><span className="font-bold">Period:</span> {deleteModal.payroll.month} {deleteModal.payroll.year}</p>
+                    <p className="text-sm"><span className="font-bold">Amount:</span> AED {deleteModal.payroll.total_amount}</p>
+                  </div>
+                )}
+              </div>
+              <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
+                <button
+                  onClick={() => setDeleteModal({ isOpen: false, payroll: null })}
+                  className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                >
+                  Delete Payroll
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Approve Modal */}
-      {approveModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
-            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Mark as Paid</h3>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Are you sure you want to mark this payroll as paid?
-              </p>
-              {approveModal.payroll && (
-                <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-4 space-y-2">
-                  <p className="text-sm"><span className="font-bold">Period:</span> {approveModal.payroll.month} {approveModal.payroll.year}</p>
-                  <p className="text-sm"><span className="font-bold">Amount:</span> AED {approveModal.payroll.total_amount}</p>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Notes (Optional)
-                </label>
-                <textarea
-                  value={approveModal.notes}
-                  onChange={(e) => setApproveModal({ ...approveModal, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  rows="3"
-                  placeholder="Add any notes..."
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
-              <button
-                onClick={() => setApproveModal({ isOpen: false, payroll: null, notes: '' })}
-                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleMarkAsPaid}
-                className="px-4 py-2 text-sm font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-              >
-                Confirm Payment
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Modal */}
-      {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-xl max-w-md w-full border border-gray-200 dark:border-zinc-800">
-            <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Delete Payroll</h3>
-            </div>
-            <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Are you sure you want to delete this payroll? This action cannot be undone.
-              </p>
-              {deleteModal.payroll && (
-                <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 space-y-2">
-                  <p className="text-sm"><span className="font-bold">Period:</span> {deleteModal.payroll.month} {deleteModal.payroll.year}</p>
-                  <p className="text-sm"><span className="font-bold">Amount:</span> AED {deleteModal.payroll.total_amount}</p>
-                </div>
-              )}
-            </div>
-            <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteModal({ isOpen: false, payroll: null })}
-                className="px-4 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-              >
-                Delete Payroll
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </ProtectedRoute>
   );
 }

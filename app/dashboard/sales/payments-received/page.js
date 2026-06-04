@@ -10,6 +10,8 @@ import { apiClient } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import { exportToExcel } from "@/app/lib/utils/exportUtils";
 import useSWR from "swr";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function PaymentsReceivedPage() {
   const { success, error } = useToast();
@@ -268,7 +270,8 @@ export default function PaymentsReceivedPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
@@ -914,5 +917,6 @@ export default function PaymentsReceivedPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

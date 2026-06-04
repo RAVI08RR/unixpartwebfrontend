@@ -64,7 +64,8 @@ export default function AllInventoryPage() {
     current_branch_id: "",
     status: "in_stock",
     quantity: 1,
-    po_id: ""
+    po_id: "",
+    is_dismantled: false
   });
 
   // Fetch inventory data
@@ -284,7 +285,8 @@ export default function AllInventoryPage() {
       current_branch_id: item.current_branch_id ? String(item.current_branch_id) : "",
       status: item.status || "in_stock",
       quantity: item.quantity || 1,
-      po_id: item.po_id || ""
+      po_id: item.po_id || "",
+      is_dismantled: typeof item.is_dismantled === 'boolean' ? item.is_dismantled : false
     });
     setEditModalOpen(true);
     setMenuOpenId(null);
@@ -295,16 +297,28 @@ export default function AllInventoryPage() {
     setSubmitting(true);
     
     try {
-      // Include all required fields from API schema
       const payload = {
-        po_id: parseInt(editFormData.po_id),
-        item_id: parseInt(editFormData.item_id),
-        po_description: editFormData.po_description,
-        stock_notes: editFormData.stock_notes || "",
-        current_branch_id: parseInt(editFormData.current_branch_id),
+        po_description: editFormData.po_description || null,
+        stock_notes: editFormData.stock_notes || null,
         status: editFormData.status,
-        quantity: parseInt(editFormData.quantity)
+        quantity: parseInt(editFormData.quantity) || 1,
+        is_dismantled: editFormData.is_dismantled
       };
+
+      const poId = parseInt(editFormData.po_id);
+      if (!isNaN(poId)) {
+        payload.po_id = poId;
+      }
+
+      const itemId = parseInt(editFormData.item_id);
+      if (!isNaN(itemId)) {
+        payload.item_id = itemId;
+      }
+
+      const branchId = parseInt(editFormData.current_branch_id);
+      if (!isNaN(branchId)) {
+        payload.current_branch_id = branchId;
+      }
       
       console.log('📦 Updating item ID:', selectedItem.id);
       console.log('📦 Payload:', JSON.stringify(payload, null, 2));

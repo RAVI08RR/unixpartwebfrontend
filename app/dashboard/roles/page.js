@@ -12,8 +12,12 @@ import { useToast } from "@/app/components/Toast";
 import { useConfirm } from "@/app/components/ConfirmModal";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { usePermission } from "@/app/lib/hooks/usePermission";
 
 export default function RolesPage() {
+  const { hasPermission } = usePermission();
   const { roles, loading, error, updateRole, deleteRole } = useRoles();
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -153,7 +157,8 @@ export default function RolesPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full">
+    <ProtectedRoute permission={PERMISSIONS.ROLES.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -194,10 +199,12 @@ export default function RolesPage() {
               onError={(err) => showError(`Export failed: ${err.message}`)}
             />
             
-            <Link href="/dashboard/roles/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Role</span>
-            </Link>
+            {hasPermission(PERMISSIONS.ROLES.CREATE) && (
+              <Link href="/dashboard/roles/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Role</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -287,21 +294,27 @@ export default function RolesPage() {
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
-                                <Link 
-                                  href={`/dashboard/roles/edit/${role.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Role
-                                </Link>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(role)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Role
-                                </button>
+                                  {hasPermission(PERMISSIONS.ROLES.UPDATE) && (
+                                    <Link 
+                                      href={`/dashboard/roles/edit/${role.id}`}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit Role
+                                    </Link>
+                                  )}
+                                  {hasPermission(PERMISSIONS.ROLES.DELETE) && (
+                                    <>
+                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                      <button 
+                                        onClick={() => handleDeleteClick(role)}
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Role
+                                      </button>
+                                    </>
+                                  )}
                               </div>
                             )}
                           </div>
@@ -449,13 +462,15 @@ export default function RolesPage() {
               >
                 Close
               </button>
-              <Link 
-                href={`/dashboard/roles/edit/${selectedRole.id}`}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
-                onClick={handleViewClose}
-              >
-                Edit Role
-              </Link>
+              {hasPermission(PERMISSIONS.ROLES.UPDATE) && (
+                <Link 
+                  href={`/dashboard/roles/edit/${selectedRole.id}`}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+                  onClick={handleViewClose}
+                >
+                  Edit Role
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -510,6 +525,7 @@ export default function RolesPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

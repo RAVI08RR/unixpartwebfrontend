@@ -9,6 +9,8 @@ import {
 import { roleService } from "@/app/lib/services/roleService";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditRolePage() {
   const router = useRouter();
@@ -228,7 +230,8 @@ export default function EditRolePage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.ROLES.UPDATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
         <div>
@@ -377,6 +380,7 @@ export default function EditRolePage() {
           Cancel
         </Link>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

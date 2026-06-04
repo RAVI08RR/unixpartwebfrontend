@@ -15,8 +15,12 @@ import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatStatusForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { usePermission } from "@/app/lib/hooks/usePermission";
 
 export default function PurchaseOrdersPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -311,7 +315,8 @@ export default function PurchaseOrdersPage() {
   if (!isMounted) return null;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
+    <ProtectedRoute permission={PERMISSIONS.PURCHASE_ORDERS.VIEW}>
+      <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -342,13 +347,15 @@ export default function PurchaseOrdersPage() {
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
 
-            <Link 
-              href="/dashboard/inventory/purchase-orders/add"
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">New Purchase Order</span>
-            </Link>
+            {hasPermission(PERMISSIONS.PURCHASE_ORDERS.CREATE) && (
+              <Link 
+                href="/dashboard/inventory/purchase-orders/add"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">New Purchase Order</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -394,7 +401,7 @@ export default function PurchaseOrdersPage() {
                   <option value="All">Filter by Supplier</option>
                   {supplierList.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.label || s.name || s.supplier_code}
+                      {s.supplier_name || s.name || s.label || (s.supplier_code ? `Supplier ${s.supplier_code}` : `Supplier #${s.id}`)}
                     </option>
                   ))}
                 </select>
@@ -410,7 +417,7 @@ export default function PurchaseOrdersPage() {
                   <option value="All">Filter by Branch</option>
                   {branchList.map((b) => (
                     <option key={b.id} value={b.id}>
-                      {b.label || b.branch_name}
+                      {b.label || b.branch_name || b.name || `Branch #${b.id}`}
                     </option>
                   ))}
                 </select>
@@ -557,19 +564,25 @@ export default function PurchaseOrdersPage() {
                           >
                             <FileText className="w-4 h-4 text-purple-500" /> Documents
                           </button>
-                          <Link 
-                            href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-                          >
-                            <Pencil className="w-4 h-4 text-amber-500" /> Edit Order
-                          </Link>
-                          <div className="my-1 border-t border-gray-100 dark:border-zinc-800"></div>
-                          <button 
-                            onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
-                          >
-                            <Trash2 className="w-4 h-4" /> Delete Order
-                          </button>
+                          {hasPermission(PERMISSIONS.PURCHASE_ORDERS.UPDATE) && (
+                            <Link 
+                              href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                              <Pencil className="w-4 h-4 text-amber-500" /> Edit Order
+                            </Link>
+                          )}
+                          {hasPermission(PERMISSIONS.PURCHASE_ORDERS.DELETE) && (
+                            <>
+                              <div className="my-1 border-t border-gray-100 dark:border-zinc-800"></div>
+                              <button 
+                                onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
+                              >
+                                <Trash2 className="w-4 h-4" /> Delete Order
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -610,10 +623,14 @@ export default function PurchaseOrdersPage() {
               </div>
 
               {menuOpenId === po.id && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-3 gap-2 animate-in slide-in-from-top-2 duration-200">
-                   <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Docs</span></button>
-                   <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
-                   <button onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl"><Trash2 className="w-3.5 h-3.5 text-red-600" /><span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete</span></button>
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
+                   <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Docs</span></button>
+                   {hasPermission(PERMISSIONS.PURCHASE_ORDERS.UPDATE) && (
+                     <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
+                   )}
+                   {hasPermission(PERMISSIONS.PURCHASE_ORDERS.DELETE) && (
+                     <button onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl"><Trash2 className="w-3.5 h-3.5 text-red-600" /><span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete</span></button>
+                   )}
                 </div>
               )}
             </div>
@@ -910,5 +927,6 @@ export default function PurchaseOrdersPage() {
         </div>
       )}
     </div>
-  );
+  </ProtectedRoute>
+);
 }

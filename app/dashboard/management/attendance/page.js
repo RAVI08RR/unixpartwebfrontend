@@ -7,9 +7,13 @@ import {
 } from "lucide-react";
 import { attendanceService } from "@/app/lib/services/attendanceService";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AttendancePage() {
   const { success, error } = useToast();
+  const { hasPermission } = usePermission();
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,7 +88,8 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <ProtectedRoute permission={PERMISSIONS.ATTENDANCE.VIEW}>
+      <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Attendance</h1>
@@ -92,13 +97,15 @@ export default function AttendancePage() {
             Track and manage employee attendance
           </p>
         </div>
-        <Link
-          href="/dashboard/management/attendance/submit"
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
-        >
-          <Plus className="w-4 h-4" />
-          Submit Attendance
-        </Link>
+        {hasPermission(PERMISSIONS.ATTENDANCE.CREATE) && (
+          <Link
+            href="/dashboard/management/attendance/submit"
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-all shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Submit Attendance
+          </Link>
+        )}
       </div>
 
       <div className="relative">
@@ -218,14 +225,16 @@ export default function AttendancePage() {
                         >
                           <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
                         </Link>
-                        <Link
-                          href={`/dashboard/management/attendance/edit/${record.id}`}
-                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                        </Link>
-                        {record.status === 'pending' && (
+                        {hasPermission(PERMISSIONS.ATTENDANCE.UPDATE) && (
+                          <Link
+                            href={`/dashboard/management/attendance/edit/${record.id}`}
+                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                          </Link>
+                        )}
+                        {record.status === 'pending' && hasPermission(PERMISSIONS.ATTENDANCE.APPROVE) && (
                           <button
                             onClick={() => handleApprove(record.id)}
                             className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
@@ -234,13 +243,15 @@ export default function AttendancePage() {
                             <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
                           </button>
                         )}
-                        <button
-                          onClick={() => handleDelete(record.id)}
-                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                        </button>
+                        {hasPermission(PERMISSIONS.ATTENDANCE.DELETE) && (
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -259,6 +270,7 @@ export default function AttendancePage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

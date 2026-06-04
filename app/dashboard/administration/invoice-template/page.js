@@ -5,6 +5,8 @@ import { ArrowLeft, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/app/components/Toast";
 import { apiClient } from "@/app/lib/api";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function InvoiceTemplatePage() {
   const { success, error: showError } = useToast();
@@ -119,7 +121,8 @@ export default function InvoiceTemplatePage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <ProtectedRoute permission={PERMISSIONS.BRANCHES.UPDATE}>
+      <div className="space-y-6 pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
@@ -323,5 +326,6 @@ export default function InvoiceTemplatePage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-05-30T06:40:06.839Z",
+  "url": "http://srv1029267.hstgr.cloud:8000/api/po-items/2",
+  "requestBody": {
+    "po_description": "Cylinder Head - High quality part",
+    "stock_notes": "Item from PO-2023-00155555",
+    "status": "sold",
+    "quantity": 1,
+    "is_dismantled": false,
+    "po_id": 1,
+    "item_id": 10,
+    "current_branch_id": 2
+  },
+  "status": 500,
+  "responseBody": "Internal Server Error"
+}

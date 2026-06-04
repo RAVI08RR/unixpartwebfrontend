@@ -10,6 +10,8 @@ import { useRoles } from "@/app/lib/hooks/useRoles";
 import { useCurrentUser } from "@/app/lib/hooks/useCurrentUser";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import { useToast } from "@/app/components/Toast";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function AddRolePage() {
   const router = useRouter();
@@ -137,7 +139,8 @@ export default function AddRolePage() {
   };
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.ROLES.CREATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
       {/* Show loading state while checking authentication */}
       {userLoading && (
         <div className="flex items-center justify-center py-12">
@@ -389,6 +392,7 @@ export default function AddRolePage() {
           </form>
         </>
       )}
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

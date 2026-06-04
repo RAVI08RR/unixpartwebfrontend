@@ -7,6 +7,8 @@ import {
   Package, FileText, Tag, Check, X, ArrowLeft
 } from "lucide-react";
 import { stockItemService } from "@/app/lib/services/stockItemService";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function EditStockItemPage() {
   const router = useRouter();
@@ -150,105 +152,107 @@ export default function EditStockItemPage() {
   }
 
   return (
-    <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Stock Item</h1>
-          <p className="text-gray-500 text-sm">Update stock item information</p>
+    <ProtectedRoute permission={PERMISSIONS.STOCK_ITEMS.UPDATE}>
+      <div className="space-y-8 pb-12 w-full max-w-full overflow-hidden">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Edit Stock Item</h1>
+            <p className="text-gray-500 text-sm">Update stock item information</p>
+          </div>
+        </div>
+
+        {/* Main Form Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
+          {/* Item Name */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Item Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                type="text"
+                placeholder="Enter item name"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {/* Parent Category */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Parent Category
+            </label>
+            <div className="relative">
+              <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+              <select 
+                className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+                value={formData.parent_category_id}
+                onChange={(e) => setFormData({...formData, parent_category_id: e.target.value})}
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label || category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Description - Full Width */}
+          <div className="lg:col-span-2 space-y-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Description
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
+              <textarea 
+                placeholder="Enter item description"
+                rows="4"
+                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+              />
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Status <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <select 
+                className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
+                value={formData.status}
+                onChange={(e) => setFormData({...formData, status: e.target.value === 'true'})}
+              >
+                <option value={true}>Active</option>
+                <option value={false}>Inactive</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
+          <button 
+            onClick={handleSubmit} 
+            disabled={loading}
+            className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
+          >
+            <Check className="w-4 h-4" />
+            <span>{loading ? "Updating..." : "Update Stock Item"}</span>
+          </button>
+          <Link href="/dashboard/inventory/stock-items" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
+            Cancel
+          </Link>
         </div>
       </div>
-
-      {/* Main Form Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
-        {/* Item Name */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Item Name <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <Package className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text"
-              placeholder="Enter item name"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400"
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-            />
-          </div>
-        </div>
-
-        {/* Parent Category */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Parent Category
-          </label>
-          <div className="relative">
-            <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
-            <select 
-              className="w-full pl-10 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-              value={formData.parent_category_id}
-              onChange={(e) => setFormData({...formData, parent_category_id: e.target.value})}
-            >
-              <option value="">Select a category</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.label || category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Description - Full Width */}
-        <div className="lg:col-span-2 space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Description
-          </label>
-          <div className="relative">
-            <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
-            <textarea 
-              placeholder="Enter item description"
-              rows="4"
-              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-400 resize-none"
-              value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
-            />
-          </div>
-        </div>
-
-        {/* Status */}
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Status <span className="text-red-500">*</span>
-          </label>
-          <div className="relative">
-            <select 
-              className="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all appearance-none text-gray-900 dark:text-white"
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value === 'true'})}
-            >
-              <option value={true}>Active</option>
-              <option value={false}>Inactive</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-8">
-        <button 
-          onClick={handleSubmit} 
-          disabled={loading}
-          className="px-6 py-2.5 bg-black dark:bg-zinc-800 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 shadow-sm hover:bg-gray-900 transition-all disabled:opacity-50"
-        >
-          <Check className="w-4 h-4" />
-          <span>{loading ? "Updating..." : "Update Stock Item"}</span>
-        </button>
-        <Link href="/dashboard/inventory/stock-items" className="px-6 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 text-sm font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all text-center">
-          Cancel
-        </Link>
-      </div>
-    </div>
+    </ProtectedRoute>
   );
 }

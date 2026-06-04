@@ -14,8 +14,12 @@ import { getAuthToken } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport } from "@/app/lib/utils/exportUtils";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function PermissionsManagementPage() {
+  const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [moduleFilter, setModuleFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -240,7 +244,8 @@ export default function PermissionsManagementPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
+    <ProtectedRoute permission={PERMISSIONS.PERMISSIONS.VIEW}>
+      <div className="space-y-6 pb-12 w-full max-w-full overflow-hidden">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
         <div className="shrink-0">
@@ -305,13 +310,15 @@ export default function PermissionsManagementPage() {
               onSuccess={(format) => success(`Permissions exported successfully as ${format}!`)}
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
-            <button 
-              onClick={handleAddPermission}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Permission</span>
-            </button>
+            {hasPermission(PERMISSIONS.PERMISSIONS.CREATE) && (
+              <button 
+                onClick={handleAddPermission}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Permission</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -416,21 +423,27 @@ export default function PermissionsManagementPage() {
                                   <Eye className="w-4 h-4" />
                                   View Details
                                 </button>
-                                <button 
-                                  onClick={() => handleEditPermission(permission)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Permission
-                                </button>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button 
-                                  onClick={() => handleDeleteClick(permission)} 
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                  Delete Permission
-                                </button>
+                                {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && (
+                                  <button 
+                                    onClick={() => handleEditPermission(permission)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Permission
+                                  </button>
+                                )}
+                                {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                )}
+                                {hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
+                                  <button 
+                                    onClick={() => handleDeleteClick(permission)} 
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Permission
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -691,15 +704,17 @@ export default function PermissionsManagementPage() {
               >
                 Close
               </button>
-              <button 
-                onClick={() => {
-                  handleViewClose();
-                  handleEditPermission(selectedPermission);
-                }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
-              >
-                Edit Permission
-              </button>
+              {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && (
+                <button 
+                  onClick={() => {
+                    handleViewClose();
+                    handleEditPermission(selectedPermission);
+                  }}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100 transition-all btn-primary"
+                >
+                  Edit Permission
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -755,5 +770,6 @@ export default function PermissionsManagementPage() {
         </div>
       )}
     </div>
+    </ProtectedRoute>
   );
 }

@@ -17,10 +17,14 @@ import useSWR from "swr";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 import CancelReturnItemsModal from "@/app/components/CancelReturnItemsModal";
+import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { usePermission } from "@/app/lib/hooks/usePermission";
+import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 function InvoiceManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { hasPermission } = usePermission();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -453,10 +457,12 @@ function InvoiceManagementContent() {
               ]}
               filename={`invoices-${new Date().toISOString().split('T')[0]}`}
             />
-            <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Invoice</span>
-            </Link>
+            {hasPermission(PERMISSIONS.INVOICES.CREATE) && (
+              <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Invoice</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -805,38 +811,46 @@ function InvoiceManagementContent() {
                                        <Eye className="w-4 h-4" />
                                        View/Modify Invoice
                                      </Link>
-                                     <Link
-                                       href={`/dashboard/sales/invoices/edit/${invoice.id}`}
-                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                     >
-                                       <Pencil className="w-4 h-4" />
-                                       Edit Invoice
-                                     </Link>
-                                     <button
-                                       onClick={() => {
-                                         window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
-                                         setMenuOpenId(null);
-                                       }}
-                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
-                                     >
-                                       <FileText className="w-4 h-4" />
-                                       Print Preview
-                                     </button>
-                                     <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
-                                     <button 
-                                       onClick={() => handleCancelReturnClick(invoice)}
-                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
-                                     >
-                                       <RefreshCcw className="w-4 h-4" />
-                                       Cancel / Return Items
-                                     </button>
-                                     <button 
-                                       onClick={() => handleDeleteClick(invoice)} 
-                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                     >
-                                       <Trash2 className="w-4 h-4" />
-                                       Delete Invoice
-                                     </button>
+                                     {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+                                        <Link
+                                          href={`/dashboard/sales/invoices/edit/${invoice.id}`}
+                                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                        >
+                                          <Pencil className="w-4 h-4" />
+                                          Edit Invoice
+                                        </Link>
+                                      )}
+                                      <button
+                                        onClick={() => {
+                                          window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
+                                          setMenuOpenId(null);
+                                        }}
+                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
+                                      >
+                                        <FileText className="w-4 h-4" />
+                                        Print Preview
+                                      </button>
+                                      {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+                                        <>
+                                          <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
+                                          <button 
+                                            onClick={() => handleCancelReturnClick(invoice)}
+                                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
+                                          >
+                                            <RefreshCcw className="w-4 h-4" />
+                                            Cancel / Return Items
+                                          </button>
+                                        </>
+                                      )}
+                                      {hasPermission(PERMISSIONS.INVOICES.DELETE) && (
+                                        <button 
+                                          onClick={() => handleDeleteClick(invoice)} 
+                                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                          Delete Invoice
+                                        </button>
+                                      )}
                                    </div>
                                  )}
                                </div>
@@ -1117,20 +1131,22 @@ function InvoiceManagementContent() {
 
 export default function InvoiceManagementPage() {
   return (
-    <Suspense fallback={
-      <div className="space-y-6 pb-12 w-full max-w-full">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
-          <div className="shrink-0">
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
-            <p className="text-gray-400 dark:text-white text-sm font-normal">Loading invoices...</p>
+    <ProtectedRoute permission={PERMISSIONS.INVOICES.VIEW}>
+      <Suspense fallback={
+        <div className="space-y-6 pb-12 w-full max-w-full">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+            <div className="shrink-0">
+              <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
+              <p className="text-gray-400 dark:text-white text-sm font-normal">Loading invoices...</p>
+            </div>
+          </div>
+          <div className="p-10 text-center">
+            <div className="text-gray-500">Loading...</div>
           </div>
         </div>
-        <div className="p-10 text-center">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      </div>
-    }>
-      <InvoiceManagementContent />
-    </Suspense>
+      }>
+        <InvoiceManagementContent />
+      </Suspense>
+    </ProtectedRoute>
   );
 }
