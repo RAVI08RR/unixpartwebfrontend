@@ -52,9 +52,9 @@ export function Sidebar() {
       icon: LayoutDashboard,
       customIcon: "/icons/dashboard-icon.svg",
       label: "Dashboards",
-      permission: null, // Always visible to all authenticated users
+      permission: null,
       items: [
-        { label: "CRM", href: "/dashboard", icon: BarChart3, permission: null },
+        { label: "CRM", href: "/dashboard", icon: BarChart3, permission: PERMISSIONS.DASHBOARD.VIEW },
       ]
     },
     {
@@ -62,7 +62,7 @@ export function Sidebar() {
       icon: Users,
       customIcon: "/icons/Button-5.svg",
       label: "Management",
-      permission: null, // Group visibility driven by sub-item filtering
+      permission: null,
       items: [
         { label: "User Management", href: "/dashboard/users", icon: Users, permission: PERMISSIONS.USERS.VIEW },
         { label: "Role Management", href: "/dashboard/roles", icon: Shield, permission: PERMISSIONS.ROLES.VIEW },
@@ -168,10 +168,10 @@ export function Sidebar() {
       label: "Settings",
       permission: null,
       items: [
-        { label: "General", href: "/dashboard/settings", icon: Settings, permission: null }, // Always accessible
-        { label: "File Manager", href: "/dashboard/settings/file-manager", icon: FolderOpen, permission: null }, // Always accessible
+        { label: "General", href: "/dashboard/settings", icon: Settings, permission: PERMISSIONS.SETTINGS.VIEW },
+        { label: "File Manager", href: "/dashboard/settings/file-manager", icon: FolderOpen, permission: PERMISSIONS.FILE_MANAGER.VIEW },
         { label: "Permissions", href: "/dashboard/settings/permissions", icon: Shield, permission: PERMISSIONS.PERMISSIONS.VIEW },
-        { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null }, // Always accessible
+        { label: "Profile", href: "/dashboard/settings/profile", icon: Users, permission: null }, // Always accessible — user's own profile
       ]
     },
   ];

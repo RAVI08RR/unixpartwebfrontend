@@ -145,6 +145,15 @@ export const PERMISSIONS = {
   SECURITY: {
     VIEW: 'security.view',
   },
+  DASHBOARD: {
+    VIEW: 'dashboard.view',
+  },
+  SETTINGS: {
+    VIEW: 'settings.view',
+  },
+  FILE_MANAGER: {
+    VIEW: 'file_manager.view',
+  },
 };
 
 // Helper to get all permission slugs as a flat array
