@@ -500,6 +500,7 @@ export default function SalesDataPage() {
               </select>
             </div>
         </div>
+      </div>
       )}
 
       {/* Main Table Card */}
