@@ -44,6 +44,13 @@ export default function SalesDataPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
 
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    if (activeFiltersCount > 0) {
+      setIsFilterOpen(true);
+    }
+  }, []);
+
   // Fetch sales data
   const fetchData = async () => {
     setLoading(true);
@@ -312,6 +319,18 @@ export default function SalesDataPage() {
             </div>
           </div>
           
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
+
           <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all">
             <Download className="w-4 h-4" />
             <span>Export to Excel</span>
@@ -320,23 +339,29 @@ export default function SalesDataPage() {
       </div>
 
       {/* Filters Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[20px] border border-gray-100 dark:border-zinc-800 shadow-sm p-4 sm:p-6 lg:p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h3 className="text-lg font-black text-gray-900 dark:text-white">Filters</h3>
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div className="flex items-center gap-3">
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              {activeFiltersCount > 0 && (
+                <span className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-xs font-black">
+                  {activeFiltersCount} Active
+                </span>
+              )}
+            </div>
             {activeFiltersCount > 0 && (
-              <span className="px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-xs font-black">
-                {activeFiltersCount} Active
-              </span>
+              <button 
+                onClick={clearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
             )}
           </div>
-          <button onClick={() => setIsFilterOpen(!isFilterOpen)} className="p-2 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors">
-            <Filter className={`w-5 h-5 ${isFilterOpen ? 'text-red-500' : 'text-gray-400'}`} />
-          </button>
-        </div>
-        
-        {isFilterOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {/* Filter by User */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Filter by User</label>
@@ -474,32 +499,22 @@ export default function SalesDataPage() {
                 <option value="not_loaded">Not Loaded</option>
               </select>
             </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
-          <button 
-            onClick={clearFilters}
-            className="flex items-center gap-2 text-xs font-black text-red-600 dark:text-red-400 uppercase tracking-widest hover:opacity-70 transition-opacity"
-          >
-            <RefreshCcw className="w-3.5 h-3.5" />
-            Clear Filters
-          </button>
-          
+      {/* Main Table Card */}
+      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl">
+        <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-50 dark:border-zinc-800/50 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white">Sales Table</h3>
+            <p className="text-sm text-gray-500 mt-1">All sales data from invoices and inventory.</p>
+          </div>
           <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-100 dark:border-blue-900/30">
             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
             <span className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
               {filteredData.length} Results
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl">
-        <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-50 dark:border-zinc-800/50">
-          <h3 className="text-lg font-black text-gray-900 dark:text-white">Sales Table</h3>
-          <p className="text-sm text-gray-500 mt-1">All sales data from invoices and inventory.</p>
         </div>
 
         {/* Desktop Table View */}

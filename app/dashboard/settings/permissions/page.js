@@ -6,7 +6,7 @@ import {
   Shield, MoreVertical, Search, 
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   Pencil, Trash2, X, Eye, Calendar,
-  Tag, FileText, Hash
+  Tag, FileText, Hash, RotateCcw
 } from "lucide-react";
 import { usePermissions } from "@/app/lib/hooks/usePermissions";
 import { permissionService } from "@/app/lib/services/permissionService";
@@ -43,6 +43,13 @@ export default function PermissionsManagementPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [permissions.length]);
+
+  // Auto-expand filters if moduleFilter is not default on load
+  useEffect(() => {
+    if (moduleFilter !== "All") {
+      setIsFilterOpen(true);
+    }
+  }, []);
 
   // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -271,37 +278,17 @@ export default function PermissionsManagementPage() {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <div className="relative flex-1 sm:flex-none">
-              <button 
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
-              
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {modules.map((module) => (
-                    <button
-                      key={module}
-                      onClick={() => {
-                        setModuleFilter(module);
-                        setIsFilterOpen(false);
-                        setCurrentPage(1);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        moduleFilter === module 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      {module === "All" ? "All Modules" : module}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+                isFilterOpen 
+                  ? 'bg-red-600 text-white shadow-red-600/10' 
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            </button>
 
             <ExportButton
               data={filteredPermissions}
@@ -322,6 +309,50 @@ export default function PermissionsManagementPage() {
           </div>
         </div>
       </div>
+
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the permissions list below.</p>
+            </div>
+            {moduleFilter !== "All" && (
+              <button 
+                onClick={() => {
+                  setModuleFilter("All");
+                  setCurrentPage(1);
+                }}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Module</label>
+              <select
+                value={moduleFilter}
+                onChange={(e) => {
+                  setModuleFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                {modules.map((module) => (
+                  <option key={module} value={module}>
+                    {module === "All" ? "All Modules" : module}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">

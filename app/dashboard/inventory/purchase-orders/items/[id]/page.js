@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { 
   ArrowLeft, Package, Building2, 
-  Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar, Printer
+  Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar, Printer, RotateCcw
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { QRCodeSVG } from "qrcode.react";
@@ -59,6 +59,23 @@ function PurchaseOrderItemsContent({ params }) {
   });
   const printRef = useRef();
   const itemsPerPage = 8;
+
+  const hasActiveFilters = useMemo(() => {
+    return statusFilter !== "all" || searchQuery !== "";
+  }, [statusFilter, searchQuery]);
+
+  const handleClearFilters = () => {
+    setStatusFilter("all");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    if (statusFilter !== "all") {
+      setIsFilterOpen(true);
+    }
+  }, [statusFilter]);
   
   const { branches: apiBranches } = useBranches(0, 100, true);
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
@@ -311,6 +328,17 @@ function PurchaseOrderItemsContent({ params }) {
         </div>
 
         <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
           <button
             onClick={handlePrintLabels}
             disabled={selectedItems.length === 0}
@@ -364,31 +392,52 @@ function PurchaseOrderItemsContent({ params }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="relative">
-          <button 
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="h-full px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl font-semibold text-xs uppercase tracking-wider flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
-          >
-            <Filter className="w-4 h-4" />
-            {statusFilter === 'all' ? 'All Status' : statusFilter.replace('_', ' ')}
-          </button>
-          {isFilterOpen && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 p-1 overflow-hidden">
-              {['all', 'in_stock', 'sold', 'shipped'].map(s => (
-                <button
-                  key={s}
-                  onClick={() => { setStatusFilter(s); setIsFilterOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
-                    statusFilter === s ? 'bg-red-50 text-red-600 dark:bg-red-900/20' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {s.replace('_', ' ')}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
+
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the items list below.</p>
+            </div>
+            {hasActiveFilters && (
+              <button 
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Status</label>
+              <div className="flex flex-wrap gap-2">
+                {['all', 'in_stock', 'sold', 'shipped'].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setStatusFilter(s);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      statusFilter === s 
+                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/10' 
+                        : 'bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {s === "all" ? "All Status" : s.replace('_', ' ').toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Items Table */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto responsive-table-container">

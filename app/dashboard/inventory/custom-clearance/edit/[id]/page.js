@@ -55,12 +55,16 @@ export default function EditClearancePage({ params }) {
         const data = await containerService.getById(id);
         
         if (data) {
+          const supplierId = data.supplier_id || data.supplier?.id || "";
+          const branchId = data.destination_branch_id || data.destination_branch?.id || data.branch?.id || "";
+          const invoiceDate = (data.invoice_date || "").split('T')[0];
+
           setFormData({
             container_code: data.container_code || "",
             container_number: data.container_number || "",
             invoice_number: data.invoice_number || "",
-            supplier_id: data.supplier_id ? String(data.supplier_id) : "",
-            destination_branch_id: data.destination_branch_id ? String(data.destination_branch_id) : "",
+            supplier_id: supplierId ? String(supplierId) : "",
+            destination_branch_id: branchId ? String(branchId) : "",
             vessel_name: data.vessel_name || "",
             voyage_number: data.voyage_number || "",
             shipping_agent: data.shipping_agent || "",
@@ -70,7 +74,7 @@ export default function EditClearancePage({ params }) {
             total_packages: data.total_packages || 1,
             notify_user_id: data.notify_user_id || 1,
             status: data.status || "draft",
-            invoice_date: data.invoice_date || "",
+            invoice_date: invoiceDate || "",
             notes: data.notes || ""
           });
         }

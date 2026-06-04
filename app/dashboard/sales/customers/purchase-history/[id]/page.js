@@ -29,6 +29,13 @@ export default function CustomerPurchaseHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    if (statusFilter !== "All" || dateRange.start || dateRange.end) {
+      setIsFilterOpen(true);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -263,70 +270,89 @@ export default function CustomerPurchaseHistoryPage() {
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
             />
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex items-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm shadow-sm transition-all border ${
-                hasActiveFilters
-                  ? "bg-red-600 text-white border-red-600 shadow-red-600/20 shadow-lg"
-                  : "bg-white dark:bg-zinc-900 border-gray-100 dark:border-zinc-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              Filters
-              {hasActiveFilters && (
-                <span className="w-5 h-5 bg-white/30 rounded-full text-[10px] flex items-center justify-center font-black">!</span>
-              )}
-            </button>
-
-            {isFilterOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-black text-gray-900 dark:text-white">Filters</h3>
-                  <div className="flex gap-2">
-                    {hasActiveFilters && (
-                      <button onClick={() => { setStatusFilter("All"); setDateRange({ start: "", end: "" }); setCurrentPage(1); }} className="text-xs font-bold text-red-600">Clear All</button>
-                    )}
-                    <button onClick={() => setIsFilterOpen(false)} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800">
-                      <X className="w-4 h-4 text-gray-400" />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-2">Invoice Status</label>
-                  <div className="space-y-1">
-                    {["All", "paid", "pending", "overdue", "partial", "cancelled"].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm font-bold capitalize transition-colors ${
-                          statusFilter === s ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400" : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800"
-                        }`}
-                      >
-                        {s === "All" ? "All Status" : s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-xs font-black text-gray-700 dark:text-gray-300 mb-2">Date Range</label>
-                  <div className="space-y-2">
-                    <input type="date" value={dateRange.start} onChange={(e) => { setDateRange(p => ({ ...p, start: e.target.value })); setCurrentPage(1); }}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50" />
-                    <input type="date" value={dateRange.end} onChange={(e) => { setDateRange(p => ({ ...p, end: e.target.value })); setCurrentPage(1); }}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50" />
-                  </div>
-                </div>
-
-                <button onClick={() => setIsFilterOpen(false)} className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-black text-sm transition-all hover:bg-gray-800 dark:hover:bg-gray-100">
-                  Apply Filters
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
         </div>
+
+        {/* Collapsible Filters Card */}
+        {isFilterOpen && (
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+                <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the customer's purchase history below.</p>
+              </div>
+              {hasActiveFilters && (
+                <button 
+                  onClick={() => { setStatusFilter("All"); setDateRange({ start: "", end: "" }); setCurrentPage(1); }}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5" />
+                  Clear Filters
+                </button>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="paid">Paid</option>
+                  <option value="pending">Pending</option>
+                  <option value="overdue">Overdue</option>
+                  <option value="partial">Partial</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">Start Date</label>
+                <input
+                  type="date"
+                  value={dateRange.start}
+                  onChange={(e) => {
+                    setDateRange(prev => ({ ...prev, start: e.target.value }));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none"
+                />
+              </div>
+
+              {/* End Date */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest pl-1">End Date</label>
+                <input
+                  type="date"
+                  value={dateRange.end}
+                  onChange={(e) => {
+                    setDateRange(prev => ({ ...prev, end: e.target.value }));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Invoices Table / Cards ── */}
         <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full">

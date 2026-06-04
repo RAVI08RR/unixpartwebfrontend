@@ -24,6 +24,13 @@ export default function PaymentsReceivedPage() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    if (typeFilter !== "All" || branchFilter !== "All" || supplierFilter !== "All" || userFilter !== "All" || dateRange.start || dateRange.end) {
+      setIsFilterOpen(true);
+    }
+  }, []);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
@@ -288,6 +295,18 @@ export default function PaymentsReceivedPage() {
             </p>
           </div>
           <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
+
+          <button 
             onClick={handleExport}
             className="flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 active:scale-95"
           >
@@ -298,23 +317,32 @@ export default function PaymentsReceivedPage() {
       </div>
 
       {/* Filters Section Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the payments list below.</p>
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the payments list below.</p>
+            </div>
+            {(searchQuery !== "" || typeFilter !== "All" || branchFilter !== "All" || supplierFilter !== "All" || userFilter !== "All" || dateRange.start !== "" || dateRange.end !== "") && (
+              <button 
+                onClick={() => {
+                  setSearchQuery('');
+                  setTypeFilter('All');
+                  setBranchFilter('All');
+                  setSupplierFilter('All');
+                  setUserFilter('All');
+                  setDateRange({ start: '', end: '' });
+                }}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
           </div>
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300 rounded-lg transition-colors border border-gray-200/40 dark:border-zinc-800"
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
-          </button>
-        </div>
 
-        {isFilterOpen && (
-          <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="space-y-4 pt-2">
             {/* Filters Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* Search by Invoice # */}
@@ -449,29 +477,11 @@ export default function PaymentsReceivedPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-            </div>
-
-            {/* Clear Filters Button Row */}
-            <div className="flex items-center">
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setTypeFilter('All');
-                  setBranchFilter('All');
-                  setSupplierFilter('All');
-                  setUserFilter('All');
-                  setDateRange({ start: '', end: '' });
-                }}
-                className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-600 transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Clear Filters</span>
-              </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
+    )}
 
       {/* Main Table / Mobile Cards */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">

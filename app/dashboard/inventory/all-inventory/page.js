@@ -7,7 +7,8 @@ import {
   Eye, FileText, Calendar, User, 
   ChevronLeft, ChevronRight, X, 
   Building2, ShoppingCart, RefreshCcw, MoreVertical,
-  Package, Hash, DollarSign, Truck, MapPin, Layers, Box, Check, ClipboardList
+  Package, Hash, DollarSign, Truck, MapPin, Layers, Box, Check, ClipboardList,
+  RotateCcw
 } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -114,6 +115,16 @@ export default function AllInventoryPage() {
       setIsFilterOpen(true);
     }
   }, [supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleDateRange, saleAmountFilter]);
+
+  const hasActiveFilters = useMemo(() => {
+    return supplierFilter !== "All" ||
+           stockNumberFilter !== "" ||
+           itemNameFilter !== "" ||
+           branchFilter !== "All" ||
+           statusFilter !== "All" ||
+           saleAmountFilter !== "" ||
+           (saleDateRange && (saleDateRange.start !== "" || saleDateRange.end !== ""));
+  }, [supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleAmountFilter, saleDateRange]);
 
   // Filter logic
   const filteredData = useMemo(() => {
@@ -344,7 +355,19 @@ export default function AllInventoryPage() {
           <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">A complete list of all stock items in your inventory.</p>
         </div>
         
-        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 lg:mt-0 justify-end">
+        <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 lg:mt-0 justify-end btn-mobile-arrange">
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
+
           <button 
             onClick={() => success("Stock taking process initiated.")}
             className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all active:scale-95"
@@ -363,24 +386,26 @@ export default function AllInventoryPage() {
         </div>
       </div>
 
-      {/* Filters Section Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in duration-300">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the inventory list below.</p>
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the inventory list below.</p>
+            </div>
+            {hasActiveFilters && (
+              <button 
+                onClick={clearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5 active:scale-95 transition-all"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
           </div>
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300 rounded-lg transition-colors border border-gray-200/40 dark:border-zinc-800"
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
-          </button>
-        </div>
 
-        {isFilterOpen && (
-          <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="space-y-4 pt-2">
             {/* Filters Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {/* Filter by Supplier */}
@@ -535,20 +560,9 @@ export default function AllInventoryPage() {
               {/* Empty spacing for matching grid columns */}
               <div className="hidden md:block"></div>
             </div>
-
-            {/* Clear Filters Button Row */}
-            <div className="flex items-center pt-2">
-              <button 
-                onClick={clearFilters}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-950/20 border border-gray-200/65 dark:border-zinc-700/50 rounded-xl text-sm font-bold text-gray-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 shadow-sm active:scale-95 transition-all animate-in fade-in duration-200"
-              >
-                <X className="w-4 h-4" />
-                <span>Clear Filters</span>
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Table / Mobile Cards */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">

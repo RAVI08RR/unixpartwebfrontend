@@ -1,16 +1,42 @@
 {
-  "timestamp": "2026-05-30T06:40:06.839Z",
-  "url": "http://srv1029267.hstgr.cloud:8000/api/po-items/2",
-  "requestBody": {
-    "po_description": "Cylinder Head - High quality part",
-    "stock_notes": "Item from PO-2023-00155555",
-    "status": "sold",
+  "timestamp": "2026-06-04T11:33:23.466Z",
+  "url": "http://srv1029267.hstgr.cloud:8000/api/po-items/1",
+  "originalBody": {
+    "po_description": "test",
+    "stock_notes": "test",
+    "status": "in_stock",
     "quantity": 1,
     "is_dismantled": false,
     "po_id": 1,
-    "item_id": 10,
+    "item_id": 11,
     "current_branch_id": 2
   },
-  "status": 500,
-  "responseBody": "Internal Server Error"
+  "finalStatus": 500,
+  "finalResponse": "Internal Server Error",
+  "healed": false,
+  "healingDetails": {
+    "attempt1": {
+      "payload": {
+        "po_description": "test",
+        "stock_notes": "test",
+        "status": "in_stock",
+        "quantity": 1,
+        "is_dismantled": false,
+        "current_branch_id": 2
+      },
+      "status": 500,
+      "response": "Internal Server Error"
+    },
+    "attempt2": {
+      "payload": {
+        "po_description": "test",
+        "stock_notes": "test",
+        "status": "in_stock",
+        "quantity": 1,
+        "is_dismantled": false
+      },
+      "status": 500,
+      "response": "Internal Server Error"
+    }
+  }
 }

@@ -150,23 +150,26 @@ export default function AddPOItemPage({ params }) {
     loadPoItems();
   }, []);
 
-  useEffect(() => {
-    if (!poId || branches.length === 0 || !poItemsLoaded) return;
-    if (formData.stock_number && stockNumberTouched) return;
-
-    setFormData(prev => ({
-      ...prev,
-      stock_number: generateStockNumber(prev.current_branch_id, allPoItems),
-    }));
-  }, [poId, branches, allPoItems, poItemsLoaded, purchaseOrder, formData.current_branch_id, formData.stock_number, stockNumberTouched]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
 
+    const stockNumber = (formData.stock_number || "").trim().toUpperCase();
+    if (!stockNumber) {
+      showError("Stock Number is required");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const { stockNumber, latestItems } = await getUniqueStockNumber(formData.current_branch_id);
-      setFormData(prev => ({ ...prev, stock_number: stockNumber }));
+      // Check if the stock number already exists in the system
+      const exists = await stockNumberExists(stockNumber);
+      if (exists) {
+        showError(`Stock Number "${stockNumber}" already exists. Please enter a unique stock number.`);
+        setSubmitting(false);
+        return;
+      }
 
       const payload = {
         ...formData,
@@ -177,23 +180,7 @@ export default function AddPOItemPage({ params }) {
         quantity: parseInt(formData.quantity)
       };
       
-      try {
-        await poItemService.create(payload);
-      } catch (createErr) {
-        const duplicateError = /duplicate|already|unique|stock/i.test(createErr.message || "");
-        if (!duplicateError) throw createErr;
-
-        const retry = await getUniqueStockNumber(formData.current_branch_id);
-        const retryPayload = { ...payload, stock_number: retry.stockNumber };
-        setFormData(prev => ({ ...prev, stock_number: retry.stockNumber }));
-        await poItemService.create(retryPayload);
-        setAllPoItems([...retry.latestItems, { ...retryPayload }]);
-        success(`Item added successfully with stock number ${retry.stockNumber}`);
-        router.push(`/dashboard/inventory/purchase-orders/items/${poId}`);
-        return;
-      }
-
-      setAllPoItems([...latestItems, { ...payload }]);
+      await poItemService.create(payload);
       success("Item added successfully");
 
       // Auto-update purchase order status to Saved & Published
@@ -245,29 +232,18 @@ export default function AddPOItemPage({ params }) {
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Stock Number" required>
+             <FormField label="Stock Number" required>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Auto-generating..."
-                  className="w-full pl-10 pr-14 py-3 bg-gray-50 dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-black tracking-wider focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
+                  placeholder="Enter Stock Number..."
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-black tracking-wider focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
                   value={formData.stock_number}
-                  readOnly
+                  onChange={(e) => setFormData({...formData, stock_number: e.target.value})}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => refreshStockNumber()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                  title="Generate new unique stock number"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
               </div>
-              <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">
-                Auto-generated from branch code, PO number, and next available sequence.
-              </p>
             </FormField>
 
             <FormField label="Category" required>
@@ -296,9 +272,7 @@ export default function AddPOItemPage({ params }) {
                     setFormData(prev => ({
                       ...prev,
                       current_branch_id: branchId,
-                      stock_number: generateStockNumber(branchId),
                     }));
-                    setStockNumberTouched(true);
                   }}
                   required
                 >

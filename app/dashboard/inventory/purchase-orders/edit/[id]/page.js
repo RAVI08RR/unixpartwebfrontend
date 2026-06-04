@@ -53,14 +53,20 @@ export default function EditPurchaseOrderPage() {
         if (data) {
           console.log("📦 Purchase Order Data:", data);
           setPurchaseOrder(data);
+          
+          const containerId = data.container_id || data.container?.id || "";
+          const supplierId = data.supplier_id || data.supplier?.id || data.container?.supplier_id || data.container?.supplier?.id || "";
+          const branchId = data.arrival_branch_id || data.arrival_branch?.id || data.container?.destination_branch_id || data.container?.destination_branch?.id || data.branch?.id || "";
+          const arrivalDate = (data.arrival_date || data.created_at || "").split('T')[0];
+
           setFormData({
             po_id: data.po_id || "",
-            container_id: data.container_id ? String(data.container_id) : "",
-            container_code: data.container_code || "",
-            container_number: data.container_number || "",
-            supplier_id: data.supplier_id ? String(data.supplier_id) : "",
-            arrival_date: data.arrival_date || "",
-            arrival_branch_id: data.arrival_branch_id ? String(data.arrival_branch_id) : "",
+            container_id: containerId ? String(containerId) : "",
+            container_code: data.container_code || data.container?.container_code || "",
+            container_number: data.container_number || data.container?.container_number || "",
+            supplier_id: supplierId ? String(supplierId) : "",
+            arrival_date: arrivalDate || "",
+            arrival_branch_id: branchId ? String(branchId) : "",
             total_container_revenue: data.total_container_revenue || 0,
             items_in_stock: data.items_in_stock || 0,
             status: data.status || "pending",

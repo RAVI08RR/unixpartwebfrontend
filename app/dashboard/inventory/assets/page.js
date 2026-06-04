@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight, Pencil, Trash2, X, 
   Eye, Package, Calendar, Building2, DollarSign, Hash,
   AlertCircle, FileText, Upload, Trash, ExternalLink, 
-  TrendingUp, History, ArrowRightLeft, ShoppingCart
+  TrendingUp, History, ArrowRightLeft, ShoppingCart, RotateCcw
 } from "lucide-react";
 import { useAssets } from "@/app/lib/hooks/useAssets";
 import { assetService } from "@/app/lib/services/assetService";
@@ -29,6 +29,16 @@ export default function AssetsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
+
+  const hasActiveFilters = useMemo(() => {
+    return searchQuery !== "" || statusFilter !== "All";
+  }, [searchQuery, statusFilter]);
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("All");
+    setCurrentPage(1);
+  };
   
   const itemsPerPage = 8;
   const { assets, loading, refetch } = useAssets(0, 100);
@@ -43,6 +53,14 @@ export default function AssetsPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [assets.length, searchQuery, statusFilter]);
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    const hasActive = searchQuery !== "" || statusFilter !== "All";
+    if (hasActive) {
+      setIsFilterOpen(true);
+    }
+  }, []);
 
   // Modal states
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -318,36 +336,17 @@ export default function AssetsPage() {
           </div>
           
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <div className="relative flex-1 sm:flex-none">
-              <button 
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
-              
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-[200] p-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {['All', 'Active', 'Sold', 'Disposed', 'Maintenance'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => {
-                        setStatusFilter(status);
-                        setIsFilterOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                        statusFilter === status 
-                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                      }`}
-                    >
-                      {status === "All" ? "All Status" : status}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+                isFilterOpen 
+                  ? 'bg-red-600 text-white shadow-red-600/10' 
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            </button>
 
             <ExportButton
               data={filteredAssets}
@@ -369,6 +368,51 @@ export default function AssetsPage() {
           </div>
         </div>
       </div>
+
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the assets list below.</p>
+            </div>
+            {hasActiveFilters && (
+              <button 
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Status</label>
+              <div className="flex flex-wrap gap-2">
+                {['All', 'Active', 'Sold', 'Disposed', 'Maintenance'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                      statusFilter === status 
+                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/10' 
+                        : 'bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    }`}
+                  >
+                    {status === "All" ? "All Status" : status}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">

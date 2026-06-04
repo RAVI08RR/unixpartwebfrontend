@@ -29,6 +29,23 @@ export default function ExpensesPage() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
+
+  const hasActiveFilters = useMemo(() => {
+    return searchQuery !== "" ||
+      typeFilter !== "All" ||
+      categoryFilter !== "All" ||
+      supplierFilter !== "All" ||
+      (dateRange && (dateRange.start !== "" || dateRange.end !== ""));
+  }, [searchQuery, typeFilter, categoryFilter, supplierFilter, dateRange]);
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setTypeFilter("All");
+    setCategoryFilter("All");
+    setSupplierFilter("All");
+    setDateRange({ start: "", end: "" });
+    setCurrentPage(1);
+  };
   
   // Data Fetching
   const itemsPerPage = 6;
@@ -255,52 +272,70 @@ export default function ExpensesPage() {
           </div>
         </div>
         
-        {hasPermission(PERMISSIONS.EXPENSES.CREATE) && (
-          <div className="shrink-0">
-            <Link 
-              href="/dashboard/finance/expenses/add"
-              className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-full sm:w-auto"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="whitespace-nowrap font-black">Add Expense</span>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Filters Section Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the expenses list below.</p>
-          </div>
-          <button
+        <div className="flex items-center gap-3 justify-end shrink-0 w-full sm:w-auto">
+          <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300 rounded-lg transition-colors border border-gray-200/40 dark:border-zinc-800"
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
           >
-            <Filter className="w-3.5 h-3.5" />
+            <Filter className="w-4 h-4" />
             <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
+          {hasPermission(PERMISSIONS.EXPENSES.CREATE) && (
+            <div className="shrink-0">
+              <Link 
+                href="/dashboard/finance/expenses/add"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-full sm:w-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="whitespace-nowrap font-black">Add Expense</span>
+              </Link>
+            </div>
+          )}
         </div>
+      </div>
 
-        {isFilterOpen && (
-          <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-            {/* Filters Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* Search by Expense ID */}
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the expenses list below.</p>
+            </div>
+            {hasActiveFilters && (
+              <button 
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            {/* Search by Expense ID */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Search</label>
               <div className="relative">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Search by Expense ID..."
+                  placeholder="Search by ID, desc..."
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 dark:focus:ring-red-500/20 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+            </div>
 
-              {/* Pick Date Range */}
+            {/* Pick Date Range */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Date Range</label>
               <div className="relative">
                 <button 
                   onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
@@ -321,7 +356,7 @@ export default function ExpensesPage() {
                 {isDatePickerOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                    <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
                         <input 
@@ -358,72 +393,57 @@ export default function ExpensesPage() {
                   </>
                 )}
               </div>
-
-              {/* Filter by Type */}
-              <div>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
-                >
-                  <option value="All">Filter by Type</option>
-                  <option value="General">General</option>
-                  <option value="Personal">Personal</option>
-                </select>
-              </div>
-
-              {/* Filter by Category */}
-              <div>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
-                >
-                  <option value="All">Filter by Category</option>
-                  <option value="General">General</option>
-                  <option value="Port">Port</option>
-                  <option value="VAT">VAT</option>
-                  <option value="Personal">Personal</option>
-                  <option value="Other Exp">Other Exp</option>
-                </select>
-              </div>
-
-              {/* Filter by Supplier */}
-              <div>
-                <select
-                  value={supplierFilter}
-                  onChange={(e) => setSupplierFilter(e.target.value)}
-                  className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
-                >
-                  <option value="All">Filter by Supplier</option>
-                  {suppliers?.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name || s.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
-            {/* Clear Filters Button Row */}
-            <div className="flex items-center">
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setTypeFilter('All');
-                  setCategoryFilter('All');
-                  setSupplierFilter('All');
-                  setDateRange({ start: '', end: '' });
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-950/20 text-xs font-bold text-gray-500 hover:text-red-600 border border-gray-200/50 dark:border-zinc-800 hover:border-red-200/50 dark:hover:border-red-950/30 transition-colors shadow-sm"
+            {/* Filter by Type */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
-                <span>Clear Filters</span>
-              </button>
+                <option value="All">All Types</option>
+                {uniqueTypes.filter(t => t !== 'All').map(t => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter by Category */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                <option value="All">All Categories</option>
+                {uniqueCategories.filter(c => c !== 'All').map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter by Supplier */}
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Supplier</label>
+              <select
+                value={supplierFilter}
+                onChange={(e) => setSupplierFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                <option value="All">All Suppliers</option>
+                {suppliers?.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name || s.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">

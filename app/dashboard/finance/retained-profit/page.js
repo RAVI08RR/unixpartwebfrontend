@@ -108,9 +108,38 @@ export default function RetainedProfitReportPage() {
   const [selectedItems, setSelectedItems] = useState([]);
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(true); // default true for better visibility on load
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  const hasActiveFilters = useMemo(() => {
+    return searchQuery !== "" ||
+      selectedBranches.length > 0 ||
+      selectedSuppliers.length > 0 ||
+      selectedItems.length > 0 ||
+      (dateRange && (dateRange.start !== "" || dateRange.end !== ""));
+  }, [searchQuery, selectedBranches, selectedSuppliers, selectedItems, dateRange]);
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setSelectedBranches([]);
+    setSelectedSuppliers([]);
+    setSelectedItems([]);
+    setDateRange({ start: '', end: '' });
+    setCurrentPage(1);
+  };
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    const hasActive = searchQuery !== "" ||
+                      selectedBranches.length > 0 ||
+                      selectedSuppliers.length > 0 ||
+                      selectedItems.length > 0 ||
+                      (dateRange && (dateRange.start !== "" || dateRange.end !== ""));
+    if (hasActive) {
+      setIsFilterOpen(true);
+    }
+  }, []);
 
   // Load dropdown lists
   const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
@@ -309,12 +338,23 @@ export default function RetainedProfitReportPage() {
           </p>
         </div>
         
-        {/* Export Button */}
-        <div className="flex items-center gap-6 justify-end">
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-3 justify-end">
+          <button 
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              isFilterOpen 
+                ? 'bg-red-600 text-white shadow-red-600/10' 
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+          </button>
           <button 
             onClick={handleExport}
             disabled={filteredRefunds.length === 0}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shrink-0 active:scale-95"
+            className="flex items-center justify-center gap-2 px-5 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shrink-0 active:scale-95"
           >
             <FileText className="w-4 h-4 text-emerald-600" />
             <span>Export to Excel</span>
@@ -374,152 +414,134 @@ export default function RetainedProfitReportPage() {
       </div>
 
       {/* Collapsible Filters Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm p-6 space-y-4">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Filter the retained profit summaries below.</p>
-          </div>
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300 rounded-lg transition-colors border border-gray-200/40 dark:border-zinc-800"
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
-          </button>
-        </div>
-
-        {isFilterOpen && (
-          <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
-            {/* Filters Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-              {/* Search Bar */}
-              <div className="relative">
-                <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Search</label>
-                <div className="relative">
-                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    placeholder="Invoice #, stock #, name..."
-                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Branch Multi-select */}
-              <MultiSelectFilter
-                label="Branch"
-                options={branchOptions}
-                selectedValues={selectedBranches}
-                onChange={setSelectedBranches}
-                placeholder="All Branches"
-              />
-
-              {/* Supplier Multi-select */}
-              <MultiSelectFilter
-                label="Supplier"
-                options={supplierOptions}
-                selectedValues={selectedSuppliers}
-                onChange={setSelectedSuppliers}
-                placeholder="All Suppliers"
-              />
-
-              {/* Stock Items Multi-select */}
-              <MultiSelectFilter
-                label="Stock Items"
-                options={stockItemOptions}
-                selectedValues={selectedItems}
-                onChange={setSelectedItems}
-                placeholder="All Items"
-              />
-
-              {/* Pick Date Range */}
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Date Range</label>
-                <div className="relative">
-                  <button 
-                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                    type="button"
-                    className="w-full flex items-center justify-between px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm truncate"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                      <span className="truncate">
-                        {dateRange.start || dateRange.end 
-                          ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
-                          : "Pick a date range"
-                        }
-                      </span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isDatePickerOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {isDatePickerOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
-                      <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
-                          <input 
-                            type="date"
-                            className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                            value={dateRange.start}
-                            onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
-                          <input 
-                            type="date"
-                            className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
-                            value={dateRange.end}
-                            onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end pt-1">
-                          <button 
-                            type="button"
-                            onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
-                            className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
-                          >
-                            Clear
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => setIsDatePickerOpen(false)}
-                            className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
-                          >
-                            Apply
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Filter the retained profit summaries below.</p>
             </div>
-
-            {/* Clear Filters Button Row */}
-            <div className="flex items-center">
+            {hasActiveFilters && (
               <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedBranches([]);
-                  setSelectedSuppliers([]);
-                  setSelectedItems([]);
-                  setDateRange({ start: '', end: '' });
-                }}
-                className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-red-600 transition-colors"
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset All Filters</span>
+                Clear Filters
               </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Search</label>
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input 
+                  type="text" 
+                  placeholder="Invoice #, stock #, name..."
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Branch Multi-select */}
+            <MultiSelectFilter
+              label="Branch"
+              options={branchOptions}
+              selectedValues={selectedBranches}
+              onChange={setSelectedBranches}
+              placeholder="All Branches"
+            />
+
+            {/* Supplier Multi-select */}
+            <MultiSelectFilter
+              label="Supplier"
+              options={supplierOptions}
+              selectedValues={selectedSuppliers}
+              onChange={setSelectedSuppliers}
+              placeholder="All Suppliers"
+            />
+
+            {/* Stock Items Multi-select */}
+            <MultiSelectFilter
+              label="Stock Items"
+              options={stockItemOptions}
+              selectedValues={selectedItems}
+              onChange={setSelectedItems}
+              placeholder="All Items"
+            />
+
+            {/* Pick Date Range */}
+            <div>
+              <label className="block text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Date Range</label>
+              <div className="relative">
+                <button 
+                  onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                  type="button"
+                  className="w-full flex items-center justify-between px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-700 dark:text-zinc-300 transition-all text-left shadow-sm truncate"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                    <span className="truncate">
+                      {dateRange.start || dateRange.end 
+                        ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                        : "Pick a date range"
+                      }
+                    </span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isDatePickerOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isDatePickerOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsDatePickerOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
+                        <input 
+                          type="date"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                          value={dateRange.start}
+                          onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
+                        <input 
+                          type="date"
+                          className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                          value={dateRange.end}
+                          onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end pt-1">
+                        <button 
+                          type="button"
+                          onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
+                          className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
+                        >
+                          Clear
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={() => setIsDatePickerOpen(false)}
+                          className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Table / Mobile Cards */}
       <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">

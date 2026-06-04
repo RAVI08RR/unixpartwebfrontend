@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Download, Plus, 
   ChevronLeft, ChevronRight, Pencil, Trash2, 
   Eye, Calendar, DollarSign, FileText,
-  AlertCircle, ArrowLeftRight, Truck, X, Hash, Building2
+  AlertCircle, ArrowLeftRight, Truck, X, Hash, Building2, RotateCcw
 } from "lucide-react";
 import { useFundTransfers } from "@/app/lib/hooks/useFundTransfers";
 import { fundTransferService } from "@/app/lib/services/fundTransferService";
@@ -26,6 +26,21 @@ export default function FundTransfersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
+
+  const hasActiveFilters = useMemo(() => {
+    return searchQuery !== "" ||
+      methodFilter !== "All" ||
+      branchFilter !== "All" ||
+      supplierFilter !== "All";
+  }, [searchQuery, methodFilter, branchFilter, supplierFilter]);
+
+  const handleClearFilters = () => {
+    setSearchQuery("");
+    setMethodFilter("All");
+    setBranchFilter("All");
+    setSupplierFilter("All");
+    setCurrentPage(1);
+  };
   
   // Data Fetching
   const itemsPerPage = 6;
@@ -40,6 +55,17 @@ export default function FundTransfersPage() {
   useEffect(() => {
     setCurrentPage(1);
   }, [transfers.length, searchQuery, methodFilter, branchFilter, supplierFilter]);
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    const hasActive = searchQuery !== "" ||
+                      methodFilter !== "All" ||
+                      branchFilter !== "All" ||
+                      supplierFilter !== "All";
+    if (hasActive) {
+      setIsFilterOpen(true);
+    }
+  }, []);
 
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
@@ -230,111 +256,18 @@ export default function FundTransfersPage() {
           
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
-            <div className="relative flex-1 sm:flex-none">
-              <button 
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all filter-button"
-              >
-                <Filter className="w-4 h-4" />
-                <span>Filters</span>
-              </button>
-              
-              {isFilterOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                  {/* Method Filter */}
-                  <div className="mb-4">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Method</label>
-                    <div className="space-y-1">
-                      {uniqueMethods.map((method) => (
-                        <button
-                          key={method}
-                          onClick={() => setMethodFilter(method)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            methodFilter === method 
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {method}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Branch Filter */}
-                  <div className="mb-4">
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Branch</label>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      <button
-                        onClick={() => setBranchFilter('All')}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                          branchFilter === 'All' 
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        All
-                      </button>
-                      {uniqueBranches.filter(b => b !== 'All').map((branch) => (
-                        <button
-                          key={branch.code}
-                          onClick={() => setBranchFilter(branch.code)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            branchFilter === branch.code 
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {branch.name} ({branch.code})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Supplier Filter */}
-                  <div>
-                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Supplier</label>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
-                      <button
-                        onClick={() => setSupplierFilter('All')}
-                        className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                          supplierFilter === 'All' 
-                            ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                        }`}
-                      >
-                        All
-                      </button>
-                      {uniqueSuppliers.filter(s => s !== 'All').map((supplier) => (
-                        <button
-                          key={supplier.code}
-                          onClick={() => setSupplierFilter(supplier.code)}
-                          className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-colors ${
-                            supplierFilter === supplier.code 
-                              ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' 
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800'
-                          }`}
-                        >
-                          {supplier.name} ({supplier.code})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setMethodFilter('All');
-                      setBranchFilter('All');
-                      setSupplierFilter('All');
-                    }}
-                    className="w-full mt-4 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-                  >
-                    Clear Filters
-                  </button>
-                </div>
-              )}
-            </div>
-
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+                isFilterOpen 
+                  ? 'bg-red-600 text-white shadow-red-600/10' 
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            </button>
+            
             <ExportButton
               data={filteredTransfers}
               columns={exportColumns}
@@ -355,6 +288,73 @@ export default function FundTransfersPage() {
           </div>
         </div>
       </div>
+
+      {/* Collapsible Filters Card */}
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the fund transfers list below.</p>
+            </div>
+            {hasActiveFilters && (
+              <button 
+                onClick={handleClearFilters}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Method Filter */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Method</label>
+              <select
+                value={methodFilter}
+                onChange={(e) => setMethodFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                {uniqueMethods.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Branch Filter */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Branch</label>
+              <select
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                <option value="All">All Branches</option>
+                {uniqueBranches.filter(b => b !== 'All').map(branch => (
+                  <option key={branch.code} value={branch.code}>{branch.name} ({branch.code})</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Supplier Filter */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Supplier</label>
+              <select
+                value={supplierFilter}
+                onChange={(e) => setSupplierFilter(e.target.value)}
+                className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium text-gray-500 dark:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all cursor-pointer"
+              >
+                <option value="All">All Suppliers</option>
+                {uniqueSuppliers.filter(s => s !== 'All').map(supplier => (
+                  <option key={supplier.code} value={supplier.code}>{supplier.name} ({supplier.code})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">

@@ -45,10 +45,23 @@ function InvoiceManagementContent() {
       const urlStatus = searchParams.get('status');
       const urlCustomer = searchParams.get('customer');
       
-      if (urlStatus) setStatusFilter(urlStatus);
-      if (urlCustomer) setCustomerFilter(urlCustomer);
+      if (urlStatus) {
+        setStatusFilter(urlStatus);
+        setIsFilterOpen(true);
+      }
+      if (urlCustomer) {
+        setCustomerFilter(urlCustomer);
+        setIsFilterOpen(true);
+      }
     }
   }, [searchParams]);
+
+  // Auto-expand filters if active filters exist on load
+  useEffect(() => {
+    if (statusFilter !== 'All' || customerFilter !== 'All' || branchFilter !== 'All' || invoiceNumberFilter !== '' || stockNumberFilter !== '' || userFilter !== 'All' || loadStatusFilter !== 'All' || dateRange.start || dateRange.end) {
+      setIsFilterOpen(true);
+    }
+  }, []);
   
   // Data Fetching with API-level filtering
   const itemsPerPage = 8;
@@ -457,6 +470,18 @@ function InvoiceManagementContent() {
               ]}
               filename={`invoices-${new Date().toISOString().split('T')[0]}`}
             />
+            <button 
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+                isFilterOpen 
+                  ? 'bg-red-600 text-white shadow-red-600/10' 
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            </button>
+
             {hasPermission(PERMISSIONS.INVOICES.CREATE) && (
               <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                 <Plus className="w-4 h-4" />
@@ -468,22 +493,34 @@ function InvoiceManagementContent() {
       </div>
 
       {/* Filters Section Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in duration-300">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-            <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the invoice list below.</p>
+      {isFilterOpen && (
+        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the invoice list below.</p>
+            </div>
+            {(statusFilter !== 'All' || customerFilter !== 'All' || branchFilter !== 'All' || invoiceNumberFilter !== '' || stockNumberFilter !== '' || userFilter !== 'All' || loadStatusFilter !== 'All' || dateRange.start !== '' || dateRange.end !== '') && (
+              <button 
+                onClick={() => {
+                  setSearchQuery('');
+                  setStatusFilter('All');
+                  setCustomerFilter('All');
+                  setBranchFilter('All');
+                  setInvoiceNumberFilter('');
+                  setStockNumberFilter('');
+                  setUserFilter('All');
+                  setLoadStatusFilter('All');
+                  setDateRange({ start: '', end: '' });
+                }}
+                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+              >
+                <RefreshCcw className="w-3.5 h-3.5" />
+                Clear Filters
+              </button>
+            )}
           </div>
-          <button
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300 rounded-lg transition-colors border border-gray-200/40 dark:border-zinc-800"
-          >
-            <Filter className="w-3.5 h-3.5" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
-          </button>
-        </div>
 
-        {isFilterOpen && (
           <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-1 duration-200">
             {/* Filters Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
@@ -646,30 +683,9 @@ function InvoiceManagementContent() {
                 </select>
               </div>
             </div>
-
-            {/* Clear Filters Button Row */}
-            <div className="flex items-center pt-2">
-              <button 
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('All');
-                  setCustomerFilter('All');
-                  setBranchFilter('All');
-                  setInvoiceNumberFilter('');
-                  setStockNumberFilter('');
-                  setUserFilter('All');
-                  setLoadStatusFilter('All');
-                  setDateRange({ start: '', end: '' });
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 hover:bg-red-50 dark:bg-zinc-800 dark:hover:bg-red-950/20 border border-gray-200/65 dark:border-zinc-700/50 rounded-xl text-sm font-bold text-gray-600 hover:text-red-600 dark:text-zinc-300 dark:hover:text-red-400 shadow-sm active:scale-95 transition-all animate-in fade-in duration-200"
-              >
-                <RefreshCcw className="w-4 h-4" />
-                <span>Clear Filters</span>
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Table Card */}
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
