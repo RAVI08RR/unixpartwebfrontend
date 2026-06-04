@@ -149,7 +149,13 @@ export default function AddPurchaseOrderPage() {
             await purchaseOrderService.update(createdPo.id, {
                 po_id: createdPo.po_id,
                 container_id: createdPo.container_id,
-                status: "saved_published"
+                supplier_id: createdPo.supplier_id || parseInt(formData.supplier_id),
+                arrival_date: createdPo.arrival_date || formData.arrival_date,
+                arrival_branch_id: createdPo.arrival_branch_id || parseInt(formData.arrival_branch_id),
+                total_container_revenue: createdPo.total_container_revenue || parseFloat(formData.total_container_revenue) || 0,
+                items_in_stock: createdPo.items_in_stock || parseInt(formData.items_in_stock) || 0,
+                status: "saved_published",
+                notes: createdPo.notes || formData.notes || null
             });
         } catch (statusErr) {
             console.error("Auto-status transition failed:", statusErr);

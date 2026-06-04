@@ -46,10 +46,10 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
     try {
       await refundItemsService.create(selectedItemDetails.id, {
         invoice_item_id: selectedItemDetails.id,
-        refund_amount: refundAmount,
+        refund_amount: parseFloat(refundAmount) || 0,
         refund_reason: "Customer Return",
         refund_method: "Original Payment Method",
-        supplier_profit: retainedProfit,
+        supplier_profit: parseFloat(retainedProfit) || 0,
         refund_date: new Date().toISOString().split('T')[0]
       });
       
@@ -65,8 +65,8 @@ const CancelReturnItemsModal = ({ isOpen, onClose, invoice, onSuccess }) => {
     }
   };
 
-  const totalRefund = refundAmount;
-  const totalRetainedProfit = retainedProfit;
+  const totalRefund = parseFloat(refundAmount) || 0;
+  const totalRetainedProfit = parseFloat(retainedProfit) || 0;
 
   return (
     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
