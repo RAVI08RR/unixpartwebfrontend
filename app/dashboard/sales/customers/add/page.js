@@ -65,8 +65,8 @@ export default function AddCustomerPage() {
 
   const handleSubmit = async () => {
     // Basic validation
-    if(!formData.full_name || !formData.customer_code || !formData.phone || !formData.address) {
-      error("Please fill in all required fields (Name, Customer Code, Phone, and Address)");
+    if(!formData.full_name || !formData.customer_code || !formData.phone) {
+      error("Please fill in all required fields (Name, Customer Code, and Phone)");
       return;
     }
 
@@ -86,7 +86,7 @@ export default function AddCustomerPage() {
         phone: formData.phone.trim(),
         business_name: formData.business_name.trim() || null,
         business_number: formData.business_number.trim() || null,
-        address: formData.address.trim(),
+        address: formData.address?.trim() || null,
         notes: formData.notes.trim() || null,
         status: formData.status
       };
@@ -310,7 +310,7 @@ export default function AddCustomerPage() {
         {/* Address */}
         <div className="space-y-1.5 lg:col-span-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Address <span className="text-red-500">*</span>
+            Address <span className="text-gray-400 font-normal">(Optional)</span>
           </label>
           <div className="relative">
             <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />

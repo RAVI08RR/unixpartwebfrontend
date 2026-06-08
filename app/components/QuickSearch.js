@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, DollarSign, Scissors } from "lucide-react";
+import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, DollarSign, Scissors, Camera } from "lucide-react";
+import QRScannerModal from "./QRScannerModal";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,22 @@ export default function QuickSearch() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [isLoadingItemDetails, setIsLoadingItemDetails] = useState(false);
+  
+  // Scanner states
+  const [isMainScannerOpen, setIsMainScannerOpen] = useState(false);
+  const [isDismantleScannerOpen, setIsDismantleScannerOpen] = useState(false);
+
+  const handleMainScanSuccess = (decodedText) => {
+    setSearchQuery(decodedText);
+    setIsMainScannerOpen(false);
+    success("Scanned successfully!");
+  };
+
+  const handleDismantleScanSuccess = (decodedText) => {
+    setDismantleStockNumber(decodedText);
+    setIsDismantleScannerOpen(false);
+    success("Scanned successfully!");
+  };
 
   // Close on Escape key
   useEffect(() => {
@@ -205,14 +222,14 @@ export default function QuickSearch() {
     try {
       const item = await poItemService.getByStockNumber(stockNumber);
       if (item && item.id) {
-        // Show success message without redirecting
-        success(`Item ${stockNumber} is ready for dismantling`);
+        await poItemService.dismantle(item.id);
+        success(`Item ${stockNumber} dismantled successfully`);
         // Clear the search input
         setDismantleStockNumber("");
         setDismantleSearchResults([]);
       }
     } catch (error) {
-      showError('Item not found: ' + error.message);
+      showError('Failed to dismantle item: ' + error.message);
     }
   };
 
@@ -279,7 +296,7 @@ export default function QuickSearch() {
 
             {/* Search Input */}
             <div className="p-8">
-              <div className="relative">
+              <div className="relative flex items-center">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
@@ -287,8 +304,15 @@ export default function QuickSearch() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-14 pr-6 py-5 bg-gray-50 dark:bg-zinc-800/50 border-2 border-gray-100 dark:border-zinc-800 rounded-2xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-gray-400"
+                  className="w-full pl-14 pr-16 py-5 bg-gray-50 dark:bg-zinc-800/50 border-2 border-gray-100 dark:border-zinc-800 rounded-2xl text-base font-medium focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500 transition-all placeholder:text-gray-400"
                 />
+                <button
+                  onClick={() => setIsMainScannerOpen(true)}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-gray-200 dark:bg-zinc-700 hover:bg-red-600 hover:text-white rounded-xl transition-all text-gray-600 dark:text-gray-300"
+                  title="Scan Barcode/QR"
+                >
+                  <Camera className="w-5 h-5" />
+                </button>
               </div>
             </div>
 
@@ -432,7 +456,7 @@ export default function QuickSearch() {
                                         ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
                                         : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
                                     }`}>
-                                      {(item.status || item.po_item_status)?.toLowerCase() === 'in_stock' ? 'Sell' : (item.status || item.po_item_status)?.toLowerCase() === 'sold' ? 'Sold' : (item.status || item.po_item_status) || 'Unknown'}
+                                      {(item.status || item.po_item_status)?.toLowerCase() === 'in_stock' ? 'Sell' : (item.status || item.po_item_status)?.toLowerCase() === 'sold' ? 'Sold' : (item.status || item.po_item_status)?.replace('_', ' ') || 'Unknown'}
                                     </span>
                                   </div>
                                   <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -545,14 +569,21 @@ export default function QuickSearch() {
                     </p>
                     
                     {/* Dismantle Search Input */}
-                    <div className="max-w-md mx-auto w-full relative">
+                    <div className="max-w-md mx-auto w-full relative flex items-center">
                       <input
                         type="text"
                         placeholder="Enter stock number..."
                         value={dismantleStockNumber}
                         onChange={(e) => setDismantleStockNumber(e.target.value)}
-                        className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                        className="w-full pl-4 pr-12 py-3 bg-white dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-gray-400"
                       />
+                      <button
+                        onClick={() => setIsDismantleScannerOpen(true)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-gray-100 dark:bg-zinc-800 hover:bg-blue-600 hover:text-white rounded-lg transition-all text-gray-500 dark:text-gray-400"
+                        title="Scan Barcode/QR"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
                       
                       {/* Dropdown Results */}
                       {dismantleStockNumber && dismantleSearchResults.length > 0 && (
@@ -692,7 +723,7 @@ export default function QuickSearch() {
                       ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400'
                   }`}>
-                    {selectedItem.status?.toUpperCase() || 'UNKNOWN'}
+                    {selectedItem.status?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
                   </span>
                 </div>
                 <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
@@ -845,6 +876,17 @@ export default function QuickSearch() {
           </div>
         </div>
       )}
+
+      <QRScannerModal 
+        isOpen={isMainScannerOpen} 
+        onClose={() => setIsMainScannerOpen(false)} 
+        onScanSuccess={handleMainScanSuccess} 
+      />
+      <QRScannerModal 
+        isOpen={isDismantleScannerOpen} 
+        onClose={() => setIsDismantleScannerOpen(false)} 
+        onScanSuccess={handleDismantleScanSuccess} 
+      />
     </>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Upload, FileText, X } from "lucide-react";
 import { leaveService } from "@/app/lib/services/leaveService";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
@@ -28,6 +28,17 @@ export default function EditLeavePage() {
     reason: "",
     proof_documents: [],
   });
+
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     fetchData();
@@ -67,6 +78,25 @@ export default function EditLeavePage() {
     setLoading(true);
 
     try {
+      let uploadedPaths = [];
+      if (selectedFiles.length > 0) {
+        if (!formData.employee_id) {
+          throw new Error("Please select an employee first");
+        }
+        for (const file of selectedFiles) {
+          const res = await employeeService.uploadDocument(
+            formData.employee_id,
+            file,
+            "leave_proof",
+            file.name
+          );
+          const path = res.document_path || res.file_path || res.path;
+          if (path) {
+            uploadedPaths.push(path);
+          }
+        }
+      }
+
       const payload = {
         employee_id: parseInt(formData.employee_id),
         leave_type: formData.leave_type,
@@ -74,7 +104,7 @@ export default function EditLeavePage() {
         end_date: formData.end_date,
         total_days: parseInt(formData.total_days) || 1,
         reason: formData.reason,
-        proof_documents: formData.proof_documents.length > 0 ? formData.proof_documents : [],
+        proof_documents: [...formData.proof_documents, ...uploadedPaths],
       };
 
       await leaveService.update(params.id, payload);
@@ -214,6 +244,79 @@ export default function EditLeavePage() {
                   required
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Proof Documents Section */}
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Proof Documents</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 dark:bg-zinc-800 border-2 border-dashed border-gray-300 dark:border-zinc-700 rounded-xl cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all">
+                  <Upload className="w-5 h-5 text-gray-400" />
+                  <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Choose Files to Upload</span>
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+                </label>
+              </div>
+
+              {selectedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Files to upload</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-zinc-800">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(idx)}
+                          className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {formData.proof_documents?.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Existing Proof Documents</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {formData.proof_documents.map((docPath, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">
+                            {docPath.split('/').pop()}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              proof_documents: prev.proof_documents.filter((_, i) => i !== idx)
+                            }));
+                          }}
+                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

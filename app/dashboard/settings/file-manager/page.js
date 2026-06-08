@@ -14,6 +14,10 @@ import {
   Download
 } from "lucide-react";
 import { fileManagerService } from "@/app/lib/services/fileManagerService";
+import { containerService } from "@/app/lib/services/containerService";
+import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
+import { assetService } from "@/app/lib/services/assetService";
+import { employeeService } from "@/app/lib/services/employeeService";
 
 export default function FileManagerPage() {
   const [currentPath, setCurrentPath] = useState(null); // null means root
@@ -27,10 +31,18 @@ export default function FileManagerPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Subfolder & Drilldown states
+  const [selectedEntityId, setSelectedEntityId] = useState(null);
+  const [selectedDocType, setSelectedDocType] = useState(null);
+  
+  const [entityTypeName, setEntityTypeName] = useState("");
+  const [entityName, setEntityName] = useState("");
+  const [docTypeName, setDocTypeName] = useState("");
+
   // Fetch data when path, page, or search changes
   useEffect(() => {
     fetchData();
-  }, [currentPath, page]);
+  }, [currentPath, selectedEntityId, selectedDocType, page]);
 
   // Debounced search
   useEffect(() => {
@@ -55,7 +67,9 @@ export default function FileManagerPage() {
         const data = await fileManagerService.getFolderContents(currentPath, {
           page,
           page_size: 50,
-          search: searchQuery
+          search: searchQuery,
+          entity_id: selectedEntityId,
+          document_type: selectedDocType
         });
         setContents({
           folders: data.folders || [],
@@ -72,14 +86,32 @@ export default function FileManagerPage() {
 
   const handleFolderClick = (entityType, folderName) => {
     setCurrentPath(entityType);
-    setCurrentFolderName(folderName);
+    setEntityTypeName(folderName);
+    setSelectedEntityId(null);
+    setSelectedDocType(null);
     setSearchQuery("");
     setPage(1);
   };
 
+  const handleSubfolderClick = (folder) => {
+    if (!selectedEntityId) {
+      setSelectedEntityId(folder.entity_id || folder.id);
+      setEntityName(folder.name || `Folder #${folder.entity_id || folder.id}`);
+    } else if (!selectedDocType) {
+      setSelectedDocType(folder.document_type || folder.type || folder.name);
+      setDocTypeName(folder.name || folder.document_type || folder.type);
+    }
+    setPage(1);
+    setSearchQuery("");
+  };
+
   const handleHomeClick = () => {
     setCurrentPath(null);
-    setCurrentFolderName("");
+    setSelectedEntityId(null);
+    setSelectedDocType(null);
+    setEntityTypeName("");
+    setEntityName("");
+    setDocTypeName("");
     setSearchQuery("");
     setPage(1);
   };
@@ -96,13 +128,37 @@ export default function FileManagerPage() {
     return <File className="w-8 h-8 text-blue-500" />;
   };
 
-  const handleDownload = (document) => {
-    // In a real implementation, this would trigger a download
-    // For now, if there's a file_url, we can try opening it
-    if (document.file_url) {
-      window.open(document.file_url, '_blank');
-    } else {
-      alert("Download functionality for this document is not fully implemented yet.");
+  const handleDownload = async (doc) => {
+    try {
+      const entityId = selectedEntityId || doc.container_id || doc.po_id || doc.asset_id || doc.employee_id || doc.entity_id;
+      if (!entityId) {
+        if (doc.file_url) {
+          window.open(doc.file_url, '_blank');
+          return;
+        }
+        alert("Cannot download document: missing entity context.");
+        return;
+      }
+      
+      const documentId = doc.id;
+      if (currentPath === "containers") {
+        await containerService.downloadDocument(entityId, documentId);
+      } else if (currentPath === "purchase-orders") {
+        await purchaseOrderService.downloadDocument(entityId, documentId);
+      } else if (currentPath === "assets") {
+        await assetService.downloadDocument(entityId, documentId);
+      } else if (currentPath === "employees") {
+        await employeeService.downloadDocument(entityId, documentId);
+      } else {
+        if (doc.file_url) {
+          window.open(doc.file_url, '_blank');
+        } else {
+          alert("Download not supported for this folder type.");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to download document:", error);
+      alert("Failed to download document: " + error.message);
     }
   };
 
@@ -127,9 +183,52 @@ export default function FileManagerPage() {
             {currentPath && (
               <>
                 <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                <button
+                  onClick={() => {
+                    setSelectedEntityId(null);
+                    setSelectedDocType(null);
+                    setPage(1);
+                    setSearchQuery("");
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                    !selectedEntityId 
+                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-bold' 
+                      : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium'
+                  }`}
+                >
+                  <Folder className="w-4 h-4" />
+                  <span>{entityTypeName || currentPath}</span>
+                </button>
+              </>
+            )}
+
+            {currentPath && selectedEntityId && (
+              <>
+                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                <button
+                  onClick={() => {
+                    setSelectedDocType(null);
+                    setPage(1);
+                    setSearchQuery("");
+                  }}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                    !selectedDocType 
+                      ? 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-bold' 
+                      : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800 font-medium'
+                  }`}
+                >
+                  <Folder className="w-4 h-4" />
+                  <span>{entityName || `ID: ${selectedEntityId}`}</span>
+                </button>
+              </>
+            )}
+
+            {currentPath && selectedEntityId && selectedDocType && (
+              <>
+                <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-bold">
                   <Folder className="w-4 h-4" />
-                  <span>{currentFolderName || currentPath}</span>
+                  <span>{docTypeName || selectedDocType}</span>
                 </div>
               </>
             )}
@@ -202,6 +301,7 @@ export default function FileManagerPage() {
                     {contents.folders.map((folder, idx) => (
                       <button
                         key={`folder-${idx}`}
+                        onClick={() => handleSubfolderClick(folder)}
                         className="flex flex-col items-center text-center p-4 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-sm hover:border-blue-300 transition-all group"
                       >
                         <Folder className="w-12 h-12 text-blue-400 mb-3" fill="currentColor" fillOpacity={0.2} />

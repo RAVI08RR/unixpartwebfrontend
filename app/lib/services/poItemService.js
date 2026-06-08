@@ -94,11 +94,17 @@ export const poItemService = {
   // Dismantle PO item
   dismantle: async (parentItemId, dismantleData) => {
     try {
+      let id = parentItemId;
+      let data = dismantleData || {};
+      if (typeof parentItemId === 'object' && parentItemId !== null) {
+        id = parentItemId.item_id || parentItemId.parent_item_id || parentItemId.id;
+        data = { ...parentItemId, ...data };
+      }
       return await fetchApi('/api/po-items/dismantle', {
         method: 'POST',
         body: JSON.stringify({
-          parent_item_id: parentItemId,
-          ...dismantleData
+          parent_item_id: id,
+          ...data
         }),
       });
     } catch (error) {

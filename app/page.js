@@ -121,10 +121,65 @@ function LoginForm() {
   return (
     <div className="min-h-screen justify-center flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
       {/* Left Panel - Branding with Abstract Background */}
+      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
+        <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1 bg-white">
+             <img 
+                src="/logo.png" 
+                alt="Unixparts Logo" 
+                className="w-full h-full object-contain"
+             />
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+            Welcome to Unixparts
+          </h1>
+          
+          <p className="text-gray-400 text-lg leading-relaxed">
+            Access the internal Unixparts system to manage inventory, sales, warehouse operations, suppliers, and financial workflows.
+          </p>
+
+          <div className="space-y-6 pt-6">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Secure access to all modules</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Real-time data synchronization</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/10 p-2 rounded-lg">
+                <Check className="w-5 h-5 text-white" />
+              </div>
+              <span className="text-gray-300">Multi-branch support</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Subtle background glow */}
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div>
+      </div>
       
       {/* Right Panel - Clean Login Form */}
       <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
         <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
+          
+          {/* Mobile Logo */}
+          <div className="md:hidden flex justify-center mb-6">
+             <div className="w-16 h-16 rounded-lg overflow-hidden p-1 bg-black dark:bg-zinc-900">
+               <img 
+                  src="/logo.png" 
+                  alt="Unixparts Logo" 
+                  className="w-full h-full object-contain"
+               />
+             </div>
+          </div>
+
           <div className="flex justify-between items-start">
             <div className="space-y-2">
               <h2 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Welcome back</h2>

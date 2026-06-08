@@ -181,10 +181,10 @@ export default function CustomerAutocompleteWithCreate({
     const trimmedCode = customerForm.customer_code?.trim();
     const trimmedName = customerForm.full_name?.trim();
     const trimmedPhone = customerForm.phone?.trim();
-    const trimmedAddress = customerForm.address?.trim();
+    const trimmedAddress = customerForm.address?.trim() || "";
     
-    if (!trimmedCode || !trimmedName || !trimmedPhone || !trimmedAddress) {
-      alert("Please fill in all required fields (Customer Code, Full Name, Phone, and Address)");
+    if (!trimmedCode || !trimmedName || !trimmedPhone) {
+      alert("Please fill in all required fields (Customer Code, Full Name, and Phone)");
       return;
     }
 
@@ -195,7 +195,9 @@ export default function CustomerAutocompleteWithCreate({
       formData.append('customer_code', trimmedCode);
       formData.append('full_name', trimmedName);
       formData.append('phone', trimmedPhone);
-      formData.append('address', trimmedAddress);
+      if (trimmedAddress) {
+        formData.append('address', trimmedAddress);
+      }
       formData.append('status', customerForm.status);
       
       // Add optional fields
@@ -561,7 +563,7 @@ export default function CustomerAutocompleteWithCreate({
               {/* Address - Full Width */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                  Address <span className="text-red-600">*</span>
+                  Address <span className="text-gray-400 font-normal">(Optional)</span>
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -601,7 +603,7 @@ export default function CustomerAutocompleteWithCreate({
               </button>
               <button 
                 onClick={handleCreateCustomer}
-                disabled={saving || !customerForm.full_name || !customerForm.phone || !customerForm.customer_code || !customerForm.address}
+                disabled={saving || !customerForm.full_name || !customerForm.phone || !customerForm.customer_code}
                 className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {saving ? (

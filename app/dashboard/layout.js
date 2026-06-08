@@ -49,7 +49,7 @@ function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#F8FAFC] dark:bg-zinc-950 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 py-4 flex items-center justify-between transition-colors duration-300">
+    <header className="sticky top-0 z-40 bg-[#F8FAFC] dark:bg-zinc-950 backdrop-blur-md border-b border-gray-100 dark:border-zinc-900 px-4 md:px-8 pt-[calc(1rem+env(safe-area-inset-top))] pb-4 flex items-center justify-between transition-colors duration-300">
     
       <div className="flex items-center gap-4 flex-1">
         {/* Desktop Toggle */}
