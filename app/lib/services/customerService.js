@@ -63,105 +63,119 @@ export const customerService = {
   // Create new customer
   create: async (customerData) => {
     try {
-      // Check if customerData contains a file (profile_image is a File object)
-      const hasFile = customerData.profile_image instanceof File;
+      const formData = new FormData();
       
-      if (hasFile) {
-        // Use multipart/form-data for file upload
-        const formData = new FormData();
-        
-        // Append all customer data to FormData
-        Object.keys(customerData).forEach(key => {
-          if (customerData[key] !== null && customerData[key] !== undefined) {
-            formData.append(key, customerData[key]);
+      // Append all customer data to FormData
+      Object.keys(customerData).forEach(key => {
+        const val = customerData[key];
+        if (val !== null && val !== undefined) {
+          if (key === 'profile_image') {
+            if (val instanceof File) {
+              formData.append(key, val);
+            }
+          } else {
+            formData.append(key, val);
           }
-        });
-        
-        const token = localStorage.getItem('access_token');
-        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-        const response = await fetch(`${apiUrl}api/customers/`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
         }
-        
-        return await response.json();
-      } else {
-        // Use JSON for regular data - also send directly to backend
-        const token = localStorage.getItem('access_token');
-        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-        const response = await fetch(`${apiUrl}api/customers/`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(customerData),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
+      });
+      
+      const token = localStorage.getItem('access_token');
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+      const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
+      const response = await fetch(`${apiUrl}api/customers/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        let errMsg = '';
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errMsg = errorData.detail.map(err => {
+              const field = err.loc ? err.loc.join('.') : 'body';
+              return `${field}: ${err.msg}`;
+            }).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errMsg = errorData.detail;
+          } else {
+            errMsg = JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.error) {
+          errMsg = errorData.error;
+        } else if (errorData.message) {
+          errMsg = errorData.message;
+        } else {
+          errMsg = `Request failed with status ${response.status}`;
         }
-        
-        return await response.json();
+        throw new Error(errMsg);
       }
+      
+      return await response.json();
     } catch (error) {
       console.warn('📋 Customer creation failed, backend unavailable:', error.message);
-      throw new Error('Cannot create customer: ' + error.message);
+      throw new Error(error.message);
     }
   },
 
   // Update existing customer
   update: async (id, customerData) => {
     try {
-      // Check if customerData contains a file (profile_image is a File object)
-      const hasFile = customerData.profile_image instanceof File;
+      const formData = new FormData();
       
-      if (hasFile) {
-        // Use multipart/form-data for file upload
-        const formData = new FormData();
-        
-        // Append all customer data to FormData
-        Object.keys(customerData).forEach(key => {
-          if (customerData[key] !== null && customerData[key] !== undefined) {
-            formData.append(key, customerData[key]);
+      // Append all customer data to FormData
+      Object.keys(customerData).forEach(key => {
+        const val = customerData[key];
+        if (val !== null && val !== undefined) {
+          if (key === 'profile_image') {
+            if (val instanceof File) {
+              formData.append(key, val);
+            }
+          } else {
+            formData.append(key, val);
           }
-        });
-        
-        const token = localStorage.getItem('access_token');
-        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-        const response = await fetch(`${apiUrl}api/customers/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || errorData.detail || `Request failed with status ${response.status}`);
         }
-        
-        return await response.json();
-      } else {
-        // Use JSON for regular data
-        return await fetchApi(`/api/customers/${id}`, {
-          method: 'PUT',
-          body: JSON.stringify(customerData),
-        });
+      });
+      
+      const token = localStorage.getItem('access_token');
+      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+      const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
+      const response = await fetch(`${apiUrl}api/customers/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        let errMsg = '';
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errMsg = errorData.detail.map(err => {
+              const field = err.loc ? err.loc.join('.') : 'body';
+              return `${field}: ${err.msg}`;
+            }).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errMsg = errorData.detail;
+          } else {
+            errMsg = JSON.stringify(errorData.detail);
+          }
+        } else if (errorData.error) {
+          errMsg = errorData.error;
+        } else if (errorData.message) {
+          errMsg = errorData.message;
+        } else {
+          errMsg = `Request failed with status ${response.status}`;
+        }
+        throw new Error(errMsg);
       }
+      
+      return await response.json();
     } catch (error) {
       console.warn('📋 Customer update failed, backend unavailable:', error.message);
       
@@ -182,7 +196,7 @@ export const customerService = {
         };
       }
       
-      throw new Error('Cannot update customer: ' + error.message);
+      throw new Error(error.message);
     }
   },
 
