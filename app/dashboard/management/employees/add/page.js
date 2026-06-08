@@ -40,6 +40,9 @@ export default function AddEmployeePage() {
     visa_expiry: "",
     insurance_policy_number: "",
     insurance_expiry: "",
+    insurance_provider: "",
+    insurance_agent_name: "",
+    insurance_status: "active",
     starting_salary: "",
     current_salary: "",
     annual_leave_entitlement: "30",
@@ -60,6 +63,30 @@ export default function AddEmployeePage() {
     } finally {
       setBranchesLoading(false);
     }
+  };
+
+  const handleInsuranceExpiryChange = (dateValue) => {
+    let newStatus = formData.insurance_status;
+    if (formData.insurance_status !== "under_process") {
+      if (!dateValue) {
+        newStatus = "active";
+      } else {
+        const todayStr = new Date().toISOString().split('T')[0];
+        newStatus = dateValue >= todayStr ? "active" : "expired";
+      }
+    }
+    setFormData(prev => ({
+      ...prev,
+      insurance_expiry: dateValue,
+      insurance_status: newStatus
+    }));
+  };
+
+  const handleInsuranceStatusChange = (statusValue) => {
+    setFormData(prev => ({
+      ...prev,
+      insurance_status: statusValue
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -95,6 +122,9 @@ export default function AddEmployeePage() {
         visa_expiry: formData.visa_expiry || "2099-12-31",
         insurance_policy_number: formData.insurance_policy_number || "",
         insurance_expiry: formData.insurance_expiry || "2099-12-31",
+        insurance_provider: formData.insurance_provider || "",
+        insurance_agent_name: formData.insurance_agent_name || "",
+        insurance_status: formData.insurance_status || "active",
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
@@ -283,6 +313,13 @@ export default function AddEmployeePage() {
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Annual Leave Entitlement (Days)</label>
               <input type="number" placeholder="30" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.annual_leave_entitlement} onChange={(e) => setFormData({...formData, annual_leave_entitlement: e.target.value})} />
             </div>
+          </div>
+        </div>
+
+        {/* Insurance Information */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Insurance Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Policy Number</label>
               <input type="text" placeholder="Enter policy number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_policy_number} onChange={(e) => setFormData({...formData, insurance_policy_number: e.target.value})} />
@@ -291,8 +328,24 @@ export default function AddEmployeePage() {
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Expiry</label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_expiry} onChange={(e) => setFormData({...formData, insurance_expiry: e.target.value})} />
+                <input type="date" className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_expiry} onChange={(e) => handleInsuranceExpiryChange(e.target.value)} />
               </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Provider</label>
+              <input type="text" placeholder="Enter insurance provider" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_provider} onChange={(e) => setFormData({...formData, insurance_provider: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Agent Name</label>
+              <input type="text" placeholder="Enter agent name" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_agent_name} onChange={(e) => setFormData({...formData, insurance_agent_name: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Insurance Status</label>
+              <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.insurance_status} onChange={(e) => handleInsuranceStatusChange(e.target.value)}>
+                <option value="active">Active</option>
+                <option value="expired">Expired</option>
+                <option value="under_process">Under Process</option>
+              </select>
             </div>
           </div>
         </div>

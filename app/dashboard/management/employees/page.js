@@ -655,6 +655,49 @@ export default function EmployeesPage() {
                         <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Expiry</label>
                         <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.insurance_expiry || '-'}</p>
                       </div>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Provider</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.insurance_provider || '-'}</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Agent Name</label>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedEmployee.insurance_agent_name || '-'}</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-4 border border-gray-200/20 dark:border-zinc-800/50">
+                        <label className="text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest block mb-1">Insurance Status</label>
+                        <div className="mt-1">
+                          {(() => {
+                            const fetchedStatus = selectedEmployee.insurance_status || "";
+                            let calculatedStatus = fetchedStatus;
+                            if (!calculatedStatus) {
+                              const expiryDate = selectedEmployee.insurance_expiry || "";
+                              if (!expiryDate) {
+                                calculatedStatus = "active";
+                              } else {
+                                const todayStr = new Date().toISOString().split('T')[0];
+                                calculatedStatus = expiryDate >= todayStr ? "active" : "expired";
+                              }
+                            }
+                            
+                            let badgeColor = "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20";
+                            let statusText = "Active";
+                            
+                            if (calculatedStatus === "expired") {
+                              badgeColor = "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20";
+                              statusText = "Expired";
+                            } else if (calculatedStatus === "under_process") {
+                              badgeColor = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+                              statusText = "Under Process";
+                            }
+
+                            return (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${badgeColor}`}>
+                                {statusText}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>

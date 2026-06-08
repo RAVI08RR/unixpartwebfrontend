@@ -100,7 +100,7 @@ export const poItemService = {
         id = parentItemId.item_id || parentItemId.parent_item_id || parentItemId.id;
         data = { ...parentItemId, ...data };
       }
-      return await fetchApi('/api/po-items/dismantle', {
+      return await fetchApi(`/api/po-items/${id}/dismantle`, {
         method: 'POST',
         body: JSON.stringify({
           parent_item_id: id,
