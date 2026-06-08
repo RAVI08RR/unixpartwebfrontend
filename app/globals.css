@@ -241,34 +241,61 @@ th.px-8.py-6.text-left.text-sm.font-black.text-gray-400.dark\:text-gray-500.uppe
     font-weight: 600;
 }
 
-/* Custom checkbox styling for black checkmarks */
+/* Custom checkbox styling using appearance: none for consistent cross-platform behavior */
 .checkbox-black {
-  accent-color: black;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-block;
+  vertical-align: middle;
+  background-origin: border-box;
+  user-select: none;
+  flex-shrink: 0;
+  width: 1rem !important; /* w-4 */
+  height: 1rem !important; /* h-4 */
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+  border: 1px solid #d1d5db !important; /* border-gray-300 */
+  border-radius: 0.25rem !important; /* rounded */
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+  cursor: pointer;
+  position: relative;
 }
 
+/* Size modifier for w-5 h-5 */
+.checkbox-black.w-5 {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+/* Dark mode unchecked state */
 .dark .checkbox-black {
-  accent-color: white;
+  background-color: #27272a !important; /* bg-zinc-800 */
+  border-color: #3f3f46 !important; /* border-zinc-700 */
 }
 
-/* Alternative approach for better browser support */
+/* Light mode checked state: Black background, white checkmark */
 .checkbox-black:checked {
-  background-color: black;
-  border-color: black;
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 85% 85% !important;
 }
 
+/* Dark mode checked state: White background, black checkmark */
 .dark .checkbox-black:checked {
-  background-color: white !important;
-  border-color: white !important;
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
   background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='black' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 85% 85% !important;
 }
 
-
-.checkbox-black {
-  accent-color: black !important;
-}
-
-.dark .checkbox-black {
-  accent-color: white !important;
+/* Focus styles */
+.checkbox-black:focus-visible {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
 }
 
 /* Global form focus styles - Fix for cutting border issue */
