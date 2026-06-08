@@ -78,7 +78,8 @@ export const customerService = {
         });
         
         const token = localStorage.getItem('access_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
         const response = await fetch(`${apiUrl}api/customers/`, {
           method: 'POST',
           headers: {
@@ -96,7 +97,8 @@ export const customerService = {
       } else {
         // Use JSON for regular data - also send directly to backend
         const token = localStorage.getItem('access_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
         const response = await fetch(`${apiUrl}api/customers/`, {
           method: 'POST',
           headers: {
@@ -137,7 +139,8 @@ export const customerService = {
         });
         
         const token = localStorage.getItem('access_token');
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
+        const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
         const response = await fetch(`${apiUrl}api/customers/${id}`, {
           method: 'PUT',
           headers: {
