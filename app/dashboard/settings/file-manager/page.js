@@ -11,13 +11,35 @@ import {
   Loader2,
   File,
   Image as ImageIcon,
-  Download
+  Download,
+  BookOpen,
+  CreditCard,
+  ShieldCheck,
+  Plane,
+  ScrollText,
+  HeartPulse,
+  GraduationCap,
+  Briefcase,
+  MoreHorizontal
 } from "lucide-react";
 import { fileManagerService } from "@/app/lib/services/fileManagerService";
 import { containerService } from "@/app/lib/services/containerService";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
 import { assetService } from "@/app/lib/services/assetService";
 import { employeeService } from "@/app/lib/services/employeeService";
+
+// Document type definitions for employees
+const EMPLOYEE_DOCUMENT_TYPES = [
+  { type: 'passport', name: 'Passport', icon: BookOpen, color: 'blue', bgLight: 'bg-blue-50', bgDark: 'dark:bg-blue-900/20', text: 'text-blue-500' },
+  { type: 'eid_front', name: 'EID Front', icon: CreditCard, color: 'emerald', bgLight: 'bg-emerald-50', bgDark: 'dark:bg-emerald-900/20', text: 'text-emerald-500' },
+  { type: 'eid_back', name: 'EID Back', icon: CreditCard, color: 'teal', bgLight: 'bg-teal-50', bgDark: 'dark:bg-teal-900/20', text: 'text-teal-500' },
+  { type: 'visa', name: 'Visa', icon: Plane, color: 'violet', bgLight: 'bg-violet-50', bgDark: 'dark:bg-violet-900/20', text: 'text-violet-500' },
+  { type: 'labour_contract', name: 'Labour Contract', icon: ScrollText, color: 'amber', bgLight: 'bg-amber-50', bgDark: 'dark:bg-amber-900/20', text: 'text-amber-500' },
+  { type: 'insurance', name: 'Insurance', icon: HeartPulse, color: 'rose', bgLight: 'bg-rose-50', bgDark: 'dark:bg-rose-900/20', text: 'text-rose-500' },
+  { type: 'education', name: 'Education', icon: GraduationCap, color: 'indigo', bgLight: 'bg-indigo-50', bgDark: 'dark:bg-indigo-900/20', text: 'text-indigo-500' },
+  { type: 'experience', name: 'Experience', icon: Briefcase, color: 'orange', bgLight: 'bg-orange-50', bgDark: 'dark:bg-orange-900/20', text: 'text-orange-500' },
+  { type: 'other', name: 'Other', icon: MoreHorizontal, color: 'gray', bgLight: 'bg-gray-50', bgDark: 'dark:bg-gray-900/20', text: 'text-gray-500' },
+];
 
 export default function FileManagerPage() {
   const [currentPath, setCurrentPath] = useState(null); // null means root
@@ -39,14 +61,22 @@ export default function FileManagerPage() {
   const [entityName, setEntityName] = useState("");
   const [docTypeName, setDocTypeName] = useState("");
 
+  // Whether we are showing the document type folder grid for employees
+  const isEmployeeDocTypeFolderView = currentPath === "employees" && selectedEntityId && !selectedDocType;
+
   // Fetch data when path, page, or search changes
   useEffect(() => {
+    // Don't fetch from API if we're showing the local doc-type folder grid
+    if (isEmployeeDocTypeFolderView) {
+      setIsLoading(false);
+      return;
+    }
     fetchData();
   }, [currentPath, selectedEntityId, selectedDocType, page]);
 
   // Debounced search
   useEffect(() => {
-    if (currentPath) {
+    if (currentPath && !isEmployeeDocTypeFolderView) {
       const timer = setTimeout(() => {
         setPage(1); // Reset to first page on search
         fetchData();
@@ -95,12 +125,23 @@ export default function FileManagerPage() {
 
   const handleSubfolderClick = (folder) => {
     if (!selectedEntityId) {
+      // Clicking on an employee/entity — set entity ID
       setSelectedEntityId(folder.entity_id || folder.id);
       setEntityName(folder.name || `Folder #${folder.entity_id || folder.id}`);
+      // For employees, doc type folders will be shown automatically (no API call needed)
+      // For other types, continue with existing behavior
     } else if (!selectedDocType) {
+      // For non-employee paths, this handles the old doc type drill-down
       setSelectedDocType(folder.document_type || folder.type || folder.name);
       setDocTypeName(folder.name || folder.document_type || folder.type);
     }
+    setPage(1);
+    setSearchQuery("");
+  };
+
+  const handleDocTypeFolderClick = (docTypeObj) => {
+    setSelectedDocType(docTypeObj.type);
+    setDocTypeName(docTypeObj.name);
     setPage(1);
     setSearchQuery("");
   };
@@ -160,6 +201,11 @@ export default function FileManagerPage() {
       console.error("Failed to download document:", error);
       alert("Failed to download document: " + error.message);
     }
+  };
+
+  // Get the icon component for a doc type
+  const getDocTypeInfo = (type) => {
+    return EMPLOYEE_DOCUMENT_TYPES.find(dt => dt.type === type) || EMPLOYEE_DOCUMENT_TYPES[EMPLOYEE_DOCUMENT_TYPES.length - 1];
   };
 
   return (
@@ -227,14 +273,18 @@ export default function FileManagerPage() {
               <>
                 <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-bold">
-                  <Folder className="w-4 h-4" />
+                  {(() => {
+                    const info = getDocTypeInfo(selectedDocType);
+                    const IconComp = info.icon;
+                    return <IconComp className="w-4 h-4" />;
+                  })()}
                   <span>{docTypeName || selectedDocType}</span>
                 </div>
               </>
             )}
           </div>
 
-          {currentPath && (
+          {currentPath && !isEmployeeDocTypeFolderView && (
             <div className="relative w-full md:w-64 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
@@ -283,6 +333,40 @@ export default function FileManagerPage() {
                     No folders available or you don't have access.
                   </div>
                 )}
+              </div>
+            ) : isEmployeeDocTypeFolderView ? (
+              /* Employee Document Type Folders View */
+              <div>
+                <div className="mb-6 px-1">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Documents — {entityName}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Select a document type to view files
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {EMPLOYEE_DOCUMENT_TYPES.map((docType) => {
+                    const IconComp = docType.icon;
+                    return (
+                      <button
+                        key={docType.type}
+                        onClick={() => handleDocTypeFolderClick(docType)}
+                        className="flex flex-col items-center text-center p-5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+                      >
+                        <div className={`w-14 h-14 ${docType.bgLight} ${docType.bgDark} rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                          <IconComp className={`w-7 h-7 ${docType.text}`} />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {docType.name}
+                        </span>
+                        <span className="text-[10px] uppercase font-semibold text-gray-400 mt-1 tracking-wide">
+                          {docType.type.replace(/_/g, ' ')}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ) : (
               /* Inside Folder View */

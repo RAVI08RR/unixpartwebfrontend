@@ -57,6 +57,14 @@ export default function DocumentsPage() {
       error('Please select a file');
       return;
     }
+    if (!formData.document_type) {
+      error('Please select a document type');
+      return;
+    }
+    if (!formData.document_name.trim()) {
+      error('Please enter a document name');
+      return;
+    }
 
     try {
       setUploading(true);
@@ -239,10 +247,13 @@ export default function DocumentsPage() {
                 >
                   <option value="">Select type</option>
                   <option value="passport">Passport</option>
+                  <option value="eid_front">EID Front</option>
+                  <option value="eid_back">EID Back</option>
                   <option value="visa">Visa</option>
-                  <option value="eid">Emirates ID</option>
-                  <option value="contract">Contract</option>
-                  <option value="certificate">Certificate</option>
+                  <option value="labour_contract">Labour Contract</option>
+                  <option value="insurance">Insurance</option>
+                  <option value="education">Education</option>
+                  <option value="experience">Experience</option>
                   <option value="other">Other</option>
                 </select>
               </div>

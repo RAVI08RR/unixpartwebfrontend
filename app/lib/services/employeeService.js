@@ -162,8 +162,8 @@ export const employeeService = {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      if (documentType) formData.append('document_type', documentType);
-      if (documentName) formData.append('document_name', documentName);
+      formData.append('document_type', documentType || 'other');
+      formData.append('document_name', documentName || file.name || 'document');
 
       const token = localStorage.getItem('access_token');
       if (!token) {
