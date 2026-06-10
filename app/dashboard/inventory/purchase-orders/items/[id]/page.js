@@ -217,6 +217,7 @@ function PurchaseOrderItemsContent({ params }) {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: `PO-${poId}-Labels-${new Date().toISOString().split('T')[0]}`,
+    preserveAfterPrint: true,
     onAfterPrint: () => {
       setLabelPreviewOpen(false);
       setSelectedItems([]);
@@ -1033,7 +1034,7 @@ function PurchaseOrderItemsContent({ params }) {
       )}
 
       {/* Hidden Print Component */}
-      <div className="hidden">
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
         <div ref={printRef}>
           <PrintableLabel items={getPrintData()} styles={labelStyles} labelSize={labelSize} />
         </div>

@@ -20,6 +20,22 @@ const PrintableLabel = React.forwardRef(({ items, styles, labelSize }, ref) => {
             width: 100%;
             height: 100%;
           }
+          .print-container .space-y-4 {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+          .print-container .space-y-4 > * + * {
+            margin-top: 0 !important;
+          }
+          .label-item {
+            margin: 0 !important;
+            page-break-after: always !important;
+            break-after: always !important;
+          }
+          .label-item:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
           .no-print {
             display: none !important;
           }
@@ -30,12 +46,13 @@ const PrintableLabel = React.forwardRef(({ items, styles, labelSize }, ref) => {
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="label-item bg-white border-2 border-gray-300 p-4 flex items-start justify-between"
+            className="label-item bg-white border-2 border-gray-300 flex items-start justify-between"
             style={{
               width: `${labelSize.width}in`,
               height: `${labelSize.height}in`,
               pageBreakAfter: index < items.length - 1 ? "always" : "auto",
               boxSizing: "border-box",
+              padding: labelSize.height < 1.5 ? '0.25rem' : labelSize.height < 2.5 ? '0.5rem' : '1rem',
             }}
           >
             <div className="flex-1 space-y-1">
@@ -115,7 +132,7 @@ const PrintableLabel = React.forwardRef(({ items, styles, labelSize }, ref) => {
             </div>
 
             {/* QR Code */}
-            <div className="shrink-0 ml-4">
+            <div className="shrink-0" style={{ marginLeft: labelSize.width < 2.5 ? '0.25rem' : '1rem' }}>
               <QRCodeSVG
                 value={item.qr_data}
                 size={styles.qrSize}
