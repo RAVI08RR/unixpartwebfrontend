@@ -187,12 +187,20 @@ export const leaveService = {
   },
 
   // Upload leave document
-  uploadDocument: async (leaveId, file, documentName) => {
+  uploadDocument: async (leaveId, file, documentName, documentType) => {
     try {
+      const allowedEnums = [
+        'passport', 'eid_front', 'eid_back', 'visa', 'labour_contract', 
+        'insurance', 'education', 'experience', 'other', 'medical', 'travel'
+      ];
+      const type = documentType && allowedEnums.includes(documentType.toLowerCase())
+        ? documentType.toLowerCase()
+        : 'other';
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('document_name', documentName || file.name || 'document');
-      formData.append('document_type', 'leave_proof'); 
+      formData.append('document_type', type);
 
       const token = localStorage.getItem('access_token');
       if (!token) {

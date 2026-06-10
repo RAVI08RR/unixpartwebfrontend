@@ -78,7 +78,17 @@ export async function PUT(request, { params }) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Backend returned non-JSON response for PUT:', text);
+      return NextResponse.json(
+        { error: 'Backend returned invalid response', details: text },
+        { status: response.status }
+      );
+    }
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(
@@ -105,7 +115,17 @@ export async function DELETE(request, { params }) {
       headers,
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Backend returned non-JSON response for DELETE:', text);
+      return NextResponse.json(
+        { error: 'Backend returned invalid response', details: text },
+        { status: response.status }
+      );
+    }
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(

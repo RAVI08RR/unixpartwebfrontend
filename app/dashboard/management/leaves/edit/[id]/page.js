@@ -41,6 +41,38 @@ export default function EditLeavePage() {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleStartDateChange = (val) => {
+    setFormData(prev => {
+      const newStart = val;
+      let newTotal = prev.total_days;
+      if (newStart && prev.end_date) {
+        const start = new Date(newStart);
+        const end = new Date(prev.end_date);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const diffTime = end.getTime() - start.getTime();
+          newTotal = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+        }
+      }
+      return { ...prev, start_date: newStart, total_days: newTotal };
+    });
+  };
+
+  const handleEndDateChange = (val) => {
+    setFormData(prev => {
+      const newEnd = val;
+      let newTotal = prev.total_days;
+      if (prev.start_date && newEnd) {
+        const start = new Date(prev.start_date);
+        const end = new Date(newEnd);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const diffTime = end.getTime() - start.getTime();
+          newTotal = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+        }
+      }
+      return { ...prev, end_date: newEnd, total_days: newTotal };
+    });
+  };
+
   useEffect(() => {
     fetchData();
   }, [params.id]);
@@ -84,18 +116,15 @@ export default function EditLeavePage() {
       if (selectedFiles.length > 0) {
         console.log(`Uploading ${selectedFiles.length} new proof documents for leave request ID ${params.id}`);
         for (const file of selectedFiles) {
-          await leaveService.uploadDocument(params.id, file, file.name);
+          await leaveService.uploadDocument(params.id, file, file.name, 'other');
         }
       }
 
       const payload = {
-        employee_id: parseInt(formData.employee_id),
-        leave_type: formData.leave_type,
         start_date: formData.start_date,
         end_date: formData.end_date,
         total_days: parseInt(formData.total_days) || 1,
         reason: formData.reason,
-        proof_documents: formData.proof_documents,
       };
 
       await leaveService.update(params.id, payload);
@@ -185,7 +214,7 @@ export default function EditLeavePage() {
                     type="date"
                     className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.start_date}
-                    onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
                     required
                   />
                 </div>
@@ -201,7 +230,7 @@ export default function EditLeavePage() {
                     type="date"
                     className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.end_date}
-                    onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
                     required
                   />
                 </div>

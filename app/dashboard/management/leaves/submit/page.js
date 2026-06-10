@@ -41,6 +41,38 @@ export default function SubmitLeavePage() {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleStartDateChange = (val) => {
+    setFormData(prev => {
+      const newStart = val;
+      let newTotal = prev.total_days;
+      if (newStart && prev.end_date) {
+        const start = new Date(newStart);
+        const end = new Date(prev.end_date);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const diffTime = end.getTime() - start.getTime();
+          newTotal = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+        }
+      }
+      return { ...prev, start_date: newStart, total_days: newTotal };
+    });
+  };
+
+  const handleEndDateChange = (val) => {
+    setFormData(prev => {
+      const newEnd = val;
+      let newTotal = prev.total_days;
+      if (prev.start_date && newEnd) {
+        const start = new Date(prev.start_date);
+        const end = new Date(newEnd);
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+          const diffTime = end.getTime() - start.getTime();
+          newTotal = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1);
+        }
+      }
+      return { ...prev, end_date: newEnd, total_days: newTotal };
+    });
+  };
+
   const handleFileTypeChange = (index, type) => {
     setSelectedFiles(prev => {
       const newFiles = [...prev];
@@ -99,7 +131,7 @@ export default function SubmitLeavePage() {
         if (leaveId) {
           console.log(`Uploading ${selectedFiles.length} proof documents for leave request ID ${leaveId}`);
           for (const fileObj of selectedFiles) {
-            await leaveService.uploadDocument(leaveId, fileObj.file, fileObj.file.name);
+            await leaveService.uploadDocument(leaveId, fileObj.file, fileObj.file.name, fileObj.type);
           }
         } else {
           throw new Error("Leave request was submitted, but could not determine its ID to upload documents.");
@@ -181,7 +213,7 @@ export default function SubmitLeavePage() {
                     type="date"
                     className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.start_date}
-                    onChange={(e) => setFormData({...formData, start_date: e.target.value})}
+                    onChange={(e) => handleStartDateChange(e.target.value)}
                     required
                   />
                 </div>
@@ -197,7 +229,7 @@ export default function SubmitLeavePage() {
                     type="date"
                     className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={formData.end_date}
-                    onChange={(e) => setFormData({...formData, end_date: e.target.value})}
+                    onChange={(e) => handleEndDateChange(e.target.value)}
                     required
                   />
                 </div>
