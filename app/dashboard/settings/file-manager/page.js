@@ -12,6 +12,7 @@ import {
   File,
   Image as ImageIcon,
   Download,
+  Eye,
   BookOpen,
   CreditCard,
   ShieldCheck,
@@ -20,7 +21,8 @@ import {
   HeartPulse,
   GraduationCap,
   Briefcase,
-  MoreHorizontal
+  MoreHorizontal,
+  X
 } from "lucide-react";
 import { fileManagerService } from "@/app/lib/services/fileManagerService";
 import { containerService } from "@/app/lib/services/containerService";
@@ -61,22 +63,21 @@ export default function FileManagerPage() {
   const [entityName, setEntityName] = useState("");
   const [docTypeName, setDocTypeName] = useState("");
 
+
+
   // Whether we are showing the document type folder grid for employees
   const isEmployeeDocTypeFolderView = currentPath === "employees" && selectedEntityId && !selectedDocType;
+  // Whether we are inside an employee's document type folder (showing docs)
+  const isEmployeeDocumentsView = currentPath === "employees" && selectedEntityId && selectedDocType;
 
   // Fetch data when path, page, or search changes
   useEffect(() => {
-    // Don't fetch from API if we're showing the local doc-type folder grid
-    if (isEmployeeDocTypeFolderView) {
-      setIsLoading(false);
-      return;
-    }
     fetchData();
   }, [currentPath, selectedEntityId, selectedDocType, page]);
 
   // Debounced search
   useEffect(() => {
-    if (currentPath && !isEmployeeDocTypeFolderView) {
+    if (currentPath) {
       const timer = setTimeout(() => {
         setPage(1); // Reset to first page on search
         fetchData();
@@ -93,7 +94,7 @@ export default function FileManagerPage() {
         const data = await fileManagerService.getRootFolders();
         setRootFolders(data);
       } else {
-        // Fetch folder contents
+        // Fetch folder contents via file manager API for all entity types (including employees)
         const data = await fileManagerService.getFolderContents(currentPath, {
           page,
           page_size: 50,
@@ -105,7 +106,7 @@ export default function FileManagerPage() {
           folders: data.folders || [],
           documents: data.documents || []
         });
-        setTotalPages(Math.ceil((data.total_documents + data.total_folders) / 50) || 1);
+        setTotalPages(Math.ceil(((data.total_documents || 0) + (data.total_folders || 0)) / 50) || 1);
       }
     } catch (error) {
       console.error("Failed to fetch file manager data:", error);
@@ -169,9 +170,15 @@ export default function FileManagerPage() {
     return <File className="w-8 h-8 text-blue-500" />;
   };
 
+  // Download document - uses same API as employee documents page
   const handleDownload = async (doc) => {
     try {
-      const entityId = selectedEntityId || doc.container_id || doc.po_id || doc.asset_id || doc.employee_id || doc.entity_id;
+      const entityId = selectedEntityId || doc.container_id || doc.purchase_order_id || doc.po_id || doc.asset_id || doc.employee_id || doc.entity_id;
+      const documentId = doc.document_id || doc.id;
+      const fileName = doc.file_name || doc.original_name || doc.document_name || `document_${documentId}`;
+      
+      console.log('📥 File Manager Download:', { entityId, documentId, fileName, currentPath, doc });
+
       if (!entityId) {
         if (doc.file_url) {
           window.open(doc.file_url, '_blank');
@@ -180,16 +187,21 @@ export default function FileManagerPage() {
         alert("Cannot download document: missing entity context.");
         return;
       }
+
+      if (!documentId) {
+        alert("Cannot download document: missing document ID.");
+        return;
+      }
       
-      const documentId = doc.id;
       if (currentPath === "containers") {
         await containerService.downloadDocument(entityId, documentId);
-      } else if (currentPath === "purchase-orders") {
+      } else if (currentPath === "purchase-orders" || currentPath === "purchase_orders") {
         await purchaseOrderService.downloadDocument(entityId, documentId);
       } else if (currentPath === "assets") {
         await assetService.downloadDocument(entityId, documentId);
       } else if (currentPath === "employees") {
-        await employeeService.downloadDocument(entityId, documentId);
+        // Same API as employee documents page: GET /api/employees/{employee_id}/documents/{document_id}/download
+        await employeeService.downloadDocument(entityId, documentId, fileName);
       } else {
         if (doc.file_url) {
           window.open(doc.file_url, '_blank');
@@ -202,6 +214,106 @@ export default function FileManagerPage() {
       alert("Failed to download document: " + error.message);
     }
   };
+
+
+  // View/Preview document - uses same download API but opens in browser
+  const handleView = async (doc) => {
+    try {
+      const entityId = selectedEntityId || doc.container_id || doc.purchase_order_id || doc.po_id || doc.asset_id || doc.employee_id || doc.entity_id;
+      const documentId = doc.document_id || doc.id;
+
+      console.log('👁️ File Manager View:', { entityId, documentId, currentPath, doc });
+
+      if (!entityId) {
+        if (doc.file_url) {
+          window.open(doc.file_url, '_blank');
+          return;
+        }
+        alert("Cannot view document: missing entity context.");
+        return;
+      }
+
+      if (!documentId) {
+        alert("Cannot view document: missing document ID.");
+        return;
+      }
+
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert("No authentication token found");
+        return;
+      }
+
+      // Use the same download API endpoint: GET /api/employees/{employee_id}/documents/{document_id}/download
+      let downloadUrl = '';
+      if (currentPath === "employees") {
+        downloadUrl = `/api/employees/${entityId}/documents/${documentId}/download`;
+      } else if (currentPath === "containers") {
+        downloadUrl = `/api/containers/${entityId}/documents/${documentId}/download`;
+      } else if (currentPath === "purchase-orders" || currentPath === "purchase_orders") {
+        downloadUrl = `/api/purchase-orders/${entityId}/documents/${documentId}/download`;
+      } else if (currentPath === "assets") {
+        downloadUrl = `/api/assets/${entityId}/documents/${documentId}/download`;
+      } else {
+        if (doc.file_url) {
+          window.open(doc.file_url, '_blank');
+          return;
+        }
+        alert("View not supported for this folder type.");
+        return;
+      }
+
+      console.log('👁️ Fetching preview from:', downloadUrl);
+
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load document (${response.status})`);
+      }
+
+      const contentType = response.headers.get('Content-Type') || '';
+      console.log('👁️ Response Content-Type:', contentType);
+
+      // Case 1: Backend returns JSON (URL string)
+      if (contentType.includes('application/json')) {
+        const data = await response.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(data);
+        } catch (e) {
+          parsed = data;
+        }
+
+        const fileUrl = typeof parsed === 'string' ? parsed : (parsed?.url || parsed?.file_url || parsed?.download_url);
+        
+        if (fileUrl && (fileUrl.startsWith('http') || fileUrl.startsWith('/'))) {
+          console.log('👁️ Got file URL for preview:', fileUrl);
+          window.open(fileUrl, '_blank');
+          return;
+        }
+
+        throw new Error('Received JSON response but no downloadable URL');
+      }
+
+      // Case 2: Binary file response
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      
+      // Clean up after a delay
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (error) {
+      console.error("Failed to view document:", error);
+      alert("Failed to view document: " + error.message);
+    }
+  };
+
+
 
   // Get the icon component for a doc type
   const getDocTypeInfo = (type) => {
@@ -346,11 +458,31 @@ export default function FileManagerPage() {
                   </p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {EMPLOYEE_DOCUMENT_TYPES.map((docType) => {
+                  {(contents.folders && contents.folders.length > 0 ? contents.folders : EMPLOYEE_DOCUMENT_TYPES).map((folder, idx) => {
+                    let typeKey = '';
+                    if (currentPath === "employees") {
+                      const nameToResolve = folder.name || '';
+                      const matchedType = EMPLOYEE_DOCUMENT_TYPES.find(dt => 
+                        dt.type === nameToResolve.toLowerCase() || 
+                        dt.name.toLowerCase() === nameToResolve.toLowerCase()
+                      );
+                      typeKey = matchedType ? matchedType.type : nameToResolve.toLowerCase().trim().replace(/\s+/g, '_');
+                    } else {
+                      typeKey = (folder.document_type || folder.type || folder.name || '').toLowerCase();
+                    }
+                    const docType = EMPLOYEE_DOCUMENT_TYPES.find(dt => dt.type === typeKey) || {
+                      type: typeKey,
+                      name: folder.name || typeKey,
+                      icon: Folder,
+                      color: 'blue',
+                      bgLight: 'bg-blue-50',
+                      bgDark: 'dark:bg-blue-900/20',
+                      text: 'text-blue-500'
+                    };
                     const IconComp = docType.icon;
                     return (
                       <button
-                        key={docType.type}
+                        key={`${docType.type}-${idx}`}
                         onClick={() => handleDocTypeFolderClick(docType)}
                         className="flex flex-col items-center text-center p-5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
                       >
@@ -401,29 +533,40 @@ export default function FileManagerPage() {
                         key={`doc-${idx}`}
                         className="relative flex flex-col items-center text-center p-4 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-sm hover:shadow-md transition-all group"
                       >
-                        <div className="w-full flex justify-end absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Action buttons - top right on hover */}
+                        <div className="w-full flex justify-end absolute top-2 right-2 gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleView(doc); }}
+                            className="p-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400"
+                            title="View Document"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleDownload(doc); }}
                             className="p-1.5 bg-gray-100 dark:bg-zinc-800 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300"
-                            title="Download/Open"
+                            title="Download Document"
                           >
                             <Download className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-3">
+                        <div 
+                          className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center mb-3 cursor-pointer"
+                          onClick={() => handleView(doc)}
+                        >
                           {getFileIcon(doc.file_name || doc.original_name)}
                         </div>
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200 line-clamp-2 w-full px-2" title={doc.file_name || doc.original_name || 'Document'}>
-                          {doc.file_name || doc.original_name || 'Document'}
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200 line-clamp-2 w-full px-2" title={doc.file_name || doc.original_name || doc.document_name || 'Document'}>
+                          {doc.file_name || doc.original_name || doc.document_name || 'Document'}
                         </span>
                         {(doc.document_type || doc.type) && (
                           <span className="text-[10px] uppercase font-bold text-gray-400 mt-1">
                             {doc.document_type || doc.type}
                           </span>
                         )}
-                        {doc.created_at && (
+                        {(doc.created_at || doc.uploaded_at) && (
                           <span className="text-[10px] text-gray-400 mt-1">
-                            {new Date(doc.created_at).toLocaleDateString()}
+                            {new Date(doc.created_at || doc.uploaded_at).toLocaleDateString()}
                           </span>
                         )}
                       </div>
@@ -458,6 +601,8 @@ export default function FileManagerPage() {
           </div>
         )}
       </div>
+
+
     </div>
   );
 }

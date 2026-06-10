@@ -89,9 +89,9 @@ export default function DocumentsPage() {
     }
   };
 
-  const handleDownload = async (documentId) => {
+  const handleDownload = async (documentId, fileName) => {
     try {
-      await employeeService.downloadDocument(params.id, documentId);
+      await employeeService.downloadDocument(params.id, documentId, fileName);
       success('Document downloaded');
     } catch (err) {
       error('Failed to download document: ' + err.message);
@@ -196,7 +196,7 @@ export default function DocumentsPage() {
                 </div>
                 <div className="flex gap-2 mt-4">
                   <button
-                    onClick={() => handleDownload(doc.id)}
+                    onClick={() => handleDownload(doc.id, doc.file_name || doc.document_name)}
                     className="flex-1 px-3 py-2 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-700 text-sm flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" />

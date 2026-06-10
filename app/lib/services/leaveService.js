@@ -44,10 +44,26 @@ export const leaveService = {
   // Submit leave
   submit: async (leaveData) => {
     try {
-      return await fetchApi('/api/leaves', {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/leaves/', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(leaveData),
       });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to submit leave');
+      }
+
+      return await response.json();
     } catch (error) {
       throw new Error('Cannot submit leave: ' + error.message);
     }

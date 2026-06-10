@@ -190,12 +190,14 @@ export const employeeService = {
     }
   },
 
-  downloadDocument: async (employeeId, documentId) => {
+  downloadDocument: async (employeeId, documentId, fileName) => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
         throw new Error('No authentication token found');
       }
+
+      console.log(`📥 Downloading: employee=${employeeId}, doc=${documentId}, name=${fileName}`);
 
       const response = await fetch(`/api/employees/${employeeId}/documents/${documentId}/download`, {
         method: 'GET',
@@ -205,18 +207,80 @@ export const employeeService = {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download document');
+        const errorText = await response.text().catch(() => '');
+        console.error(`📥 Download failed (${response.status}):`, errorText);
+        throw new Error(errorText || `Failed to download document (${response.status})`);
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `document_${documentId}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const contentType = response.headers.get('Content-Type') || '';
+      console.log(`📥 Response Content-Type: ${contentType}`);
+
+      // Case 1: Backend returns JSON (URL string or base64)
+      if (contentType.includes('application/json')) {
+        const data = await response.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(data);
+        } catch (e) {
+          parsed = data;
+        }
+
+        // If it's a URL string, open/download from that URL
+        const fileUrl = typeof parsed === 'string' ? parsed : (parsed?.url || parsed?.file_url || parsed?.download_url);
+        
+        if (fileUrl && (fileUrl.startsWith('http') || fileUrl.startsWith('/'))) {
+          console.log(`📥 Got file URL: ${fileUrl}`);
+          // Fetch the actual file from the URL
+          try {
+            const fileResponse = await fetch(fileUrl);
+            if (fileResponse.ok) {
+              const blob = await fileResponse.blob();
+              const downloadName = fileName || `document_${documentId}`;
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = downloadName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(() => window.URL.revokeObjectURL(url), 500);
+              return;
+            }
+          } catch (fetchErr) {
+            console.log('📥 Direct fetch failed, opening in new tab:', fetchErr.message);
+          }
+          // Fallback: open URL in new tab
+          window.open(fileUrl, '_blank');
+          return;
+        }
+
+        console.log('📥 JSON response (not a URL):', data?.substring?.(0, 200) || data);
+      }
+
+      // Case 2: Binary file response — download as blob
+      // Try to get filename from Content-Disposition header
+      let downloadName = fileName || `document_${documentId}`;
+      const contentDisposition = response.headers.get('Content-Disposition');
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          downloadName = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      const blob = contentType.includes('application/json') ? null : await response.blob();
+      if (blob && blob.size > 0) {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = downloadName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 500);
+      } else {
+        throw new Error('No downloadable content received from server');
+      }
     } catch (error) {
       console.error(`Failed to download document ${documentId}:`, error);
       throw error;

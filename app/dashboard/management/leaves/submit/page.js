@@ -30,12 +30,23 @@ export default function SubmitLeavePage() {
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files).map(file => ({
+      file,
+      type: "medical"
+    }));
     setSelectedFiles(prev => [...prev, ...files]);
   };
 
   const handleRemoveFile = (index) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileTypeChange = (index, type) => {
+    setSelectedFiles(prev => {
+      const newFiles = [...prev];
+      newFiles[index].type = type;
+      return newFiles;
+    });
   };
 
   useEffect(() => {
@@ -61,16 +72,24 @@ export default function SubmitLeavePage() {
         if (!formData.employee_id) {
           throw new Error("Please select an employee first");
         }
-        for (const file of selectedFiles) {
+        for (const fileObj of selectedFiles) {
+          console.log("Uploading file:", fileObj.file.name, "Type:", fileObj.type);
           const res = await employeeService.uploadDocument(
             formData.employee_id,
-            file,
-            "leave_proof",
-            file.name
+            fileObj.file,
+            fileObj.type,
+            fileObj.file.name
           );
-          const path = res.document_path || res.file_path || res.path;
+          console.log("Upload response:", res);
+          // Try to get any path or ID from the response
+          const path = res.document_path || res.file_path || res.path || res.file_url || res.url || (res.id ? res.id.toString() : null);
+          
           if (path) {
             uploadedPaths.push(path);
+          } else {
+            // Fallback: if we got a success response but no path, push the filename
+            console.warn("Could not extract path from response, using filename as fallback");
+            uploadedPaths.push(fileObj.file.name);
           }
         }
       }
@@ -85,6 +104,7 @@ export default function SubmitLeavePage() {
         proof_documents: uploadedPaths,
       };
 
+      console.log("Submitting payload:", payload);
       await leaveService.submit(payload);
       success("Leave request submitted successfully!");
       router.push("/dashboard/management/leaves");
@@ -236,19 +256,30 @@ export default function SubmitLeavePage() {
                 <div className="space-y-2">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Files to upload</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-zinc-800">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">{file.name}</span>
+                    {selectedFiles.map((fileObj, idx) => (
+                      <div key={idx} className="flex flex-col gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-zinc-800">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">{fileObj.file.name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(idx)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded text-red-500"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveFile(idx)}
-                          className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded text-red-500"
+                        <select
+                          value={fileObj.type}
+                          onChange={(e) => handleFileTypeChange(idx, e.target.value)}
+                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                          <X className="w-4 h-4" />
-                        </button>
+                          <option value="medical">Medical</option>
+                          <option value="travel">Travel</option>
+                          <option value="leave_proof">Other Leave Proof</option>
+                        </select>
                       </div>
                     ))}
                   </div>

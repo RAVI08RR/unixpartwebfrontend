@@ -222,7 +222,20 @@ export default function QuickSearch() {
     try {
       const item = await poItemService.getByStockNumber(stockNumber);
       if (item && item.id) {
-        await poItemService.dismantle(item.id);
+        const childItems = [
+          {
+            po_id: item.po_id || 0,
+            item_id: item.item_id || 0,
+            po_description: item.po_description || "",
+            stock_notes: item.stock_notes || "",
+            current_branch_id: item.current_branch_id || 0,
+            status: "in_stock",
+            is_dismantled: false,
+            quantity: item.quantity || 1,
+            stock_number: item.stock_number || ""
+          }
+        ];
+        await poItemService.dismantle(item.id, { child_items: childItems });
         success(`Item ${stockNumber} dismantled successfully`);
         // Clear the search input
         setDismantleStockNumber("");

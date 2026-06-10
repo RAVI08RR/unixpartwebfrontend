@@ -6,7 +6,7 @@ import {
   Search, Filter, Download, Plus, MoreVertical,
   UserCheck, Mail, Phone, Building2, Calendar,
   Edit, Trash2, Eye, FileText, CreditCard, Briefcase, X, DollarSign,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Upload, AlertCircle, ExternalLink, Loader2
 } from "lucide-react";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
@@ -30,6 +30,14 @@ export default function EmployeesPage() {
   const [activeTab, setActiveTab] = useState('personal');
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState(null);
+  const [uploadDocType, setUploadDocType] = useState("other");
   
   const { success, error } = useToast();
   const { hasPermission } = usePermission();
@@ -124,6 +132,97 @@ export default function EmployeesPage() {
       setEmployeeDetails(employee);
     } finally {
       setLoadingDetails(false);
+    }
+  };
+
+  const handleOpenDocuments = async (employee) => {
+    setSelectedEmployee(employee);
+    setDocumentsModalOpen(true);
+    await fetchDocuments(employee.id);
+  };
+
+  const fetchDocuments = async (employeeId) => {
+    setLoadingDocuments(true);
+    try {
+      const docs = await employeeService.getDocuments(employeeId);
+      setDocuments(Array.isArray(docs) ? docs : []);
+    } catch (err) {
+      console.error("Failed to fetch documents:", err);
+      setDocuments([]);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedEmployee) return;
+
+    if (!uploadDocType) {
+      error("Please select a document type first");
+      return;
+    }
+
+    setUploadingDocument(true);
+    try {
+      const docName = file.name.split('.').slice(0, -1).join('.');
+      await employeeService.uploadDocument(selectedEmployee.id, file, uploadDocType, docName);
+      success("Document uploaded successfully!");
+      await fetchDocuments(selectedEmployee.id);
+      setUploadDocType("other");
+    } catch (err) {
+      error("Failed to upload document: " + err.message);
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId) => {
+    try {
+      await employeeService.deleteDocument(documentId);
+      success("Document deleted successfully!");
+      if (selectedEmployee) {
+        await fetchDocuments(selectedEmployee.id);
+      }
+      setDeleteDocModalOpen(false);
+      setDocToDelete(null);
+    } catch (err) {
+      error("Failed to delete document: " + err.message);
+    }
+  };
+
+  const handleDownloadDocument = async (documentId, fileName) => {
+    if (!selectedEmployee) return;
+    try {
+      await employeeService.downloadDocument(selectedEmployee.id, documentId, fileName);
+    } catch (err) {
+      error("Failed to download document: " + err.message);
+    }
+  };
+
+  const handleViewDocument = async (documentId) => {
+    if (!selectedEmployee) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const url = `/api/employees/${selectedEmployee.id}/documents/${documentId}/download`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load document');
+      }
+      
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
+    } catch (err) {
+      error("Failed to view document: " + err.message);
     }
   };
 
@@ -358,13 +457,16 @@ export default function EmployeesPage() {
                                         <FileText className="w-4 h-4 text-gray-400" />
                                         Visa History
                                       </Link>
-                                      <Link
-                                        href={`/dashboard/management/employees/${employee.id}/documents`}
-                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                      <button
+                                        onClick={() => {
+                                          handleOpenDocuments(employee);
+                                          setMenuOpenId(null);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
                                       >
                                         <FileText className="w-4 h-4 text-gray-400" />
                                         Documents
-                                      </Link>
+                                      </button>
                                       <Link
                                         href={`/dashboard/management/employees/${employee.id}/bank-details`}
                                         className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
@@ -720,6 +822,223 @@ export default function EmployeesPage() {
                   Edit Employee
                 </Link>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Documents Modal */}
+      {documentsModalOpen && selectedEmployee && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-black dark:text-white">Documents for {selectedEmployee.first_name} {selectedEmployee.last_name}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Manage and view documents related to this employee.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedEmployee(null);
+                  setDocuments([]);
+                }}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {loadingDocuments ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 text-sm font-bold">Loading documents...</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Show all uploaded documents */}
+                {documents.length > 0 ? (
+                  documents.map((doc) => {
+                    const docTypeNames = {
+                      'passport': 'Passport',
+                      'eid_front': 'EID Front',
+                      'eid_back': 'EID Back',
+                      'visa': 'Visa',
+                      'labour_contract': 'Labour Contract',
+                      'insurance': 'Insurance',
+                      'education': 'Education',
+                      'experience': 'Experience',
+                      'other': 'Other'
+                    };
+                    const displayName = doc.document_name || (docTypeNames[doc.document_type] || doc.document_type || 'General').toUpperCase();
+                    
+                    return (
+                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                        <div className="flex items-center gap-3">
+                          <div 
+                            className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                            onClick={() => handleViewDocument(doc.id)}
+                            title="Click to view full size"
+                          >
+                            {doc.file_name && (doc.file_name.endsWith('.jpg') || doc.file_name.endsWith('.jpeg') || doc.file_name.endsWith('.png') || doc.file_name.endsWith('.webp')) ? (
+                              <img 
+                                src={`/api/employees/${selectedEmployee.id}/documents/${doc.id}/download`}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.nextSibling.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className="w-full h-full flex items-center justify-center" style={{ display: doc.file_name && (doc.file_name.endsWith('.jpg') || doc.file_name.endsWith('.jpeg') || doc.file_name.endsWith('.png') || doc.file_name.endsWith('.webp')) ? 'none' : 'flex' }}>
+                              <FileText className="w-6 h-6 text-gray-400" />
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{displayName}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Uploaded {doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString() : 'N/A'} • {doc.document_type || 'General'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewDocument(doc.id)}
+                            className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="View in new tab"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleDownloadDocument(doc.id, doc.file_name || doc.document_name)}
+                            className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Download file"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDocToDelete(doc);
+                              setDeleteDocModalOpen(true);
+                            }}
+                            className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            title="Delete document"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
+                  </div>
+                )}
+
+                {/* Upload new document section */}
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800 space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-black text-gray-400 dark:text-zinc-500 uppercase tracking-widest mb-1.5">Document Type</label>
+                      <select
+                        value={uploadDocType}
+                        onChange={(e) => setUploadDocType(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
+                      >
+                        <option value="passport">Passport</option>
+                        <option value="eid_front">EID Front</option>
+                        <option value="eid_back">EID Back</option>
+                        <option value="visa">Visa</option>
+                        <option value="labour_contract">Labour Contract</option>
+                        <option value="insurance">Insurance</option>
+                        <option value="education">Education</option>
+                        <option value="experience">Experience</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-end flex-1 sm:flex-none">
+                      <label className="w-full flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors h-[42px]">
+                        {uploadingDocument ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4" />
+                            Upload File
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          disabled={uploadingDocument}
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                    Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+              <button
+                onClick={() => {
+                  setDocumentsModalOpen(false);
+                  setSelectedEmployee(null);
+                  setDocuments([]);
+                }}
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Document Confirmation Modal */}
+      {deleteDocModalOpen && docToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+              <AlertCircle className="w-10 h-10 text-red-600" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Document?</h2>
+              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                Are you sure you want to delete this document? This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  setDeleteDocModalOpen(false);
+                  setDocToDelete(null);
+                }}
+                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handleDeleteDocument(docToDelete.id)}
+                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+              >
+                Delete Document
+              </button>
             </div>
           </div>
         </div>

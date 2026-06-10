@@ -160,7 +160,20 @@ function PurchaseOrderItemsContent({ params }) {
 
   const handleDismantle = async () => {
     try {
-      await poItemService.dismantle({ item_id: selectedItem.id });
+      const childItems = [
+        {
+          po_id: selectedItem.po_id || 0,
+          item_id: selectedItem.item_id || 0,
+          po_description: selectedItem.po_description || "",
+          stock_notes: selectedItem.stock_notes || "",
+          current_branch_id: selectedItem.current_branch_id || 0,
+          status: "in_stock",
+          is_dismantled: false,
+          quantity: selectedItem.quantity || 1,
+          stock_number: selectedItem.stock_number || ""
+        }
+      ];
+      await poItemService.dismantle(selectedItem.id, { child_items: childItems });
       success("Item dismantled successfully");
       setDismantleModalOpen(false);
       fetchData();
