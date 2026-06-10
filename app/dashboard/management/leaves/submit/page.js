@@ -71,26 +71,41 @@ export default function SubmitLeavePage() {
         throw new Error("Please select an employee first");
       }
 
-      const payload = new FormData();
-      payload.append('employee_id', parseInt(formData.employee_id));
-      payload.append('leave_type', formData.leave_type);
-      payload.append('start_date', formData.start_date ? formData.start_date.trim() : '');
-      payload.append('end_date', formData.end_date ? formData.end_date.trim() : '');
-      payload.append('total_days', parseInt(formData.total_days) || 1);
-      
-      if (formData.reason) {
-        payload.append('reason', formData.reason);
-      }
+      const payload = {
+        employee_id: parseInt(formData.employee_id),
+        leave_type: formData.leave_type,
+        start_date: formData.start_date ? formData.start_date.trim() : '',
+        end_date: formData.end_date ? formData.end_date.trim() : '',
+        total_days: parseInt(formData.total_days) || 1,
+        reason: formData.reason || '',
+      };
 
+      console.log("Submitting leave request payload:", payload);
+      const newLeave = await leaveService.submit(payload);
+      
+      let leaveId = newLeave?.id || newLeave?.data?.id;
+      
       if (selectedFiles.length > 0) {
-        for (const fileObj of selectedFiles) {
-          payload.append('files', fileObj.file);
-          payload.append('document_types', fileObj.type);
+        if (!leaveId) {
+          console.warn("New leave ID not found in response, attempting fallback retrieval...");
+          const allLeaves = await leaveService.getAll();
+          const employeeLeaves = allLeaves.filter(l => l.employee_id === parseInt(formData.employee_id));
+          employeeLeaves.sort((a, b) => b.id - a.id);
+          if (employeeLeaves.length > 0) {
+            leaveId = employeeLeaves[0].id;
+          }
+        }
+
+        if (leaveId) {
+          console.log(`Uploading ${selectedFiles.length} proof documents for leave request ID ${leaveId}`);
+          for (const fileObj of selectedFiles) {
+            await leaveService.uploadDocument(leaveId, fileObj.file, fileObj.file.name);
+          }
+        } else {
+          throw new Error("Leave request was submitted, but could not determine its ID to upload documents.");
         }
       }
 
-      console.log("Submitting FormData payload");
-      await leaveService.submit(payload);
       success("Leave request submitted successfully!");
       router.push("/dashboard/management/leaves");
     } catch (err) {

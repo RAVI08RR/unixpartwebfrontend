@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Calendar, Upload, FileText, X } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Upload, FileText, X, Download } from "lucide-react";
 import { leaveService } from "@/app/lib/services/leaveService";
 import { employeeService } from "@/app/lib/services/employeeService";
 import { useToast } from "@/app/components/Toast";
@@ -29,6 +29,7 @@ export default function EditLeavePage() {
     proof_documents: [],
   });
 
+  const [documents, setDocuments] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
 
   const handleFileChange = (e) => {
@@ -47,12 +48,14 @@ export default function EditLeavePage() {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-      const [leaveData, employeesData] = await Promise.all([
+      const [leaveData, employeesData, leaveDocs] = await Promise.all([
         leaveService.getById(params.id),
-        employeeService.getAll()
+        employeeService.getAll(),
+        leaveService.getDocuments(params.id)
       ]);
       
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
+      setDocuments(Array.isArray(leaveDocs) ? leaveDocs : []);
       
       if (leaveData) {
         setFormData({
@@ -78,22 +81,10 @@ export default function EditLeavePage() {
     setLoading(true);
 
     try {
-      let uploadedPaths = [];
       if (selectedFiles.length > 0) {
-        if (!formData.employee_id) {
-          throw new Error("Please select an employee first");
-        }
+        console.log(`Uploading ${selectedFiles.length} new proof documents for leave request ID ${params.id}`);
         for (const file of selectedFiles) {
-          const res = await employeeService.uploadDocument(
-            formData.employee_id,
-            file,
-            "leave_proof",
-            file.name
-          );
-          const path = res.document_path || res.file_path || res.path;
-          if (path) {
-            uploadedPaths.push(path);
-          }
+          await leaveService.uploadDocument(params.id, file, file.name);
         }
       }
 
@@ -104,7 +95,7 @@ export default function EditLeavePage() {
         end_date: formData.end_date,
         total_days: parseInt(formData.total_days) || 1,
         reason: formData.reason,
-        proof_documents: [...formData.proof_documents, ...uploadedPaths],
+        proof_documents: formData.proof_documents,
       };
 
       await leaveService.update(params.id, payload);
@@ -288,29 +279,32 @@ export default function EditLeavePage() {
                 </div>
               )}
 
-              {formData.proof_documents?.length > 0 && (
+              {documents.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Existing Proof Documents</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {formData.proof_documents.map((docPath, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-800/30">
                         <div className="flex items-center gap-2 min-w-0">
                           <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                           <span className="text-sm font-bold text-gray-700 dark:text-gray-300 truncate">
-                            {docPath.split('/').pop()}
+                            {doc.file_name || doc.document_name || 'Document'}
                           </span>
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setFormData(prev => ({
-                              ...prev,
-                              proof_documents: prev.proof_documents.filter((_, i) => i !== idx)
-                            }));
+                          onClick={async () => {
+                            try {
+                              await leaveService.downloadDocument(params.id, doc.id, doc.file_name || doc.document_name);
+                              success("Document download started");
+                            } catch (err) {
+                              error("Failed to download document: " + err.message);
+                            }
                           }}
-                          className="p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-red-500"
+                          className="p-1.5 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/40 rounded-lg text-blue-600 dark:text-blue-400 transition-colors flex items-center justify-center"
+                          title="Download Document"
                         >
-                          <X className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
                         </button>
                       </div>
                     ))}

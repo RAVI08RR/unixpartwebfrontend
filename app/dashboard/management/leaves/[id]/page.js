@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Loader2, Calendar, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, Calendar, FileText, Download } from "lucide-react";
 import { leaveService } from "@/app/lib/services/leaveService";
 import { useToast } from "@/app/components/Toast";
 
@@ -14,6 +14,7 @@ export default function LeaveDetailPage() {
   const params = useParams();
   const { error } = useToast();
   const [leave, setLeave] = useState(null);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,12 +24,15 @@ export default function LeaveDetailPage() {
   const fetchLeave = async () => {
     setLoading(true);
     try {
-      // Note: You'll need to add getById to leaveService
-      const data = await leaveService.getAll();
-      const record = data.find(l => l.id === parseInt(params.id));
-      setLeave(record);
+      const [leaveData, docsData] = await Promise.all([
+        leaveService.getById(params.id),
+        leaveService.getDocuments(params.id)
+      ]);
+      setLeave(leaveData);
+      setDocuments(Array.isArray(docsData) ? docsData : []);
     } catch (err) {
       error("Failed to load leave details");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -155,6 +159,47 @@ export default function LeaveDetailPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Proof Documents Section */}
+        <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Proof Documents</h2>
+          {documents.length === 0 ? (
+            <p className="text-sm text-gray-500">No proof documents uploaded.</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {documents.map((doc) => (
+                <div key={doc.id} className="border border-gray-200 dark:border-zinc-800 rounded-xl p-4 flex items-center justify-between bg-gray-50/50 dark:bg-zinc-800/30">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                        {doc.file_name || doc.document_name || 'Untitled Document'}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {doc.document_type || 'Leave Proof'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await leaveService.downloadDocument(leave.id, doc.id, doc.file_name || doc.document_name);
+                      } catch (err) {
+                        error("Failed to download document: " + err.message);
+                      }
+                    }}
+                    className="p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:bg-gray-100 dark:hover:bg-zinc-850 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all shadow-sm flex items-center justify-center"
+                    title="Download Document"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </ProtectedRoute>
