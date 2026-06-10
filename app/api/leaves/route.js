@@ -34,18 +34,29 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const authHeader = request.headers.get('authorization');
-    const body = await request.json();
+    const contentType = request.headers.get('content-type') || '';
+    const isFormData = contentType.includes('multipart/form-data');
+    
+    let body;
+    if (isFormData) {
+      body = await request.formData();
+    } else {
+      body = await request.json();
+    }
     
     const headers = {
-      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
     
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await fetch(`${API_BASE_URL}/api/leaves/`, {
       method: 'POST',
       headers,
-      body: JSON.stringify(body),
+      body: isFormData ? body : JSON.stringify(body),
     });
 
     // Get response as text first

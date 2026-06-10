@@ -67,44 +67,29 @@ export default function SubmitLeavePage() {
     setLoading(true);
 
     try {
-      let uploadedPaths = [];
+      if (!formData.employee_id) {
+        throw new Error("Please select an employee first");
+      }
+
+      const payload = new FormData();
+      payload.append('employee_id', parseInt(formData.employee_id));
+      payload.append('leave_type', formData.leave_type);
+      payload.append('start_date', formData.start_date ? formData.start_date.trim() : '');
+      payload.append('end_date', formData.end_date ? formData.end_date.trim() : '');
+      payload.append('total_days', parseInt(formData.total_days) || 1);
+      
+      if (formData.reason) {
+        payload.append('reason', formData.reason);
+      }
+
       if (selectedFiles.length > 0) {
-        if (!formData.employee_id) {
-          throw new Error("Please select an employee first");
-        }
         for (const fileObj of selectedFiles) {
-          console.log("Uploading file:", fileObj.file.name, "Type:", fileObj.type);
-          const res = await employeeService.uploadDocument(
-            formData.employee_id,
-            fileObj.file,
-            fileObj.type,
-            fileObj.file.name
-          );
-          console.log("Upload response:", res);
-          // Try to get any path or ID from the response
-          const path = res.document_path || res.file_path || res.path || res.file_url || res.url || (res.id ? res.id.toString() : null);
-          
-          if (path) {
-            uploadedPaths.push(path);
-          } else {
-            // Fallback: if we got a success response but no path, push the filename
-            console.warn("Could not extract path from response, using filename as fallback");
-            uploadedPaths.push(fileObj.file.name);
-          }
+          payload.append('files', fileObj.file);
+          payload.append('document_types', fileObj.type);
         }
       }
 
-      const payload = {
-        employee_id: parseInt(formData.employee_id),
-        leave_type: formData.leave_type,
-        start_date: formData.start_date,
-        end_date: formData.end_date,
-        total_days: parseInt(formData.total_days) || 1,
-        reason: formData.reason,
-        proof_documents: uploadedPaths,
-      };
-
-      console.log("Submitting payload:", payload);
+      console.log("Submitting FormData payload");
       await leaveService.submit(payload);
       success("Leave request submitted successfully!");
       router.push("/dashboard/management/leaves");

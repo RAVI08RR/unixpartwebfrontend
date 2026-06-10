@@ -49,13 +49,20 @@ export const leaveService = {
         throw new Error('No authentication token found');
       }
 
+      const isFormData = leaveData instanceof FormData;
+      
+      const headers = {
+        'Authorization': `Bearer ${token}`
+      };
+      
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const response = await fetch('/api/leaves/', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(leaveData),
+        headers,
+        body: isFormData ? leaveData : JSON.stringify(leaveData),
       });
 
       if (!response.ok) {
