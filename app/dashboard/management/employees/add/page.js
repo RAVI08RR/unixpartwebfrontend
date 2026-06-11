@@ -99,6 +99,12 @@ export default function AddEmployeePage() {
     setLoading(true);
     try {
       // Build payload matching API schema
+      const allowedStatuses = ["active", "inactive", "terminated"];
+      if (!allowedStatuses.includes(formData.status)) {
+        error("Invalid employee status selected");
+        return;
+      }
+
       const payload = {
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -122,6 +128,9 @@ export default function AddEmployeePage() {
         visa_expiry: formData.visa_expiry || "2099-12-31",
         insurance_policy_number: formData.insurance_policy_number || "",
         insurance_expiry: formData.insurance_expiry || "2099-12-31",
+        is_insurance_under_process: formData.insurance_status === "under_process",
+        insurance_provider: formData.insurance_provider || "",
+        insurance_agent_name: formData.insurance_agent_name || "",
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
@@ -214,7 +223,12 @@ export default function AddEmployeePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Status</label>
-                <input type="text" placeholder="e.g. Valid,Expired,Under Process " className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_status} onChange={(e) => setFormData({ ...formData, visa_status: e.target.value })} />
+                <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.visa_status} onChange={(e) => setFormData({ ...formData, visa_status: e.target.value })}>
+                  <option value="">Select Visa Status</option>
+                  <option value="Valid">Valid</option>
+                  <option value="Expired">Expired</option>
+                  <option value="Under Process">Under Process</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Visa Type</label>
@@ -287,7 +301,6 @@ export default function AddEmployeePage() {
                 <select className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
-                  <option value="on_leave">On Leave</option>
                   <option value="terminated">Terminated</option>
                 </select>
               </div>

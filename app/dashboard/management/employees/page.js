@@ -126,6 +126,7 @@ export default function EmployeesPage() {
     try {
       // Fetch additional details if needed
       const details = await employeeService.getById(employee.id);
+      setSelectedEmployee(details);
       setEmployeeDetails(details);
     } catch (err) {
       console.error('Failed to fetch employee details:', err);
@@ -317,6 +318,7 @@ export default function EmployeesPage() {
             <option value="All">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+            <option value="terminated">Terminated</option>
           </select>
         </div>
       </div>
@@ -771,7 +773,9 @@ export default function EmployeesPage() {
                           {(() => {
                             const fetchedStatus = selectedEmployee.insurance_status || "";
                             let calculatedStatus = fetchedStatus;
-                            if (!calculatedStatus) {
+                            if (selectedEmployee.is_insurance_under_process) {
+                              calculatedStatus = "under_process";
+                            } else if (!calculatedStatus) {
                               const expiryDate = selectedEmployee.insurance_expiry || "";
                               if (!expiryDate) {
                                 calculatedStatus = "active";
