@@ -19,21 +19,42 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false); // Start as false for instant render
   const { success, error } = useToast();
-  const { setAuth } = useAuthStore();
+  const { setAuth, role, isInitialized } = useAuthStore();
 
-  // Check if user is already authenticated on mount (instant check)
+  // Check if user is already authenticated on mount (one-time check)
   useEffect(() => {
     const token = getAuthToken();
     if (token) {
-      // User already has a token, redirect immediately without showing login form
-      console.log('✅ User already authenticated, redirecting to dashboard');
-      setIsCheckingAuth(true); // Show loading only during redirect
+      console.log('✅ User already authenticated, redirecting');
+      setIsCheckingAuth(true);
       
-      // Get redirect URL from query params or default to dashboard
-      const redirectUrl = searchParams.get('redirect') || '/dashboard';
+      // Get redirect URL from query params or default based on role
+      let redirectUrl = searchParams.get('redirect');
+      if (!redirectUrl) {
+        // Check role from store or localStorage
+        const currentRole = useAuthStore.getState().role;
+        if (currentRole?.slug === 'employee' || currentRole?.slug === 'staff') {
+          redirectUrl = '/employee';
+        } else {
+          // Check if employee from localStorage
+          try {
+            const userStr = localStorage.getItem('current_user');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              if (user && user.employee_id) {
+                redirectUrl = '/employee';
+              }
+            }
+          } catch (e) {
+            // ignore
+          }
+          redirectUrl = redirectUrl || '/dashboard';
+        }
+      }
       router.replace(redirectUrl);
     }
-  }, [router, searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Helper function to parse validation errors into user-friendly messages
   const parseValidationError = (errorMessage) => {
@@ -77,8 +98,9 @@ function LoginForm() {
             }
             
             // Fetch user permissions
+            let permissionsData = null;
             try {
-                const permissionsData = await authService.getUserPermissions();
+                permissionsData = await authService.getUserPermissions();
                 setAuth(permissionsData);
             } catch (permErr) {
                 console.error("Failed to fetch permissions:", permErr);
@@ -87,8 +109,16 @@ function LoginForm() {
             
             success("Login successful! Redirecting to dashboard...");
             
-            // Get redirect URL from query params or default to dashboard
-            const redirectUrl = searchParams.get('redirect') || '/dashboard';
+            // Get redirect URL from query params or default based on role
+            let redirectUrl = searchParams.get('redirect');
+            if (!redirectUrl) {
+              const roleSlug = permissionsData?.role?.slug;
+              if (roleSlug === 'employee' || roleSlug === 'staff') {
+                redirectUrl = '/employee';
+              } else {
+                redirectUrl = '/dashboard';
+              }
+            }
             
             // Small delay to show success message
             setTimeout(() => {

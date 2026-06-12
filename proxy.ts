@@ -8,7 +8,7 @@ const publicRoutes = ['/', '/signup'];
 const authRoutes = ['/', '/signup'];
 
 // Define protected routes that require authentication
-const protectedRoutes = ['/dashboard', '/profile', '/settings'];
+const protectedRoutes = ['/dashboard', '/profile', '/settings', '/employee'];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -23,17 +23,20 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Get token from cookie (HttpOnly) or fallback to checking if user might have it in localStorage
+  // Get token and role from cookie
   const token = request.cookies.get('auth_token')?.value;
+  const userRole = request.cookies.get('user_role')?.value;
+  const isEmployee = userRole === 'employee';
   
-  // Check if the current path is a protected route
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  // Check if the current path is a protected route (excluding the employee login page itself)
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route)) && pathname !== '/employee/login';
   const isAuthRoute = authRoutes.includes(pathname);
   const isPublicRoute = publicRoutes.includes(pathname);
   
   console.log('🔐 Proxy:', {
     pathname,
     hasToken: !!token,
+    userRole,
     isProtectedRoute,
     isAuthRoute,
     host: request.headers.get('host'),
@@ -41,9 +44,22 @@ export function proxy(request: NextRequest) {
   
   // If user is authenticated (has token)
   if (token) {
-    // Redirect authenticated users away from auth pages to dashboard
+    // Redirect authenticated users away from auth pages to their respective dashboard
     if (isAuthRoute) {
-      console.log('✅ Authenticated user accessing auth route, redirecting to dashboard');
+      const targetUrl = isEmployee ? '/employee' : '/dashboard';
+      console.log(`✅ Authenticated user accessing auth route, redirecting to ${targetUrl}`);
+      return NextResponse.redirect(new URL(targetUrl, request.url));
+    }
+    
+    // Redirect employees trying to access admin dashboard routes
+    if (isEmployee && pathname.startsWith('/dashboard')) {
+      console.log('❌ Employee user trying to access admin dashboard, redirecting to employee dashboard');
+      return NextResponse.redirect(new URL('/employee', request.url));
+    }
+
+    // Redirect admins/managers trying to access employee routes
+    if (!isEmployee && pathname.startsWith('/employee') && pathname !== '/employee/login') {
+      console.log('❌ Admin user trying to access employee portal, redirecting to admin dashboard');
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
     
@@ -56,10 +72,13 @@ export function proxy(request: NextRequest) {
   
   // If user is NOT authenticated (no token)
   if (!token) {
-    // Redirect unauthenticated users from protected routes to login (root /)
+    // Redirect unauthenticated users from protected routes to login
     if (isProtectedRoute) {
-      console.log('❌ Unauthenticated user accessing protected route, redirecting to login');
-      const loginUrl = new URL('/', request.url);
+      const isEmployeeRoute = pathname.startsWith('/employee');
+      const targetLoginPath = isEmployeeRoute ? '/employee/login' : '/';
+      
+      console.log(`❌ Unauthenticated user accessing protected route, redirecting to ${targetLoginPath}`);
+      const loginUrl = new URL(targetLoginPath, request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }

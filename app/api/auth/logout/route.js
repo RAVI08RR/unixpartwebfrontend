@@ -21,17 +21,25 @@ export async function POST(request) {
       }
     );
     
-    // Clear the auth cookie by setting it with Max-Age=0
-    const cookieOptions = [
+    // Clear the auth and role cookies by setting them with Max-Age=0
+    const authCookieOptions = [
       'auth_token=',
       'Path=/',
       'HttpOnly',
       'SameSite=Lax',
       'Max-Age=0', // Expire immediately
     ].join('; ');
+
+    const roleCookieOptions = [
+      'user_role=',
+      'Path=/',
+      'SameSite=Lax',
+      'Max-Age=0', // Expire immediately
+    ].join('; ');
     
-    response.headers.set('Set-Cookie', cookieOptions);
-    console.log('🍪 Auth cookie cleared');
+    response.headers.set('Set-Cookie', authCookieOptions);
+    response.headers.append('Set-Cookie', roleCookieOptions);
+    console.log('🍪 Auth and user_role cookies cleared');
     
     return response;
     

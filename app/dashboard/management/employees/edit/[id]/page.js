@@ -9,6 +9,7 @@ import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import PasswordInput from "@/app/components/PasswordInput";
 
 export default function EditEmployeePage() {
   const router = useRouter();
@@ -48,7 +49,8 @@ export default function EditEmployeePage() {
     starting_salary: "",
     current_salary: "",
     annual_leave_entitlement: "30",
-    status: "active"
+    status: "active",
+    password: ""
   });
 
   useEffect(() => {
@@ -111,7 +113,8 @@ export default function EditEmployeePage() {
         starting_salary: employee.starting_salary || "",
         current_salary: employee.current_salary || "",
         annual_leave_entitlement: employee.annual_leave_entitlement || "30",
-        status: employee.status || "active"
+        status: employee.status || "active",
+        password: ""
       });
       
       console.log('Form data set successfully');
@@ -191,7 +194,8 @@ export default function EditEmployeePage() {
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
-        status: formData.status
+        status: formData.status,
+        password: formData.password || null
       };
 
       await employeeService.update(params.id, payload);
@@ -263,7 +267,21 @@ export default function EditEmployeePage() {
           </div>
         </div>
 
-        {/* Passport & Visa Information */}
+        {/* Account Credentials */}
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Account Credentials</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PasswordInput
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Enter new self-service password (leave blank to keep current)"
+                required={false}
+                label="Reset Self-Service Password"
+              />
+            </div>
+          </div>
+
+          {/* Passport & Visa Information */}
         <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Passport & Visa Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

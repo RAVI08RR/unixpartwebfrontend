@@ -9,6 +9,7 @@ import { branchService } from "@/app/lib/services/branchService";
 import { useToast } from "@/app/components/Toast";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import PasswordInput from "@/app/components/PasswordInput";
 
 export default function AddEmployeePage() {
   const router = useRouter();
@@ -46,7 +47,8 @@ export default function AddEmployeePage() {
     starting_salary: "",
     current_salary: "",
     annual_leave_entitlement: "30",
-    status: "active"
+    status: "active",
+    password: ""
   });
 
   useEffect(() => {
@@ -134,7 +136,8 @@ export default function AddEmployeePage() {
         starting_salary: formData.starting_salary ? parseFloat(formData.starting_salary) : 0,
         current_salary: formData.current_salary ? parseFloat(formData.current_salary) : 0,
         annual_leave_entitlement: formData.annual_leave_entitlement ? parseInt(formData.annual_leave_entitlement) : 30,
-        status: formData.status
+        status: formData.status,
+        password: formData.password || null
       };
 
       await employeeService.create(payload);
@@ -192,6 +195,20 @@ export default function AddEmployeePage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Emergency Contact</label>
                 <input type="text" placeholder="Name and phone number" className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={formData.emergency_contact} onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })} />
               </div>
+            </div>
+          </div>
+
+          {/* Account Credentials */}
+          <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Account Credentials</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PasswordInput
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Enter self-service login password"
+                required={false}
+                label="Self-Service Password"
+              />
             </div>
           </div>
 

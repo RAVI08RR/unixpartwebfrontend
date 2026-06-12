@@ -9,6 +9,14 @@ export const authService = {
     });
   },
 
+  employeeLogin: async (email, password) => {
+    // Use Next.js proxy route for employee login
+    return fetchApi('/api/auth/employee/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+  },
+
   register: async (userData) => {
     // Register uses direct API call (add proxy if needed)
     return fetchApi('api/auth/register', {
