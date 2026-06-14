@@ -151,17 +151,17 @@ function LoginForm() {
   return (
     <div className="min-h-screen justify-center flex flex-col md:flex-row bg-[#F8FAFC] dark:bg-zinc-950 transition-colors duration-300">
       {/* Left Panel - Branding with Abstract Background */}
-      <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden">
-        <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100">
-          <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1 bg-white">
+      {/* <div className="w-full md:w-1/2 bg-black text-white p-8 md:p-16 flex flex-col justify-center relative overflow-hidden"> */}
+        {/* <div className="max-w-lg mx-auto md:ml-20 space-y-8 relative z-10 transition-all duration-700 ease-in-out transform translate-y-0 opacity-100"> */}
+          {/* <div className="w-16 h-16 rounded-lg flex items-center justify-center mb-12 overflow-hidden p-1 bg-white">
              <img 
                 src="/logo.png" 
                 alt="Unixparts Logo" 
                 className="w-full h-full object-contain"
              />
-          </div>
+          </div> */}
           
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+          {/* <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
             Welcome to Unixparts
           </h1>
           
@@ -188,19 +188,19 @@ function LoginForm() {
               </div>
               <span className="text-gray-300">Multi-branch support</span>
             </div>
-          </div>
-        </div>
+          </div> */}
+        {/* </div> */}
         
         {/* Subtle background glow */}
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div>
-      </div>
+        {/* <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-red-600/10 rounded-full blur-[100px]"></div> */}
+      {/* </div> */}
       
       {/* Right Panel - Clean Login Form */}
       <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative transition-colors duration-300">
         <div className="max-w-xl w-full mx-auto space-y-8 relative z-10">
           
           {/* Mobile Logo */}
-          <div className="md:hidden flex justify-center mb-6">
+          <div className=" flex justify-center mb-6">
              <div className="w-16 h-16 rounded-lg overflow-hidden p-1 bg-black dark:bg-zinc-900">
                <img 
                   src="/logo.png" 
