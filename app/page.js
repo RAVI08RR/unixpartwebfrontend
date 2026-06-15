@@ -264,9 +264,9 @@ function LoginForm() {
             </button>
           </form>
 
-          <p className="text-center text-base text-gray-500 dark:text-gray-400">
+          {/* <p className="text-center text-base text-gray-500 dark:text-gray-400">
             Don't have an account? <Link href="/signup" className="text-black dark:text-white font-bold hover:underline">Sign up</Link>
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
