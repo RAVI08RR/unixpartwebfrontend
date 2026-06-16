@@ -170,10 +170,21 @@ function PurchaseOrderItemsContent({ params }) {
   };
 
   const handleSelectAll = () => {
-    if (selectedItems.length === paginatedItems.length) {
-      setSelectedItems([]);
+    const allSelectedOnPage = paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id));
+    if (allSelectedOnPage) {
+      const pageIds = paginatedItems.map(item => item.id);
+      setSelectedItems(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
-      setSelectedItems(paginatedItems.map(item => item.id));
+      const pageIds = paginatedItems.map(item => item.id);
+      setSelectedItems(prev => {
+        const newSelection = [...prev];
+        pageIds.forEach(id => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
     }
   };
 
@@ -320,7 +331,7 @@ function PurchaseOrderItemsContent({ params }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 justify-start sm:justify-end btn-mobile-arrange">
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
@@ -432,8 +443,76 @@ function PurchaseOrderItemsContent({ params }) {
         </div>
       )}
 
+      {/* Mobile-only style overrides for checkbox table layout */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 1024px) {
+          .checkbox-table td[data-label="Select"] {
+            border-bottom: none !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 10px !important;
+            font-size: 13px !important;
+            font-weight: normal !important;
+            justify-content: flex-end !important;
+            padding-left: 45% !important;
+            text-align: right !important;
+          }
+          .checkbox-table td[data-label="Select"]:before {
+            content: attr(data-label) !important;
+            display: block !important;
+            position: absolute;
+            left: 0;
+            width: 40%;
+            text-align: left;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 10px;
+            color: rgb(156 163 175);
+            letter-spacing: 0.1em;
+          }
+          .checkbox-table td[data-label="Item Details"] {
+            padding-left: 0 !important;
+            text-align: left !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+            border-bottom: 1px solid rgb(243 244 246) !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 12px !important;
+            color: black !important;
+            justify-content: flex-start !important;
+          }
+          .dark .checkbox-table td[data-label="Item Details"] {
+            border-bottom-color: rgb(39 39 42) !important;
+            color: white !important;
+          }
+          .checkbox-table td[data-label="Item Details"]:before {
+            display: none !important;
+          }
+        }
+      ` }} />
+
+      {/* Mobile Select All Bar */}
+      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-800 mb-3">
+        <label className="flex items-center gap-2.5 cursor-pointer text-sm font-bold text-gray-700 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
+            onChange={handleSelectAll}
+            className="w-4 h-4 rounded border-gray-300 text-red-650 focus:ring-red-500 cursor-pointer"
+          />
+          <span>Select All Items ({selectedItems.length} selected)</span>
+        </label>
+        {selectedItems.length > 0 && (
+          <button
+            onClick={() => setSelectedItems([])}
+            className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {/* Items Table */}
-      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto responsive-table-container">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto responsive-table-container checkbox-table">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
         <table className="w-full min-w-[800px]">
             <thead>
@@ -441,7 +520,7 @@ function PurchaseOrderItemsContent({ params }) {
                     <th className="px-6 py-4 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedItems.length === paginatedItems.length && paginatedItems.length > 0}
+                        checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
                         onChange={handleSelectAll}
                         className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
                       />
