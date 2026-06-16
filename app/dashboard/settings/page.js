@@ -14,10 +14,31 @@ import {
   CreditCard,
   MessageSquare,
   Building2,
-  FolderOpen
+  FolderOpen,
+  Download
 } from "lucide-react";
 
 export default function SettingsHubPage() {
+  const handleInstallClick = async () => {
+    if (typeof window !== 'undefined') {
+      if (window.deferredPrompt) {
+        const promptEvent = window.deferredPrompt;
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+          window.deferredPrompt = null;
+        }
+      } else {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        if (isStandalone) {
+          alert("Unixparts App is already installed and running!");
+        } else {
+          alert("To install the app on iOS, tap the 'Share' button in Safari and select 'Add to Home Screen'. On desktop or Android, click the install icon in the address bar.");
+        }
+      }
+    }
+  };
+
   const settingsGroups = [
     {
       title: "Account & Profile",
@@ -84,6 +105,13 @@ export default function SettingsHubPage() {
           icon: <Palette className="w-5 h-5 text-teal-600" />,
           color: "teal"
         },
+        {
+          title: "Download App",
+          description: "Install Unixparts App as a PWA on your home screen or desktop",
+          onClick: handleInstallClick,
+          icon: <Download className="w-5 h-5 text-emerald-600" />,
+          color: "emerald"
+        },
       ]
     }
   ];
@@ -105,30 +133,37 @@ export default function SettingsHubPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {group.items.map((item, j) => (
-                <Link 
-                  key={j}
-                  href={item.href}
-                  className="group bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-6 rounded-[28px] shadow-sm hover:shadow-xl hover:border-red-600/20 hover:-translate-y-1 transition-all duration-300"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-[20px] bg-${item.color}-50 dark:bg-${item.color}-900/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500`}>
-                        {item.icon}
+              {group.items.map((item, j) => {
+                const CardWrapper = item.onClick ? 'button' : Link;
+                const wrapperProps = item.onClick 
+                  ? { onClick: item.onClick, type: 'button' }
+                  : { href: item.href };
+
+                return (
+                  <CardWrapper 
+                    key={j}
+                    {...wrapperProps}
+                    className={`group bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 p-6 rounded-[28px] shadow-sm hover:shadow-xl hover:border-red-600/20 hover:-translate-y-1 transition-all duration-300 text-left ${item.onClick ? 'w-full' : ''}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-[20px] bg-${item.color}-50 dark:bg-${item.color}-900/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-500`}>
+                          {item.icon}
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
+                            {item.title}
+                          </h3>
+                          <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
+                            {item.description}
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <h3 className="font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors uppercase tracking-tight text-sm">
-                          {item.title}
-                        </h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs font-medium leading-relaxed">
-                          {item.description}
-                        </p>
-                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-600 group-hover:translate-x-1 transition-all" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-red-600 group-hover:translate-x-1 transition-all" />
-                  </div>
-                </Link>
-              ))}
+                  </CardWrapper>
+                );
+              })}
             </div>
           </div>
         ))}

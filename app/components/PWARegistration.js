@@ -35,6 +35,7 @@ export default function PWARegistration() {
       e.preventDefault();
       // Stash the event so it can be triggered later
       setDeferredPrompt(e);
+      window.deferredPrompt = e; // Store globally for Settings page
       // Show our beautiful custom installation popup
       setShowInstallPrompt(true);
     };
@@ -45,6 +46,7 @@ export default function PWARegistration() {
     window.addEventListener('appinstalled', () => {
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      window.deferredPrompt = null; // Clear global
       console.log('PWA was successfully installed');
     });
 
