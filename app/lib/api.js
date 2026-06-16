@@ -210,6 +210,14 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
           }
         } else if (errorData.message) {
           errorMessage = errorData.message;
+        } else if (errorData.error) {
+          if (typeof errorData.error === 'string') {
+            errorMessage = errorData.error;
+          } else if (Array.isArray(errorData.error)) {
+            errorMessage = errorData.error.map(d => `${d.loc?.join('.') || 'error'}: ${d.msg || 'unknown'}`).join(', ');
+          } else {
+            errorMessage = JSON.stringify(errorData.error);
+          }
         }
       } catch (e) {
         // Use default error message if JSON parsing fails

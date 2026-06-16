@@ -15,6 +15,7 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
 import { useToast } from "@/app/components/Toast";
 import ConfirmModal from "@/app/components/ConfirmModal";
+import DismantleModal from "@/app/components/DismantleModal";
 import ExportButton from "@/app/components/ExportButton";
 import PrintableLabel from "@/app/components/PrintableLabel";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
@@ -158,29 +159,7 @@ function PurchaseOrderItemsContent({ params }) {
     }
   };
 
-  const handleDismantle = async () => {
-    try {
-      const childItems = [
-        {
-          po_id: selectedItem.po_id || 0,
-          item_id: selectedItem.item_id || 0,
-          po_description: selectedItem.po_description || "",
-          stock_notes: selectedItem.stock_notes || "",
-          current_branch_id: selectedItem.current_branch_id || 0,
-          status: "in_stock",
-          is_dismantled: false,
-          quantity: selectedItem.quantity || 1,
-          stock_number: selectedItem.stock_number || ""
-        }
-      ];
-      await poItemService.dismantle(selectedItem.id, { child_items: childItems });
-      success("Item dismantled successfully");
-      setDismantleModalOpen(false);
-      fetchData();
-    } catch (err) {
-      showError(err.message);
-    }
-  };
+
 
   const handleSelectItem = (itemId) => {
     setSelectedItems(prev => 
@@ -682,14 +661,11 @@ function PurchaseOrderItemsContent({ params }) {
         type="danger"
       />
 
-      <ConfirmModal 
+      <DismantleModal 
         isOpen={dismantleModalOpen}
         onClose={() => setDismantleModalOpen(false)}
-        onConfirm={handleDismantle}
-        title="Dismantle Part?"
-        message={`This will mark item ${selectedItem?.stock_number} as dismantled and available for part-by-part recovery. Continue?`}
-        confirmText="Confirm Dismantle"
-        type="warning"
+        item={selectedItem}
+        onSuccess={fetchData}
       />
 
       {viewModalOpen && selectedItem && (
@@ -880,7 +856,7 @@ function PurchaseOrderItemsContent({ params }) {
                                 {getPrintData()[0].container_number}
                               </div>
                             )}
-                            <div style={{ color: '#000000', fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate">
+                            <div style={{ color: '#000000', fontSize: `${labelStyles.stockNumber.fontSize}px`, fontWeight: labelStyles.stockNumber.bold ? 'bold' : 'normal', textDecoration: labelStyles.stockNumber.underline ? 'underline' : 'none', lineHeight: 1.2, wordBreak: 'break-all', whiteSpace: 'normal' }}>
                               {getPrintData()[0].stock_number}
                             </div>
                             <div style={{ color: '#000000', fontSize: `${labelStyles.item.fontSize}px`, fontWeight: labelStyles.item.bold ? 'bold' : 'normal', textDecoration: labelStyles.item.underline ? 'underline' : 'none', lineHeight: 1.2 }} className="truncate whitespace-normal line-clamp-2">

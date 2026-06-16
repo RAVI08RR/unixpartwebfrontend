@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Search, X, Maximize2, Package, FileText, User, Receipt, Calendar, DollarSign, Scissors, Camera } from "lucide-react";
 import QRScannerModal from "./QRScannerModal";
+import DismantleModal from "./DismantleModal";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,8 @@ export default function QuickSearch() {
   const [dismantleStockNumber, setDismantleStockNumber] = useState("");
   const [dismantleSearchResults, setDismantleSearchResults] = useState([]);
   const [isDismantleSearching, setIsDismantleSearching] = useState(false);
+  const [dismantleItem, setDismantleItem] = useState(null);
+  const [isDismantleModalOpen, setIsDismantleModalOpen] = useState(false);
   
   // Item details modal states
   const [selectedItem, setSelectedItem] = useState(null);
@@ -222,27 +225,15 @@ export default function QuickSearch() {
     try {
       const item = await poItemService.getByStockNumber(stockNumber);
       if (item && item.id) {
-        const childItems = [
-          {
-            po_id: item.po_id || 0,
-            item_id: item.item_id || 0,
-            po_description: item.po_description || "",
-            stock_notes: item.stock_notes || "",
-            current_branch_id: item.current_branch_id || 0,
-            status: "in_stock",
-            is_dismantled: false,
-            quantity: item.quantity || 1,
-            stock_number: item.stock_number || ""
-          }
-        ];
-        await poItemService.dismantle(item.id, { child_items: childItems });
-        success(`Item ${stockNumber} dismantled successfully`);
+        setDismantleItem(item);
+        setIsDismantleModalOpen(true);
+        setIsOpen(false);
         // Clear the search input
         setDismantleStockNumber("");
         setDismantleSearchResults([]);
       }
     } catch (error) {
-      showError('Failed to dismantle item: ' + error.message);
+      showError('Failed to locate item for dismantling: ' + error.message);
     }
   };
 
@@ -899,6 +890,14 @@ export default function QuickSearch() {
         isOpen={isDismantleScannerOpen} 
         onClose={() => setIsDismantleScannerOpen(false)} 
         onScanSuccess={handleDismantleScanSuccess} 
+      />
+      <DismantleModal
+        isOpen={isDismantleModalOpen}
+        onClose={() => setIsDismantleModalOpen(false)}
+        item={dismantleItem}
+        onSuccess={() => {
+          // Success callback
+        }}
       />
     </>
   );

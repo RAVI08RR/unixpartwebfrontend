@@ -101,6 +101,8 @@ const PrintableLabel = React.forwardRef(({ items, styles, labelSize }, ref) => {
                   fontSize: `${styles.stockNumber.fontSize}px`,
                   fontWeight: styles.stockNumber.bold ? "bold" : "normal",
                   textDecoration: styles.stockNumber.underline ? "underline" : "none",
+                  wordBreak: "break-all",
+                  whiteSpace: "normal"
                 }}
               >
                 {item.stock_number}

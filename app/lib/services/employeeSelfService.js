@@ -40,7 +40,7 @@ export const employeeSelfService = {
    *   - For check-out only: send check_out, set check_in: null
    * employee_id is ignored by the backend (uses token), but required by schema.
    */
-  submitAttendance: async ({ type, notes, latitude, longitude }) => {
+  submitAttendance: async ({ employee_id, type, notes, latitude, longitude }) => {
     const now = new Date();
 
     // Date portion: "YYYY-MM-DD"
@@ -51,8 +51,12 @@ export const employeeSelfService = {
     //      .split('T')[1]          = "11:20:44.859Z"
     const timeStr = now.toISOString().split('T')[1];
 
+    // Parse employee_id to ensure it's a valid integer
+    let empId = parseInt(employee_id, 10);
+    if (isNaN(empId)) empId = 0;
+
     const payload = {
-      employee_id: 0,   // ignored by backend, identity comes from Bearer token
+      employee_id: empId,
       date,
       check_in:  type === 'check_in'  ? timeStr : null,
       check_out: type === 'check_out' ? timeStr : null,

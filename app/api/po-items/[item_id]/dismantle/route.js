@@ -39,9 +39,13 @@ export async function POST(request, context) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error('Dismantle API error:', errorData);
+      console.log('❌ Dismantle backend error:', errorData);
       return NextResponse.json(
-        { error: errorData.detail || 'Failed to dismantle item' },
+        { 
+          error: errorData.detail || errorData.message || 'Failed to dismantle item',
+          detail: errorData.detail,
+          message: errorData.message
+        },
         { status: response.status }
       );
     }

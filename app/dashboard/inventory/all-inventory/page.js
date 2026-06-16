@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, X, 
   Building2, ShoppingCart, RefreshCcw, MoreVertical,
   Package, Hash, DollarSign, Truck, MapPin, Layers, Box, Check, ClipboardList,
-  RotateCcw
+  RotateCcw, Scissors
 } from "lucide-react";
 import { poItemService } from "@/app/lib/services/poItemService";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -18,6 +18,7 @@ import { useToast } from "@/app/components/Toast";
 import Link from "next/link";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
+import DismantleModal from "@/app/components/DismantleModal";
 
 export default function AllInventoryPage() {
   const router = useRouter();
@@ -43,6 +44,7 @@ export default function AllInventoryPage() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [dismantleModalOpen, setDismantleModalOpen] = useState(false);
   
   const { branches: apiBranches } = useBranches(0, 100, true);
   const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
@@ -604,6 +606,18 @@ export default function AllInventoryPage() {
                           <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
                             <FileText className="w-4 h-4" />Edit Item
                           </button>
+                          {!item.is_dismantled && (
+                            <button 
+                              onClick={() => {
+                                setSelectedItem(item);
+                                setDismantleModalOpen(true);
+                                setMenuOpenId(null);
+                              }} 
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+                            >
+                              <Scissors className="w-4 h-4" />Dismantle Item
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -691,6 +705,18 @@ export default function AllInventoryPage() {
                             <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                               <FileText className="w-4 h-4" />Edit Item
                             </button>
+                            {!item.is_dismantled && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedItem(item);
+                                  setDismantleModalOpen(true);
+                                  setMenuOpenId(null);
+                                }} 
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
+                              >
+                                <Scissors className="w-4 h-4" />Dismantle Item
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -963,6 +989,13 @@ export default function AllInventoryPage() {
           </div>
         </div>
       )}
+      {/* Dismantle Item Modal */}
+      <DismantleModal
+        isOpen={dismantleModalOpen}
+        onClose={() => setDismantleModalOpen(false)}
+        item={selectedItem}
+        onSuccess={fetchData}
+      />
     </div>
   );
 }

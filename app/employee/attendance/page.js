@@ -122,6 +122,7 @@ export default function EmployeeAttendance() {
     setActionLoading(true);
     try {
       const payload = {
+        employee_id: user?.id || user?.employee_id || 0,
         type: type,
         notes: notes || "",
         latitude: location?.latitude || null,
