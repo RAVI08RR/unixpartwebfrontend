@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
     }
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
@@ -252,25 +252,22 @@ export async function PUT(request, { params }) {
     }
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
-    // Get request body
-    const body = await request.text();
+    const contentType = request.headers.get('content-type') || '';
     
     console.log('Customer proxy PUT - Customer ID:', customerId);
     console.log('Customer proxy PUT - API Base URL:', apiBaseUrl);
     console.log('Customer proxy PUT - Auth header present:', !!authHeader);
-    console.log('Customer proxy PUT - Request body length:', body.length);
+    console.log('Customer proxy PUT - Content-Type:', contentType);
     
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/customers/${customerId}/`;
     console.log('Customer proxy PUT - Backend URL:', backendUrl);
     
     const headers = {
-      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     
@@ -279,11 +276,20 @@ export async function PUT(request, { params }) {
       headers['Authorization'] = authHeader;
     }
     
+    let body;
+    if (contentType.includes('multipart/form-data')) {
+      body = await request.formData();
+      // Let fetch/browser set boundary automatically
+    } else {
+      body = await request.text();
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await fetch(backendUrl, {
       method: 'PUT',
       headers,
       body,
-      signal: AbortSignal.timeout(15000), // 15 second timeout for customer update
+      signal: AbortSignal.timeout(30000), // 30 second timeout for customer update
     });
     
     console.log('Customer proxy PUT - Backend response status:', response.status);
@@ -406,7 +412,7 @@ export async function DELETE(request, { params }) {
     }
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');

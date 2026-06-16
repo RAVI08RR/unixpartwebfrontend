@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Download, X } from "lucide-react";
 
 export default function PWARegistration() {
+  const pathname = usePathname();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
@@ -66,7 +68,17 @@ export default function PWARegistration() {
     setDeferredPrompt(null);
   };
 
-  if (!showInstallPrompt) return null;
+  // Only display the install prompt banner on allowed paths:
+  // 1. Root page (admin login)
+  // 2. Employee login page
+  // 3. Settings page and subpages
+  const isAllowedPath = 
+    pathname === '/' || 
+    pathname === '/employee/login' || 
+    pathname === '/login' ||
+    pathname?.startsWith('/dashboard/settings');
+
+  if (!showInstallPrompt || !isAllowedPath) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 md:p-6 animate-in slide-in-from-bottom-full duration-500">

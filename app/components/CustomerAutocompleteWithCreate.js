@@ -20,6 +20,7 @@ export default function CustomerAutocompleteWithCreate({
   const [showDropdown, setShowDropdown] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const wrapperRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -123,6 +124,7 @@ export default function CustomerAutocompleteWithCreate({
   const openCreateModal = () => {
     setCreateModalOpen(true);
     setShowDropdown(false);
+    setErrorMsg("");
     
     // Generate customer code
     const timestamp = Date.now().toString().slice(-6);
@@ -147,16 +149,17 @@ export default function CustomerAutocompleteWithCreate({
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        alert("Please select a valid image file");
+        setErrorMsg("Please select a valid image file");
         return;
       }
       
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert("Image size should be less than 5MB");
+        setErrorMsg("Image size should be less than 5MB");
         return;
       }
       
+      setErrorMsg(""); // Clear if it was set
       setProfileImage(file);
       
       // Create preview
@@ -181,90 +184,30 @@ export default function CustomerAutocompleteWithCreate({
     const trimmedCode = customerForm.customer_code?.trim();
     const trimmedName = customerForm.full_name?.trim();
     const trimmedPhone = customerForm.phone?.trim();
-    const trimmedAddress = customerForm.address?.trim() || "";
     
     if (!trimmedCode || !trimmedName || !trimmedPhone) {
-      alert("Please fill in all required fields (Customer Code, Full Name, and Phone)");
+      setErrorMsg("Please fill in all required fields (Customer Code, Full Name, and Phone)");
       return;
     }
 
     setSaving(true);
+    setErrorMsg(""); // Reset previous errors
     try {
-      // Use FormData for multipart/form-data submission (same as add customer page)
-      const formData = new FormData();
-      formData.append('customer_code', trimmedCode);
-      formData.append('full_name', trimmedName);
-      formData.append('phone', trimmedPhone);
-      if (trimmedAddress) {
-        formData.append('address', trimmedAddress);
-      }
-      formData.append('status', customerForm.status);
-      
-      // Add optional fields
-      if (customerForm.business_name?.trim()) {
-        formData.append('business_name', customerForm.business_name.trim());
-      }
-      if (customerForm.business_number?.trim()) {
-        formData.append('business_number', customerForm.business_number.trim());
-      }
-      if (customerForm.notes?.trim()) {
-        formData.append('notes', customerForm.notes.trim());
-      }
-      
-      // Add profile image if provided
-      if (profileImage) {
-        formData.append('profile_image', profileImage);
-      }
+      const payload = {
+        customer_code: trimmedCode,
+        full_name: trimmedName,
+        phone: trimmedPhone,
+        business_name: customerForm.business_name?.trim() || null,
+        business_number: customerForm.business_number?.trim() || null,
+        address: customerForm.address?.trim() || null,
+        notes: customerForm.notes?.trim() || null,
+        status: customerForm.status,
+        profile_image: profileImage
+      };
 
-      console.log("🚀 Sending FormData to API");
-      
-      // Debug: Log FormData contents
-      for (let pair of formData.entries()) {
-        console.log(`  ${pair[0]}:`, pair[1]);
-      }
-
-      // Send FormData directly to backend API
-      const token = localStorage.getItem('access_token');
-      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-      const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-      const response = await fetch(`${apiUrl}api/customers/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("❌ API Error Response:", errorData);
-        
-        // Handle different error formats
-        let errorMessage = `Request failed with status ${response.status}`;
-        
-        if (errorData.detail) {
-          // FastAPI validation error format
-          if (Array.isArray(errorData.detail)) {
-            errorMessage = errorData.detail.map(err => {
-              const field = err.loc ? err.loc.join('.') : 'unknown';
-              return `${field}: ${err.msg}`;
-            }).join(', ');
-          } else if (typeof errorData.detail === 'string') {
-            errorMessage = errorData.detail;
-          } else {
-            errorMessage = JSON.stringify(errorData.detail);
-          }
-        } else if (errorData.error) {
-          errorMessage = errorData.error;
-        } else if (errorData.message) {
-          errorMessage = errorData.message;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const newCustomer = await response.json();
-      console.log("✅ Customer created:", newCustomer);
+      console.log("🚀 Creating customer inline via customerService:", payload);
+      const newCustomer = await customerService.create(payload);
+      console.log("✅ Customer created successfully:", newCustomer);
       
       // Add to local list
       const newOption = {
@@ -284,10 +227,9 @@ export default function CustomerAutocompleteWithCreate({
       }
       
       setCreateModalOpen(false);
-      alert("Customer created successfully!");
     } catch (error) {
       console.error("Failed to create customer:", error);
-      alert("Failed to create customer: " + error.message);
+      setErrorMsg(error.message || "Failed to create customer. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -408,6 +350,11 @@ export default function CustomerAutocompleteWithCreate({
 
             {/* Modal Content - Scrollable */}
             <div className="p-4 sm:p-6 space-y-4 overflow-y-auto flex-1">
+              {errorMsg && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400">
+                  {errorMsg}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Customer Code */}
               <div>

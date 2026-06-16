@@ -80,9 +80,8 @@ export const customerService = {
       });
       
       const token = localStorage.getItem('access_token');
-      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-      const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-      const response = await fetch(`${apiUrl}api/customers/`, {
+      // Use Next.js API proxy route to avoid mixed content errors
+      const response = await fetch(`/api/customers`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -141,9 +140,8 @@ export const customerService = {
       });
       
       const token = localStorage.getItem('access_token');
-      const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000/';
-      const apiUrl = rawApiUrl.endsWith('/') ? rawApiUrl : `${rawApiUrl}/`;
-      const response = await fetch(`${apiUrl}api/customers/${id}`, {
+      // Use Next.js API proxy route to avoid mixed content errors
+      const response = await fetch(`/api/customers/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

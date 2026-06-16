@@ -10,7 +10,7 @@ export async function GET(request) {
     const status = searchParams.get('status');
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
@@ -195,24 +195,21 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
-    // Get request body
-    const body = await request.text();
+    const contentType = request.headers.get('content-type') || '';
     
     console.log('Customers proxy POST - API Base URL:', apiBaseUrl);
     console.log('Customers proxy POST - Auth header present:', !!authHeader);
-    console.log('Customers proxy POST - Request body length:', body.length);
+    console.log('Customers proxy POST - Content-Type:', contentType);
     
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/customers/`;
     console.log('Customers proxy POST - Backend URL:', backendUrl);
     
     const headers = {
-      'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     
@@ -221,11 +218,20 @@ export async function POST(request) {
       headers['Authorization'] = authHeader;
     }
     
+    let body;
+    if (contentType.includes('multipart/form-data')) {
+      body = await request.formData();
+      // Let fetch/browser set boundary automatically
+    } else {
+      body = await request.text();
+      headers['Content-Type'] = 'application/json';
+    }
+    
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
-      signal: AbortSignal.timeout(15000), // 15 second timeout for customer creation
+      signal: AbortSignal.timeout(30000), // 30 second timeout for customer creation / uploads
     });
     
     console.log('Customers proxy POST - Backend response status:', response.status);
