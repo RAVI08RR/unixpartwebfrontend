@@ -132,15 +132,15 @@ function EmployeeLoginForm() {
     <div className="min-h-screen flex flex-col md:flex-row bg-zinc-950 text-white transition-colors duration-300 font-sans selection:bg-red-500/30 selection:text-red-200">
       
       {/* Left Panel: Portal Branding & Visual Features */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950/40 p-8 md:p-16 flex-col justify-between relative overflow-hidden md:border-r border-zinc-900">
+      {/* <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950/40 p-8 md:p-16 flex-col justify-between relative overflow-hidden md:border-r border-zinc-900"> */}
         
         {/* Subtle decorative background gradients/grids */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+        {/* <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
         <div className="absolute top-1/4 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-[120px] pointer-events-none"></div>
-        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-zinc-800/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-zinc-800/20 rounded-full blur-[120px] pointer-events-none"></div> */}
 
         {/* Brand Header */}
-        <div className="flex items-center gap-3 relative z-10">
+        {/* <div className="flex items-center gap-3 relative z-10">
           <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center p-1.5 overflow-hidden shrink-0 border border-white/10 shadow-lg">
             <img src="/logo.png" alt="Unixparts Logo" className="w-full h-full object-contain" />
           </div>
@@ -148,11 +148,11 @@ function EmployeeLoginForm() {
             <span className="font-black tracking-wider text-sm leading-tight text-white uppercase block">Unixparts</span>
             <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block">Self Service Portal</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Features list / Visual representation */}
-        <div className="max-w-md mx-auto md:ml-12 my-12 md:my-auto space-y-8 relative z-10">
-          <div className="space-y-4">
+        {/* <div className="max-w-md mx-auto md:ml-12 my-12 md:my-auto space-y-8 relative z-10"> */}
+          {/* <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-wider">
               <ShieldCheck className="w-3.5 h-3.5" /> Secure Employee Sign-In
             </div>
@@ -163,10 +163,10 @@ function EmployeeLoginForm() {
             <p className="text-zinc-400 text-base md:text-lg leading-relaxed font-medium">
               Log in with your corporate or personal registered email to submit attendance, request leaves, upload documents, and view your career progress.
             </p>
-          </div>
+          </div> */}
 
-          <div className="space-y-4 border-t border-zinc-950/50 pt-6">
-            <div className="flex items-start gap-3.5">
+          {/* <div className="space-y-4 border-t border-zinc-950/50 pt-6"> */}
+            {/* <div className="flex items-start gap-3.5">
               <div className="bg-white/5 border border-white/10 p-2 rounded-xl text-red-500 mt-0.5 shadow-md">
                 <Check className="w-4 h-4" />
               </div>
@@ -174,9 +174,9 @@ function EmployeeLoginForm() {
                 <h4 className="font-bold text-zinc-200 text-sm md:text-base">Real-Time Attendance</h4>
                 <p className="text-xs md:text-sm text-zinc-500 font-medium">Clock in and clock out dynamically, review history and monthly logs.</p>
               </div>
-            </div>
+            </div> */}
 
-            <div className="flex items-start gap-3.5">
+            {/* <div className="flex items-start gap-3.5">
               <div className="bg-white/5 border border-white/10 p-2 rounded-xl text-red-500 mt-0.5 shadow-md">
                 <Check className="w-4 h-4" />
               </div>
@@ -184,9 +184,9 @@ function EmployeeLoginForm() {
                 <h4 className="font-bold text-zinc-200 text-sm md:text-base">Leave & Document Management</h4>
                 <p className="text-xs md:text-sm text-zinc-500 font-medium">Submit leave requests and upload passport/visa documents safely.</p>
               </div>
-            </div>
+            </div> */}
 
-            <div className="flex items-start gap-3.5">
+            {/* <div className="flex items-start gap-3.5">
               <div className="bg-white/5 border border-white/10 p-2 rounded-xl text-red-500 mt-0.5 shadow-md">
                 <Check className="w-4 h-4" />
               </div>
@@ -194,23 +194,23 @@ function EmployeeLoginForm() {
                 <h4 className="font-bold text-zinc-200 text-sm md:text-base">Salary & Position Timelines</h4>
                 <p className="text-xs md:text-sm text-zinc-500 font-medium">Monitor your active salary rates and position transition timeline history.</p>
               </div>
-            </div>
-          </div>
-        </div>
+            </div> */}
+          {/* </div>
+        </div> */}
 
         {/* Footer info */}
-        <div className="text-xs text-gray-400 dark:text-zinc-600 font-medium relative z-10 hidden md:block">
+        {/* <div className="text-xs text-gray-400 dark:text-zinc-600 font-medium relative z-10 hidden md:block">
           &copy; {new Date().getFullYear()} Unixparts Co. All rights reserved. Secure Gateway.
         </div>
-      </div>
+      </div> */}
 
       {/* Right Panel: Sleek Dark Login Form */}
-      <div className="w-full md:w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative">
+      <div className="w-full w-1/2 bg-white dark:bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative">
         
         <div className="max-w-md w-full mx-auto space-y-8 relative z-10">
           
           {/* Logo on Mobile */}
-          <div className="flex flex-col items-center gap-2.5 md:hidden">
+          <div className="flex flex-col items-center gap-2.5 ">
             <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-white/10 flex items-center justify-center p-1.5 border border-gray-200 dark:border-white/10 shadow-lg">
               <img src="/logo.png" alt="Unixparts Logo" className="w-full h-full object-contain" />
             </div>

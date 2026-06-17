@@ -11,7 +11,7 @@ import { poItemService } from "@/app/lib/services/poItemService";
 import { useContainers } from "@/app/lib/hooks/useContainers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
 import { useStockItems } from "@/app/lib/hooks/useStockItems";
-import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
+// import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useToast } from "@/app/components/Toast";
 import { fetchApi } from "@/app/lib/api";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
@@ -26,10 +26,10 @@ export default function AddPurchaseOrderPage() {
   const { containers } = useContainers(0, 100, null, null, null, true);
   const { branches: apiBranches } = useBranches(0, 100, true);
   const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
-  const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
+  // const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
-  const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
+  // const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
@@ -38,7 +38,7 @@ export default function AddPurchaseOrderPage() {
   const [formData, setFormData] = useState({
     po_id: "",
     container_id: "",
-    supplier_id: "",
+    // supplier_id: "",
     arrival_date: new Date().toISOString().split('T')[0],
     arrival_branch_id: "",
     total_container_revenue: "0.00",
@@ -74,13 +74,13 @@ export default function AddPurchaseOrderPage() {
   const handleContainerChange = (containerId) => {
     const selectedContainer = containers?.find(c => String(c.id) === String(containerId));
     if (selectedContainer) {
-      const supplierId = selectedContainer.supplier_id || selectedContainer.supplier?.id || "";
+      // const supplierId = selectedContainer.supplier_id || selectedContainer.supplier?.id || "";
       const branchId = selectedContainer.destination_branch_id || selectedContainer.destination_branch?.id || selectedContainer.branch?.id || "";
       
       setFormData(prev => ({
         ...prev,
         container_id: containerId,
-        supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
+        // supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
         arrival_branch_id: branchId ? String(branchId) : prev.arrival_branch_id
       }));
     } else {
@@ -101,7 +101,7 @@ export default function AddPurchaseOrderPage() {
         const payload = {
             ...formData,
             container_id: parseInt(formData.container_id),
-            supplier_id: parseInt(formData.supplier_id),
+            // supplier_id: parseInt(formData.supplier_id),
             arrival_branch_id: parseInt(formData.arrival_branch_id),
             items_in_stock: parseInt(formData.items_in_stock),
             total_container_revenue: formData.total_container_revenue.toString()
@@ -149,7 +149,7 @@ export default function AddPurchaseOrderPage() {
             await purchaseOrderService.update(createdPo.id, {
                 po_id: createdPo.po_id,
                 container_id: createdPo.container_id,
-                supplier_id: createdPo.supplier_id || parseInt(formData.supplier_id),
+                // supplier_id: createdPo.supplier_id || parseInt(formData.supplier_id),
                 arrival_date: createdPo.arrival_date || formData.arrival_date,
                 arrival_branch_id: createdPo.arrival_branch_id || parseInt(formData.arrival_branch_id),
                 total_container_revenue: createdPo.total_container_revenue || parseFloat(formData.total_container_revenue) || 0,
@@ -226,7 +226,7 @@ export default function AddPurchaseOrderPage() {
               </div>
             </FormField>
 
-            <FormField label="Supplier" required>
+            {/* <FormField label="Supplier" required>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select 
@@ -243,9 +243,9 @@ export default function AddPurchaseOrderPage() {
                   ))}
                 </select>
               </div>
-            </FormField>
+            </FormField> */}
 
-            <FormField label="Arrival Date" required>
+            <FormField label="Unload Date" required>
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
@@ -258,7 +258,7 @@ export default function AddPurchaseOrderPage() {
               </div>
             </FormField>
 
-            <FormField label="Arrival Branch" required>
+            <FormField label="Unload Branch" required>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select 
