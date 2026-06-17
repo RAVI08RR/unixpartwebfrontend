@@ -36,16 +36,29 @@ export async function GET(request) {
 export async function POST(request) {
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
   const authHeader = request.headers.get('authorization');
+  const contentType = request.headers.get('content-type') || '';
+  const isFormData = contentType.includes('multipart/form-data');
 
   try {
-    const body = await request.text();
+    let body;
+    if (isFormData) {
+      body = await request.formData();
+    } else {
+      body = await request.text();
+    }
+
+    const headers = {
+      'Authorization': authHeader || '',
+      'ngrok-skip-browser-warning': 'true',
+    };
+
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${apiBaseUrl}/api/employee/me/leaves`, {
       method: 'POST',
-      headers: {
-        'Authorization': authHeader || '',
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
+      headers,
       body,
     });
 
