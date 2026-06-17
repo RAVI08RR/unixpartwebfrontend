@@ -116,6 +116,7 @@ export default function EditPurchaseOrderPage() {
       setFormData(prev => ({
         ...prev,
         container_id: containerId,
+        po_id: selectedContainer.container_code || prev.po_id,
         supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
         arrival_branch_id: branchId ? String(branchId) : prev.arrival_branch_id
       }));

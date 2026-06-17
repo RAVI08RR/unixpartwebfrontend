@@ -80,6 +80,7 @@ export default function AddPurchaseOrderPage() {
       setFormData(prev => ({
         ...prev,
         container_id: containerId,
+        po_id: selectedContainer.container_code || prev.po_id,
         // supplier_id: supplierId ? String(supplierId) : prev.supplier_id,
         arrival_branch_id: branchId ? String(branchId) : prev.arrival_branch_id
       }));
@@ -91,7 +92,7 @@ export default function AddPurchaseOrderPage() {
   const handleCreateOrder = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
     
-    if(!formData.po_id || !formData.container_id || !formData.supplier_id || !formData.arrival_date || !formData.arrival_branch_id) {
+    if(!formData.po_id || !formData.container_id || !formData.arrival_date || !formData.arrival_branch_id) {
         showError("Please fill in all required fields");
         return;
     }
