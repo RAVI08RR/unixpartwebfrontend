@@ -243,10 +243,10 @@ function LoginForm() {
           {/* Header & Theme Control */}
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-white uppercase">Admin Access</h2>
-              <p className="text-sm md:text-base text-zinc-500 font-medium">Sign in to your account to continue</p>
+              <h2 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white uppercase">Admin Access</h2>
+              <p className="text-sm md:text-base text-gray-500 dark:text-zinc-500 font-medium">Sign in to your account to continue</p>
             </div>
-            <ThemeToggle className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 transition-colors shadow-lg" />
+            <ThemeToggle className="p-2.5 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 hover:border-gray-350 dark:hover:border-zinc-700 transition-colors shadow-lg" />
           </div>
 
           {/* Form */}
@@ -254,15 +254,15 @@ function LoginForm() {
             
             {/* Email Input */}
             <div className="space-y-2">
-              <label className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Email Address</label>
+              <label className="text-sm font-bold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Email Address</label>
               <div className="relative group">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-600 group-focus-within:text-red-500 transition-colors" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-zinc-600 group-focus-within:text-red-500 transition-colors" />
                 <input 
                   type="email" 
                   placeholder="Enter Email Address"
                   autoComplete="email"
                   required
-                  className="w-full pl-12 pr-4 py-3.5 bg-zinc-900/50 border border-zinc-800 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-xl focus:outline-none transition-all text-white text-base shadow-inner"
+                  className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-zinc-800 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 rounded-xl focus:outline-none transition-all text-gray-900 dark:text-white text-base shadow-inner"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
@@ -287,14 +287,14 @@ function LoginForm() {
 
             {/* Login Options */}
             <div className="flex items-center justify-between text-sm font-medium">
-              <label className="flex items-center gap-2 cursor-pointer select-none text-zinc-500 hover:text-zinc-350 transition-colors">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-gray-500 hover:text-gray-700 dark:hover:text-zinc-350 transition-colors">
                 <input 
                   type="checkbox" 
-                  className="w-4 h-4 rounded border-zinc-800 bg-zinc-900 text-red-600 focus:ring-red-500 focus:ring-offset-zinc-950" 
+                  className="w-4 h-4 rounded border-gray-300 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 text-red-600 focus:ring-red-500 focus:ring-offset-white dark:focus:ring-offset-zinc-950" 
                 />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="text-zinc-500 hover:text-red-400 transition-colors">Forgot password?</a>
+              <a href="#" className="text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">Forgot password?</a>
             </div>
 
             {/* Submit Button */}
@@ -318,9 +318,9 @@ function LoginForm() {
           </form>
 
           {/* Quick links to self service for employees */}
-          <div className="border-t border-zinc-900 pt-6 text-center text-xs md:text-sm text-zinc-500">
+          <div className="border-t border-gray-150 dark:border-zinc-900 pt-6 text-center text-xs md:text-sm text-gray-505 dark:text-zinc-500">
             Are you looking for employee self-service?{" "}
-            <Link href="/employee/login" className="text-white font-bold hover:text-red-400 transition-colors hover:underline">
+            <Link href="/employee/login" className="text-gray-900 dark:text-white font-bold hover:text-red-500 dark:hover:text-red-400 transition-colors hover:underline">
               Go to Employee Login
             </Link>
           </div>
