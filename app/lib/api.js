@@ -112,7 +112,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
 
   // Add auth token if available (except for login/register)
   const token = getAuthToken();
-  const isAuthEndpoint = endpoint.includes('auth/login') || endpoint.includes('auth/register');
+  const isAuthEndpoint = endpoint.includes('login') || endpoint.includes('register');
   if (token && !isAuthEndpoint) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -128,7 +128,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     headers,
     // Add timeout for all requests - longer for login and updates
     signal: AbortSignal.timeout(
-      endpoint.includes('auth/login') ? 30000 : 
+      isAuthEndpoint ? 30000 : 
       (options.method === 'PUT' || options.method === 'POST') ? 45000 : 
       15000
     ),
@@ -139,8 +139,8 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
   try {
     const response = await fetch(url, config);
     
-    // Handle 401 - clear token and throw error
-    if (response.status === 401) {
+    // Handle 401 - clear token and throw error (unless it's login/register)
+    if (response.status === 401 && !isAuthEndpoint) {
       clearAuthToken();
       throw new Error('Your session has expired. Please log in again.');
     }
