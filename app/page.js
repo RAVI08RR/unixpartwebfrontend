@@ -152,7 +152,7 @@ function LoginForm() {
     <div className="min-h-screen flex flex-col md:flex-row bg-zinc-950 text-white transition-colors duration-300 font-sans selection:bg-red-500/30 selection:text-red-200">
       
       {/* Left Panel: Portal Branding & Visual Features */}
-      <div className="w-full md:w-1/2 bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950/40 p-8 md:p-16 flex flex-col justify-between relative overflow-hidden border-b md:border-b-0 md:border-r border-zinc-900">
+      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-zinc-950 via-zinc-900 to-red-950/40 p-8 md:p-16 flex-col justify-between relative overflow-hidden md:border-r border-zinc-900">
         
         {/* Subtle decorative background gradients/grids */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
@@ -225,9 +225,20 @@ function LoginForm() {
       </div>
 
       {/* Right Panel: Sleek Dark Login Form */}
-      <div className="w-full md:w-1/2 bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative border-t md:border-t-0 border-zinc-900">
+      <div className="w-full md:w-1/2 bg-zinc-950 p-8 md:p-16 flex items-center justify-center relative">
         
         <div className="max-w-md w-full mx-auto space-y-8 relative z-10">
+          
+          {/* Logo on Mobile */}
+          <div className="flex flex-col items-center gap-2.5 md:hidden">
+            <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center p-1.5 border border-white/10 shadow-lg">
+              <img src="/logo.png" alt="Unixparts Logo" className="w-full h-full object-contain" />
+            </div>
+            <div className="text-center">
+              <span className="font-black tracking-wider text-sm leading-tight text-white uppercase block">Unixparts</span>
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest block">Administration Panel</span>
+            </div>
+          </div>
           
           {/* Header & Theme Control */}
           <div className="flex justify-between items-center">
