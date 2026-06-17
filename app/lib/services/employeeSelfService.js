@@ -24,7 +24,7 @@ export const employeeSelfService = {
     return fetchApi('/api/employee/me/password', {
       method: 'PUT',
       body: JSON.stringify({
-        old_password: oldPassword,
+        current_password: oldPassword,
         new_password: newPassword
       }),
     });
@@ -304,12 +304,15 @@ export const employeeSelfService = {
   /**
    * Change employee password
    * Uses PUT /api/employee/me/password
-   * API expects: { old_password, new_password }
+   * API expects: { current_password, new_password }
    */
   changePassword: async (old_password, new_password) => {
     return fetchApi('/api/employee/me/password', {
       method: 'PUT',
-      body: JSON.stringify({ old_password, new_password }),
+      body: JSON.stringify({ 
+        current_password: old_password, 
+        new_password: new_password 
+      }),
     });
   },
 };
