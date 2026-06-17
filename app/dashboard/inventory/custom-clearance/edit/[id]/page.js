@@ -48,6 +48,21 @@ export default function EditClearancePage({ params }) {
     notes: ""
   });
 
+  const handleSupplierChange = async (supplierId) => {
+    setFormData(prev => ({ ...prev, supplier_id: supplierId }));
+    
+    if (supplierId) {
+      try {
+        const response = await containerService.generateContainerCode(supplierId);
+        if (response && response.container_code) {
+          setFormData(prev => ({ ...prev, container_code: response.container_code }));
+        }
+      } catch (err) {
+        console.error("Failed to generate container code:", err);
+      }
+    }
+  };
+
   useEffect(() => {
     const fetchContainer = async () => {
       try {
@@ -212,7 +227,7 @@ export default function EditClearancePage({ params }) {
                   className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
                   style={{ height: '45px' }}
                   value={formData.supplier_id}
-                  onChange={(e) => setFormData({...formData, supplier_id: e.target.value})}
+                  onChange={(e) => handleSupplierChange(e.target.value)}
                   required
                 >
                   <option value="">Select Supplier</option>

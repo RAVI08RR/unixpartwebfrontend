@@ -72,6 +72,16 @@ export const containerService = {
     }
   },
 
+  // Generate container code suggestion by supplier ID
+  generateContainerCode: async (supplierId) => {
+    try {
+      return await fetchApi(`/api/containers/generate/container-code?supplier_id=${supplierId}`);
+    } catch (error) {
+      console.warn('📦 Container code generation failed:', error.message);
+      throw error;
+    }
+  },
+
   // Create new container
   create: async (containerData) => {
     try {
