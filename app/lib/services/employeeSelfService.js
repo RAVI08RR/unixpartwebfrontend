@@ -23,9 +23,9 @@ export const employeeSelfService = {
   changePassword: async (oldPassword, newPassword) => {
     return fetchApi('/api/employee/me/password', {
       method: 'PUT',
-      body: JSON.stringify({ 
-        old_password: oldPassword, 
-        new_password: newPassword 
+      body: JSON.stringify({
+        old_password: oldPassword,
+        new_password: newPassword
       }),
     });
   },
@@ -58,7 +58,7 @@ export const employeeSelfService = {
     const payload = {
       employee_id: empId,
       date,
-      check_in:  type === 'check_in'  ? timeStr : null,
+      check_in: type === 'check_in' ? timeStr : null,
       check_out: type === 'check_out' ? timeStr : null,
       notes: notes || '',
     };
@@ -262,10 +262,10 @@ export const employeeSelfService = {
 
     if (data && typeof data === 'object') {
       const docs = [
-        { key: 'passport',  label: 'Passport',           expiry: data.passport_expiry,  days: data.passport_days_left },
-        { key: 'visa',      label: 'Visa',                expiry: data.visa_expiry,      days: data.visa_days_left },
-        { key: 'eid',       label: 'Emirates ID',         expiry: data.eid_expiry,       days: data.eid_days_left },
-        { key: 'insurance', label: 'Medical Insurance',   expiry: data.insurance_expiry, days: data.insurance_days_left },
+        { key: 'passport', label: 'Passport', expiry: data.passport_expiry, days: data.passport_days_left },
+        { key: 'visa', label: 'Visa', expiry: data.visa_expiry, days: data.visa_days_left },
+        { key: 'eid', label: 'Emirates ID', expiry: data.eid_expiry, days: data.eid_days_left },
+        { key: 'insurance', label: 'Medical Insurance', expiry: data.insurance_expiry, days: data.insurance_days_left },
       ];
 
       return docs
