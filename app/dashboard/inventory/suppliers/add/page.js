@@ -27,7 +27,7 @@ export default function AddSupplierPage() {
     company: "",
     address: "",
     notes: "",
-    type: "Wholesale", // Default type
+    type: "OWNER", // Default type
     status: true
   });
 
@@ -194,7 +194,7 @@ export default function AddSupplierPage() {
               >
              
              
-                <option value="OWNER">Owner</option>
+                <option selected value="OWNER">Owner</option>
                 <option value="RENTAL">Rental</option>
               </select>
               <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
