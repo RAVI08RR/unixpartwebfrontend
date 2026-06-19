@@ -131,7 +131,6 @@ export default function AddPurchaseOrderPage() {
     setSubmittingItem(true);
     try {
         const payload = {
-            stock_number: `STOCK-${Date.now()}`, // Auto-generate stock number
             po_id: createdPo.id,
             item_id: parseInt(itemFormData.item_id),
             current_branch_id: parseInt(itemFormData.current_branch_id),
