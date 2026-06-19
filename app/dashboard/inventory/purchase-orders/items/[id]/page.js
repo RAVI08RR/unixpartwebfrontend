@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { 
-  ArrowLeft, Package, Building2, 
+  ArrowLeft, Package, Building2, Hash, FileText, RefreshCw,
   Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar, Printer, RotateCcw
 } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
@@ -47,6 +47,19 @@ function PurchaseOrderItemsContent({ params }) {
   const searchParams = useSearchParams();
   const [printLabelModalOpen, setPrintLabelModalOpen] = useState(false);
   const [labelPreviewOpen, setLabelPreviewOpen] = useState(false);
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [submittingItem, setSubmittingItem] = useState(false);
+  const [generatingStockNumber, setGeneratingStockNumber] = useState(false);
+  const [stockNumberTouched, setStockNumberTouched] = useState(false);
+  const [itemFormData, setItemFormData] = useState({
+    stock_number: "",
+    item_id: "",
+    po_description: "",
+    stock_notes: "",
+    current_branch_id: "",
+    status: "in_stock",
+    quantity: 1,
+  });
   const [labelSize, setLabelSize] = useState({ width: 2.25, height: 1.25 });
   const [rememberSize, setRememberSize] = useState(false);
   const [labelStyles, setLabelStyles] = useState({
@@ -86,6 +99,142 @@ function PurchaseOrderItemsContent({ params }) {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
   }, [apiStockItems]);
+
+  const getInitialItemFormData = (branchId = "") => ({
+    stock_number: "",
+    item_id: "",
+    po_description: "",
+    stock_notes: "",
+    current_branch_id: branchId,
+    status: "in_stock",
+    quantity: 1,
+  });
+
+  const normalizeStockNumber = (stockNumber) => (stockNumber || "").trim().toUpperCase();
+  const padNumber = (value, size) => String(value).padStart(size, "0");
+
+  const getDefaultBranchId = () => {
+    const branchId =
+      purchaseOrder?.arrival_branch_id ||
+      purchaseOrder?.arrival_branch?.id ||
+      purchaseOrder?.branch?.id ||
+      purchaseOrder?.container?.destination_branch_id ||
+      purchaseOrder?.container?.destination_branch?.id ||
+      "";
+
+    return branchId ? String(branchId) : "";
+  };
+
+  const getBranchCode = (branchId = itemFormData.current_branch_id) => {
+    const branch = branches.find(b => String(b.id) === String(branchId));
+    const fallbackBranch = purchaseOrder?.arrival_branch || purchaseOrder?.branch || purchaseOrder?.container?.destination_branch;
+    const fallback = branch?.label || branch?.branch_name || fallbackBranch?.branch_name || fallbackBranch?.label || "STK";
+
+    return normalizeStockNumber(branch?.branch_code || branch?.code || fallbackBranch?.branch_code || fallbackBranch?.code || fallback)
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 3) || "STK";
+  };
+
+  const getPoSegment = () => {
+    const rawPoId = purchaseOrder?.po_id || poId || "0";
+    const numericPart = String(rawPoId).match(/\d+/g)?.join("") || poId || "0";
+    return padNumber(numericPart, 3).slice(-3);
+  };
+
+  const generateStockNumber = (branchId = itemFormData.current_branch_id, sourceItems = items) => {
+    const branchCode = getBranchCode(branchId);
+    const poSegment = getPoSegment();
+    const prefix = `${branchCode}-${poSegment}-`;
+    const existingStockNumbers = new Set((sourceItems || []).map(item => normalizeStockNumber(item.stock_number)));
+    const maxSequence = (sourceItems || []).reduce((max, item) => {
+      const stockNumber = normalizeStockNumber(item.stock_number);
+      if (!stockNumber.startsWith(prefix)) return max;
+      const sequence = parseInt(stockNumber.slice(prefix.length), 10);
+      return Number.isFinite(sequence) ? Math.max(max, sequence) : max;
+    }, 0);
+
+    let nextSequence = maxSequence + 1;
+    let nextStockNumber = `${prefix}${padNumber(nextSequence, 6)}`;
+    while (existingStockNumbers.has(nextStockNumber)) {
+      nextSequence += 1;
+      nextStockNumber = `${prefix}${padNumber(nextSequence, 6)}`;
+    }
+
+    return nextStockNumber;
+  };
+
+  const stockNumberExists = async (stockNumber) => {
+    try {
+      await poItemService.getByStockNumber(stockNumber);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const getUniqueStockNumber = async (branchId = itemFormData.current_branch_id) => {
+    let latestItems = await poItemService.getAll(0, 5000);
+    let stockNumber = generateStockNumber(branchId, latestItems);
+    let attempts = 0;
+
+    while (attempts < 50 && await stockNumberExists(stockNumber)) {
+      latestItems = [...latestItems, { stock_number: stockNumber }];
+      stockNumber = generateStockNumber(branchId, latestItems);
+      attempts += 1;
+    }
+
+    if (attempts >= 50) {
+      throw new Error("Could not generate a unique stock number. Please try again.");
+    }
+
+    return stockNumber;
+  };
+
+  const setGeneratedStockNumber = async (branchId = itemFormData.current_branch_id) => {
+    if (!branchId) return;
+
+    setGeneratingStockNumber(true);
+    try {
+      const stockNumber = await getUniqueStockNumber(branchId);
+      setItemFormData(prev => ({
+        ...prev,
+        current_branch_id: branchId,
+        stock_number: stockNumber,
+      }));
+      setStockNumberTouched(false);
+    } catch (err) {
+      showError(err.message || "Failed to generate stock number");
+    } finally {
+      setGeneratingStockNumber(false);
+    }
+  };
+
+  const handleOpenItemModal = () => {
+    const branchId = getDefaultBranchId();
+    setItemFormData(getInitialItemFormData(branchId));
+    setStockNumberTouched(false);
+    setItemModalOpen(true);
+    if (branchId) {
+      setGeneratedStockNumber(branchId);
+    }
+  };
+
+  const handleCloseItemModal = () => {
+    setItemModalOpen(false);
+    setItemFormData(getInitialItemFormData());
+    setStockNumberTouched(false);
+  };
+
+  const handleItemBranchChange = (branchId) => {
+    setItemFormData(prev => ({
+      ...prev,
+      current_branch_id: branchId,
+    }));
+
+    if (!stockNumberTouched && branchId) {
+      setGeneratedStockNumber(branchId);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -156,6 +305,62 @@ function PurchaseOrderItemsContent({ params }) {
       fetchData();
     } catch (err) {
       showError(err.message);
+    }
+  };
+
+  const handleCreateItem = async (e) => {
+    e.preventDefault();
+
+    const stockNumber = normalizeStockNumber(itemFormData.stock_number);
+    if (!stockNumber) {
+      showError("Stock Number is required");
+      return;
+    }
+
+    setSubmittingItem(true);
+    try {
+      const exists = await stockNumberExists(stockNumber);
+      if (exists) {
+        showError(`Stock Number "${stockNumber}" already exists. Please enter a unique stock number.`);
+        return;
+      }
+
+      const payload = {
+        ...itemFormData,
+        stock_number: stockNumber,
+        po_id: parseInt(poId),
+        item_id: parseInt(itemFormData.item_id),
+        current_branch_id: parseInt(itemFormData.current_branch_id),
+        quantity: parseInt(itemFormData.quantity),
+      };
+
+      await poItemService.create(payload);
+      success("Item added successfully");
+
+      try {
+        if (purchaseOrder && purchaseOrder.status !== "saved_published") {
+          await purchaseOrderService.update(poId, {
+            po_id: purchaseOrder.po_id,
+            container_id: purchaseOrder.container_id,
+            supplier_id: purchaseOrder.supplier_id,
+            arrival_date: purchaseOrder.arrival_date,
+            arrival_branch_id: purchaseOrder.arrival_branch_id,
+            total_container_revenue: purchaseOrder.total_container_revenue,
+            items_in_stock: purchaseOrder.items_in_stock,
+            status: "saved_published",
+            notes: purchaseOrder.notes,
+          });
+        }
+      } catch (statusErr) {
+        console.error("Auto-status transition failed:", statusErr);
+      }
+
+      handleCloseItemModal();
+      fetchData();
+    } catch (err) {
+      showError(err.message || "Failed to add item");
+    } finally {
+      setSubmittingItem(false);
     }
   };
 
@@ -366,13 +571,14 @@ function PurchaseOrderItemsContent({ params }) {
             ]}
             filename={`po-items-${poId}-${new Date().toISOString().split('T')[0]}`}
           />
-          <Link 
-            href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
+          <button
+            type="button"
+            onClick={handleOpenItemModal}
             className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2 w-fit"
           >
             <Plus className="w-4 h-4" />
             ADD ITEM TO ORDER
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -550,13 +756,14 @@ function PurchaseOrderItemsContent({ params }) {
                           </p>
                         </div>
                         {!searchQuery && statusFilter === 'all' && (
-                          <Link 
-                            href={`/dashboard/inventory/purchase-orders/items/add/${poId}`}
+                          <button
+                            type="button"
+                            onClick={handleOpenItemModal}
                             className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
                           >
                             <Plus className="w-4 h-4" />
                             Add First Item
-                          </Link>
+                          </button>
                         )}
                       </div>
                     </td>
@@ -730,6 +937,160 @@ function PurchaseOrderItemsContent({ params }) {
       </div>
 
       {/* Modals */}
+      {itemModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleCreateItem} className="p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Add Item to Order</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">PO: {purchaseOrder?.po_id || poId}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseItemModal}
+                  className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors shrink-0"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <FormField label="Stock Number" required>
+                  <div className="relative flex gap-2">
+                    <div className="relative flex-1">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Enter Stock Number..."
+                        className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-black tracking-wider focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
+                        value={itemFormData.stock_number}
+                        onChange={(e) => {
+                          setItemFormData({ ...itemFormData, stock_number: e.target.value });
+                          setStockNumberTouched(true);
+                        }}
+                        required
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setGeneratedStockNumber(itemFormData.current_branch_id)}
+                      disabled={!itemFormData.current_branch_id || generatingStockNumber}
+                      className="w-12 h-12 rounded-[15px] border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-all"
+                      title="Generate stock number"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${generatingStockNumber ? "animate-spin" : ""}`} />
+                    </button>
+                  </div>
+                </FormField>
+
+                <FormField label="Category" required>
+                  <div className="relative">
+                    <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                      value={itemFormData.item_id}
+                      onChange={(e) => setItemFormData({ ...itemFormData, item_id: e.target.value })}
+                      required
+                    >
+                      <option value="">Select Item Category</option>
+                      {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
+                    </select>
+                  </div>
+                </FormField>
+
+                <FormField label="Current Branch / Warehouse" required>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <select
+                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                      value={itemFormData.current_branch_id}
+                      onChange={(e) => handleItemBranchChange(e.target.value)}
+                      required
+                    >
+                      <option value="">Select Branch</option>
+                      {branches.map(b => <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>)}
+                    </select>
+                  </div>
+                </FormField>
+
+                <FormField label="Quantity" required>
+                  <div className="relative">
+                    <Box className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemFormData.quantity}
+                      onChange={(e) => setItemFormData({ ...itemFormData, quantity: e.target.value })}
+                      required
+                    />
+                  </div>
+                </FormField>
+
+                <FormField label="Status" required>
+                  <select
+                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={itemFormData.status}
+                    onChange={(e) => setItemFormData({ ...itemFormData, status: e.target.value })}
+                    required
+                  >
+                    <option value="in_stock">In Stock</option>
+                    <option value="sold">Sold</option>
+                    <option value="reserved">Reserved</option>
+                    <option value="damaged">Damaged</option>
+                  </select>
+                </FormField>
+              </div>
+
+              <FormField label="Order Description">
+                <div className="relative">
+                  <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Engine Block - High quality part"
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={itemFormData.po_description}
+                    onChange={(e) => setItemFormData({ ...itemFormData, po_description: e.target.value })}
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="Internal Item Notes">
+                <div className="relative">
+                  <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
+                  <textarea
+                    rows="3"
+                    placeholder="Enter any internal notes about this specific part..."
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                    value={itemFormData.stock_notes}
+                    onChange={(e) => setItemFormData({ ...itemFormData, stock_notes: e.target.value })}
+                  />
+                </div>
+              </FormField>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={submittingItem || generatingStockNumber}
+                  className="w-full sm:flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  {submittingItem ? "Adding..." : "Add Item"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseItemModal}
+                  className="w-full sm:flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <ConfirmModal 
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
@@ -778,7 +1139,7 @@ function PurchaseOrderItemsContent({ params }) {
               {selectedItem.stock_notes && (
                  <div className="p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl space-y-1 border border-gray-200 dark:border-zinc-800">
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stock Notes</span>
-                    <p className="text-sm text-gray-700 dark:text-zinc-300">"{selectedItem.stock_notes}"</p>
+                    <p className="text-sm text-gray-700 dark:text-zinc-300">{selectedItem.stock_notes}</p>
                  </div>
               )}
             </div>
@@ -1134,6 +1495,17 @@ function DetailBox({ label, value }) {
       <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-lg text-sm font-medium dark:text-white border border-gray-200 dark:border-zinc-800">
         {value || 'N/A'}
       </div>
+    </div>
+  );
+}
+
+function FormField({ label, children, required }) {
+  return (
+    <div className="space-y-2">
+      <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
     </div>
   );
 }
