@@ -4,7 +4,7 @@ import React from "react";
 import { 
   BarChart3, LayoutDashboard, Box, Users, ShoppingCart, 
   FileText, Settings, LogOut, Layers, Package, Truck, 
-  DollarSign, X, Shield, Building2, UserCheck, FolderOpen
+  DollarSign, X, Shield, Building2, UserCheck, FolderOpen, Camera
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useSidebar } from "./SidebarContext";
 import { NavItem } from "./NavItem";
 import { authService } from "../lib/services/authService";
+import QRScannerModal from "../components/QRScannerModal";
 import { usePermission } from "../lib/hooks/usePermission";
 import { PERMISSIONS } from "../lib/constants/permissions";
 import useAuthStore from "../lib/store/authStore";
@@ -26,6 +27,7 @@ export function Sidebar() {
   const { hasPermission, hasAnyPermission, hasModuleAccess, isAdmin } = usePermission();
   const { clearAuth } = useAuthStore();
   const [isClient, setIsClient] = React.useState(false);
+  const [isInvoiceScannerOpen, setIsInvoiceScannerOpen] = React.useState(false);
 
   // Ensure we only render permission-filtered content on client
   React.useEffect(() => {
@@ -103,6 +105,7 @@ export function Sidebar() {
         { label: "Invoices", href: "/dashboard/sales/invoices", icon: FileText, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Payments Received", href: "/dashboard/sales/payments-received", icon: DollarSign, permission: PERMISSIONS.INVOICES.VIEW },
         { label: "Sales Data", href: "/dashboard/sales/sales-data", icon: BarChart3, permission: PERMISSIONS.INVOICES.VIEW },
+        { label: "Scan Invoice", action: "scan_invoice", icon: Camera, permission: PERMISSIONS.INVOICES.VIEW },
       ]
     },
     {
@@ -278,7 +281,11 @@ export function Sidebar() {
               <button
                 key={idx}
                 onClick={() => {
-                  window.location.href = item.href;
+                  if (item.action === "scan_invoice") {
+                    setIsInvoiceScannerOpen(true);
+                  } else {
+                    window.location.href = item.href;
+                  }
                   if (isMobileOpen) setIsMobileOpen(false);
                 }}
                 className={`
@@ -361,6 +368,19 @@ export function Sidebar() {
           </>
         )}
       </AnimatePresence>
+
+      <QRScannerModal
+        isOpen={isInvoiceScannerOpen}
+        onClose={() => setIsInvoiceScannerOpen(false)}
+        onScanSuccess={(decodedText) => {
+          setIsInvoiceScannerOpen(false);
+          if (decodedText.startsWith("http")) {
+             window.location.href = decodedText;
+          } else {
+             router.push(decodedText);
+          }
+        }}
+      />
     </>
   );
 }

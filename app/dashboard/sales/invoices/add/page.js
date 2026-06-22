@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer, Pencil, Camera
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, Printer, Pencil, Camera, QrCode
 } from "lucide-react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
@@ -559,6 +559,17 @@ function AddInvoiceContent() {
       };
 
       await invoiceService.saveGranular(payload);
+
+      // Explicitly update PO items to 'sold' status
+      try {
+        const updatePromises = formData.items.map(item => 
+          poItemService.update(parseInt(item.po_item_id), { status: 'sold' })
+        );
+        await Promise.allSettled(updatePromises);
+      } catch (statusError) {
+        console.error("Failed to update item statuses to sold:", statusError);
+      }
+
       success("Invoice created successfully!");
       router.push("/dashboard/sales/invoices");
     } catch (error) {
@@ -976,6 +987,20 @@ function AddInvoiceContent() {
             onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
           />
         </FormField>
+
+        {/* Invoice QR Code Placeholder */}
+        <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] p-6 flex flex-col sm:flex-row items-center gap-6">
+          <div className="shrink-0 bg-gray-50 dark:bg-zinc-800/50 p-6 rounded-xl border border-gray-100 dark:border-zinc-800 flex items-center justify-center w-[138px] h-[138px]">
+            <QrCode className="w-12 h-12 text-gray-300 dark:text-zinc-600" />
+          </div>
+          <div className="flex-1 text-center sm:text-left space-y-2">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice QR Code</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">A unique QR code will be generated for this invoice immediately after saving.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 mt-2 bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-lg font-bold text-xs">
+              Available after save
+            </div>
+          </div>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-zinc-800">

@@ -3,8 +3,8 @@
 import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { 
-  Receipt, MoreVertical, Search, 
+import {
+  Receipt, MoreVertical, Search,
   Filter, Download, Plus, ChevronLeft, ChevronRight,
   DollarSign, Pencil, Trash2, Check, X, Eye, Calendar,
   User, Building2, Printer, FileText, RefreshCcw
@@ -25,7 +25,7 @@ function InvoiceManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { hasPermission } = usePermission();
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [customerFilter, setCustomerFilter] = useState("All");
@@ -38,13 +38,13 @@ function InvoiceManagementContent() {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  
+
   // Initialize filters from URL params after component mounts
   useEffect(() => {
     if (searchParams) {
       const urlStatus = searchParams.get('status');
       const urlCustomer = searchParams.get('customer');
-      
+
       if (urlStatus) {
         setStatusFilter(urlStatus);
         setIsFilterOpen(true);
@@ -62,24 +62,24 @@ function InvoiceManagementContent() {
       setIsFilterOpen(true);
     }
   }, []);
-  
+
   // Data Fetching with API-level filtering
   const itemsPerPage = 8;
-  
+
   // Convert status filter to API parameter
   const getApiStatusParam = (statusFilter) => {
     if (statusFilter === "All") return null;
     return statusFilter.toLowerCase();
   };
-  
+
   // Convert customer filter to API parameter
   const getApiCustomerParam = (customerFilter) => {
     return customerFilter === "All" ? null : customerFilter;
   };
-  
+
   const { invoices: apiInvoices, isLoading, isError, mutate } = useInvoices(
-    0, 
-    100, 
+    0,
+    100,
     getApiCustomerParam(customerFilter),
     getApiStatusParam(statusFilter)
   );
@@ -101,20 +101,20 @@ function InvoiceManagementContent() {
     salesData.forEach(item => {
       const invNum = item.invoice?.invoice_number;
       if (!invNum) return;
-      
+
       let branchCode = null;
       let branchId = null;
       let supplierCode = null;
       let supplierId = null;
       const stockNum = item.po_item?.stock_number;
-      
+
       if (stockNum) {
         branchCode = stockNum.split('-')[0]?.toUpperCase();
         if (branchCode === 'DXB') branchId = 1;
         else if (branchCode === 'AUH') branchId = 2;
         else if (branchCode === 'SHJ') branchId = 3;
       }
-      
+
       const supCode = item.po_item?.purchase_order?.container?.supplier?.supplier_code;
       if (supCode) {
         supplierCode = supCode;
@@ -123,7 +123,7 @@ function InvoiceManagementContent() {
           supplierId = idNum;
         }
       }
-      
+
       if (!map[invNum]) {
         map[invNum] = {
           branchId,
@@ -135,40 +135,40 @@ function InvoiceManagementContent() {
       if (branchId) map[invNum].branchId = branchId;
       if (supplierId) map[invNum].supplierId = supplierId;
     });
-    
+
     // Convert sets to arrays
     Object.keys(map).forEach(key => {
       map[key].stockNumbers = Array.from(map[key].stockNumbers);
     });
-    
+
     return map;
   }, [salesData]);
 
   // Update URL parameters when filters change
   const updateUrlParams = (status, customer) => {
     const params = new URLSearchParams();
-    
+
     if (status !== "All") {
       params.set('status', status.toLowerCase());
     }
-    
+
     if (customer !== "All") params.set('customer', customer);
-    
+
     const newUrl = params.toString() ? `?${params.toString()}` : '';
     router.replace(`/dashboard/sales/invoices${newUrl}`, { scroll: false });
   };
-  
+
   // Handle Data Selection (API only) - Fixed for hydration
   const invoices = useMemo(() => {
     // During SSR, always return empty array to prevent hydration mismatch
     if (typeof window === 'undefined') return [];
 
     const token = getAuthToken();
-    if (!token) { 
+    if (!token) {
       // If no token, return empty array - user should be redirected to login
       return [];
     }
-    
+
     // Log the data state for debugging
     console.log("INVOICE-DASHBOARD DATA DEBUG:", {
       hasApiData: !!apiInvoices,
@@ -177,12 +177,12 @@ function InvoiceManagementContent() {
       isLoading,
       isError
     });
-    
+
     // If we have API data, use it
     if (apiInvoices) {
-        // Handle both array and object responses
-        const data = Array.isArray(apiInvoices) ? apiInvoices : (apiInvoices?.invoices || []);
-        return data;
+      // Handle both array and object responses
+      const data = Array.isArray(apiInvoices) ? apiInvoices : (apiInvoices?.invoices || []);
+      return data;
     }
 
     // If no API data, return empty array
@@ -191,7 +191,7 @@ function InvoiceManagementContent() {
 
   // Add client-side mounting state to prevent hydration mismatch
   const [isMounted, setIsMounted] = useState(false);
-  
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -224,7 +224,7 @@ function InvoiceManagementContent() {
       const matchesCustomer = customerFilter === "All" || String(invoice.customer_id) === String(customerFilter);
 
       // Branch check
-      const matchesBranch = branchFilter === "All" || 
+      const matchesBranch = branchFilter === "All" ||
         String(invoiceBranchId) === String(branchFilter) ||
         (invoice.created_by?.branches && invoice.created_by.branches.some(b => String(b.id) === String(branchFilter)));
 
@@ -235,8 +235,8 @@ function InvoiceManagementContent() {
       const matchesStockNumber = !stockNumberFilter || invoiceStockNumbers.some(sn => sn.toLowerCase().includes(stockNumberFilter.toLowerCase()));
 
       // User check
-      const matchesUser = userFilter === "All" || 
-        String(invoice.invoice_by) === String(userFilter) || 
+      const matchesUser = userFilter === "All" ||
+        String(invoice.invoice_by) === String(userFilter) ||
         String(invoice.created_by?.id) === String(userFilter);
 
       // Load Status check
@@ -248,26 +248,26 @@ function InvoiceManagementContent() {
         const pDate = new Date(invoice.invoice_date);
         if (dateRange.start) {
           const sDate = new Date(dateRange.start);
-          sDate.setHours(0,0,0,0);
+          sDate.setHours(0, 0, 0, 0);
           if (pDate < sDate) matchesDateRange = false;
         }
         if (dateRange.end) {
           const eDate = new Date(dateRange.end);
-          eDate.setHours(23,59,59,999);
+          eDate.setHours(23, 59, 59, 999);
           if (pDate > eDate) matchesDateRange = false;
         }
       }
 
       // Generic search bar fallback check
-      const matchesSearch = !searchQuery || 
+      const matchesSearch = !searchQuery ||
         (invoice.invoice_number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
         (invoice.invoice_notes?.toLowerCase() || "").includes(searchQuery.toLowerCase());
 
-      return matchesStatus && matchesCustomer && matchesBranch && matchesInvoiceNumber && 
-             matchesStockNumber && matchesUser && matchesLoadStatus && matchesDateRange && matchesSearch;
+      return matchesStatus && matchesCustomer && matchesBranch && matchesInvoiceNumber &&
+        matchesStockNumber && matchesUser && matchesLoadStatus && matchesDateRange && matchesSearch;
     });
   }, [
-    invoices, statusFilter, customerFilter, branchFilter, invoiceNumberFilter, 
+    invoices, statusFilter, customerFilter, branchFilter, invoiceNumberFilter,
     stockNumberFilter, userFilter, loadStatusFilter, dateRange, searchQuery, invoiceDetailsMap
   ]);
 
@@ -318,7 +318,7 @@ function InvoiceManagementContent() {
 
   const confirmDelete = async () => {
     if (!selectedInvoice) return;
-    
+
     try {
       await invoiceService.delete(selectedInvoice.id);
       mutate();
@@ -350,15 +350,15 @@ function InvoiceManagementContent() {
   // Helper function to format currency
   const formatCurrency = (amount) => {
     if (!amount) return "AED 0.00";
-    
+
     try {
       // Handle very long decimal strings by parsing and formatting
       let numAmount;
-      
+
       if (typeof amount === 'string') {
         // Remove leading zeros and handle very long strings
         const cleanAmount = amount.replace(/^[+-]?0+/, '') || '0';
-        
+
         // If the string is extremely long, truncate it to a reasonable length
         if (cleanAmount.length > 15) {
           // Take first 10 digits and add decimal point
@@ -370,14 +370,14 @@ function InvoiceManagementContent() {
       } else {
         numAmount = parseFloat(amount);
       }
-      
+
       if (isNaN(numAmount)) return "AED 0.00";
-      
+
       // Cap extremely large numbers for display
       if (numAmount > 999999999) {
         return "AED 999M+";
       }
-      
+
       return new Intl.NumberFormat('en-AE', {
         style: 'currency',
         currency: 'AED',
@@ -437,13 +437,13 @@ function InvoiceManagementContent() {
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Invoice Management</h1>
           <p className="text-gray-400 dark:text-white text-sm font-normal">Manage your sales invoices</p>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
           {/* Search Bar */}
           <div className="relative w-full lg:max-w-xl">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search by invoice number, notes..."
               className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
               value={searchQuery}
@@ -453,7 +453,7 @@ function InvoiceManagementContent() {
               }}
             />
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
             <ExportButton
@@ -470,13 +470,12 @@ function InvoiceManagementContent() {
               ]}
               filename={`invoices-${new Date().toISOString().split('T')[0]}`}
             />
-            <button 
+            <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
-                isFilterOpen 
-                  ? 'bg-red-600 text-white shadow-red-600/10' 
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                  ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
-              }`}
+                }`}
             >
               <Filter className="w-4 h-4" />
               <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
@@ -485,7 +484,7 @@ function InvoiceManagementContent() {
             {hasPermission(PERMISSIONS.INVOICES.CREATE) && (
               <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Invoice</span>
+                <span className="whitespace-nowrap font-black">Create Invoice</span>
               </Link>
             )}
           </div>
@@ -501,7 +500,7 @@ function InvoiceManagementContent() {
               <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the invoice list below.</p>
             </div>
             {(statusFilter !== 'All' || customerFilter !== 'All' || branchFilter !== 'All' || invoiceNumberFilter !== '' || stockNumberFilter !== '' || userFilter !== 'All' || loadStatusFilter !== 'All' || dateRange.start !== '' || dateRange.end !== '') && (
-              <button 
+              <button
                 onClick={() => {
                   setSearchQuery('');
                   setStatusFilter('All');
@@ -542,15 +541,15 @@ function InvoiceManagementContent() {
 
               {/* Pick Date Range */}
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
                   className="w-full flex items-center gap-2 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm justify-between"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
                     <span className="truncate">
-                      {dateRange.start || dateRange.end 
-                        ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                      {dateRange.start || dateRange.end
+                        ? `${dateRange.start ? new Date(dateRange.start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''} - ${dateRange.end ? new Date(dateRange.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}`
                         : "Pick a date range"
                       }
                     </span>
@@ -564,7 +563,7 @@ function InvoiceManagementContent() {
                     <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
-                        <input 
+                        <input
                           type="date"
                           className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
                           value={dateRange.start}
@@ -573,7 +572,7 @@ function InvoiceManagementContent() {
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
-                        <input 
+                        <input
                           type="date"
                           className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
                           value={dateRange.end}
@@ -581,13 +580,13 @@ function InvoiceManagementContent() {
                         />
                       </div>
                       <div className="flex gap-2 justify-end pt-1">
-                        <button 
+                        <button
                           onClick={() => { setDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
                           className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
                         >
                           Clear
                         </button>
-                        <button 
+                        <button
                           onClick={() => setIsDatePickerOpen(false)}
                           className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
                         >
@@ -601,8 +600,8 @@ function InvoiceManagementContent() {
 
               {/* Filter by Invoice # */}
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Filter by Invoice #..."
                   className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={invoiceNumberFilter}
@@ -628,8 +627,8 @@ function InvoiceManagementContent() {
 
               {/* Filter by Stock Number */}
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Filter by Stock Number..."
                   className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={stockNumberFilter}
@@ -765,113 +764,109 @@ function InvoiceManagementContent() {
 
                       {/* Invoice Status */}
                       <td className="px-6 py-5" data-label="Invoice Status">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
-                          invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                             : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                            : invoice.invoice_status === 'cancelled'
-                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                        }`}>
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                              : invoice.invoice_status === 'cancelled'
+                                ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                          }`}>
                           {invoice.invoice_status || "Pending"}
                         </div>
                       </td>
 
                       {/* Load Status */}
                       <td className="px-6 py-5" data-label="Load Status">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${
-                          invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                             : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-                            : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
-                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                            : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
-                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                        }`}>
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                              : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                                : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
+                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
                           {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
-                           invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
-                           invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
-                           invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
-                           invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft' ? 'Draft' :
-                           'Not Loaded'}
+                            invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
+                              invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
+                                invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
+                                  invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft' ? 'Draft' :
+                                    'Not Loaded'}
                         </div>
                       </td>
 
                       {/* Actions */}
-                       <td className="px-6 py-5 text-right relative" data-label="Actions">
-                         <div className="flex items-center justify-end gap-2">
-                           <div className="relative">
-                             <button 
-                               onClick={() => toggleMenu(invoice.id)}
-                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                 menuOpenId === invoice.id 
-                                   ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                   : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                               }`}
-                             >
-                               <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                               <MoreVertical className="w-5 h-5" />
-                             </button>
-                                 
-                                 {menuOpenId === invoice.id && (
-                                   <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                     index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                   }`}>
-                                     <Link
-                                       href={`/dashboard/sales/invoices/view/${invoice.id}`}
-                                       className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                     >
-                                       <Eye className="w-4 h-4" />
-                                       View/Modify Invoice
-                                     </Link>
-                                     {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
-                                        <Link
-                                          href={`/dashboard/sales/invoices/edit/${invoice.id}`}
-                                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                        >
-                                          <Pencil className="w-4 h-4" />
-                                          Edit Invoice
-                                        </Link>
-                                      )}
-                                      <button
-                                        onClick={() => {
-                                          window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
-                                          setMenuOpenId(null);
-                                        }}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
-                                      >
-                                        <FileText className="w-4 h-4" />
-                                        Print Preview
-                                      </button>
-                                      {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
-                                        <>
-                                          <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
-                                          <button 
-                                            onClick={() => handleCancelReturnClick(invoice)}
-                                            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
-                                          >
-                                            <RefreshCcw className="w-4 h-4" />
-                                            Cancel / Return Items
-                                          </button>
-                                        </>
-                                      )}
-                                      {hasPermission(PERMISSIONS.INVOICES.DELETE) && (
-                                        <button 
-                                          onClick={() => handleDeleteClick(invoice)} 
-                                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                          Delete Invoice
-                                        </button>
-                                      )}
-                                   </div>
-                                 )}
-                               </div>
-                         </div>
-                       </td>
+                      <td className="px-6 py-5 text-right relative" data-label="Actions">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="relative">
+                            <button
+                              onClick={() => toggleMenu(invoice.id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${menuOpenId === invoice.id
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                                }`}
+                            >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            {menuOpenId === invoice.id && (
+                              <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}>
+                                <Link
+                                  href={`/dashboard/sales/invoices/view/${invoice.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View/Modify Invoice
+                                </Link>
+                                {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+                                  <Link
+                                    href={`/dashboard/sales/invoices/edit/${invoice.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Invoice
+                                  </Link>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Print Preview
+                                </button>
+                                {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+                                  <>
+                                    <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
+                                    <button
+                                      onClick={() => handleCancelReturnClick(invoice)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
+                                    >
+                                      <RefreshCcw className="w-4 h-4" />
+                                      Cancel / Return Items
+                                    </button>
+                                  </>
+                                )}
+                                {hasPermission(PERMISSIONS.INVOICES.DELETE) && (
+                                  <button
+                                    onClick={() => handleDeleteClick(invoice)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Invoice
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })
@@ -891,9 +886,9 @@ function InvoiceManagementContent() {
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredInvoices.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredInvoices.length}</span> entries
           </p>
-          
+
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
               className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
@@ -903,20 +898,19 @@ function InvoiceManagementContent() {
             </button>
             <div className="hidden sm:flex items-center gap-1.5">
               {[...Array(totalPages)].map((_, i) => (
-                <button 
+                <button
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
+                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
+                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10'
+                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    }`}
                 >
                   {i + 1}
                 </button>
               ))}
             </div>
-            <button 
+            <button
               onClick={handleNextPage}
               disabled={currentPage === totalPages || totalPages === 0}
               className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
@@ -926,15 +920,15 @@ function InvoiceManagementContent() {
             </button>
           </div>
         </div>
-        </div>
+      </div>
 
 
 
       {/* View Invoice Modal */}
       {viewModalOpen && selectedInvoice && (
         <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-50" 
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setViewModalOpen(false)}
           />
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -950,7 +944,7 @@ function InvoiceManagementContent() {
                       <p className="text-sm text-gray-500 dark:text-gray-400">{selectedInvoice.invoice_number}</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setViewModalOpen(false)}
                     className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                   >
@@ -966,33 +960,31 @@ function InvoiceManagementContent() {
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Number</h3>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Customer</h3>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Date</h3>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(selectedInvoice.invoice_date)}</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</h3>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${
-                      selectedInvoice.invoice_status === 'paid'
-                        ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' 
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${selectedInvoice.invoice_status === 'paid'
+                        ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
                         : selectedInvoice.invoice_status === 'overdue'
-                        ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                        : selectedInvoice.invoice_status === 'cancelled'
-                        ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
-                        : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        selectedInvoice.invoice_status === 'paid' ? 'bg-green-600' : 
-                        selectedInvoice.invoice_status === 'overdue' ? 'bg-red-600' :
-                        selectedInvoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
-                      }`}></div>
+                          ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                          : selectedInvoice.invoice_status === 'cancelled'
+                            ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
+                            : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
+                      }`}>
+                      <div className={`w-2 h-2 rounded-full ${selectedInvoice.invoice_status === 'paid' ? 'bg-green-600' :
+                          selectedInvoice.invoice_status === 'overdue' ? 'bg-red-600' :
+                            selectedInvoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
+                        }`}></div>
                       {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
                     </div>
                   </div>
@@ -1039,13 +1031,13 @@ function InvoiceManagementContent() {
               </div>
 
               <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex justify-end gap-3">
-                <button 
+                <button
                   onClick={() => setViewModalOpen(false)}
                   className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
                   Close
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     setViewModalOpen(false);
                     handleEdit(selectedInvoice);
@@ -1064,8 +1056,8 @@ function InvoiceManagementContent() {
       {/* Delete Confirmation Modal */}
       {deleteModalOpen && selectedInvoice && (
         <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-50" 
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
             onClick={() => setDeleteModalOpen(false)}
           />
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -1098,11 +1090,10 @@ function InvoiceManagementContent() {
                     </div>
                     <div className="flex justify-between text-sm mt-1">
                       <span className="text-gray-500 dark:text-gray-400">Status:</span>
-                      <span className={`font-semibold ${
-                        selectedInvoice.invoice_status === 'paid' ? 'text-green-600 dark:text-green-400' :
-                        selectedInvoice.invoice_status === 'overdue' ? 'text-red-600 dark:text-red-400' :
-                        'text-yellow-600 dark:text-yellow-400'
-                      }`}>
+                      <span className={`font-semibold ${selectedInvoice.invoice_status === 'paid' ? 'text-green-600 dark:text-green-400' :
+                          selectedInvoice.invoice_status === 'overdue' ? 'text-red-600 dark:text-red-400' :
+                            'text-yellow-600 dark:text-yellow-400'
+                        }`}>
                         {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
                       </span>
                     </div>
@@ -1114,13 +1105,13 @@ function InvoiceManagementContent() {
                 </p>
 
                 <div className="flex gap-3">
-                  <button 
+                  <button
                     onClick={() => setDeleteModalOpen(false)}
                     className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={confirmDelete}
                     className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
@@ -1135,9 +1126,9 @@ function InvoiceManagementContent() {
       )}
 
       {/* Cancel/Return Items Modal */}
-      <CancelReturnItemsModal 
-        isOpen={cancelModalOpen} 
-        onClose={() => setCancelModalOpen(false)} 
+      <CancelReturnItemsModal
+        isOpen={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
         invoice={selectedInvoice}
         onSuccess={() => mutate()}
       />

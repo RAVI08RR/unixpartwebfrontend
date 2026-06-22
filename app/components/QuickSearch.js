@@ -36,6 +36,23 @@ export default function QuickSearch() {
   // Scanner states
   const [isMainScannerOpen, setIsMainScannerOpen] = useState(false);
   const [isDismantleScannerOpen, setIsDismantleScannerOpen] = useState(false);
+  const [isInvoiceScannerOpen, setIsInvoiceScannerOpen] = useState(false);
+
+  const handleInvoiceScanSuccess = (decodedText) => {
+    try {
+      if (decodedText.startsWith("http")) {
+        const url = new URL(decodedText);
+        router.push(url.pathname + url.search);
+      } else {
+        router.push(decodedText);
+      }
+      setIsInvoiceScannerOpen(false);
+      setIsOpen(false);
+      success("Invoice scanned successfully!");
+    } catch(e) {
+      router.push(decodedText);
+    }
+  };
 
   const handleMainScanSuccess = (decodedText) => {
     setSearchQuery(decodedText);
@@ -199,7 +216,7 @@ export default function QuickSearch() {
     return () => clearTimeout(timeoutId);
   }, [dismantleStockNumber, activeTab]);
 
-  const tabs = ["Item", "Invoice", "Create", "Actions"];
+  const tabs = ["Item", "Invoice", "Actions"];
 
   const handleViewItemDetails = async (item) => {
     // If we have po_id, redirect to the items list page with item_id for auto-open
@@ -325,6 +342,29 @@ export default function QuickSearch() {
               <div className="bg-gray-50 dark:bg-zinc-800/30 rounded-2xl p-6 h-full flex flex-col">
                 {activeTab === "Invoice" ? (
                   <div className="flex flex-col h-full overflow-hidden">
+                    <div className="flex justify-between items-center mb-4 shrink-0 px-2 pt-2">
+                      <h2 className="text-lg font-black text-gray-900 dark:text-white">Invoices</h2>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setIsInvoiceScannerOpen(true)}
+                          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm"
+                          title="Scan Invoice QR Code"
+                        >
+                          <Camera className="w-4 h-4" />
+                          Scan
+                        </button>
+                        <button
+                          onClick={() => {
+                            router.push('/dashboard/sales/invoices/add');
+                            setIsOpen(false);
+                          }}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm"
+                        >
+                          <FileText className="w-4 h-4" />
+                          New Invoice
+                        </button>
+                      </div>
+                    </div>
                     {isLoadingInvoices ? (
                       <div className="flex flex-col items-center justify-center py-12 flex-1">
                         <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -412,9 +452,24 @@ export default function QuickSearch() {
                       </div>
                     )}
                   </div>
-                ) : activeTab === "Item" && searchQuery ? (
+                ) : activeTab === "Item" ? (
                   <div className="flex flex-col h-full overflow-hidden">
-                    {isSearching ? (
+                    <div className="flex justify-between items-center mb-4 shrink-0 px-2 pt-2">
+                      <h2 className="text-lg font-black text-gray-900 dark:text-white">Items</h2>
+                      <button
+                        onClick={() => {
+                          router.push('/dashboard/inventory/purchase-orders/add');
+                          setIsOpen(false);
+                        }}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm"
+                      >
+                        <Package className="w-4 h-4" />
+                        New Purchase Order
+                      </button>
+                    </div>
+                    {searchQuery ? (
+                      <div className="flex flex-col h-full overflow-hidden">
+                        {isSearching ? (
                       <div className="flex flex-col items-center justify-center py-12 flex-1">
                         <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p className="text-sm font-bold text-gray-500">Searching for "{searchQuery}"...</p>
@@ -510,55 +565,15 @@ export default function QuickSearch() {
                       </div>
                     ) : null}
                   </div>
-                ) : activeTab === "Create" ? (
+                ) : (
                   <div className="text-center py-8 flex-1 flex flex-col justify-center">
-                    <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                      <Package className="w-10 h-10 text-red-600 dark:text-red-400" />
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                      <Search className="w-10 h-10 text-gray-300 dark:text-gray-600" />
                     </div>
-                    <p className="text-lg font-black text-gray-900 dark:text-white mb-2">
-                      Create New
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-8">
-                      Quick actions to create new records
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                      <button
-                        onClick={() => {
-                          router.push('/dashboard/sales/invoices/add');
-                          setIsOpen(false);
-                        }}
-                        className="bg-white dark:bg-zinc-900 rounded-xl p-6 border-2 border-gray-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-500 transition-all hover:shadow-lg group"
-                      >
-                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                          <FileText className="w-6 h-6 text-red-600 dark:text-red-400" />
-                        </div>
-                        <p className="text-sm font-black text-gray-900 dark:text-white">
-                          New Invoice
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Create invoice
-                        </p>
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          router.push('/dashboard/inventory/purchase-orders/add');
-                          setIsOpen(false);
-                        }}
-                        className="bg-white dark:bg-zinc-900 rounded-xl p-6 border-2 border-gray-200 dark:border-zinc-800 hover:border-red-500 dark:hover:border-red-500 transition-all hover:shadow-lg group"
-                      >
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                          <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <p className="text-sm font-black text-gray-900 dark:text-white">
-                          New Purchase Order
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Create PO
-                        </p>
-                      </button>
-                    </div>
+                    <p className="text-lg font-black text-gray-900 dark:text-white mb-2">Search for Items</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">Enter a stock number or item name to search for PO items</p>
+                  </div>
+                )}
                   </div>
                 ) : activeTab === "Actions" ? (
                   <div className="text-center py-8 flex-1 flex flex-col justify-center">
@@ -890,6 +905,12 @@ export default function QuickSearch() {
         isOpen={isDismantleScannerOpen} 
         onClose={() => setIsDismantleScannerOpen(false)} 
         onScanSuccess={handleDismantleScanSuccess} 
+      />
+      <QRScannerModal
+        isOpen={isInvoiceScannerOpen}
+        onClose={() => setIsInvoiceScannerOpen(false)}
+        onScanSuccess={handleInvoiceScanSuccess}
+        title="Scan Invoice QR Code"
       />
       <DismantleModal
         isOpen={isDismantleModalOpen}

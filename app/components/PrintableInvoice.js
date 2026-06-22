@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
 
 const PrintableInvoice = React.forwardRef(
   ({ invoice, customer, invoiceId }, ref) => {
@@ -500,29 +501,43 @@ const PrintableInvoice = React.forwardRef(
             </div>
 
             {/* Footer */}
-            <div className="footer-section">
-              <p
-                style={{
-                  color: "#28a745",
-                  fontWeight: "bold",
-                }}
-              >
-                PO LEDO
-              </p>
-
+            <div className="footer-section" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
               <div>
-                <p>
-                  <strong>
-                    Remarks of Purchase:
-                  </strong>
+                <p
+                  style={{
+                    color: "#28a745",
+                    fontWeight: "bold",
+                  }}
+                >
+                  PO LEDO
                 </p>
 
-                <p className="purchase-note">
-                  {templateSettings?.remarks_of_purchase ||
-                    invoiceData.invoice_notes ||
-                    "All items verified by customer at time of purchase."}
-                </p>
+                <div>
+                  <p>
+                    <strong>
+                      Remarks of Purchase:
+                    </strong>
+                  </p>
+
+                  <p className="purchase-note">
+                    {templateSettings?.remarks_of_purchase ||
+                      invoiceData.invoice_notes ||
+                      "All items verified by customer at time of purchase."}
+                  </p>
+                </div>
               </div>
+              
+              {/* Invoice QR Code */}
+              {(invoiceId || invoiceData?.id) && (
+                <div style={{ textAlign: "center", marginLeft: "20px" }}>
+                  <QRCodeSVG 
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard/sales/invoices/view/${invoiceId || invoiceData?.id}`} 
+                    size={80} 
+                    level="M"
+                  />
+                  <p style={{ fontSize: "10px", marginTop: "5px", color: "#666", fontWeight: "bold" }}>Scan to View</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

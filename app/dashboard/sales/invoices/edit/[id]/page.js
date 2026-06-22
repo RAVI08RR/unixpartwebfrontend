@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { useReactToPrint } from 'react-to-print';
 import { 
   Receipt, User, Calendar, FileText, Check, X, Hash, 
-  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle, Pencil, Printer, RotateCcw, Camera
+  Building2, ArrowLeft, Plus, Trash2, DollarSign, Package, CreditCard, AlertCircle, Pencil, Printer, RotateCcw, Camera, Download
 } from "lucide-react";
+import { QRCodeCanvas } from "qrcode.react";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import { customerService } from "@/app/lib/services/customerService";
 import { poItemService } from "@/app/lib/services/poItemService";
@@ -673,6 +674,27 @@ export default function EditInvoicePage({ params }) {
       };
 
       await invoiceService.saveGranular(payload);
+
+      // Explicitly update PO items to 'sold' status for all items in the invoice
+      try {
+        const updatePromises = formData.items.map(item => {
+          const poItemId = parseInt(item.po_item_id || item.stock_item_id);
+          if (poItemId && !isNaN(poItemId)) {
+            return poItemService.update(poItemId, { status: 'sold' });
+          }
+          return Promise.resolve();
+        });
+        
+        // Handle reverted items (if any item was deleted from the invoice, it might need to revert to in_stock)
+        // However, we only have deletedItemIds which are invoice_item IDs, not po_item_ids.
+        // It's safer to only mark newly added items as sold, but since this is an edit page, 
+        // ensuring they remain 'sold' is fine.
+        
+        await Promise.allSettled(updatePromises);
+      } catch (statusError) {
+        console.error("Failed to update item statuses to sold:", statusError);
+      }
+
       success("Invoice updated successfully!");
       router.push("/dashboard/sales/invoices");
     } catch (error) {
@@ -1228,6 +1250,41 @@ export default function EditInvoicePage({ params }) {
             onChange={(e) => setFormData({...formData, invoice_notes: e.target.value})}
           />
         </FormField>
+
+        {/* Invoice QR Code */}
+        {invoiceId && (
+          <div className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] p-6 flex flex-col sm:flex-row items-center gap-6">
+            <div className="shrink-0 bg-white p-2 rounded-xl border border-gray-100">
+              <QRCodeCanvas 
+                id="invoice-qr-code"
+                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/dashboard/sales/invoices/view/${invoiceId}`} 
+                size={120} 
+                level="M"
+              />
+            </div>
+            <div className="flex-1 text-center sm:text-left space-y-2">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Invoice QR Code</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Scan this code to quickly access and view this invoice on any device.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  const canvas = document.getElementById('invoice-qr-code');
+                  if (canvas) {
+                    const url = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `Invoice-${formData.invoice_number}-QR.png`;
+                    link.href = url;
+                    link.click();
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 mt-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 rounded-lg font-bold text-sm transition-all"
+              >
+                <Download className="w-4 h-4" />
+                Download QR Code
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-zinc-800">
