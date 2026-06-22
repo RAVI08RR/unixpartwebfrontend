@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { X, Camera, RefreshCw } from "lucide-react";
+import { X, Camera, RefreshCw, Upload } from "lucide-react";
 
 export default function QRScannerModal({ isOpen, onClose, onScanSuccess }) {
   const [scanError, setScanError] = useState(null);
@@ -10,6 +10,40 @@ export default function QRScannerModal({ isOpen, onClose, onScanSuccess }) {
   const scannerContainerRef = useRef(null);
   const scannerDivRef = useRef(null);
   const hasScannedRef = useRef(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      let tempDiv = document.getElementById("qr-file-scanner-temp");
+      if (!tempDiv) {
+        tempDiv = document.createElement("div");
+        tempDiv.id = "qr-file-scanner-temp";
+        tempDiv.style.display = "none";
+        document.body.appendChild(tempDiv);
+      }
+      
+      const fileScanner = new Html5Qrcode(tempDiv.id);
+      const decodedText = await fileScanner.scanFile(file, true);
+      
+      if (!hasScannedRef.current) {
+        hasScannedRef.current = true;
+        onScanSuccess(decodedText);
+      }
+      
+      fileScanner.clear();
+    } catch (err) {
+      console.error(err);
+      alert("No valid QR code found in the image. Please try a clearer image.");
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   const stopScanner = useCallback(async () => {
     const scanner = html5QrcodeRef.current;
@@ -180,10 +214,26 @@ export default function QRScannerModal({ isOpen, onClose, onScanSuccess }) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-gray-100 dark:border-zinc-800 flex justify-end">
+        <div className="p-6 border-t border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-gray-50/50 dark:bg-zinc-900/50 rounded-b-[28px]">
+          <div>
+            <input 
+              type="file" 
+              accept="image/*" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2.5 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all border border-gray-200 dark:border-zinc-700 flex items-center gap-2 shadow-sm"
+            >
+              <Upload className="w-4 h-4" />
+              Upload QR Image
+            </button>
+          </div>
           <button
             onClick={handleClose}
-            className="px-6 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm transition-all"
+            className="px-6 py-2.5 bg-gray-200 dark:bg-zinc-800 hover:bg-gray-300 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200 rounded-xl font-bold text-sm transition-all"
           >
             Cancel
           </button>
