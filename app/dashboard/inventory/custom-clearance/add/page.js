@@ -150,6 +150,24 @@ export default function AddClearancePage() {
         <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 sm:p-8 space-y-8">
           {/* Main Form Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <FormField label="Supplier" required>
+              <div className="relative">
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <select 
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
+                  value={formData.supplier_id}
+                  onChange={(e) => handleSupplierChange(e.target.value)}
+                  required
+                >
+                  <option value="">Select Supplier</option>
+                  {suppliers?.map(s => (
+                    <option key={s.id} value={s.id}>{s.label || s.company || s.name}</option>
+                  ))}
+                </select>
+              </div>
+            </FormField>
+
             <FormField label="Container Code" required>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -210,23 +228,7 @@ export default function AddClearancePage() {
               </div>
             </FormField>
 
-            <FormField label="Supplier" required>
-              <div className="relative">
-                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                <select 
-                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
-                  style={{ height: '45px' }}
-                  value={formData.supplier_id}
-                  onChange={(e) => handleSupplierChange(e.target.value)}
-                  required
-                >
-                  <option value="">Select Supplier</option>
-                  {suppliers?.map(s => (
-                    <option key={s.id} value={s.id}>{s.label || s.company || s.name}</option>
-                  ))}
-                </select>
-              </div>
-            </FormField>
+
 
             <FormField label="Destination Branch" required>
               <div className="relative">

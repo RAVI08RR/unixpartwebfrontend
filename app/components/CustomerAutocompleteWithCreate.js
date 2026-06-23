@@ -130,10 +130,13 @@ export default function CustomerAutocompleteWithCreate({
     const timestamp = Date.now().toString().slice(-6);
     const customerCode = `CUST-${timestamp}`;
     
+    // Check if query is primarily a phone number
+    const isPhoneNumber = /^[0-9+\-\\s()]+$/.test(query.trim()) && /[0-9]/.test(query);
+    
     setCustomerForm({
       customer_code: customerCode,
-      full_name: query || "",
-      phone: "",
+      full_name: isPhoneNumber ? "" : (query || ""),
+      phone: isPhoneNumber ? query.trim() : "",
       business_name: "",
       business_number: "",
       address: "",
