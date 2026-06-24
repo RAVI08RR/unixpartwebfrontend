@@ -7,28 +7,28 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
-    
-    const backendUrl = `${apiBaseUrl}/api/branch-owners/?skip=${skip}&limit=${limit}`;
-    
+
+    const backendUrl = `${apiBaseUrl}/api/branch-owners/?page=${page}&page_size=${page_size}`;
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(10000),
     });
-    
+
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {
@@ -50,35 +50,35 @@ export async function POST(request) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     const body = await request.text();
-    
+
     console.log('Branch owners POST - Request body:', body);
-    
+
     const backendUrl = `${apiBaseUrl}/api/branch-owners/`;
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     console.log('Branch owners POST - Backend URL:', backendUrl);
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(15000),
     });
-    
+
     const data = await response.text();
-    
+
     console.log('Branch owners POST - Response status:', response.status);
     console.log('Branch owners POST - Response data:', data);
-    
+
     if (!response.ok) {
       console.error('Branch owners POST - Backend error:', data);
     }
-    
+
     return new Response(data, {
       status: response.status,
       headers: {

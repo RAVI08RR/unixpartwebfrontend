@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
     
     // Backend doesn't support GET for individual leave records
     // So we fetch all and filter client-side
-    const backendUrl = `${API_BASE_URL}/api/leaves?skip=0&limit=1000`;
+    const backendUrl = `${API_BASE_URL}/api/leaves?page=1&page_size=1000`;
     console.log('🌐 Calling backend (fetching all):', backendUrl);
     
     const response = await fetch(backendUrl, { headers });

@@ -7,34 +7,34 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
     const status = searchParams.get('status');
     const branch_id = searchParams.get('branch_id');
-    
+
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
-    
-    let queryParams = `skip=${skip}&limit=${limit}`;
+
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status) queryParams += `&status=${status}`;
     if (branch_id) queryParams += `&branch_id=${branch_id}`;
-    
+
     const backendUrl = `${apiBaseUrl}/api/assets/?${queryParams}`;
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(10000),
     });
-    
+
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {
@@ -56,24 +56,24 @@ export async function POST(request) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     const body = await request.text();
-    
+
     const backendUrl = `${apiBaseUrl}/api/assets/`;
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(15000),
     });
-    
+
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {

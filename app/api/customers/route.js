@@ -5,63 +5,63 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
     const status = searchParams.get('status');
-    
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     console.log('Customers proxy GET - API Base URL:', apiBaseUrl);
     console.log('Customers proxy GET - Auth header present:', !!authHeader);
-    
+
     // Build query parameters
-    let queryParams = `skip=${skip}&limit=${limit}`;
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status !== null && status !== undefined) {
       queryParams += `&status=${status}`;
     }
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/customers/?${queryParams}`;
     console.log('Customers proxy GET - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
-    
+
     console.log('Customers proxy GET - Backend response status:', response.status);
-    
+
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
       console.log('🔄 Backend returned 401, using fallback customers data');
       throw new Error('Authentication failed, using fallback data');
     }
-    
+
     // Handle other error status codes
     if (!response.ok) {
       console.log('🔄 Backend returned error status:', response.status, 'using fallback customers data');
       throw new Error(`Backend error: ${response.status}`);
     }
-    
+
     // Get response data
     const data = await response.text();
     console.log('Customers proxy GET - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -73,16 +73,16 @@ export async function GET(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Customers proxy GET error:', error);
     console.log('🏢 Customers API failed, using fallback customers:', error.message);
-    
-    // Get skip and limit from the original request
+
+    // Get page and page_size from the original request
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = parseInt(searchParams.get('page') || '1');
+    const page_size = parseInt(searchParams.get('page_size') || '100');
+
     // Return fallback customers data when backend is unavailable
     const fallbackCustomers = [
       {
@@ -176,7 +176,7 @@ export async function GET(request) {
         updated_at: "2026-01-28T06:17:15"
       }
     ];
-    
+
     return new Response(
       JSON.stringify(fallbackCustomers),
       {
@@ -196,28 +196,28 @@ export async function POST(request) {
   try {
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
     const contentType = request.headers.get('content-type') || '';
-    
+
     console.log('Customers proxy POST - API Base URL:', apiBaseUrl);
     console.log('Customers proxy POST - Auth header present:', !!authHeader);
     console.log('Customers proxy POST - Content-Type:', contentType);
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/customers/`;
     console.log('Customers proxy POST - Backend URL:', backendUrl);
-    
+
     const headers = {
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     let body;
     if (contentType.includes('multipart/form-data')) {
       body = await request.formData();
@@ -226,20 +226,20 @@ export async function POST(request) {
       body = await request.text();
       headers['Content-Type'] = 'application/json';
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(30000), // 30 second timeout for customer creation / uploads
     });
-    
+
     console.log('Customers proxy POST - Backend response status:', response.status);
-    
+
     // Get response data
     const data = await response.text();
     console.log('Customers proxy POST - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -251,11 +251,11 @@ export async function POST(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Customers proxy POST error:', error);
     console.log('➕ Create customer API failed, using fallback response:', error.message);
-    
+
     // Parse the request body to get customer data
     let customerData = {};
     try {
@@ -263,10 +263,10 @@ export async function POST(request) {
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
     }
-    
+
     // Generate a new customer ID (simulate auto-increment)
     const newCustomerId = Math.floor(Math.random() * 1000) + 100;
-    
+
     // Return fallback created customer data when backend is unavailable
     const fallbackCreatedCustomer = {
       customer_code: customerData.customer_code || `CUST-${String(newCustomerId).padStart(3, '0')}`,
@@ -283,7 +283,7 @@ export async function POST(request) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    
+
     return new Response(
       JSON.stringify(fallbackCreatedCustomer),
       {

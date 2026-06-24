@@ -5,61 +5,61 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
     const status = searchParams.get('status') || '';
-    
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     console.log('Suppliers proxy GET - API Base URL:', apiBaseUrl);
     console.log('Suppliers proxy GET - Auth header present:', !!authHeader);
-    
+
     // Build query parameters
-    let queryParams = `skip=${skip}&limit=${limit}`;
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status) queryParams += `&status=${status}`;
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/suppliers/?${queryParams}`;
     console.log('Suppliers proxy GET - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
-    
+
     console.log('Suppliers proxy GET - Backend response status:', response.status);
-    
+
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
       console.log('🔄 Backend returned 401, using fallback suppliers data');
       throw new Error('Authentication failed, using fallback data');
     }
-    
+
     // Handle other error status codes
     if (!response.ok) {
       console.log('🔄 Backend returned error status:', response.status, 'using fallback suppliers data');
       throw new Error(`Backend error: ${response.status}`);
     }
-    
+
     // Get response data
     const data = await response.text();
     console.log('Suppliers proxy GET - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -71,16 +71,16 @@ export async function GET(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Suppliers proxy GET error:', error);
     console.log('🏭 Suppliers API failed, using fallback suppliers:', error.message);
-    
-    // Get skip and limit from the original request
+
+    // Get page and page_size from the original request
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = parseInt(searchParams.get('page') || '1');
+    const page_size = parseInt(searchParams.get('page_size') || '100');
+
     // Return fallback suppliers data when backend is unavailable
     const fallbackSuppliers = {
       items: [
@@ -151,10 +151,11 @@ export async function GET(request) {
         }
       ],
       total: 5,
-      skip: parseInt(skip),
-      limit: parseInt(limit)
+      page: page,
+      page_size: page_size,
+      total_pages: Math.ceil(5 / page_size)
     };
-    
+
     return new Response(
       JSON.stringify(fallbackSuppliers),
       {
@@ -174,44 +175,44 @@ export async function POST(request) {
   try {
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     // Get request body
     const body = await request.text();
-    
+
     console.log('Suppliers proxy POST - API Base URL:', apiBaseUrl);
     console.log('Suppliers proxy POST - Auth header present:', !!authHeader);
     console.log('Suppliers proxy POST - Request body length:', body.length);
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/suppliers/`;
     console.log('Suppliers proxy POST - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(15000), // 15 second timeout
     });
-    
+
     console.log('Suppliers proxy POST - Backend response status:', response.status);
-    
+
     // Get response data
     const data = await response.text();
     console.log('Suppliers proxy POST - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -223,11 +224,11 @@ export async function POST(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Suppliers proxy POST error:', error);
     console.log('🏭 Create supplier API failed, using fallback response:', error.message);
-    
+
     // Parse the request body to get supplier data
     let supplierData = {};
     try {
@@ -236,10 +237,10 @@ export async function POST(request) {
     } catch (parseError) {
       console.error('Failed to parse request body:', parseError);
     }
-    
+
     // Generate a new supplier ID (simulate auto-increment)
     const newSupplierId = Math.floor(Math.random() * 1000) + 100;
-    
+
     // Return fallback created supplier data when backend is unavailable
     const fallbackCreatedSupplier = {
       id: newSupplierId,
@@ -256,7 +257,7 @@ export async function POST(request) {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    
+
     return new Response(
       JSON.stringify(fallbackCreatedSupplier),
       {

@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
     
     // Backend doesn't support GET for individual attendance records
     // So we fetch all and filter client-side
-    const backendUrl = `${API_BASE_URL}/api/attendance?skip=0&limit=1000`;
+    const backendUrl = `${API_BASE_URL}/api/attendance?page=1&page_size=1000`;
     console.log('🌐 Calling backend (fetching all):', backendUrl);
     
     const response = await fetch(backendUrl, { headers });

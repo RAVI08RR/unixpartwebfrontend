@@ -5,56 +5,56 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     console.log('Branches proxy GET - API Base URL:', apiBaseUrl);
     console.log('Branches proxy GET - Auth header present:', !!authHeader);
-    
+
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/branches/?skip=${skip}&limit=${limit}`;
+    const backendUrl = `${apiBaseUrl}/api/branches/?page=${page}&page_size=${page_size}`;
     console.log('Branches proxy GET - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(5000), // Reduced timeout to 5 seconds
     });
-    
+
     console.log('Branches proxy GET - Backend response status:', response.status);
-    
+
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
       console.log('🔄 Backend returned 401, using fallback branches data');
       throw new Error('Authentication failed, using fallback data');
     }
-    
+
     // Handle other error status codes
     if (!response.ok) {
       console.log('🔄 Backend returned error status:', response.status, 'using fallback branches data');
       throw new Error(`Backend error: ${response.status}`);
     }
-    
+
     // Get response data
     const data = await response.text();
     console.log('Branches proxy GET - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -66,10 +66,10 @@ export async function GET(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Branches proxy GET error:', error);
-    
+
     // Return fallback branches data when backend is not accessible
     const fallbackBranches = [
       {
@@ -113,9 +113,9 @@ export async function GET(request) {
         updated_at: "2024-01-01T00:00:00Z"
       }
     ];
-    
+
     console.log('🔄 Returning fallback branches data due to backend connectivity issues');
-    
+
     return new Response(JSON.stringify(fallbackBranches), {
       status: 200,
       headers: {
@@ -146,26 +146,26 @@ export async function POST(request) {
   try {
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Unauthorized - No token found' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     // Get request body
     const body = await request.json();
-    
+
     console.log('Branches proxy POST - Creating branch:', body);
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/branches/`;
     console.log('Branches proxy POST - Backend URL:', backendUrl);
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
@@ -175,11 +175,11 @@ export async function POST(request) {
       },
       body: JSON.stringify(body),
     });
-    
+
     console.log('Branches proxy POST - Backend response status:', response.status);
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('Branches proxy POST - Backend error:', data);
       return new Response(JSON.stringify(data), {
@@ -187,9 +187,9 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     console.log('Branches proxy POST - Branch created successfully:', data);
-    
+
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: {
@@ -197,7 +197,7 @@ export async function POST(request) {
         'Access-Control-Allow-Origin': '*',
       },
     });
-    
+
   } catch (error) {
     console.error('Branches proxy POST error:', error);
     return new Response(JSON.stringify({ error: 'Internal Server Error', details: error.message }), {

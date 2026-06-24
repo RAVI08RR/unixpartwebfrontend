@@ -5,56 +5,56 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     console.log('Roles proxy - API Base URL:', apiBaseUrl);
     console.log('Roles proxy - Auth header present:', !!authHeader);
-    
+
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/roles/?skip=${skip}&limit=${limit}`;
+    const backendUrl = `${apiBaseUrl}/api/roles/?page=${page}&page_size=${page_size}`;
     console.log('Roles proxy - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(5000), // Reduced timeout to 5 seconds
     });
-    
+
     console.log('Roles proxy - Backend response status:', response.status);
-    
+
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
       console.log('🔄 Backend returned 401, using fallback roles data');
       throw new Error('Authentication failed, using fallback data');
     }
-    
+
     // Handle other error status codes
     if (!response.ok) {
       console.log('🔄 Backend returned error status:', response.status, 'using fallback roles data');
       throw new Error(`Backend error: ${response.status}`);
     }
-    
+
     // Get response data
     const data = await response.text();
     console.log('Roles proxy - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -66,10 +66,10 @@ export async function GET(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Roles proxy error:', error);
-    
+
     // Return fallback roles data when backend is not accessible
     const fallbackRoles = [
       {
@@ -118,9 +118,9 @@ export async function GET(request) {
         updated_at: "2024-01-01T00:00:00Z"
       }
     ];
-    
+
     console.log('🔄 Returning fallback roles data due to backend connectivity issues');
-    
+
     return new Response(JSON.stringify(fallbackRoles), {
       status: 200,
       headers: {
@@ -138,45 +138,45 @@ export async function POST(request) {
   try {
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     // Get request body
     const body = await request.text();
-    
+
     console.log('Create role proxy - API Base URL:', apiBaseUrl);
     console.log('Create role proxy - Auth header present:', !!authHeader);
     console.log('Create role proxy - Request body:', body);
-    
+
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/roles/`;
     console.log('Create role proxy - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
-    
+
     console.log('Create role proxy - Backend response status:', response.status);
-    
+
     // Get response data
     const data = await response.text();
     console.log('Create role proxy - Backend response data length:', data.length);
     console.log('Create role proxy - Backend response data:', data);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -188,13 +188,13 @@ export async function POST(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Create role proxy error:', error);
-    
+
     let errorMessage = 'Create role proxy failed';
     let statusCode = 500;
-    
+
     if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
       errorMessage = 'Backend API timeout - please try again';
       statusCode = 504;
@@ -202,11 +202,11 @@ export async function POST(request) {
       errorMessage = 'Backend API unavailable - please check connection';
       statusCode = 503;
     }
-    
+
     return new Response(
-      JSON.stringify({ 
-        error: errorMessage, 
-        details: error.message 
+      JSON.stringify({
+        error: errorMessage,
+        details: error.message
       }),
       {
         status: statusCode,

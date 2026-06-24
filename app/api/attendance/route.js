@@ -5,19 +5,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     const authHeader = request.headers.get('authorization');
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(
-      `${API_BASE_URL}/api/attendance/?skip=${skip}&limit=${limit}`,
+      `${API_BASE_URL}/api/attendance/?page=${page}&page_size=${page_size}`,
       { headers }
     );
 
@@ -35,13 +35,13 @@ export async function POST(request) {
   try {
     const authHeader = request.headers.get('authorization');
     const body = await request.json();
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(`${API_BASE_URL}/api/attendance/`, {
       method: 'POST',
       headers,
@@ -50,7 +50,7 @@ export async function POST(request) {
 
     // Get response as text first
     const text = await response.text();
-    
+
     // Try to parse as JSON
     let data;
     try {
@@ -63,7 +63,7 @@ export async function POST(request) {
         { status: response.status }
       );
     }
-    
+
     return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(

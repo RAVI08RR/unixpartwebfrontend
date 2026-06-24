@@ -4,14 +4,14 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
   const authHeader = request.headers.get('authorization');
-  
+
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
-    const backendUrl = `${apiBaseUrl}/api/employees/?skip=${skip}&limit=${limit}`;
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
+    const backendUrl = `${apiBaseUrl}/api/employees/?page=${page}&page_size=${page_size}`;
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
@@ -19,9 +19,9 @@ export async function GET(request) {
         'ngrok-skip-browser-warning': 'true',
       },
     });
-    
+
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {
@@ -41,11 +41,11 @@ export async function GET(request) {
 export async function POST(request) {
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
   const authHeader = request.headers.get('authorization');
-  
+
   try {
     const body = await request.text();
     const backendUrl = `${apiBaseUrl}/api/employees/`;
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
@@ -55,9 +55,9 @@ export async function POST(request) {
       },
       body,
     });
-    
+
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {

@@ -5,56 +5,56 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
-    
+
     console.log('Users proxy GET - API Base URL:', apiBaseUrl);
     console.log('Users proxy GET - Auth header present:', !!authHeader);
-    
+
     // Make the request to FastAPI backend
-    const backendUrl = `${apiBaseUrl}/api/users/?skip=${skip}&limit=${limit}`;
+    const backendUrl = `${apiBaseUrl}/api/users/?page=${page}&page_size=${page_size}`;
     console.log('Users proxy GET - Backend URL:', backendUrl);
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers,
       signal: AbortSignal.timeout(10000), // 10 second timeout
     });
-    
+
     console.log('Users proxy GET - Backend response status:', response.status);
-    
+
     // Handle authentication errors by returning fallback data
     if (response.status === 401) {
       console.log('🔄 Backend returned 401, using fallback users data');
       throw new Error('Authentication failed, using fallback data');
     }
-    
+
     // Handle other error status codes
     if (!response.ok) {
       console.log('🔄 Backend returned error status:', response.status, 'using fallback users data');
       throw new Error(`Backend error: ${response.status}`);
     }
-    
+
     // Get response data
     const data = await response.text();
     console.log('Users proxy GET - Backend response data length:', data.length);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -66,16 +66,16 @@ export async function GET(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Users proxy GET error:', error);
     console.log('👥 Users API failed, using fallback users:', error.message);
-    
-    // Get skip and limit from the original request
+
+    // Get page and page_size from the original request
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = parseInt(searchParams.get('page') || '1');
+    const page_size = parseInt(searchParams.get('page_size') || '100');
+
     // Return fallback users data when backend is unavailable
     const fallbackUsers = {
       items: [
@@ -208,10 +208,11 @@ export async function GET(request) {
         }
       ],
       total: 5,
-      skip: parseInt(skip),
-      limit: parseInt(limit)
+      page: page,
+      page_size: page_size,
+      total_pages: Math.ceil(5 / page_size)
     };
-    
+
     return new Response(
       JSON.stringify(fallbackUsers),
       {
@@ -230,31 +231,31 @@ export async function GET(request) {
 export async function POST(request) {
   // Get API base URL
   const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-  
+
   // Get auth token from request headers
   const authHeader = request.headers.get('authorization');
-  
+
   console.log('Users proxy POST - API Base URL:', apiBaseUrl);
   console.log('Users proxy POST - Auth header present:', !!authHeader);
   console.log('Users proxy POST - Content-Type:', request.headers.get('content-type'));
-  
+
   try {
     // Make the request to FastAPI backend
     const backendUrl = `${apiBaseUrl}/api/users/`;
     console.log('Users proxy POST - Backend URL:', backendUrl);
-    
+
     // Get the request body
     const contentType = request.headers.get('content-type') || '';
     let body;
     let headers = {
       'ngrok-skip-browser-warning': 'true',
     };
-    
+
     // Forward auth header if present
     if (authHeader) {
       headers['Authorization'] = authHeader;
     }
-    
+
     if (contentType.includes('multipart/form-data')) {
       // Forward FormData as-is
       body = await request.formData();
@@ -269,7 +270,7 @@ export async function POST(request) {
       const bodyText = await request.text();
       console.log('Users proxy POST - Request body length:', bodyText.length);
       console.log('Users proxy POST - Request body content:', bodyText);
-      
+
       // Parse to verify it's valid JSON
       try {
         const bodyData = JSON.parse(bodyText);
@@ -278,25 +279,25 @@ export async function POST(request) {
       } catch (parseError) {
         console.error('Users proxy POST - Failed to parse body as JSON:', parseError);
       }
-      
+
       body = bodyText;
       headers['Content-Type'] = 'application/json';
     }
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers,
       body,
       signal: AbortSignal.timeout(15000), // 15 second timeout for user creation
     });
-    
+
     console.log('Users proxy POST - Backend response status:', response.status);
-    
+
     // Get response data
     const data = await response.text();
     console.log('Users proxy POST - Backend response data length:', data.length);
     console.log('Users proxy POST - Backend response data:', data);
-    
+
     // Forward the response with CORS headers
     return new Response(data, {
       status: response.status,
@@ -308,11 +309,11 @@ export async function POST(request) {
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
     });
-    
+
   } catch (error) {
     console.error('Users proxy POST error:', error);
     console.log('➕ Create user API failed, using fallback response:', error.message);
-    
+
     // Return error response
     return new Response(
       JSON.stringify({

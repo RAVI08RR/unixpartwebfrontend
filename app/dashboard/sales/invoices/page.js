@@ -88,7 +88,7 @@ function InvoiceManagementContent() {
   const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
   const { data: dropdownCustomers } = useSWR('/api/dropdown/customers', () => apiClient.get('/api/dropdown/customers'));
   const { data: dropdownUsers } = useSWR('/api/dropdown/users', () => apiClient.get('/api/dropdown/users'));
-  const { data: salesDataRaw } = useSWR('/api/invoices/sales-data?skip=0&limit=500', () => apiClient.get('/api/invoices/sales-data', { skip: 0, limit: 500 }));
+  const { data: salesDataRaw } = useSWR('/api/invoices/sales-data?page=1&page_size=500', () => apiClient.get('/api/invoices/sales-data', { page: 1, page_size: 500 }));
 
   const branches = useMemo(() => Array.isArray(dropdownBranches) ? dropdownBranches : [], [dropdownBranches]);
   const customers = useMemo(() => Array.isArray(dropdownCustomers) ? dropdownCustomers : [], [dropdownCustomers]);

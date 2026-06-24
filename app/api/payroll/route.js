@@ -5,19 +5,19 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://srv1029267.
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
-    
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
+
     const authHeader = request.headers.get('authorization');
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(
-      `${API_BASE_URL}/api/payroll/?skip=${skip}&limit=${limit}`,
+      `${API_BASE_URL}/api/payroll/?page=${page}&page_size=${page_size}`,
       { headers }
     );
 

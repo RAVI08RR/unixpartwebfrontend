@@ -6,21 +6,21 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
     const parent_id = searchParams.get('parent_id');
-    
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
-    
+
     // Build backend URL with query parameters
-    let backendUrl = `${apiBaseUrl}/api/stock-items/?skip=${skip}&limit=${limit}`;
+    let backendUrl = `${apiBaseUrl}/api/stock-items/?page=${page}&page_size=${page_size}`;
     if (parent_id) {
       backendUrl += `&parent_id=${parent_id}`;
     }
-    
+
     console.log('Stock Items proxy - Backend URL:', backendUrl);
-    
+
     const response = await fetch(backendUrl, {
       method: 'GET',
       headers: {
@@ -29,9 +29,9 @@ export async function GET(request) {
         'Authorization': request.headers.get('Authorization') || '',
       },
     });
-    
+
     console.log('Stock Items proxy - Backend response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Stock Items proxy - Backend error:', errorText);
@@ -40,20 +40,20 @@ export async function GET(request) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     const data = await response.json();
     console.log('Stock Items proxy - Success, items count:', Array.isArray(data) ? data.length : 'unknown');
-    
+
     return new Response(JSON.stringify(data), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-    
+
   } catch (error) {
     console.error('Stock Items proxy error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Stock Items proxy failed', 
+      JSON.stringify({
+        error: 'Stock Items proxy failed',
         details: error.message,
         timestamp: new Date().toISOString()
       }),
@@ -68,14 +68,14 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const stockItemData = await request.json();
-    
+
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/`;
-    
+
     console.log('Stock Items proxy - Create URL:', backendUrl);
     console.log('Stock Items proxy - Create data:', stockItemData);
-    
+
     const response = await fetch(backendUrl, {
       method: 'POST',
       headers: {
@@ -85,9 +85,9 @@ export async function POST(request) {
       },
       body: JSON.stringify(stockItemData),
     });
-    
+
     console.log('Stock Items proxy - Create response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Stock Items proxy - Create error:', errorText);
@@ -96,20 +96,20 @@ export async function POST(request) {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-    
+
     const data = await response.json();
     console.log('Stock Items proxy - Create success:', data);
-    
+
     return new Response(JSON.stringify(data), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });
-    
+
   } catch (error) {
     console.error('Stock Items proxy create error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Stock Items create proxy failed', 
+      JSON.stringify({
+        error: 'Stock Items create proxy failed',
         details: error.message,
         timestamp: new Date().toISOString()
       }),

@@ -6,25 +6,25 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
     const po_id = searchParams.get('po_id');
-    
+
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
-    
-    let backendUrl = `${apiBaseUrl}/api/po-items/?skip=${skip}&limit=${limit}`;
+
+    let backendUrl = `${apiBaseUrl}/api/po-items/?page=${page}&page_size=${page_size}`;
     if (po_id) backendUrl += `&po_id=${po_id}`;
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(backendUrl, { method: 'GET', headers });
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: {
@@ -42,18 +42,18 @@ export async function POST(request) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     const body = await request.text();
-    
+
     const backendUrl = `${apiBaseUrl}/api/po-items/`;
-    
+
     const headers = {
       'Content-Type': 'application/json',
       'ngrok-skip-browser-warning': 'true',
     };
     if (authHeader) headers['Authorization'] = authHeader;
-    
+
     const response = await fetch(backendUrl, { method: 'POST', headers, body });
     const data = await response.text();
-    
+
     return new Response(data, {
       status: response.status,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },

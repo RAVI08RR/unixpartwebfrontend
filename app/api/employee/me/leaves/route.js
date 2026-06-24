@@ -6,10 +6,10 @@ export async function GET(request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const skip = searchParams.get('skip') || '0';
-    const limit = searchParams.get('limit') || '100';
+    const page = searchParams.get('page') || '1';
+    const page_size = searchParams.get('page_size') || '10';
 
-    const response = await fetch(`${apiBaseUrl}/api/employee/me/leaves?skip=${skip}&limit=${limit}`, {
+    const response = await fetch(`${apiBaseUrl}/api/employee/me/leaves?page=${page}&page_size=${page_size}`, {
       method: 'GET',
       headers: {
         'Authorization': authHeader || '',

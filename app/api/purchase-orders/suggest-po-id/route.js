@@ -8,8 +8,8 @@ export async function GET(request) {
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     
-    // Fetch a page of POs to calculate the next sequence number (backend cap is 100)
-    const backendUrl = `${apiBaseUrl}/api/purchase-orders/?skip=0&limit=100`;
+    // Fetch a page of POs to calculate the next sequence number
+    const backendUrl = `${apiBaseUrl}/api/purchase-orders/?page=1&page_size=100`;
     
     const headers = {
       'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ export async function GET(request) {
     }
 
     const data = await response.json();
-    const purchaseOrders = Array.isArray(data) ? data : (data?.purchase_orders || data?.items || []);
+    const purchaseOrders = Array.isArray(data) ? data : (data?.data || data?.purchase_orders || data?.items || []);
     
     let maxNum = 0;
     const poIdRegex = /^Q-POID-(\d+)$/i;
