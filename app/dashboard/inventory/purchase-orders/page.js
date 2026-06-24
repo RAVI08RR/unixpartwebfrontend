@@ -338,7 +338,7 @@ export default function PurchaseOrdersPage() {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orders</h1>
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orderss</h1>
             <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Create and manage purchase orders for stock replenishment.</p>
           </div>
 
@@ -360,8 +360,8 @@ export default function PurchaseOrdersPage() {
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
-                    ? 'bg-red-600 text-white shadow-red-600/10'
-                    : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+                  ? 'bg-red-600 text-white shadow-red-600/10'
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
@@ -684,8 +684,8 @@ export default function PurchaseOrdersPage() {
                   key={i}
                   onClick={() => setCurrentPage(i + 1)}
                   className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
-                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10'
-                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10'
+                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
                     }`}
                 >
                   {i + 1}
