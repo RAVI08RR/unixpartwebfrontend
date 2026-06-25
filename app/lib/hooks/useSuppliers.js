@@ -19,7 +19,7 @@ export function useSuppliers(skip = 0, limit = 100, status = null, isDropdown = 
   );
 
   return {
-    suppliers: data,
+    suppliers: Array.isArray(data) ? data : (data?.data || data?.items || data?.suppliers || []),
     isLoading,
     isError: error,
     mutate

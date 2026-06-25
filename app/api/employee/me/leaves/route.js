@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
+    const page_size = searchParams.get('page_size') || '100';
 
     const response = await fetch(`${apiBaseUrl}/api/employee/me/leaves?page=${page}&page_size=${page_size}`, {
       method: 'GET',

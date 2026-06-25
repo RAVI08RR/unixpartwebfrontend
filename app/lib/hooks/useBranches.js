@@ -16,7 +16,8 @@ export function useBranches(skip = 0, limit = 100, isDropdown = false) {
       const data = isDropdown 
         ? await branchService.getDropdown()
         : await branchService.getAll(skip, limit);
-      setBranches(data);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.branches || []);
+      setBranches(list);
     } catch (err) {
       console.error('useBranches fetch error:', err);
       setIsError(true);

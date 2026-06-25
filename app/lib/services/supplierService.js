@@ -3,8 +3,12 @@ import { fetchApi } from '../api';
 export const supplierService = {
   // Get all suppliers with pagination and filters
   getAll: async (skip = 0, limit = 100, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
-    if (status !== null) queryParams += `&status=${status}`;
+    const page = Math.floor(skip / limit) + 1;
+    const page_size = limit;
+    let queryParams = `page=${page}&page_size=${page_size}`;
+    if (status !== null) {
+      queryParams += `&status=${status}`;
+    }
     
     try {
       console.log('🏭 Fetching suppliers from API...');
@@ -13,7 +17,7 @@ export const supplierService = {
       
       const suppliersData = Array.isArray(data) 
         ? data 
-        : (data?.suppliers || data?.items || data?.data || []);
+        : (data?.data || data?.suppliers || data?.items || []);
       
       if (suppliersData.length > 0) {
         console.log('✅ Suppliers fetched successfully:', suppliersData.length);

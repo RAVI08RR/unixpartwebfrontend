@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
       );
     }
     
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
     
     console.log('Get invoice items proxy - Invoice ID:', invoiceId);

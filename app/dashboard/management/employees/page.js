@@ -52,8 +52,8 @@ export default function EmployeesPage() {
     try {
       setLoading(true);
       const data = await employeeService.getAll(0, 100);
-      // API returns array directly
-      setEmployees(Array.isArray(data) ? data : []);
+      // Support both array and paginated/wrapped object responses
+      setEmployees(Array.isArray(data) ? data : (data?.data || data?.items || data?.employees || []));
     } catch (err) {
       console.error('Failed to fetch employees:', err);
       error('Failed to load employees');
@@ -146,7 +146,8 @@ export default function EmployeesPage() {
     setLoadingDocuments(true);
     try {
       const docs = await employeeService.getDocuments(employeeId);
-      setDocuments(Array.isArray(docs) ? docs : []);
+      // Support both array and paginated/wrapped object responses
+      setDocuments(Array.isArray(docs) ? docs : (docs?.data || docs?.items || docs?.documents || []));
     } catch (err) {
       console.error("Failed to fetch documents:", err);
       setDocuments([]);

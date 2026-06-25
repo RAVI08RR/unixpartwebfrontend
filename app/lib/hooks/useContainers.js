@@ -28,7 +28,7 @@ export function useContainers(skip = 0, limit = 100, supplier_id = null, branch_
   );
 
   return {
-    containers: data || [],
+    containers: Array.isArray(data) ? data : (data?.data || data?.items || data?.containers || []),
     loading: isLoading,
     error: error,
     refetch: mutate,

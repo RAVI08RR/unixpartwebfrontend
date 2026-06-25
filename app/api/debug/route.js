@@ -19,7 +19,7 @@ export async function POST(request) {
     const origin = request.headers.get('origin');
     
     // Test backend connectivity
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     console.log('🔍 Debug POST - Testing backend connectivity...');
     console.log('🔍 API Base URL:', apiBaseUrl);

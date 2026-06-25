@@ -25,7 +25,8 @@ export const employeeService = {
       console.warn(`[Workaround] Failed to fetch employee ${id} via direct endpoint, falling back to getAll list:`, error.message);
       try {
         const allEmployees = await fetchApi(`/api/employees?skip=0&limit=1000`);
-        const employee = allEmployees.find(emp => emp.id.toString() === id.toString());
+        const list = Array.isArray(allEmployees) ? allEmployees : (allEmployees?.data || allEmployees?.items || allEmployees?.employees || []);
+        const employee = list.find(emp => emp.id.toString() === id.toString());
         if (employee) return employee;
         throw new Error(`Employee ${id} not found in the list`);
       } catch (fallbackError) {

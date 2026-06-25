@@ -16,7 +16,8 @@ export function useStockItems(skip = 0, limit = 100, parent_id = null, isDropdow
       const data = isDropdown 
         ? await stockItemService.getDropdown()
         : await stockItemService.getAll(skip, limit, parent_id);
-      setStockItems(data);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.stock_items || []);
+      setStockItems(list);
     } catch (err) {
       console.error('useStockItems fetch error:', err);
       setIsError(true);

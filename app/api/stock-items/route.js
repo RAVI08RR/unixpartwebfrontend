@@ -6,12 +6,24 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
+    const skip = searchParams.get('skip');
+    const limit = searchParams.get('limit');
+    let page = searchParams.get('page');
+    let page_size = searchParams.get('page_size');
+
+    if (!page && skip !== null) {
+      const skipNum = parseInt(skip) || 0;
+      const limitNum = parseInt(limit) || 100;
+      page_size = String(limitNum);
+      page = String(Math.floor(skipNum / limitNum) + 1);
+    } else {
+      if (!page) page = '1';
+      if (!page_size) page_size = '100';
+    }
     const parent_id = searchParams.get('parent_id');
 
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
 
     // Build backend URL with query parameters
     let backendUrl = `${apiBaseUrl}/api/stock-items/?page=${page}&page_size=${page_size}`;
@@ -70,7 +82,7 @@ export async function POST(request) {
     const stockItemData = await request.json();
 
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/`;
 
     console.log('Stock Items proxy - Create URL:', backendUrl);

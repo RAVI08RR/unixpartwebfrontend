@@ -180,8 +180,10 @@ function InvoiceManagementContent() {
 
     // If we have API data, use it
     if (apiInvoices) {
-      // Handle both array and object responses
-      const data = Array.isArray(apiInvoices) ? apiInvoices : (apiInvoices?.invoices || []);
+      // Handle both array and object responses (checking data, invoices keys)
+      const data = Array.isArray(apiInvoices) 
+        ? apiInvoices 
+        : (apiInvoices?.data || apiInvoices?.invoices || []);
       return data;
     }
 
@@ -272,7 +274,7 @@ function InvoiceManagementContent() {
   ]);
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage) || 1;
+  const totalPages = Math.ceil(filteredInvoices.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedInvoices = filteredInvoices.slice(startIndex, startIndex + itemsPerPage);
 
@@ -884,7 +886,7 @@ function InvoiceManagementContent() {
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredInvoices.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredInvoices.length}</span> entries
+            Showing <span className="text-gray-900 dark:text-white font-black">{filteredInvoices.length === 0 ? 0 : startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredInvoices.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredInvoices.length}</span> entries
           </p>
 
           <div className="flex items-center gap-3">

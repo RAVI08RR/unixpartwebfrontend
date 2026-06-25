@@ -13,7 +13,8 @@ export function useCustomers(skip = 0, limit = 100, status = null, isDropdown = 
       const data = isDropdown 
         ? await customerService.getDropdown()
         : await customerService.getAll(skip, limit, status);
-      setCustomers(data);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.customers || []);
+      setCustomers(list);
     } catch (err) {
       console.error('Failed to fetch customers:', err);
       setError(err.message);

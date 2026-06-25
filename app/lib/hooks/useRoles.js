@@ -11,7 +11,8 @@ export function useRoles() {
       setLoading(true);
       setError(null);
       const data = await roleService.getAll();
-      setRoles(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.roles || []);
+      setRoles(list);
     } catch (err) {
       console.error('Error fetching roles:', err);
       setError(err.message);

@@ -4,11 +4,13 @@ export const poItemService = {
   // Get all PO items
   getAll: async (skip = 0, limit = 100, po_id = null) => {
     try {
-      let endpoint = `/api/po-items/?skip=${skip}&limit=${limit}`;
+      const page = Math.floor(skip / limit) + 1;
+      const page_size = limit;
+      let endpoint = `/api/po-items/?page=${page}&page_size=${page_size}`;
       if (po_id) endpoint += `&po_id=${po_id}`;
       
       const data = await fetchApi(endpoint);
-      return Array.isArray(data) ? data : (data?.po_items || data?.items || []);
+      return Array.isArray(data) ? data : (data?.data || data?.po_items || data?.items || []);
     } catch (error) {
       console.error("📦 PO Items API failed:", error.message);
       return [];
@@ -31,7 +33,7 @@ export const poItemService = {
   getAvailable: async () => {
     try {
       const data = await fetchApi('/api/po-items/available');
-      return Array.isArray(data) ? data : (data?.items || []);
+      return Array.isArray(data) ? data : (data?.data || data?.items || []);
     } catch (error) {
       console.error("📦 Available Items API failed:", error.message);
       return [];

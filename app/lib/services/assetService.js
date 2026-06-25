@@ -3,13 +3,15 @@ import { fetchApi } from '../api';
 export const assetService = {
   // Get all assets
   getAll: async (skip = 0, limit = 100, status = null, branch_id = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
+    const page = Math.floor(skip / limit) + 1;
+    const page_size = limit;
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status) queryParams += `&status=${status}`;
     if (branch_id) queryParams += `&branch_id=${branch_id}`;
     
     try {
       const data = await fetchApi(`/api/assets?${queryParams}`);
-      return Array.isArray(data) ? data : (data?.assets || []);
+      return Array.isArray(data) ? data : (data?.data || data?.assets || []);
     } catch (error) {
       console.error("Assets API failed:", error.message);
       return [];

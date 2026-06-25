@@ -20,7 +20,7 @@ export function usePurchaseOrders(skip = 0, limit = 100) {
   );
 
   return {
-    purchaseOrders: Array.isArray(data) ? data : [],
+    purchaseOrders: Array.isArray(data) ? data : (data?.data || data?.items || data?.purchase_orders || []),
     loading: isLoading,
     error: error,
     refetch: mutate,

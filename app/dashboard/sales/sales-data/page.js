@@ -56,17 +56,18 @@ export default function SalesDataPage() {
     setLoading(true);
     try {
       const data = await invoiceService.getSalesData(0, 100);
-      setSalesData(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.sales_data || []);
+      setSalesData(list);
       
       // Debug: Log unique customer IDs in sales data
-      if (Array.isArray(data) && data.length > 0) {
-        const customerIds = [...new Set(data.map(item => item.invoice?.customer?.id).filter(Boolean))];
-        const customerNames = [...new Set(data.map(item => item.invoice?.customer?.full_name).filter(Boolean))];
+      if (list.length > 0) {
+        const customerIds = [...new Set(list.map(item => item.invoice?.customer?.id).filter(Boolean))];
+        const customerNames = [...new Set(list.map(item => item.invoice?.customer?.full_name).filter(Boolean))];
         console.log("📊 Sales Data Loaded:");
-        console.log("  - Total items:", data.length);
+        console.log("  - Total items:", list.length);
         console.log("  - Unique customer IDs:", customerIds);
         console.log("  - Unique customer names:", customerNames);
-        console.log("  - Sample item:", data[0]);
+        console.log("  - Sample item:", list[0]);
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
@@ -91,10 +92,10 @@ export default function SalesDataPage() {
       console.log("  - Suppliers:", suppliersData);
       console.log("  - Stock Items:", stockItemsData);
       
-      setCustomers(Array.isArray(customersData) ? customersData : []);
-      setUsers(Array.isArray(usersData) ? usersData : []);
-      setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
-      setStockItems(Array.isArray(stockItemsData) ? stockItemsData : []);
+      setCustomers(Array.isArray(customersData) ? customersData : (customersData?.data || customersData?.items || customersData?.customers || []));
+      setUsers(Array.isArray(usersData) ? usersData : (usersData?.data || usersData?.items || usersData?.users || []));
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : (suppliersData?.data || suppliersData?.items || suppliersData?.suppliers || []));
+      setStockItems(Array.isArray(stockItemsData) ? stockItemsData : (stockItemsData?.data || stockItemsData?.items || stockItemsData?.stock_items || []));
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }

@@ -4,11 +4,13 @@ export const containerItemService = {
   // Get all container items
   getAll: async (skip = 0, limit = 100, container_id = null) => {
     try {
-      let endpoint = `/api/container-items/?skip=${skip}&limit=${limit}`;
+      const page = Math.floor(skip / limit) + 1;
+      const page_size = limit;
+      let endpoint = `/api/container-items/?page=${page}&page_size=${page_size}`;
       if (container_id) endpoint += `&container_id=${container_id}`;
       
       const data = await fetchApi(endpoint);
-      return Array.isArray(data) ? data : (data?.container_items || data?.items || []);
+      return Array.isArray(data) ? data : (data?.data || data?.container_items || data?.items || []);
     } catch (error) {
       console.error("📦 Container Items API failed:", error.message);
       return [];

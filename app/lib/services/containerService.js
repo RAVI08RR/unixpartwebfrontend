@@ -3,7 +3,9 @@ import { fetchApi } from '../api';
 export const containerService = {
   // Get all containers with filters
   getAll: async (skip = 0, limit = 100, supplier_id = null, branch_id = null, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
+    const page = Math.floor(skip / limit) + 1;
+    const page_size = limit;
+    let queryParams = `page=${page}&page_size=${page_size}`;
     
     if (supplier_id) queryParams += `&supplier_id=${supplier_id}`;
     if (branch_id) queryParams += `&branch_id=${branch_id}`;
@@ -16,7 +18,7 @@ export const containerService = {
       
       const containersData = Array.isArray(data) 
         ? data 
-        : (data?.containers || data?.items || data?.data || []);
+        : (data?.data || data?.containers || data?.items || []);
       
       if (containersData.length > 0) {
         console.log('✅ Containers fetched successfully:', containersData.length);

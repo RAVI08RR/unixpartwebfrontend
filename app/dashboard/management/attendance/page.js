@@ -27,12 +27,11 @@ export default function AttendancePage() {
     setLoading(true);
     try {
       const attendanceData = await attendanceService.getAll();
-      setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+      const list = Array.isArray(attendanceData) ? attendanceData : (attendanceData?.data || attendanceData?.items || attendanceData?.attendance || []);
+      setAttendance(list);
       
       // Calculate pending count from attendance data
-      const pending = Array.isArray(attendanceData) 
-        ? attendanceData.filter(a => a.status === 'pending' || !a.approved_by_supervisor).length 
-        : 0;
+      const pending = list.filter(a => a.status === 'pending' || !a.approved_by_supervisor).length;
       setPendingCount(pending);
     } catch (err) {
       error("Failed to load attendance data");

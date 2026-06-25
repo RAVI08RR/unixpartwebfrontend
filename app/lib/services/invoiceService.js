@@ -16,7 +16,9 @@ export const invoiceService = {
   // Get all invoices with pagination and filters
   getAll: async (skip = 0, limit = 100, customer_id = null, status = null) => {
     try {
-      let queryParams = `skip=${skip}&limit=${limit}`;
+      const page = Math.floor(skip / limit) + 1;
+      const page_size = limit;
+      let queryParams = `skip=${skip}&limit=${limit}&page=${page}&page_size=${page_size}`;
       if (customer_id) queryParams += `&customer_id=${customer_id}`;
       if (status) queryParams += `&status=${status}`;
       
@@ -216,16 +218,17 @@ export const invoiceService = {
   getSalesData: async (skip = 0, limit = 100) => {
     try {
       const response = await fetchApi(`/api/invoices/sales-data?skip=${skip}&limit=${limit}`);
+      const dataList = Array.isArray(response) ? response : (response?.data || response?.items || response?.sales_data || []);
       
       // WORKAROUND: The backend /api/invoices/sales-data endpoint does not return the actual invoice ID.
       // We need to fetch the invoices and match them by invoice_number to attach the ID.
       try {
         const allInvoicesResp = await fetchApi('/api/invoices/?skip=0&limit=100');
         const invoicesList = Array.isArray(allInvoicesResp) ? allInvoicesResp : 
-                            (allInvoicesResp.items || allInvoicesResp.invoices || []);
+                            (allInvoicesResp?.data || allInvoicesResp?.items || allInvoicesResp?.invoices || []);
         
-        if (Array.isArray(response) && invoicesList.length > 0) {
-          response.forEach(item => {
+        if (dataList.length > 0 && invoicesList.length > 0) {
+          dataList.forEach(item => {
             if (item.invoice && !item.invoice.id && item.invoice.invoice_number) {
               const matched = invoicesList.find(inv => inv.invoice_number === item.invoice.invoice_number);
               if (matched) {
@@ -238,7 +241,7 @@ export const invoiceService = {
         console.warn("Could not patch sales data with invoice IDs:", e);
       }
       
-      return response;
+      return dataList;
     } catch (error) {
       console.error('Failed to fetch sales data:', error);
       throw error;

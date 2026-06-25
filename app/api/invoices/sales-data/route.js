@@ -6,7 +6,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
+    const page_size = searchParams.get('page_size') || '100';
 
     // Get API base URL
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');

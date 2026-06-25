@@ -36,8 +36,10 @@ export default function LeavesPage() {
         leaveService.getAll(),
         leaveService.getPending()
       ]);
-      setLeaves(Array.isArray(leavesData) ? leavesData : []);
-      setPendingCount(Array.isArray(pendingData) ? pendingData.length : 0);
+      const list = Array.isArray(leavesData) ? leavesData : (leavesData?.data || leavesData?.items || leavesData?.leaves || []);
+      const pendingList = Array.isArray(pendingData) ? pendingData : (pendingData?.data || pendingData?.items || pendingData?.leaves || []);
+      setLeaves(list);
+      setPendingCount(pendingList.length);
     } catch (err) {
       error("Failed to load leaves data");
       setLeaves([]);

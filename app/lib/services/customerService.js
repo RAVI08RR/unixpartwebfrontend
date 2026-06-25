@@ -4,15 +4,19 @@ import { getFallbackData } from '../fallbackData';
 export const customerService = {
   // Get all customers with pagination and filters
   getAll: async (skip = 0, limit = 100, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
-    // Don't filter by status to get all customers
+    const page = Math.floor(skip / limit) + 1;
+    const page_size = limit;
+    let queryParams = `page=${page}&page_size=${page_size}`;
+    if (status !== null) {
+      queryParams += `&status=${status}`;
+    }
     
     try {
       console.log('🏢 Fetching customers from API...');
       const data = await fetchApi(`/api/customers?${queryParams}`);
       console.log('🏢 Customers API response:', data);
       
-      const customersData = Array.isArray(data) ? data : (data?.customers || []);
+      const customersData = Array.isArray(data) ? data : (data?.data || data?.customers || []);
       
       if (customersData.length > 0) {
         console.log('✅ Customers fetched successfully:', customersData.length);

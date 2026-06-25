@@ -22,11 +22,18 @@ const mapFromApiFields = (userData) => {
 export const userService = {
   // Get all users with pagination
   getAll: async (skip = 0, limit = 100) => {
+    const page = Math.floor(skip / limit) + 1;
+    const page_size = limit;
     // Use Next.js proxy route to bypass CORS issues
-    const response = await fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
+    const response = await fetchApi(`/api/users?page=${page}&page_size=${page_size}`);
     
     // Handle both array and object responses
-    if (response && response.items && Array.isArray(response.items)) {
+    if (response && response.data && Array.isArray(response.data)) {
+      return {
+        ...response,
+        data: response.data.map(mapFromApiFields)
+      };
+    } else if (response && response.items && Array.isArray(response.items)) {
       return {
         ...response,
         items: response.items.map(mapFromApiFields)

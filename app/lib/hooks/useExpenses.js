@@ -11,7 +11,8 @@ export function useExpenses(params = {}) {
       setLoading(true);
       setError(null);
       const data = await expenseService.getAll(params);
-      setExpenses(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.expenses || []);
+      setExpenses(list);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching expenses:', err);

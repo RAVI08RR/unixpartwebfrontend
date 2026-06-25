@@ -77,7 +77,7 @@ export default function AllInventoryPage() {
     try {
       // Fetching first 100 items to enable client-side filtering (backend max limit is 100)
       const data = await poItemService.getAll(0, 100);
-      setInventoryItems(Array.isArray(data) ? data : []);
+      setInventoryItems(Array.isArray(data) ? data : (data?.data || data?.items || data?.po_items || []));
     } catch (error) {
       console.error("Error fetching inventory data:", error);
     } finally {

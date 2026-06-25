@@ -29,6 +29,16 @@ const mapUsersResponse = (data) => {
     return data.items.map(mapUserData);
   }
   
+  // If data has 'data' property (paginated response)
+  if (data.data && Array.isArray(data.data)) {
+    return data.data.map(mapUserData);
+  }
+
+  // If data has 'users' property (paginated response)
+  if (data.users && Array.isArray(data.users)) {
+    return data.users.map(mapUserData);
+  }
+
   // If data is directly an array
   if (Array.isArray(data)) {
     return data.map(mapUserData);

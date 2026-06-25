@@ -5,13 +5,28 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
+    
+    // Support skip and limit query params and translate to page and page_size
+    const skip = searchParams.get('skip');
+    const limit = searchParams.get('limit');
+    let page = searchParams.get('page');
+    let page_size = searchParams.get('page_size');
+
+    if (!page && skip !== null) {
+      const skipNum = parseInt(skip) || 0;
+      const limitNum = parseInt(limit) || 100;
+      page_size = String(limitNum);
+      page = String(Math.floor(skipNum / limitNum) + 1);
+    } else {
+      if (!page) page = '1';
+      if (!page_size) page_size = '100'; // Default to 100 to retrieve enough items
+    }
+
     const customer_id = searchParams.get('customer_id') || '';
     const status = searchParams.get('status') || '';
 
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
 
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');
@@ -95,7 +110,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
 
     // Get auth token from request headers
     const authHeader = request.headers.get('authorization');

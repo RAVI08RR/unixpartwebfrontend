@@ -11,7 +11,8 @@ export function useAssets(skip = 0, limit = 100, status = null, branch_id = null
     setError(null);
     try {
       const data = await assetService.getAll(skip, limit, status, branch_id);
-      setAssets(data);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.assets || []);
+      setAssets(list);
     } catch (err) {
       setError(err.message);
       setAssets([]);

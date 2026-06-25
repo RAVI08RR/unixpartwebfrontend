@@ -24,7 +24,7 @@ export function useInvoices(skip = 0, limit = 100, customer_id = null, status = 
   );
 
   return {
-    invoices: data,
+    invoices: Array.isArray(data) ? data : (data?.data || data?.items || data?.invoices || []),
     isLoading,
     isError: error,
     mutate

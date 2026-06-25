@@ -4,9 +4,11 @@ export const purchaseOrderService = {
   // Get all purchase orders
   getAll: async (skip = 0, limit = 100) => {
     try {
-      const data = await fetchApi(`/api/purchase-orders/?skip=${skip}&limit=${limit}`);
+      const page = Math.floor(skip / limit) + 1;
+      const page_size = limit;
+      const data = await fetchApi(`/api/purchase-orders/?page=${page}&page_size=${page_size}`);
       // Return direct array or check for common wrapper keys
-      return Array.isArray(data) ? data : (data?.purchase_orders || data?.items || []);
+      return Array.isArray(data) ? data : (data?.data || data?.purchase_orders || data?.items || []);
     } catch (error) {
       console.error("📦 PO API failed:", error.message);
       return [];

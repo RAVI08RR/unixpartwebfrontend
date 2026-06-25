@@ -49,7 +49,12 @@ export default function PaymentsReceivedPage() {
   const branches = useMemo(() => Array.isArray(dropdownBranches) ? dropdownBranches : [], [dropdownBranches]);
   const suppliers = useMemo(() => Array.isArray(dropdownSuppliers) ? dropdownSuppliers : [], [dropdownSuppliers]);
   const users = useMemo(() => Array.isArray(dropdownUsers) ? dropdownUsers : [], [dropdownUsers]);
-  const salesData = useMemo(() => Array.isArray(salesDataRaw) ? salesDataRaw : [], [salesDataRaw]);
+  const salesData = useMemo(() => {
+    if (!salesDataRaw) return [];
+    return Array.isArray(salesDataRaw)
+      ? salesDataRaw
+      : (salesDataRaw.data || salesDataRaw.sales_data || []);
+  }, [salesDataRaw]);
 
   // Build a map of invoice_number -> resolved branch & supplier info from sales data
   const invoiceBranchSupplierMap = useMemo(() => {
@@ -108,7 +113,11 @@ export default function PaymentsReceivedPage() {
       setLoading(true);
       const response = await apiClient.get('/api/invoices/payments/all');
       console.log('Payments response:', response);
-      setPayments(response || []);
+      // Support both array and paginated/wrapped object responses
+      const data = Array.isArray(response)
+        ? response
+        : (response?.data || response?.payments || []);
+      setPayments(data);
     } catch (error) {
       console.error('Failed to fetch payments:', error);
       setPayments([]);
