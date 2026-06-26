@@ -169,8 +169,10 @@ function InvoiceManagementContent() {
 
     // If we have API data, use it
     if (apiInvoices) {
-      // Handle both array and object responses
-      const data = Array.isArray(apiInvoices) ? apiInvoices : (apiInvoices?.invoices || []);
+      // Handle both array and object responses (checking data, invoices keys)
+      const data = Array.isArray(apiInvoices)
+        ? apiInvoices
+        : (apiInvoices?.data || apiInvoices?.invoices || []);
       return data;
     }
 
@@ -452,8 +454,8 @@ function InvoiceManagementContent() {
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
-                  ? 'bg-red-600 text-white shadow-red-600/10'
-                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+                ? 'bg-red-600 text-white shadow-red-600/10'
+                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                 }`}
             >
               <Filter className="w-4 h-4" />
@@ -744,12 +746,12 @@ function InvoiceManagementContent() {
                       {/* Invoice Status */}
                       <td className="px-6 py-5" data-label="Invoice Status">
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                            : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
-                              ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                              : invoice.invoice_status === 'cancelled'
-                                ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                          : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                            : invoice.invoice_status === 'cancelled'
+                              ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
                           }`}>
                           {invoice.invoice_status || "Pending"}
                         </div>
@@ -758,14 +760,14 @@ function InvoiceManagementContent() {
                       {/* Load Status */}
                       <td className="px-6 py-5" data-label="Load Status">
                         <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                            : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
-                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-                              : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                                : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
-                                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
-                                  : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                          : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
+                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                            : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
+                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                              : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
+                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+                                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                           }`}>
                           {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
                             invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
@@ -783,8 +785,8 @@ function InvoiceManagementContent() {
                             <button
                               onClick={() => toggleMenu(invoice.id)}
                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${menuOpenId === invoice.id
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
                                 }`}
                             >
                               <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
@@ -868,210 +870,214 @@ function InvoiceManagementContent() {
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />
-      </div>
+      </div >
 
 
 
       {/* View Invoice Modal */}
-      {viewModalOpen && selectedInvoice && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={() => setViewModalOpen(false)}
-          />
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-black-100 dark:bg-black-900/20 flex items-center justify-center">
-                      <Receipt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+      {
+        viewModalOpen && selectedInvoice && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setViewModalOpen(false)}
+            />
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6 border-b border-gray-200 dark:border-zinc-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-black-100 dark:bg-black-900/20 flex items-center justify-center">
+                        <Receipt className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice Details</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{selectedInvoice.invoice_number}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Invoice Details</h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{selectedInvoice.invoice_number}</p>
-                    </div>
+                    <button
+                      onClick={() => setViewModalOpen(false)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setViewModalOpen(false)}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
                 </div>
-              </div>
 
-              <div className="p-6 space-y-6">
-                {/* Invoice Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Number</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
-                  </div>
+                <div className="p-6 space-y-6">
+                  {/* Invoice Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Number</h3>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
+                    </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Customer</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
-                  </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Customer</h3>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
+                    </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Date</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(selectedInvoice.invoice_date)}</p>
-                  </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Invoice Date</h3>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{formatDate(selectedInvoice.invoice_date)}</p>
+                    </div>
 
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</h3>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${selectedInvoice.invoice_status === 'paid'
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Status</h3>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold ${selectedInvoice.invoice_status === 'paid'
                         ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
                         : selectedInvoice.invoice_status === 'overdue'
                           ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
                           : selectedInvoice.invoice_status === 'cancelled'
                             ? 'bg-gray-50 text-gray-600 dark:bg-gray-500/10 dark:text-gray-400'
                             : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/10 dark:text-yellow-400'
-                      }`}>
-                      <div className={`w-2 h-2 rounded-full ${selectedInvoice.invoice_status === 'paid' ? 'bg-green-600' :
+                        }`}>
+                        <div className={`w-2 h-2 rounded-full ${selectedInvoice.invoice_status === 'paid' ? 'bg-green-600' :
                           selectedInvoice.invoice_status === 'overdue' ? 'bg-red-600' :
                             selectedInvoice.invoice_status === 'cancelled' ? 'bg-gray-600' : 'bg-yellow-600'
-                        }`}></div>
-                      {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
+                          }`}></div>
+                        {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
+                      </div>
                     </div>
                   </div>
+
+                  {/* Financial Information */}
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Summary</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
+                        <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Paid Amount</p>
+                        <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedInvoice.paid_amount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding</p>
+                        <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(selectedInvoice.outstanding_amount)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Load Status */}
+                  {selectedInvoice.overall_load_status && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Load Status</h3>
+                      <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
+                        {selectedInvoice.overall_load_status.replace('_', ' ')}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {selectedInvoice.invoice_notes && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</h3>
+                      <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-3">
+                        {selectedInvoice.invoice_notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {/* Financial Information */}
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Total Amount</p>
-                      <p className="text-xl font-bold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Paid Amount</p>
-                      <p className="text-xl font-bold text-green-600 dark:text-green-400">{formatCurrency(selectedInvoice.paid_amount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Outstanding</p>
-                      <p className="text-xl font-bold text-red-600 dark:text-red-400">{formatCurrency(selectedInvoice.outstanding_amount)}</p>
-                    </div>
-                  </div>
+                <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex justify-end gap-3">
+                  <button
+                    onClick={() => setViewModalOpen(false)}
+                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => {
+                      setViewModalOpen(false);
+                      handleEdit(selectedInvoice);
+                    }}
+                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center gap-2"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit Invoice
+                  </button>
                 </div>
-
-                {/* Load Status */}
-                {selectedInvoice.overall_load_status && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Load Status</h3>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-                      {selectedInvoice.overall_load_status.replace('_', ' ')}
-                    </p>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {selectedInvoice.invoice_notes && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</h3>
-                    <p className="text-gray-900 dark:text-white bg-gray-50 dark:bg-zinc-800/50 rounded-lg p-3">
-                      {selectedInvoice.invoice_notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="p-6 border-t border-gray-200 dark:border-zinc-800 flex justify-end gap-3">
-                <button
-                  onClick={() => setViewModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  Close
-                </button>
-                <button
-                  onClick={() => {
-                    setViewModalOpen(false);
-                    handleEdit(selectedInvoice);
-                  }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors flex items-center gap-2"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit Invoice
-                </button>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )
+      }
 
       {/* Delete Confirmation Modal */}
-      {deleteModalOpen && selectedInvoice && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-50"
-            onClick={() => setDeleteModalOpen(false)}
-          />
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-md w-full">
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-                    <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Invoice</h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                      <Receipt className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+      {
+        deleteModalOpen && selectedInvoice && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/50 z-50"
+              onClick={() => setDeleteModalOpen(false)}
+            />
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-2xl max-w-md w-full">
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+                      <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
+                      <h2 className="text-xl font-bold text-gray-900 dark:text-white">Delete Invoice</h2>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">This action cannot be undone</p>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-700">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">Total Amount:</span>
-                      <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</span>
+
+                  <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-4 mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                        <Receipt className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 dark:text-white">{selectedInvoice.invoice_number}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{getCustomerName(selectedInvoice.customer_id, selectedInvoice.customer)}</p>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm mt-1">
-                      <span className="text-gray-500 dark:text-gray-400">Status:</span>
-                      <span className={`font-semibold ${selectedInvoice.invoice_status === 'paid' ? 'text-green-600 dark:text-green-400' :
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-zinc-700">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">Total Amount:</span>
+                        <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(selectedInvoice.invoice_total)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm mt-1">
+                        <span className="text-gray-500 dark:text-gray-400">Status:</span>
+                        <span className={`font-semibold ${selectedInvoice.invoice_status === 'paid' ? 'text-green-600 dark:text-green-400' :
                           selectedInvoice.invoice_status === 'overdue' ? 'text-red-600 dark:text-red-400' :
                             'text-yellow-600 dark:text-yellow-400'
-                        }`}>
-                        {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
-                      </span>
+                          }`}>
+                          {selectedInvoice.invoice_status?.charAt(0).toUpperCase() + selectedInvoice.invoice_status?.slice(1) || "Pending"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Are you sure you want to delete this invoice? This will permanently remove the invoice and all associated data.
-                </p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    Are you sure you want to delete this invoice? This will permanently remove the invoice and all associated data.
+                  </p>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteModalOpen(false)}
-                    className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete Invoice
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setDeleteModalOpen(false)}
+                      className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={confirmDelete}
+                      className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete Invoice
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )
+      }
 
       {/* Cancel/Return Items Modal */}
       <CancelReturnItemsModal
@@ -1080,7 +1086,7 @@ function InvoiceManagementContent() {
         invoice={selectedInvoice}
         onSuccess={() => mutate()}
       />
-    </div>
+    </div >
   );
 }
 

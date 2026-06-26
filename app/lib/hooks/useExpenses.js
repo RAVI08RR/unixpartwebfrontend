@@ -13,7 +13,7 @@ export function useExpenses(page = 1, page_size = 10) {
       setLoading(true);
       setError(null);
       const response = await expenseService.getAll({ page, page_size });
-      
+
       const items = response?.data || response?.items || response?.expenses || (Array.isArray(response) ? response : []);
       setExpenses(items);
       setTotal(response?.total ?? items.length);

@@ -39,7 +39,7 @@ export const poItemService = {
   getAvailable: async () => {
     try {
       const data = await fetchApi('/api/po-items/available');
-      return Array.isArray(data) ? data : (data?.items || []);
+      return Array.isArray(data) ? data : (data?.data || data?.items || []);
     } catch (error) {
       console.error("📦 Available Items API failed:", error.message);
       return [];

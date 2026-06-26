@@ -35,7 +35,7 @@ export function useRoles() {
   const updateRole = async (id, roleData) => {
     try {
       const updatedRole = await roleService.update(id, roleData);
-      setRoles(prev => prev.map(role => 
+      setRoles(prev => prev.map(role =>
         role.id === id ? { ...role, ...updatedRole } : role
       ));
       return updatedRole;

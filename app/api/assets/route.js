@@ -7,8 +7,20 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
+    const skip = searchParams.get('skip');
+    const limit = searchParams.get('limit');
+    let page = searchParams.get('page');
+    let page_size = searchParams.get('page_size');
+
+    if (!page && skip !== null) {
+      const skipNum = parseInt(skip) || 0;
+      const limitNum = parseInt(limit) || 100;
+      page_size = String(limitNum);
+      page = String(Math.floor(skipNum / limitNum) + 1);
+    } else {
+      if (!page) page = '1';
+      if (!page_size) page_size = '100';
+    }
     const status = searchParams.get('status');
     const branch_id = searchParams.get('branch_id');
 

@@ -10,7 +10,8 @@ export function useFundTransfers() {
     try {
       setLoading(true);
       const data = await fundTransferService.getAll();
-      setTransfers(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.transfers || data?.fund_transfers || []);
+      setTransfers(list);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch fund transfers:', err);

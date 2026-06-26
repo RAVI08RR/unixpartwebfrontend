@@ -8,7 +8,7 @@
 const https = require('https');
 const http = require('http');
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000';
 
 console.log('🔍 Testing Backend Connectivity...');
 console.log('📍 API URL:', API_URL);

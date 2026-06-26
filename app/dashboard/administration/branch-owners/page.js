@@ -46,9 +46,9 @@ export default function BranchOwnersPage() {
         supplierService.getAll(0, 100)
       ]);
 
-      setBranchOwners(Array.isArray(ownersData) ? ownersData : []);
-      setBranches(Array.isArray(branchesData) ? branchesData : (branchesData?.branches || []));
-      setSuppliers(Array.isArray(suppliersData) ? suppliersData : (suppliersData?.suppliers || []));
+      setBranchOwners(Array.isArray(ownersData) ? ownersData : (ownersData?.data || ownersData?.items || ownersData?.branch_owners || []));
+      setBranches(Array.isArray(branchesData) ? branchesData : (branchesData?.data || branchesData?.items || branchesData?.branches || []));
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : (suppliersData?.data || suppliersData?.items || suppliersData?.suppliers || []));
     } catch (err) {
       console.error('Failed to fetch data:', err);
       error('Failed to load data');

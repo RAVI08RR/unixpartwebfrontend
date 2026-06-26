@@ -5,7 +5,7 @@ export async function handleRequest(request) {
     let path = url.pathname.replace(/^\/api\/file-manager/, '');
     
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     
     // Construct backend URL
     const backendUrl = `${apiBaseUrl}/api/file-manager${path}${url.search}`;

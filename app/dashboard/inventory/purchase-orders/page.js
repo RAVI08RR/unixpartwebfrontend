@@ -174,7 +174,7 @@ export default function PurchaseOrdersPage() {
     setLoadingDocuments(true);
     try {
       const docs = await purchaseOrderService.getDocuments(poId);
-      setDocuments(Array.isArray(docs) ? docs : []);
+      setDocuments(Array.isArray(docs) ? docs : (docs?.data || docs?.items || []));
     } catch (err) {
       console.error("Failed to fetch documents:", err);
       setDocuments([]);

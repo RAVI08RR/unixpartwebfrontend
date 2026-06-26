@@ -13,8 +13,8 @@ export function useInvoices(page = 1, page_size = 10, customer_id = null, status
       errorRetryInterval: 2000,
       shouldRetryOnError: (error) => {
         return !error.message.includes('401') &&
-               !error.message.includes('403') &&
-               !error.message.includes('404');
+          !error.message.includes('403') &&
+          !error.message.includes('404');
       },
     }
   );

@@ -6,7 +6,7 @@
 export async function GET(request) {
   try {
     // Get API base URL
-    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'https://228385806398.ngrok-free.app').replace(/\/+$/, '');
+    const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const backendUrl = `${apiBaseUrl}/api/stock-items/categories`;
     
     console.log('Categories proxy - Backend URL:', backendUrl);

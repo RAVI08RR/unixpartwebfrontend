@@ -363,8 +363,8 @@ export default function AllInventoryPage() {
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
-                ? 'bg-red-600 text-white shadow-red-600/10'
-                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              ? 'bg-red-600 text-white shadow-red-600/10'
+              : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
               }`}
           >
             <Filter className="w-4 h-4" />
@@ -591,8 +591,8 @@ export default function AllInventoryPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                          'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                      item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                        'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
                       }`}>{item.status?.replace('_', ' ') || "-"}</span>
                     <div className="relative">
                       <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-all">
@@ -684,9 +684,9 @@ export default function AllInventoryPage() {
                     </td>
                     <td className="px-8 py-6">
                       <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                          item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                            item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
-                              'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                          item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
+                            'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
                         }`}>
                         {item.status?.replace('_', ' ') || "-"}
                       </span>

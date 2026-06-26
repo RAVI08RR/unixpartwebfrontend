@@ -35,14 +35,15 @@ export default function PayrollPage() {
     setLoading(true);
     try {
       const payrollData = await payrollService.getAll();
-      setPayrolls(Array.isArray(payrollData) ? payrollData : []);
+      const list = Array.isArray(payrollData) ? payrollData : (payrollData?.data || payrollData?.items || payrollData?.payrolls || []);
+      setPayrolls(list);
       
       // Calculate summary from payroll data
-      if (Array.isArray(payrollData) && payrollData.length > 0) {
+      if (list.length > 0) {
         const summaryData = {
-          total_payroll: payrollData.reduce((sum, p) => sum + (parseFloat(p.net_payable) || 0), 0),
-          total_employees: payrollData.length,
-          pending_count: payrollData.filter(p => p.status === 'draft' || p.status === 'pending').length,
+          total_payroll: list.reduce((sum, p) => sum + (parseFloat(p.net_payable) || 0), 0),
+          total_employees: list.length,
+          pending_count: list.filter(p => p.status === 'draft' || p.status === 'pending').length,
         };
         setSummary(summaryData);
       }
