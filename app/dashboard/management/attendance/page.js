@@ -10,6 +10,7 @@ import { useToast } from "@/app/components/Toast";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import Pagination from "@/app/components/Pagination";
 
 export default function AttendancePage() {
   const { success, error } = useToast();
@@ -18,29 +19,41 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const PAGE_SIZE = 10;
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const attendanceData = await attendanceService.getAll();
-      setAttendance(Array.isArray(attendanceData) ? attendanceData : []);
+      const response = await attendanceService.getAll(currentPage, PAGE_SIZE);
+      const items = response?.data || [];
+      setAttendance(items);
+      setTotal(response?.total || 0);
+      setTotalPages(response?.total_pages || 1);
       
       // Calculate pending count from attendance data
-      const pending = Array.isArray(attendanceData) 
-        ? attendanceData.filter(a => a.status === 'pending' || !a.approved_by_supervisor).length 
-        : 0;
+      const pending = items.filter(a => a.status === 'pending' || !a.approved_by_supervisor).length;
       setPendingCount(pending);
     } catch (err) {
       error("Failed to load attendance data");
       setAttendance([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, [currentPage]);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleApprove = async (id) => {
     try {
@@ -70,11 +83,18 @@ export default function AttendancePage() {
     
     return (
       employeeName.includes(searchLower) ||
-      record.date?.includes(searchTerm) ||
-      record.status?.toLowerCase().includes(searchLower) ||
-      record.notes?.toLowerCase().includes(searchLower)
+      (record.date || '').includes(searchTerm) ||
+      (record.status || '').toLowerCase().includes(searchLower) ||
+      (record.notes || '').toLowerCase().includes(searchLower)
     );
   });
+
+  // Pagination logic (hybrid server/client)
+  const displayTotalPages = filteredAttendance.length > PAGE_SIZE ? Math.ceil(filteredAttendance.length / PAGE_SIZE) : totalPages;
+  const displayTotal = filteredAttendance.length > PAGE_SIZE ? filteredAttendance.length : total;
+  const paginatedAttendance = filteredAttendance.length > PAGE_SIZE
+    ? filteredAttendance.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredAttendance;
 
   if (loading) {
     return (
@@ -158,7 +178,7 @@ export default function AttendancePage() {
       </div>
 
       <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        {filteredAttendance.length > 0 ? (
+        {paginatedAttendance.length > 0 ? (
           <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -184,7 +204,7 @@ export default function AttendancePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                {filteredAttendance.map((record) => (
+                {paginatedAttendance.map((record) => (
                   <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
                     <td className="px-6 py-4" data-label="Employee">
                       <p className="text-sm font-bold text-gray-900 dark:text-white">
@@ -269,6 +289,15 @@ export default function AttendancePage() {
             </p>
           </div>
         )}
+
+        {/* Pagination Footer */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={displayTotalPages}
+          total={displayTotal}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </div>
       </div>
     </ProtectedRoute>

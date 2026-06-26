@@ -3,7 +3,7 @@ import { fetchApi } from '../api';
 // Function to map API response fields to frontend expected fields
 const mapFromApiFields = (userData) => {
   if (!userData) return userData;
-  
+
   return {
     ...userData,
     // Map API fields to frontend expected fields
@@ -21,21 +21,30 @@ const mapFromApiFields = (userData) => {
 
 export const userService = {
   // Get all users with pagination
-  getAll: async (skip = 0, limit = 100) => {
-    // Use Next.js proxy route to bypass CORS issues
-    const response = await fetchApi(`/api/users?skip=${skip}&limit=${limit}`);
-    
-    // Handle both array and object responses
-    if (response && response.items && Array.isArray(response.items)) {
-      return {
-        ...response,
-        items: response.items.map(mapFromApiFields)
-      };
-    } else if (Array.isArray(response)) {
-      return response.map(mapFromApiFields);
+  getAll: async (page = 1, page_size = 10) => {
+    try {
+      const response = await fetchApi(`/api/users?page=${page}&page_size=${page_size}`);
+      // Handle paginated envelope { data/items: [...], total, total_pages }
+      if (response && (response.data || response.items) && !Array.isArray(response)) {
+        const items = (response.data || response.items || []).map(mapFromApiFields);
+        return {
+          data: items,
+          total: response.total ?? items.length,
+          page: response.page ?? page,
+          page_size: response.page_size ?? page_size,
+          total_pages: response.total_pages ?? 1,
+        };
+      }
+      // Legacy array response
+      if (Array.isArray(response)) {
+        const items = response.map(mapFromApiFields);
+        return { data: items, total: items.length, page, page_size, total_pages: 1 };
+      }
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
+    } catch (error) {
+      console.error('👤 Users API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
-    
-    return response;
   },
 
   // Get dropdown users
@@ -59,20 +68,20 @@ export const userService = {
     // Log what we're sending
     console.log("📤 userService.create called with:", userData);
     console.log("📤 userData keys:", Object.keys(userData));
-    
+
     // Get token
     const token = localStorage.getItem('access_token');
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
     }
-    
+
     // Create FormData for multipart/form-data submission
     const formData = new FormData();
-    
+
     // Add all user data fields to FormData
     Object.keys(userData).forEach(key => {
       const value = userData[key];
-      
+
       // Handle arrays (branch_ids, supplier_ids, permission_ids)
       if (Array.isArray(value)) {
         if (value.length > 0) {
@@ -92,12 +101,12 @@ export const userService = {
         formData.append(key, '');
       }
     });
-    
+
     console.log("📤 FormData entries:");
     for (let [key, value] of formData.entries()) {
       console.log(`  ${key}:`, value);
     }
-    
+
     // Send as FormData (don't set Content-Type, browser will set it with boundary)
     const response = await fetch('/api/users', {
       method: 'POST',
@@ -107,20 +116,20 @@ export const userService = {
       },
       body: formData,
     });
-    
+
     console.log('📤 Create user response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Create user failed:', errorText);
       console.error('❌ Response status:', response.status);
-      
+
       let errorMessage = `Failed to create user (${response.status})`;
-      
+
       try {
         const errorData = JSON.parse(errorText);
         console.error('❌ Parsed error data:', errorData);
-        
+
         // Handle different error response formats
         if (errorData.detail) {
           // FastAPI validation error format
@@ -147,10 +156,10 @@ export const userService = {
           errorMessage = errorText;
         }
       }
-      
+
       throw new Error(errorMessage);
     }
-    
+
     const result = await response.json();
     console.log('✅ User created successfully:', result);
     return mapFromApiFields(result);
@@ -161,20 +170,20 @@ export const userService = {
     // Log what we're sending
     console.log("📤 userService.update called with:", userData);
     console.log("📤 userData keys:", Object.keys(userData));
-    
+
     // Get token
     const token = localStorage.getItem('access_token');
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
     }
-    
+
     // Create FormData for multipart/form-data submission (same format as Postman)
     const formData = new FormData();
-    
+
     // Add all user data fields to FormData
     Object.keys(userData).forEach(key => {
       const value = userData[key];
-      
+
       // Handle arrays (branch_ids, supplier_ids, permission_ids) - send each item separately
       if (Array.isArray(value)) {
         if (value.length > 0) {
@@ -190,12 +199,12 @@ export const userService = {
       }
       // Don't send empty/null/undefined values
     });
-    
+
     console.log("📤 FormData entries for update:");
     for (let [key, value] of formData.entries()) {
       console.log(`  ${key}:`, value);
     }
-    
+
     // Send as FormData (don't set Content-Type, browser will set it with boundary)
     const response = await fetch(`/api/users/${id}`, {
       method: 'PUT',
@@ -205,20 +214,20 @@ export const userService = {
       },
       body: formData,
     });
-    
+
     console.log('📤 Update user response status:', response.status);
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Update user failed:', errorText);
       console.error('❌ Response status:', response.status);
-      
+
       let errorMessage = `Failed to update user (${response.status})`;
-      
+
       try {
         const errorData = JSON.parse(errorText);
         console.error('❌ Parsed error data:', errorData);
-        
+
         // Handle different error response formats
         if (errorData.detail) {
           // FastAPI validation error format
@@ -245,10 +254,10 @@ export const userService = {
           errorMessage = errorText;
         }
       }
-      
+
       throw new Error(errorMessage);
     }
-    
+
     const result = await response.json();
     console.log('✅ User updated successfully:', result);
     return mapFromApiFields(result);
@@ -270,10 +279,10 @@ export const userService = {
     if (!token) {
       throw new Error('No authentication token found. Please log in again.');
     }
-    
+
     // Use Next.js API proxy route to avoid mixed content errors
     const uploadUrl = `/api/users/${userId}/upload-profile-image`;
-    
+
     console.log('📸 Uploading profile image:', {
       userId,
       fileName: file.name,
@@ -282,7 +291,7 @@ export const userService = {
       uploadUrl,
       hasToken: !!token
     });
-    
+
     try {
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -299,7 +308,7 @@ export const userService = {
         const errorText = await response.text();
         console.error('❌ Profile image upload failed with status:', response.status);
         console.error('❌ Response body:', errorText);
-        
+
         let errorMessage = `Failed to upload profile image (${response.status})`;
         try {
           const error = JSON.parse(errorText);
@@ -321,23 +330,23 @@ export const userService = {
       if (error.name === 'AbortError' || error.message.includes('timeout')) {
         throw new Error('Upload timeout: The image upload took too long. Please try with a smaller image.');
       }
-      
+
       if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
         throw new Error('Network error: Unable to connect to the server. Please check your internet connection.');
       }
-      
+
       // Re-throw other errors
       throw error;
     }
   },
-  
+
   // Get profile image URL
   getProfileImageUrl: (profileImagePath) => {
     if (!profileImagePath) return null;
-    
+
     // Extract the relative path from full URL if present
     let cleanPath = profileImagePath;
-    
+
     // If it's a full URL, extract just the path part
     if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
       try {
@@ -352,17 +361,17 @@ export const userService = {
       // Remove leading slash if present
       cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
     }
-    
+
     // Always use Next.js API proxy route to avoid mixed content errors
     // This works in both local (HTTP) and production (HTTPS) environments
     const proxyUrl = `/api/images/${cleanPath}`;
-    
-    console.log('🖼️ Profile image URL:', { 
-      originalPath: profileImagePath, 
+
+    console.log('🖼️ Profile image URL:', {
+      originalPath: profileImagePath,
       cleanPath,
-      proxyUrl 
+      proxyUrl
     });
-    
+
     return proxyUrl;
   },
 };

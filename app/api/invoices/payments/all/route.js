@@ -8,8 +8,8 @@ export async function GET(request) {
     const authHeader = request.headers.get('authorization');
     
     console.log('Get all payments proxy');
-    
-    const backendUrl = `${apiBaseUrl}/api/invoices/payments/all`;
+    const { searchParams } = new URL(request.url);
+    const backendUrl = `${apiBaseUrl}/api/invoices/payments/all?${searchParams.toString()}`;
     
     const headers = {
       'Content-Type': 'application/json',

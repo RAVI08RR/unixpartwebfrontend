@@ -4,7 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   MoreVertical, Search, Filter, Plus,
-  ChevronLeft, ChevronRight, Pencil, Trash2, Check, X,
+  Pencil, Trash2, Check, X,
   Eye, Package, Calendar, Building2, DollarSign, Hash,
   AlertCircle, FileText, Upload, Trash, ExternalLink, RefreshCcw, Download, RotateCcw
 } from "lucide-react";
@@ -18,16 +18,18 @@ import { useBranches } from "@/app/lib/hooks/useBranches";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { usePermission } from "@/app/lib/hooks/usePermission";
+import Pagination from "@/app/components/Pagination";
 
 export default function PurchaseOrdersPage() {
   const { hasPermission } = usePermission();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const { success, error } = useToast();
 
-  // Custom filter states matching visual specs
+  // Custom filter states
   const [containerCodeFilter, setContainerCodeFilter] = useState("");
   const [supplierFilter, setSupplierFilter] = useState("All");
   const [branchFilter, setBranchFilter] = useState("All");
@@ -50,18 +52,18 @@ export default function PurchaseOrdersPage() {
     setBranchFilter('All');
     setDateRange({ start: '', end: '' });
     setStatusFilter('All');
+    setCurrentPage(1);
   };
 
-  // Dropdown list data using dropdown spec hooks
-  const { suppliers } = useSuppliers(0, 100, null, true);
-  const { branches } = useBranches(0, 100, true);
+  // Dropdown list data
+  const { suppliers } = useSuppliers(1, 100, null, true);
+  const { branches } = useBranches(1, 100, true);
 
   const supplierList = useMemo(() => Array.isArray(suppliers) ? suppliers : [], [suppliers]);
   const branchList = useMemo(() => Array.isArray(branches) ? branches : [], [branches]);
 
-  // Data Fetching
-  const itemsPerPage = 6;
-  const { purchaseOrders, loading, refetch } = usePurchaseOrders(0, 100);
+  // Server-side paginated data — re-fetches when currentPage changes
+  const { purchaseOrders, loading, refetch, total, totalPages } = usePurchaseOrders(currentPage, PAGE_SIZE);
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -69,9 +71,10 @@ export default function PurchaseOrdersPage() {
     setIsMounted(true);
   }, []);
 
+  // Reset to page 1 when filters/search change
   useEffect(() => {
     setCurrentPage(1);
-  }, [purchaseOrders.length, searchQuery, statusFilter, containerCodeFilter, supplierFilter, branchFilter, dateRange]);
+  }, [searchQuery, statusFilter, containerCodeFilter, supplierFilter, branchFilter, dateRange]);
 
   useEffect(() => {
     const hasActive = searchQuery !== "" ||
@@ -97,65 +100,44 @@ export default function PurchaseOrdersPage() {
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState(null);
 
-  // Filter and search logic
+  // Local filter on current page results (search/filter within fetched page)
   const filteredPOs = useMemo(() => {
     if (!purchaseOrders) return [];
     return purchaseOrders.filter(po => {
-      // 1. Search Query (PO ID, Notes)
       const searchTarget = `${po.po_id || ''} ${po.notes || ''}`.toLowerCase();
       const matchesSearch = searchTarget.includes(searchQuery.toLowerCase());
 
-      // 2. Container Code Filter
       const containerCode = (po.container?.container_code || '').toLowerCase();
       const matchesContainerCode = !containerCodeFilter || containerCode.includes(containerCodeFilter.toLowerCase());
 
-      // 3. Supplier Filter
       const poSupplierId = po.container?.supplier?.id || po.supplier?.id || po.supplier_id;
       const matchesSupplier = supplierFilter === "All" || String(poSupplierId) === String(supplierFilter);
 
-      // 4. Branch Filter
       const poBranchId = po.container?.destination_branch?.id || po.branch?.id || po.destination_branch_id;
       const matchesBranch = branchFilter === "All" || String(poBranchId) === String(branchFilter);
 
-      // 5. Date Range Filter
       let matchesDate = true;
       if (dateRange.start || dateRange.end) {
         const poDate = po.created_at ? new Date(po.created_at) : null;
         if (poDate) {
-          if (dateRange.start && new Date(dateRange.start) > poDate) {
-            matchesDate = false;
-          }
+          if (dateRange.start && new Date(dateRange.start) > poDate) matchesDate = false;
           if (dateRange.end) {
             const endDate = new Date(dateRange.end);
             endDate.setHours(23, 59, 59, 999);
-            if (poDate > endDate) {
-              matchesDate = false;
-            }
+            if (poDate > endDate) matchesDate = false;
           }
         } else {
           matchesDate = false;
         }
       }
 
-      // 6. Status Filter
       const matchesStatus = statusFilter === "All" || po.status?.toLowerCase() === statusFilter.toLowerCase();
-
       return matchesSearch && matchesContainerCode && matchesSupplier && matchesBranch && matchesDate && matchesStatus;
     });
   }, [searchQuery, containerCodeFilter, supplierFilter, branchFilter, dateRange, statusFilter, purchaseOrders]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredPOs.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPOs = filteredPOs.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  // Pagination: use server totalPages; filteredPOs are items on current backend page
+  const paginatedPOs = filteredPOs; // show all items from current page (already correct amount)
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
@@ -338,7 +320,7 @@ export default function PurchaseOrdersPage() {
         {/* Header Section */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
           <div className="shrink-0">
-            <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orderss</h1>
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Purchase Orders</h1>
             <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Create and manage purchase orders for stock replenishment.</p>
           </div>
 
@@ -663,46 +645,13 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
         {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredPOs.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredPOs.length}</span> entries
-          </p>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10'
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
 
 
         {/* Delete Confirmation Modal */}

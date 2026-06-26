@@ -10,8 +10,8 @@ export function useRoles() {
     try {
       setLoading(true);
       setError(null);
-      const data = await roleService.getAll();
-      setRoles(Array.isArray(data) ? data : []);
+      const response = await roleService.getAll(1, 1000);
+      setRoles(Array.isArray(response) ? response : (response?.data || []));
     } catch (err) {
       console.error('Error fetching roles:', err);
       setError(err.message);

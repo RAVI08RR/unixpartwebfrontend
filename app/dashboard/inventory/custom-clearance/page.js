@@ -20,6 +20,7 @@ import { formatDateForExport, formatStatusForExport } from "@/app/lib/utils/expo
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import Pagination from "@/app/components/Pagination";
 
 export default function CustomClearancePage() {
   const { hasPermission } = usePermission();
@@ -55,11 +56,17 @@ export default function CustomClearancePage() {
     setCurrentPage(1);
   };
 
-  // Data Fetching
-  const itemsPerPage = 8;
-  const { containers, loading, refetch } = useContainers(0, 100);
-  const { suppliers } = useSuppliers(0, 100, null, true);
-  const { branches } = useBranches(0, 100, true);
+  // Data Fetching — server-side pagination
+  const PAGE_SIZE = 10;
+  const { containers, loading, refetch, total, totalPages } = useContainers(
+    currentPage,
+    PAGE_SIZE,
+    supplierFilter === "All" ? null : supplierFilter,
+    branchFilter === "All" ? null : branchFilter,
+    statusFilter === "All" ? null : statusFilter
+  );
+  const { suppliers } = useSuppliers(1, 100, null, true);
+  const { branches } = useBranches(1, 100, true);
 
   const supplierList = useMemo(() => Array.isArray(suppliers) ? suppliers : [], [suppliers]);
   const branchList = useMemo(() => Array.isArray(branches) ? branches : [], [branches]);
@@ -87,7 +94,7 @@ export default function CustomClearancePage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [containers.length, searchQuery, statusFilter, containerCodeFilter, supplierFilter, branchFilter, dateRange]);
+  }, [searchQuery, statusFilter, containerCodeFilter, supplierFilter, branchFilter, dateRange]);
 
   useEffect(() => {
     const hasActive = searchQuery !== "" ||
@@ -171,18 +178,8 @@ export default function CustomClearancePage() {
     });
   }, [searchQuery, containerCodeFilter, supplierFilter, branchFilter, dateRange, statusFilter, containers]);
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredContainers.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedContainers = filteredContainers.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  // Pagination logic (using server totalPages and items already paginated from backend)
+  const paginatedContainers = filteredContainers;
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
@@ -394,8 +391,8 @@ export default function CustomClearancePage() {
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
-                    ? 'bg-red-600 text-white shadow-red-600/10'
-                    : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+                  ? 'bg-red-600 text-white shadow-red-600/10'
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
@@ -659,7 +656,7 @@ export default function CustomClearancePage() {
 
                 {menuOpenId === container.id && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE) || hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
                   <div className={`mt-4 pt-4 border-t border-gray-100 grid ${((hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)))
-                      ? 'grid-cols-2' : 'grid-cols-1'
+                    ? 'grid-cols-2' : 'grid-cols-1'
                     } gap-2 animate-in slide-in-from-top-2 duration-200`}>
                     {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
                       <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600"><Pencil className="w-3.5 h-3.5" />Edit</Link>
@@ -675,44 +672,13 @@ export default function CustomClearancePage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredContainers.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredContainers.length}</span> entries
-          </p>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${currentPage === i + 1
-                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10'
-                      : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                    }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
 
 
         {/* View Details Modal */}

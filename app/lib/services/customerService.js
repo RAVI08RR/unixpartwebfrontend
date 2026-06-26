@@ -3,31 +3,24 @@ import { getFallbackData } from '../fallbackData';
 
 export const customerService = {
   // Get all customers with pagination and filters
-  getAll: async (skip = 0, limit = 100, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
-    // Don't filter by status to get all customers
-    
+  getAll: async (page = 1, page_size = 10, status = null) => {
+    let queryParams = `page=${page}&page_size=${page_size}`;
+
     try {
-      console.log('🏢 Fetching customers from API...');
       const data = await fetchApi(`/api/customers?${queryParams}`);
-      console.log('🏢 Customers API response:', data);
-      
-      const customersData = Array.isArray(data) ? data : (data?.customers || []);
-      
-      if (customersData.length > 0) {
-        console.log('✅ Customers fetched successfully:', customersData.length);
-        return customersData;
-      } else {
-        console.log('⚠️ No customers in API response');
-        return [];
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
       }
+      return {
+        data: data?.data || data?.customers || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-       console.error("🏢 Customers API failed:", error.message);
-       
-       // Return fallback data when backend is unavailable
-       console.log('📋 Using fallback customer data');
-       const fallbackData = await getFallbackData('customers', { skip, limit });
-       return fallbackData.data.map(customer => ({ ...customer, _fallback: true }));
+      console.error('🏢 Customers API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -37,7 +30,7 @@ export const customerService = {
       return await fetchApi('/api/dropdown/customers');
     } catch (error) {
       console.error("🏢 Customers Dropdown API failed:", error.message);
-      return customerService.getAll(0, 100); // Fallback to getAll with max limit of 100
+      return customerService.getAll(1, 10); // Fallback to getAll
     }
   },
 
@@ -47,15 +40,15 @@ export const customerService = {
       return await fetchApi(`/api/customers/${id}`);
     } catch (error) {
       console.warn('📋 Customer service falling back to mock data for ID:', id, error.message);
-      
+
       // Get fallback data and find customer
       const fallbackData = await getFallbackData('customers');
       const customer = fallbackData.data.find(cust => cust.id === parseInt(id));
-      
+
       if (customer) {
         return { ...customer, _fallback: true };
       }
-      
+
       throw new Error(`Customer with ID ${id} not found in fallback data`);
     }
   },
@@ -64,7 +57,7 @@ export const customerService = {
   create: async (customerData) => {
     try {
       const formData = new FormData();
-      
+
       // Append all customer data to FormData
       Object.keys(customerData).forEach(key => {
         const val = customerData[key];
@@ -78,7 +71,7 @@ export const customerService = {
           }
         }
       });
-      
+
       const token = localStorage.getItem('access_token');
       // Use Next.js API proxy route to avoid mixed content errors
       const response = await fetch(`/api/customers`, {
@@ -88,7 +81,7 @@ export const customerService = {
         },
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         let errMsg = '';
@@ -112,7 +105,7 @@ export const customerService = {
         }
         throw new Error(errMsg);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.warn('📋 Customer creation failed, backend unavailable:', error.message);
@@ -124,7 +117,7 @@ export const customerService = {
   update: async (id, customerData) => {
     try {
       const formData = new FormData();
-      
+
       // Append all customer data to FormData
       Object.keys(customerData).forEach(key => {
         const val = customerData[key];
@@ -138,7 +131,7 @@ export const customerService = {
           }
         }
       });
-      
+
       const token = localStorage.getItem('access_token');
       // Use Next.js API proxy route to avoid mixed content errors
       const response = await fetch(`/api/customers/${id}`, {
@@ -148,7 +141,7 @@ export const customerService = {
         },
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         let errMsg = '';
@@ -172,15 +165,15 @@ export const customerService = {
         }
         throw new Error(errMsg);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.warn('📋 Customer update failed, backend unavailable:', error.message);
-      
+
       // Check if it's a 500 error (backend issue) - use fallback
       if (error.message.includes('500') || error.message.includes('Backend server error')) {
         console.log('⚠️ Backend customer update endpoint is broken, using fallback mode');
-        
+
         // Return a simulated success response with the updated data
         return {
           ...customerData,
@@ -193,7 +186,7 @@ export const customerService = {
           _message: 'Customer data updated locally. Backend sync will occur when the server is fixed.'
         };
       }
-      
+
       throw new Error(error.message);
     }
   },
@@ -215,7 +208,7 @@ export const customerService = {
     try {
       const formData = new FormData();
       formData.append('file', imageFile);
-      
+
       const token = localStorage.getItem('access_token');
       const response = await fetch(`/api/customers/${id}/upload-profile-image`, {
         method: 'POST',
@@ -224,12 +217,12 @@ export const customerService = {
         },
         body: formData,
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || errorData.detail || `Upload failed with status ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('📸 Customer profile image upload failed:', error);
@@ -240,10 +233,10 @@ export const customerService = {
   // Get profile image URL
   getProfileImageUrl: (profileImagePath) => {
     if (!profileImagePath) return null;
-    
+
     // Extract the relative path from full URL if present
     let cleanPath = profileImagePath;
-    
+
     // If it's a full URL, extract just the path part
     if (profileImagePath.startsWith('http://') || profileImagePath.startsWith('https://')) {
       try {
@@ -258,17 +251,17 @@ export const customerService = {
       // Remove leading slash if present
       cleanPath = profileImagePath.startsWith('/') ? profileImagePath.substring(1) : profileImagePath;
     }
-    
+
     // Always use Next.js API proxy route to avoid mixed content errors
     // This works in both local (HTTP) and production (HTTPS) environments
     const proxyUrl = `/api/images/${cleanPath}`;
-    
-    console.log('🖼️ Customer profile image URL:', { 
-      original: profileImagePath, 
-      cleaned: cleanPath, 
-      proxy: proxyUrl 
+
+    console.log('🖼️ Customer profile image URL:', {
+      original: profileImagePath,
+      cleaned: cleanPath,
+      proxy: proxyUrl
     });
-    
+
     return proxyUrl;
   },
 };

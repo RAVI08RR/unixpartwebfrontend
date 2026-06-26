@@ -1,46 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { branchService } from '../services/branchService';
 
-export function useBranches(skip = 0, limit = 100, isDropdown = false) {
-  const [branches, setBranches] = useState(null);
+export function useBranches(page = 1, page_size = 10, isDropdown = false) {
+  const [result, setResult] = useState({ data: [], total: 0, total_pages: 1, page: 1 });
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchBranches = async () => {
+  const fetchBranches = useCallback(async () => {
     try {
       setIsLoading(true);
       setIsError(false);
       setError(null);
-      
-      const data = isDropdown 
+
+      const data = isDropdown
         ? await branchService.getDropdown()
-        : await branchService.getAll(skip, limit);
-      setBranches(data);
+        : await branchService.getAll(page, page_size);
+
+      if (isDropdown) {
+        const arr = Array.isArray(data) ? data : (data?.data || []);
+        setResult({ data: arr, total: arr.length, total_pages: 1, page: 1 });
+      } else {
+        setResult(data || { data: [], total: 0, total_pages: 1, page });
+      }
     } catch (err) {
       console.error('useBranches fetch error:', err);
       setIsError(true);
       setError(err);
-      setBranches(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, page_size, isDropdown]);
 
   useEffect(() => {
     fetchBranches();
-  }, [skip, limit, isDropdown]);
-
-  // Mutate function to refresh data
-  const mutate = () => {
-    fetchBranches();
-  };
+  }, [fetchBranches]);
 
   return {
-    branches,
+    branches: result.data || [],
+    total: result.total || 0,
+    totalPages: result.total_pages || 1,
+    currentPage: result.page || page,
     isLoading,
     isError,
     error,
-    mutate
+    mutate: fetchBranches,
   };
 }

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { 
+import {
   ArrowLeft, Package, Building2, FileText,
   Search, ChevronLeft, ChevronRight, Box, Plus, X, MoreVertical, Pencil, Trash2, Eye, Filter, DollarSign, Calendar, Printer, RotateCcw
 } from "lucide-react";
@@ -24,13 +24,13 @@ import { Suspense } from "react";
 function PurchaseOrderItemsContent({ params }) {
   const [poId, setPoId] = useState(null);
   const { success, error: showError } = useToast();
-  
+
   useEffect(() => {
     Promise.resolve(params).then((resolvedParams) => {
       setPoId(resolvedParams.id);
     });
   }, [params]);
-  
+
   const [items, setItems] = useState([]);
   const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -86,11 +86,11 @@ function PurchaseOrderItemsContent({ params }) {
       setIsFilterOpen(true);
     }
   }, [statusFilter]);
-  
-  const { branches: apiBranches } = useBranches(0, 100, true);
+
+  const { branches: apiBranches } = useBranches(1, 10, true);
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
-  
-  const { stockItems: apiStockItems } = useStockItems(0, 100);
+
+  const { stockItems: apiStockItems } = useStockItems(1, 10);
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
@@ -131,7 +131,7 @@ function PurchaseOrderItemsContent({ params }) {
     try {
       setLoading(true);
       const poData = await purchaseOrderService.getById(poId);
-      
+
       if (!poData) {
         console.warn("Purchase Order not found");
         setPurchaseOrder(null);
@@ -139,9 +139,9 @@ function PurchaseOrderItemsContent({ params }) {
         setLoading(false);
         return;
       }
-      
+
       setPurchaseOrder(poData);
-      
+
       const itemsData = await poItemService.getAll(0, 100, poId);
       console.log('📦 Fetched PO Items:', itemsData);
       console.log('📦 Items count:', itemsData?.length || 0);
@@ -245,8 +245,8 @@ function PurchaseOrderItemsContent({ params }) {
 
 
   const handleSelectItem = (itemId) => {
-    setSelectedItems(prev => 
-      prev.includes(itemId) 
+    setSelectedItems(prev =>
+      prev.includes(itemId)
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
     );
@@ -331,7 +331,7 @@ function PurchaseOrderItemsContent({ params }) {
     if (items.length > 0) {
       const itemId = searchParams.get('item_id');
       const stock = searchParams.get('stock');
-      
+
       if (itemId) {
         const item = items.find(i => i.id.toString() === itemId);
         if (item) {
@@ -361,8 +361,8 @@ function PurchaseOrderItemsContent({ params }) {
     return (
       <div className="max-w-[1600px] mx-auto space-y-8 pb-12 px-4 sm:px-6">
         <div className="flex items-center gap-5">
-          <Link 
-            href="/dashboard/inventory/purchase-orders" 
+          <Link
+            href="/dashboard/inventory/purchase-orders"
             className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
           >
             <ArrowLeft className="w-5 h-5 text-gray-500" />
@@ -381,7 +381,7 @@ function PurchaseOrderItemsContent({ params }) {
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Purchase Order #{poId} Not Found</p>
               <p className="text-xs text-gray-500">This order may have been deleted or the ID is incorrect</p>
             </div>
-            <Link 
+            <Link
               href="/dashboard/inventory/purchase-orders"
               className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all"
             >
@@ -398,8 +398,8 @@ function PurchaseOrderItemsContent({ params }) {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link 
-            href="/dashboard/inventory/purchase-orders" 
+          <Link
+            href="/dashboard/inventory/purchase-orders"
             className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
           >
             <ArrowLeft className="w-5 h-5 text-gray-500" />
@@ -415,13 +415,12 @@ function PurchaseOrderItemsContent({ params }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 justify-start sm:justify-end btn-mobile-arrange">
-          <button 
+          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
-              isFilterOpen 
-                ? 'bg-red-600 text-white shadow-red-600/10' 
-                : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
-            }`}
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+              ? 'bg-red-600 text-white shadow-red-600/10'
+              : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+              }`}
           >
             <Filter className="w-4 h-4" />
             <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
@@ -429,11 +428,10 @@ function PurchaseOrderItemsContent({ params }) {
           <button
             onClick={handlePrintLabels}
             disabled={selectedItems.length === 0}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${
-              selectedItems.length > 0 
-                ? "bg-blue-600 text-white hover:bg-blue-700" 
-                : "bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${selectedItems.length > 0
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed"
+              }`}
           >
             <Printer className="w-4 h-4" />
             PRINT LABELS {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
@@ -472,8 +470,8 @@ function PurchaseOrderItemsContent({ params }) {
       <div className="flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="Search items by stock number or description..."
             className="w-full pl-11 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl text-sm font-medium focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
             value={searchQuery}
@@ -491,7 +489,7 @@ function PurchaseOrderItemsContent({ params }) {
               <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the items list below.</p>
             </div>
             {hasActiveFilters && (
-              <button 
+              <button
                 onClick={handleClearFilters}
                 className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
               >
@@ -500,7 +498,7 @@ function PurchaseOrderItemsContent({ params }) {
               </button>
             )}
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Status</label>
@@ -512,11 +510,10 @@ function PurchaseOrderItemsContent({ params }) {
                       setStatusFilter(s);
                       setCurrentPage(1);
                     }}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      statusFilter === s 
-                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/10' 
-                        : 'bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                    }`}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${statusFilter === s
+                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/10'
+                      : 'bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                      }`}
                   >
                     {s === "all" ? "All Status" : s.replace('_', ' ').toUpperCase()}
                   </button>
@@ -528,7 +525,8 @@ function PurchaseOrderItemsContent({ params }) {
       )}
 
       {/* Mobile-only style overrides for checkbox table layout */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @media (max-width: 1024px) {
           .checkbox-table td[data-label="Select"] {
             border-bottom: none !important;
@@ -598,189 +596,187 @@ function PurchaseOrderItemsContent({ params }) {
       {/* Items Table */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl border border-gray-200 dark:border-zinc-800 overflow-x-auto responsive-table-container checkbox-table">
         <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-        <table className="w-full min-w-[800px]">
+          <table className="w-full min-w-[800px]">
             <thead>
-                <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
-                    <th className="px-6 py-4 text-left">
-                      <input
-                        type="checkbox"
-                        checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Item Details</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Quantity</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Branch</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"></th>
-                </tr>
+              <tr className="bg-gray-50 dark:bg-zinc-800/50 border-b border-gray-200 dark:border-zinc-800">
+                <th className="px-6 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={paginatedItems.length > 0 && paginatedItems.every(item => selectedItems.includes(item.id))}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  />
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Item Details</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Category</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Quantity</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Current Branch</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide"></th>
+              </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {paginatedItems.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
-                          <Package className="w-8 h-8 text-gray-400" />
+              {paginatedItems.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center">
+                        <Package className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">No Items Found</p>
+                        <p className="text-xs text-gray-500">
+                          {searchQuery || statusFilter !== 'all'
+                            ? 'Try adjusting your filters or search query'
+                            : 'Add items to this purchase order to get started'}
+                        </p>
+                      </div>
+                      {!searchQuery && statusFilter === 'all' && (
+                        <button
+                          type="button"
+                          onClick={handleOpenItemModal}
+                          className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Add First Item
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedItems.map((item, idx) => {
+                const stockItem = stockItems.find(si => String(si.id) === String(item.item_id));
+                const branch = branches.find(b => String(b.id) === String(item.current_branch_id));
+                const isSelected = selectedItems.includes(item.id);
+                return (
+                  <tr key={item.id} className={`group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}>
+                    <td className="px-6 py-4" data-label="Select">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectItem(item.id)}
+                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4" data-label="Item Details">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center font-semibold text-red-600 text-xs">
+                          #{idx + 1 + (currentPage - 1) * itemsPerPage}
                         </div>
-                        <div className="space-y-1">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white">No Items Found</p>
-                          <p className="text-xs text-gray-500">
-                            {searchQuery || statusFilter !== 'all' 
-                              ? 'Try adjusting your filters or search query' 
-                              : 'Add items to this purchase order to get started'}
-                          </p>
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.stock_number}</p>
+                          <p className="text-xs text-gray-500 max-w-[250px] truncate">{item.po_description}</p>
                         </div>
-                        {!searchQuery && statusFilter === 'all' && (
-                          <button
-                            type="button"
-                            onClick={handleOpenItemModal}
-                            className="mt-4 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-semibold text-sm hover:opacity-90 transition-all inline-flex items-center gap-2"
-                          >
-                            <Plus className="w-4 h-4" />
-                            Add First Item
-                          </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4" data-label="Category">
+                      <span className="text-sm text-gray-700 dark:text-zinc-300">{stockItem?.name || `ID: ${item.item_id}`}</span>
+                    </td>
+                    <td className="px-6 py-4" data-label="Quantity">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{item.quantity} units</span>
+                    </td>
+                    <td className="px-6 py-4" data-label="Branch">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-400" />
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {item.current_branch?.branch_name || item.current_branch?.branch_code || item.container?.destination_branch?.branch_name || branch?.branch_name || `Branch ${item.current_branch_id}`}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4" data-label="Status">
+                      <div className="flex flex-col gap-1.5">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide w-fit ${item.status === 'in_stock' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
+                          }`}>
+                          {item.status.replace('_', ' ')}
+                        </span>
+                        {item.is_dismantled && (
+                          <span className="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 w-fit">
+                            Dismantled
+                          </span>
                         )}
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-right relative" data-label="Actions">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => { setSelectedItem(item); setViewModalOpen(true); }}
+                          className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedItems([item.id]);
+                            setPrintLabelModalOpen(true);
+                          }}
+                          className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
+                          title="Print Label"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <div className="relative">
+                          <button
+                            onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
+                            className={`p-2 rounded-lg transition-all ${menuOpenId === item.id
+                              ? 'bg-gray-900 text-white dark:bg-white dark:text-black'
+                              : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                          {menuOpenId === item.id && (
+                            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 p-1">
+                              {!item.is_dismantled && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setDismantleModalOpen(true);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors"
+                                >
+                                  <Box className="w-4 h-4" /> Dismantle Item
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setSelectedItems([item.id]);
+                                  setPrintLabelModalOpen(true);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
+                              >
+                                <Printer className="w-4 h-4" /> Print Label
+                              </button>
+                              <Link
+                                href={`/dashboard/inventory/purchase-orders/items/edit/${item.id}`}
+                                onClick={() => setMenuOpenId(null)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                              >
+                                <Pencil className="w-4 h-4" /> Edit Item
+                              </Link>
+                              <div className="h-px bg-gray-200 dark:bg-zinc-800 my-1" />
+                              <button
+                                onClick={() => {
+                                  setSelectedItem(item);
+                                  setDeleteModalOpen(true);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" /> Remove
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
                   </tr>
-                ) : paginatedItems.map((item, idx) => {
-                    const stockItem = stockItems.find(si => String(si.id) === String(item.item_id));
-                    const branch = branches.find(b => String(b.id) === String(item.current_branch_id));
-                    const isSelected = selectedItems.includes(item.id);
-                    return (
-                        <tr key={item.id} className={`group hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-900/10' : ''}`}>
-                            <td className="px-6 py-4" data-label="Select">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => handleSelectItem(item.id)}
-                                className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                              />
-                            </td>
-                            <td className="px-6 py-4" data-label="Item Details">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center font-semibold text-red-600 text-xs">
-                                        #{idx + 1 + (currentPage-1)*itemsPerPage}
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.stock_number}</p>
-                                        <p className="text-xs text-gray-500 max-w-[250px] truncate">{item.po_description}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4" data-label="Category">
-                                <span className="text-sm text-gray-700 dark:text-zinc-300">{stockItem?.name || `ID: ${item.item_id}`}</span>
-                            </td>
-                            <td className="px-6 py-4" data-label="Quantity">
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{item.quantity} units</span>
-                            </td>
-                            <td className="px-6 py-4" data-label="Branch">
-                                <div className="flex items-center gap-2">
-                                    <Building2 className="w-4 h-4 text-gray-400" />
-                                    <span className="text-xs text-gray-600 dark:text-gray-400">
-                                        {item.current_branch?.branch_name || item.current_branch?.branch_code || item.container?.destination_branch?.branch_name || branch?.branch_name || `Branch ${item.current_branch_id}`}
-                                    </span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-4" data-label="Status">
-                                <div className="flex flex-col gap-1.5">
-                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide w-fit ${
-                                        item.status === 'in_stock' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20' : 'bg-gray-100 text-gray-700 dark:bg-zinc-800'
-                                    }`}>
-                                        {item.status.replace('_', ' ')}
-                                    </span>
-                                    {item.is_dismantled && (
-                                        <span className="px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-700 w-fit">
-                                            Dismantled
-                                        </span>
-                                    )}
-                                </div>
-                            </td>
-                            <td className="px-6 py-4 text-right relative" data-label="Actions">
-                                <div className="flex items-center justify-end gap-2">
-                                    <button 
-                                        onClick={() => { setSelectedItem(item); setViewModalOpen(true); }}
-                                        className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
-                                        title="View Details"
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                        onClick={() => { 
-                                          setSelectedItems([item.id]); 
-                                          setPrintLabelModalOpen(true); 
-                                        }}
-                                        className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"
-                                        title="Print Label"
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                    </button>
-                                    <div className="relative">
-                                        <button 
-                                            onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
-                                            className={`p-2 rounded-lg transition-all ${
-                                                menuOpenId === item.id 
-                                                ? 'bg-gray-900 text-white dark:bg-white dark:text-black' 
-                                                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                            }`}
-                                        >
-                                            <MoreVertical className="w-4 h-4" />
-                                        </button>
-                                        {menuOpenId === item.id && (
-                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 p-1">
-                                                {!item.is_dismantled && (
-                                                    <button 
-                                                        onClick={() => {
-                                                            setSelectedItem(item);
-                                                            setDismantleModalOpen(true);
-                                                            setMenuOpenId(null);
-                                                        }}
-                                                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors"
-                                                    >
-                                                        <Box className="w-4 h-4" /> Dismantle Item
-                                                    </button>
-                                                )}
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedItems([item.id]);
-                                                        setPrintLabelModalOpen(true);
-                                                        setMenuOpenId(null);
-                                                    }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-lg transition-colors"
-                                                >
-                                                    <Printer className="w-4 h-4" /> Print Label
-                                                </button>
-                                                <Link 
-                                                    href={`/dashboard/inventory/purchase-orders/items/edit/${item.id}`}
-                                                    onClick={() => setMenuOpenId(null)}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-                                                >
-                                                    <Pencil className="w-4 h-4" /> Edit Item
-                                                </Link>
-                                                <div className="h-px bg-gray-200 dark:bg-zinc-800 my-1" />
-                                                <button 
-                                                    onClick={() => {
-                                                        setSelectedItem(item);
-                                                        setDeleteModalOpen(true);
-                                                        setMenuOpenId(null);
-                                                    }}
-                                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" /> Remove
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    );
-                })}
+                );
+              })}
             </tbody>
-        </table>
+          </table>
         </div>
 
         {/* PAGINATION */}
@@ -789,7 +785,7 @@ function PurchaseOrderItemsContent({ params }) {
             Showing <span className="font-semibold text-gray-900 dark:text-white">{filteredItems.length}</span> items
           </p>
           <div className="flex items-center gap-2">
-            <button 
+            <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => prev - 1)}
               className="p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
@@ -797,13 +793,13 @@ function PurchaseOrderItemsContent({ params }) {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2 px-3">
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Page</span>
-                <span className="min-w-[32px] h-8 flex items-center justify-center bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-semibold">
-                    {currentPage}
-                </span>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">of {totalPages || 1}</span>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Page</span>
+              <span className="min-w-[32px] h-8 flex items-center justify-center bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-semibold">
+                {currentPage}
+              </span>
+              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">of {totalPages || 1}</span>
             </div>
-            <button 
+            <button
               disabled={currentPage === totalPages || totalPages === 0}
               onClick={() => setCurrentPage(prev => prev + 1)}
               className="p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
@@ -910,7 +906,7 @@ function PurchaseOrderItemsContent({ params }) {
         </div>
       )}
 
-      <ConfirmModal 
+      <ConfirmModal
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete}
@@ -920,7 +916,7 @@ function PurchaseOrderItemsContent({ params }) {
         type="danger"
       />
 
-      <DismantleModal 
+      <DismantleModal
         isOpen={dismantleModalOpen}
         onClose={() => setDismantleModalOpen(false)}
         item={selectedItem}
@@ -956,10 +952,10 @@ function PurchaseOrderItemsContent({ params }) {
               </div>
 
               {selectedItem.stock_notes && (
-                 <div className="p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl space-y-1 border border-gray-200 dark:border-zinc-800">
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stock Notes</span>
-                    <p className="text-sm text-gray-700 dark:text-zinc-300">{selectedItem.stock_notes}</p>
-                 </div>
+                <div className="p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl space-y-1 border border-gray-200 dark:border-zinc-800">
+                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stock Notes</span>
+                  <p className="text-sm text-gray-700 dark:text-zinc-300">{selectedItem.stock_notes}</p>
+                </div>
               )}
             </div>
           </div>
@@ -1058,7 +1054,7 @@ function PurchaseOrderItemsContent({ params }) {
 
             {/* Scrollable Body */}
             <div className="p-3 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-8 bg-gray-50/30 dark:bg-zinc-950/30">
-              
+
               {/* Selected Items (Horizontal Scroll) */}
               <div className="space-y-2 sm:space-y-3">
                 <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -1234,35 +1230,35 @@ function PurchaseOrderItemsContent({ params }) {
 
             {/* Footer */}
             <div className="p-3 sm:p-4 lg:p-6 border-t border-gray-200 dark:border-zinc-800 shrink-0 flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-3 bg-white dark:bg-zinc-900">
-                <button
-                  onClick={() => {
-                    setLabelStyles({
-                      branch: { fontSize: 10, bold: false, underline: false },
-                      supplier: { fontSize: 10, bold: false, underline: false },
-                      container: { fontSize: 10, bold: false, underline: false },
-                      stockNumber: { fontSize: 14, bold: true, underline: false },
-                      item: { fontSize: 10, bold: false, underline: false },
-                      poDescription: { fontSize: 10, bold: false, underline: false },
-                      qrSize: 50,
-                    });
-                  }}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-                >
-                  Reset Defaults
-                </button>
-                <button
-                  onClick={() => setLabelPreviewOpen(false)}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handlePrint()}
-                  className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl font-semibold text-xs sm:text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-                >
-                  <Printer className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Confirm Print
-                </button>
+              <button
+                onClick={() => {
+                  setLabelStyles({
+                    branch: { fontSize: 10, bold: false, underline: false },
+                    supplier: { fontSize: 10, bold: false, underline: false },
+                    container: { fontSize: 10, bold: false, underline: false },
+                    stockNumber: { fontSize: 14, bold: true, underline: false },
+                    item: { fontSize: 10, bold: false, underline: false },
+                    poDescription: { fontSize: 10, bold: false, underline: false },
+                    qrSize: 50,
+                  });
+                }}
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Reset Defaults
+              </button>
+              <button
+                onClick={() => setLabelPreviewOpen(false)}
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handlePrint()}
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-blue-600 text-white rounded-xl font-semibold text-xs sm:text-sm hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+              >
+                <Printer className="w-3 h-3 sm:w-4 sm:h-4" />
+                Confirm Print
+              </button>
             </div>
           </div>
         </div>

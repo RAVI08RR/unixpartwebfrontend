@@ -1,9 +1,21 @@
 import { fetchApi } from '../api';
 
 export const roleService = {
-  getAll: async (skip = 0, limit = 100) => {
-    // Use Next.js proxy route to bypass CORS issues
-    return await fetchApi(`/api/roles?skip=${skip}&limit=${limit}`);
+  getAll: async (page = 1, page_size = 10) => {
+    try {
+      const data = await fetchApi(`/api/roles?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) return { data, total: data.length, page, page_size, total_pages: 1 };
+      return {
+        data: data?.data || data?.roles || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
+    } catch (error) {
+      console.error('Roles API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
+    }
   },
 
   getById: async (id) => {
@@ -14,7 +26,7 @@ export const roleService = {
       return result;
     } catch (error) {
       console.error('❌ roleService.getById failed:', error);
-      
+
       // Return fallback role data if API fails
       console.log('🔄 Using fallback role data for ID:', id);
       return {
@@ -59,16 +71,16 @@ export const roleService = {
   getPermissions: async (roleId) => {
     try {
       console.log('🔍 roleService.getPermissions called with:', { roleId, type: typeof roleId });
-      
+
       // Validate roleId before making the API call
       if (!roleId || isNaN(parseInt(roleId))) {
         console.error('❌ Invalid roleId passed to getPermissions:', roleId);
         return [];
       }
-      
+
       const numericRoleId = parseInt(roleId);
       console.log('📡 Making API call to:', `/api/roles/${numericRoleId}/permissions`);
-      
+
       return await fetchApi(`/api/roles/${numericRoleId}/permissions`);
     } catch (error) {
       console.warn("Role permissions API failed:", error.message);

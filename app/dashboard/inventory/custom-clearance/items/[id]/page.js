@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { 
-  ArrowLeft, Plus, Search, MoreVertical, 
+import {
+  ArrowLeft, Plus, Search, MoreVertical,
   Trash2, Package, Box, DollarSign, Download, Save
 } from "lucide-react";
 import { containerItemService } from "@/app/lib/services/containerItemService";
@@ -16,7 +16,7 @@ export default function ContainerItemsPage() {
   const router = useRouter();
   const params = useParams();
   const containerId = params?.id;
-  
+
   const [items, setItems] = useState([]);
   const [container, setContainer] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,9 +27,9 @@ export default function ContainerItemsPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [savingInvoice, setSavingInvoice] = useState(false);
-  
+
   const { success, error: showError } = useToast();
-  const { stockItems: apiStockItems } = useStockItems(0, 100);
+  const { stockItems: apiStockItems } = useStockItems(1, 10);
 
   const stockItems = useMemo(() => {
     if (!apiStockItems) return [];
@@ -40,14 +40,14 @@ export default function ContainerItemsPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!containerId) return;
-      
+
       try {
         setLoading(true);
         const [containerData, itemsData] = await Promise.all([
           containerService.getById(containerId),
           containerItemService.getAll(0, 100, containerId)
         ]);
-        
+
         setContainer(containerData);
         setItems(Array.isArray(itemsData) ? itemsData : []);
       } catch (err) {
@@ -163,7 +163,7 @@ export default function ContainerItemsPage() {
       tableHTML += `<th>${header}</th>`;
     });
     tableHTML += '</tr></thead><tbody>';
-    
+
     rows.forEach(row => {
       tableHTML += '<tr>';
       row.forEach(cell => {
@@ -227,17 +227,17 @@ export default function ContainerItemsPage() {
               <Download className="w-4 h-4" />
               Export
             </button>
-            
+
             {exportMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-xl z-50 p-1.5">
-                <button 
+                <button
                   onClick={exportToExcel}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   Export as Excel (.xls)
                 </button>
-                <button 
+                <button
                   onClick={exportToCSV}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                 >
@@ -268,8 +268,8 @@ export default function ContainerItemsPage() {
       {/* Search Bar */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input 
-          type="text" 
+        <input
+          type="text"
           placeholder="Search items..."
           className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
           value={searchQuery}
@@ -332,25 +332,24 @@ export default function ContainerItemsPage() {
                       </td>
                       <td className="px-6 py-4 text-right relative" data-label="Actions">
                         <div className="relative">
-                          <button 
+                          <button
                             onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
-                            className={`p-2 rounded-lg transition-all ${
-                              menuOpenId === item.id 
-                                ? 'bg-gray-900 text-white dark:bg-white dark:text-black' 
+                            className={`p-2 rounded-lg transition-all ${menuOpenId === item.id
+                                ? 'bg-gray-900 text-white dark:bg-white dark:text-black'
                                 : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                            }`}
+                              }`}
                           >
                             <MoreVertical className="w-5 h-5" />
                           </button>
-                          
+
                           {menuOpenId === item.id && (
                             <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-xl z-50 p-1.5">
-                              <button 
+                              <button
                                 onClick={() => {
                                   setSelectedItem(item);
                                   setDeleteModalOpen(true);
                                   setMenuOpenId(null);
-                                }} 
+                                }}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -392,7 +391,7 @@ export default function ContainerItemsPage() {
       </div>
 
       {/* Add Item Modal */}
-      <AddItemModal 
+      <AddItemModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
         containerId={containerId}
@@ -448,7 +447,7 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const payload = {
         container_id: parseInt(containerId),
@@ -457,7 +456,7 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
         quantity: parseInt(formData.quantity),
         unit_price: parseFloat(formData.unit_price)
       };
-      
+
       await containerItemService.create(payload);
       onSuccess();
       setFormData({ item_id: "", item_description: "", quantity: 1, unit_price: "0.00" });
@@ -483,10 +482,10 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
 
           <div className="space-y-4">
             <FormField label="Item Category" required>
-              <select 
+              <select
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.item_id}
-                onChange={(e) => setFormData({...formData, item_id: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, item_id: e.target.value })}
                 required
               >
                 <option value="">Select Item Category</option>
@@ -495,47 +494,47 @@ function AddItemModal({ isOpen, onClose, containerId, stockItems, onSuccess, onE
             </FormField>
 
             <FormField label="Quantity" required>
-              <input 
+              <input
                 type="number"
                 min="1"
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.quantity}
-                onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                 required
               />
             </FormField>
 
             <FormField label="Unit Price (AED)">
-              <input 
+              <input
                 type="number"
                 step="0.01"
                 min="0"
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.unit_price}
-                onChange={(e) => setFormData({...formData, unit_price: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, unit_price: e.target.value })}
               />
             </FormField>
 
             <FormField label="Item Description">
-              <textarea 
+              <textarea
                 rows="3"
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
                 value={formData.item_description}
-                onChange={(e) => setFormData({...formData, item_description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, item_description: e.target.value })}
                 placeholder="Optional description..."
               />
             </FormField>
           </div>
 
           <div className="flex items-center gap-3 pt-4">
-            <button 
+            <button
               type="submit"
               disabled={submitting}
               className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
             >
               {submitting ? 'Adding...' : 'Add Item'}
             </button>
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"

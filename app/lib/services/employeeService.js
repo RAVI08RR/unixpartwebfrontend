@@ -2,13 +2,22 @@ import { fetchApi } from '../api';
 
 export const employeeService = {
   // Get all employees
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/employees?skip=${skip}&limit=${limit}`);
-      return response;
+      const data = await fetchApi(`/api/employees?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.employees || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
       console.error('Failed to fetch employees:', error);
-      throw error;
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -24,7 +33,7 @@ export const employeeService = {
     } catch (error) {
       console.warn(`[Workaround] Failed to fetch employee ${id} via direct endpoint, falling back to getAll list:`, error.message);
       try {
-        const allEmployees = await fetchApi(`/api/employees?skip=0&limit=1000`);
+        const allEmployees = await fetchApi(`/api/employees?page=1&page_size=1000`);
         const employee = allEmployees.find(emp => emp.id.toString() === id.toString());
         if (employee) return employee;
         throw new Error(`Employee ${id} not found in the list`);
@@ -227,7 +236,7 @@ export const employeeService = {
 
         // If it's a URL string, open/download from that URL
         const fileUrl = typeof parsed === 'string' ? parsed : (parsed?.url || parsed?.file_url || parsed?.download_url);
-        
+
         if (fileUrl && (fileUrl.startsWith('http') || fileUrl.startsWith('/'))) {
           console.log(`📥 Got file URL: ${fileUrl}`);
           // Fetch the actual file from the URL

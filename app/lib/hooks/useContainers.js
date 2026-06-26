@@ -1,26 +1,12 @@
 import useSWR from 'swr';
 import { containerService } from '../services/containerService';
 
-const fetcher = async (url) => {
-  const [, skip, limit, supplier_id, branch_id, status, isDropdown] = url.split('|');
-  
-  if (isDropdown === 'true') {
-    return containerService.getDropdown();
-  }
-  
-  return containerService.getAll(
-    parseInt(skip) || 0,
-    parseInt(limit) || 100,
-    supplier_id !== 'null' ? parseInt(supplier_id) : null,
-    branch_id !== 'null' ? parseInt(branch_id) : null,
-    status !== 'null' ? status : null
-  );
-};
-
-export function useContainers(skip = 0, limit = 100, supplier_id = null, branch_id = null, status = null, isDropdown = false) {
+export function useContainers(page = 1, page_size = 10, supplier_id = null, branch_id = null, status = null, isDropdown = false) {
   const { data, error, isLoading, mutate } = useSWR(
-    `containers|${skip}|${limit}|${supplier_id}|${branch_id}|${status}|${isDropdown}`,
-    fetcher,
+    `containers|${page}|${page_size}|${supplier_id}|${branch_id}|${status}|${isDropdown}`,
+    () => isDropdown
+      ? containerService.getDropdown()
+      : containerService.getAll(page, page_size, supplier_id, branch_id, status),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -28,9 +14,14 @@ export function useContainers(skip = 0, limit = 100, supplier_id = null, branch_
   );
 
   return {
-    containers: data || [],
+    containers: isDropdown
+      ? (Array.isArray(data) ? data : (data?.data || []))
+      : (data?.data || []),
+    total: data?.total || 0,
+    totalPages: data?.total_pages || 1,
+    currentPage: data?.page || page,
     loading: isLoading,
-    error: error,
+    error,
     refetch: mutate,
   };
 }
@@ -48,7 +39,7 @@ export function useContainer(id) {
   return {
     container: data,
     loading: isLoading,
-    error: error,
+    error,
     refetch: mutate,
   };
 }

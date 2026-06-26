@@ -2,11 +2,11 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { 
-  MoreVertical, Search, Filter, Download, Plus, 
-  ChevronLeft, ChevronRight, Pencil, Trash2, X, 
+import {
+  MoreVertical, Search, Filter, Download, Plus,
+  Pencil, Trash2, X,
   Eye, Package, Calendar, Building2, DollarSign, Hash,
-  AlertCircle, FileText, Upload, Trash, ExternalLink, 
+  AlertCircle, FileText, Upload, Trash, ExternalLink,
   TrendingUp, History, ArrowRightLeft, ShoppingCart, RotateCcw
 } from "lucide-react";
 import { useAssets } from "@/app/lib/hooks/useAssets";
@@ -21,6 +21,7 @@ import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/ex
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
+import Pagination from "@/app/components/Pagination";
 
 export default function AssetsPage() {
   const { hasPermission } = usePermission();
@@ -39,20 +40,20 @@ export default function AssetsPage() {
     setStatusFilter("All");
     setCurrentPage(1);
   };
-  
-  const itemsPerPage = 8;
-  const { assets, loading, refetch } = useAssets(0, 100);
-  const { branches } = useBranches(0, 100, true);
+
+  const PAGE_SIZE = 10;
+  const { assets, loading, refetch, total, totalPages } = useAssets(currentPage, PAGE_SIZE);
+  const { branches } = useBranches(1, 100, true);
 
   const [isMounted, setIsMounted] = useState(false);
-  
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [assets.length, searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter]);
 
   // Auto-expand filters if active filters exist on load
   useEffect(() => {
@@ -83,8 +84,8 @@ export default function AssetsPage() {
   const [transferHistory, setTransferHistory] = useState([]);
   const [loadingTransferHistory, setLoadingTransferHistory] = useState(false);
 
-  // Filter and search logic
-  const filteredAssets = useMemo(() => {
+  // Show all items from current backend page
+  const paginatedAssets = useMemo(() => {
     if (!assets) return [];
     return assets.filter(asset => {
       const searchTarget = `${asset.asset_id || ''} ${asset.description || ''} ${asset.category || ''}`.toLowerCase();
@@ -93,19 +94,7 @@ export default function AssetsPage() {
       return matchesSearch && matchesStatus;
     });
   }, [searchQuery, statusFilter, assets]);
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAssets = filteredAssets.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  const filteredAssets = paginatedAssets; // alias for export
 
   const toggleMenu = (id) => {
     setMenuOpenId(prev => prev === id ? null : id);
@@ -189,19 +178,19 @@ export default function AssetsPage() {
     try {
       const token = localStorage.getItem('access_token');
       const url = `/api/assets/${selectedAsset.id}/documents/${documentId}/download`;
-      
+
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (!response.ok) throw new Error('Failed to load document');
-      
+
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       window.open(blobUrl, '_blank');
-      
+
       setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
     } catch (err) {
       error("Failed to view document: " + err.message);
@@ -283,29 +272,29 @@ export default function AssetsPage() {
     { key: 'asset_id', label: 'Asset ID' },
     { key: 'description', label: 'Description' },
     { key: 'category', label: 'Category' },
-    { 
-      key: 'current_operating_branch.branch_name', 
+    {
+      key: 'current_operating_branch.branch_name',
       label: 'Current Branch',
       formatter: (value, row) => row.current_operating_branch?.branch_name || branches?.find(b => b.id === row.current_operating_branch_id)?.branch_name || 'N/A'
     },
-    { 
-      key: 'purchase_value', 
+    {
+      key: 'purchase_value',
       label: 'Purchase Value',
       formatter: formatCurrencyForExport
     },
-    { 
-      key: 'current_value', 
+    {
+      key: 'current_value',
       label: 'Current Value',
       formatter: formatCurrencyForExport
     },
-    { 
-      key: 'purchase_date', 
+    {
+      key: 'purchase_date',
       label: 'Purchase Date',
       formatter: formatDateForExport
     },
     { key: 'status', label: 'Status' },
-    { 
-      key: 'created_at', 
+    {
+      key: 'created_at',
       label: 'Created Date',
       formatter: formatDateForExport
     }
@@ -317,648 +306,612 @@ export default function AssetsPage() {
     <ProtectedRoute permission={PERMISSIONS.ASSETS.VIEW}>
       <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500 px-4 sm:px-6">
         {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
-        <div className="shrink-0">
-          <h1 className="text-2xl font-black dark:text-white tracking-tight">Assets Management</h1>
-          <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Track and manage company assets</p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
-          <div className="relative w-full lg:max-w-xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by asset ID, description..."
-              className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+        <div className="flex flex-col lg:flex-row lg:items-center gap-6 justify-between">
+          <div className="shrink-0">
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Assets Management</h1>
+            <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">Track and manage company assets</p>
           </div>
-          
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <button 
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
-                isFilterOpen 
-                  ? 'bg-red-600 text-white shadow-red-600/10' 
-                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
-            </button>
 
-            <ExportButton
-              data={filteredAssets}
-              columns={exportColumns}
-              filename={`assets-${new Date().toISOString().split('T')[0]}`}
-              onSuccess={(format) => success(`Assets exported successfully as ${format}!`)}
-              onError={(err) => error(`Export failed: ${err.message}`)}
-            />
-
-            {hasPermission(PERMISSIONS.ASSETS.CREATE) && (
-              <Link 
-                href="/dashboard/inventory/assets/add"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Asset</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Collapsible Filters Card */}
-      {isFilterOpen && (
-        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-          <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
-            <div>
-              <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
-              <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the assets list below.</p>
+          <div className="flex flex-col sm:flex-row items-center gap-3 flex-1 lg:max-w-6xl justify-end">
+            <div className="relative w-full lg:max-w-xl">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search by asset ID, description..."
+                className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            {hasActiveFilters && (
-              <button 
-                onClick={handleClearFilters}
-                className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+
+            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                  ? 'bg-red-600 text-white shadow-red-600/10'
+                  : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
+                  }`}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Clear Filters
+                <Filter className="w-4 h-4" />
+                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
-            )}
+
+              <ExportButton
+                data={filteredAssets}
+                columns={exportColumns}
+                filename={`assets-${new Date().toISOString().split('T')[0]}`}
+                onSuccess={(format) => success(`Assets exported successfully as ${format}!`)}
+                onError={(err) => error(`Export failed: ${err.message}`)}
+              />
+
+              {hasPermission(PERMISSIONS.ASSETS.CREATE) && (
+                <Link
+                  href="/dashboard/inventory/assets/add"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="whitespace-nowrap font-black">Add Asset</span>
+                </Link>
+              )}
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Status</label>
-              <div className="flex flex-wrap gap-2">
-                {['All', 'Active', 'Sold', 'Disposed', 'Maintenance'].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      setStatusFilter(status);
-                      setCurrentPage(1);
-                    }}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      statusFilter === status 
-                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/10' 
+        </div>
+
+        {/* Collapsible Filters Card */}
+        {isFilterOpen && (
+          <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-sm p-6 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex justify-between items-center pb-2 border-b border-gray-50 dark:border-zinc-800/50">
+              <div>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">Filters</h2>
+                <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the assets list below.</p>
+              </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleClearFilters}
+                  className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest pl-1">Status</label>
+                <div className="flex flex-wrap gap-2">
+                  {['All', 'Active', 'Sold', 'Disposed', 'Maintenance'].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => {
+                        setStatusFilter(status);
+                        setCurrentPage(1);
+                      }}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${statusFilter === status
+                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/10'
                         : 'bg-gray-50 dark:bg-zinc-800/50 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                    }`}
-                  >
-                    {status === "All" ? "All Status" : status}
-                  </button>
-                ))}
+                        }`}
+                    >
+                      {status === "All" ? "All Status" : status}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto w-full scrollbar-hide">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Asset Info</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Value</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {loading ? (
-                <tr>
-                  <td colSpan="6" className="py-24 text-center">
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Assets...</p>
-                    </div>
-                  </td>
+        {/* Main Table Card */}
+        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
+          <div className="overflow-x-auto w-full scrollbar-hide">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Asset Info</th>
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Value</th>
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
+                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
                 </tr>
-              ) : paginatedAssets.length > 0 ? (
-                paginatedAssets.map((asset, index) => (
-                  <tr key={asset.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                    <td className="px-6 py-6" data-label="Asset Info">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                          <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                            {asset.asset_id}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[200px]">
-                            {asset.description || 'No description'}
-                          </p>
-                        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="py-24 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Assets...</p>
                       </div>
                     </td>
+                  </tr>
+                ) : paginatedAssets.length > 0 ? (
+                  paginatedAssets.map((asset, index) => (
+                    <tr key={asset.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
+                      <td className="px-6 py-6" data-label="Asset Info">
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
+                              {asset.asset_id}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[200px]">
+                              {asset.description || 'No description'}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-6" data-label="Category">
-                      <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                        {asset.category || '-'}
-                      </span>
-                    </td>
-
-                    <td className="px-6 py-6" data-label="Branch">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400" />
+                      <td className="px-6 py-6" data-label="Category">
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {asset.current_operating_branch?.branch_name || 
-                           branches?.find(b => b.id === asset.current_operating_branch_id)?.branch_name || 
-                           branches?.find(b => b.id === (asset.current_operating_branch_id || asset.branch_id))?.branch_name || 
-                           'N/A'}
+                          {asset.category || '-'}
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-6 py-6" data-label="Value">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                        <span className="text-sm font-black dark:text-white">
-                          AED {parseFloat(asset.purchase_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </span>
-                      </div>
-                    </td>
+                      <td className="px-6 py-6" data-label="Branch">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                            {asset.current_operating_branch?.branch_name ||
+                              branches?.find(b => b.id === asset.current_operating_branch_id)?.branch_name ||
+                              branches?.find(b => b.id === (asset.current_operating_branch_id || asset.branch_id))?.branch_name ||
+                              'N/A'}
+                          </span>
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-6" data-label="Status">
-                      {getStatusBadge(asset.status)}
-                    </td>
+                      <td className="px-6 py-6" data-label="Value">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm font-black dark:text-white">
+                            AED {parseFloat(asset.purchase_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </td>
 
-                    <td className="px-6 py-6 text-right relative" data-label="Actions">
-                      <div className="flex items-center justify-end gap-2">
-                        <div className="relative action-menu-container">
-                          <button 
-                            onClick={() => toggleMenu(asset.id)}
-                            className={`p-2 rounded-xl transition-all ${
-                              menuOpenId === asset.id 
+                      <td className="px-6 py-6" data-label="Status">
+                        {getStatusBadge(asset.status)}
+                      </td>
+
+                      <td className="px-6 py-6 text-right relative" data-label="Actions">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="relative action-menu-container">
+                            <button
+                              onClick={() => toggleMenu(asset.id)}
+                              className={`p-2 rounded-xl transition-all ${menuOpenId === asset.id
                                 ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
                                 : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                            }`}
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                          
-                          {menuOpenId === asset.id && (
-                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                              index > paginatedAssets.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                            }`}>
-                              <button 
-                                onClick={() => {
-                                  setSelectedAsset(asset);
-                                  setViewModalOpen(true);
-                                  setMenuOpenId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleOpenDocuments(asset);
-                                  setMenuOpenId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                              >
-                                <FileText className="w-4 h-4" />
-                                Documents
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleViewTransferHistory(asset);
-                                  setMenuOpenId(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
-                              >
-                                <History className="w-4 h-4" />
-                                Transfer History
-                              </button>
-                              {asset.status?.toLowerCase() === 'sold' ? (
+                                }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            {menuOpenId === asset.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedAssets.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}>
                                 <button
                                   onClick={() => {
-                                    handleViewSaleDetails(asset);
+                                    setSelectedAsset(asset);
+                                    setViewModalOpen(true);
                                     setMenuOpenId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
-                                  <TrendingUp className="w-4 h-4" />
-                                  View Sale Details
+                                  <Eye className="w-4 h-4" />
+                                  View Details
                                 </button>
-                              ) : (
-                                hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                <button
+                                  onClick={() => {
+                                    handleOpenDocuments(asset);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Documents
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    handleViewTransferHistory(asset);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
+                                >
+                                  <History className="w-4 h-4" />
+                                  Transfer History
+                                </button>
+                                {asset.status?.toLowerCase() === 'sold' ? (
                                   <button
                                     onClick={() => {
-                                      setSelectedAsset(asset);
-                                      setSellModalOpen(true);
+                                      handleViewSaleDetails(asset);
                                       setMenuOpenId(null);
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
                                   >
-                                    <ShoppingCart className="w-4 h-4" />
-                                    Sell Asset
+                                    <TrendingUp className="w-4 h-4" />
+                                    View Sale Details
                                   </button>
-                                )
-                              )}
-                              {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                                <Link 
-                                  href={`/dashboard/inventory/assets/edit/${asset.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                  Edit Asset
-                                </Link>
-                              )}
-                              {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
-                                <>
-                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                  <button 
-                                    onClick={() => {
-                                      setSelectedAsset(asset);
-                                      setDeleteModalOpen(true);
-                                      setMenuOpenId(null);
-                                    }} 
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                ) : (
+                                  hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedAsset(asset);
+                                        setSellModalOpen(true);
+                                        setMenuOpenId(null);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
+                                    >
+                                      <ShoppingCart className="w-4 h-4" />
+                                      Sell Asset
+                                    </button>
+                                  )
+                                )}
+                                {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                  <Link
+                                    href={`/dashboard/inventory/assets/edit/${asset.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Asset
-                                  </button>
-                                </>
-                              )}
-                            </div>
-                          )}
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Asset
+                                  </Link>
+                                )}
+                                {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
+                                  <>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <button
+                                      onClick={() => {
+                                        setSelectedAsset(asset);
+                                        setDeleteModalOpen(true);
+                                        setMenuOpenId(null);
+                                      }}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete Asset
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="py-24 text-center">
+                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No assets found</p>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No assets found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredAssets.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredAssets.length}</span> entries
-          </p>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button 
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
+                )}
+              </tbody>
+            </table>
           </div>
+
+          {/* Pagination Footer */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={total}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         </div>
-      </div>
 
-      {/* View Details Modal */}
-      {viewModalOpen && selectedAsset && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-zinc-900 rounded-[15px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
-            <div className="p-8 space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black shadow-lg shadow-black/10">
-                    <Package className="w-7 h-7" />
+        {/* View Details Modal */}
+        {viewModalOpen && selectedAsset && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+            <div className="bg-white dark:bg-zinc-900 rounded-[15px] w-full max-w-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-2xl animate-in zoom-in duration-300">
+              <div className="p-8 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-black dark:bg-white flex items-center justify-center text-white dark:text-black shadow-lg shadow-black/10">
+                      <Package className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black dark:text-white tracking-tight uppercase italic">{selectedAsset.asset_id}</h2>
+                      <p className="text-sm font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">Asset Details</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-2xl font-black dark:text-white tracking-tight uppercase italic">{selectedAsset.asset_id}</h2>
-                    <p className="text-sm font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-widest">Asset Details</p>
-                  </div>
+                  <button onClick={() => setViewModalOpen(false)} className="w-10 h-10 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all">
+                    <X className="w-5 h-5 text-gray-400" />
+                  </button>
                 </div>
-                <button onClick={() => setViewModalOpen(false)} className="w-10 h-10 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all">
-                  <X className="w-5 h-5 text-gray-400" />
-                </button>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <ViewField label="Description" value={selectedAsset.description} />
-                <ViewField label="Category" value={selectedAsset.category} />
-                <ViewField label="Purchase Value" value={`AED ${parseFloat(selectedAsset.purchase_value || 0).toLocaleString()}`} />
-                <ViewField label="Current Value" value={`AED ${parseFloat(selectedAsset.current_value || 0).toLocaleString()}`} />
-                <ViewField label="Current Branch" value={selectedAsset.current_operating_branch?.branch_name || branches?.find(b => b.id === selectedAsset.current_operating_branch_id)?.branch_name || 'N/A'} />
-                <ViewField label="Purchase Date" value={selectedAsset.purchase_date ? new Date(selectedAsset.purchase_date).toLocaleDateString() : 'N/A'} />
-                <ViewField label="Status" value={selectedAsset.status?.toUpperCase()} color="red" />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <ViewField label="Description" value={selectedAsset.description} />
+                  <ViewField label="Category" value={selectedAsset.category} />
+                  <ViewField label="Purchase Value" value={`AED ${parseFloat(selectedAsset.purchase_value || 0).toLocaleString()}`} />
+                  <ViewField label="Current Value" value={`AED ${parseFloat(selectedAsset.current_value || 0).toLocaleString()}`} />
+                  <ViewField label="Current Branch" value={selectedAsset.current_operating_branch?.branch_name || branches?.find(b => b.id === selectedAsset.current_operating_branch_id)?.branch_name || 'N/A'} />
+                  <ViewField label="Purchase Date" value={selectedAsset.purchase_date ? new Date(selectedAsset.purchase_date).toLocaleDateString() : 'N/A'} />
+                  <ViewField label="Status" value={selectedAsset.status?.toUpperCase()} color="red" />
+                </div>
 
-              <div className="flex gap-4 pt-4">
+                <div className="flex gap-4 pt-4">
                   {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                    <Link 
+                    <Link
                       href={`/dashboard/inventory/assets/edit/${selectedAsset.id}`}
                       className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all text-center"
                     >
                       Edit Asset
                     </Link>
                   )}
-                  <button 
+                  <button
                     onClick={() => setViewModalOpen(false)}
                     className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
                   >
                     Close
                   </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in zoom-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
-              <Trash2 className="w-10 h-10 text-red-600" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Asset?</h2>
-              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
-                Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedAsset?.asset_id}</span>? This action cannot be undone.
-              </p>
-            </div>
-
-            {deleteError && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
-                <p className="text-sm font-bold text-red-900 dark:text-red-200">{deleteError}</p>
+        {/* Delete Confirmation Modal */}
+        {deleteModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+              <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+                <Trash2 className="w-10 h-10 text-red-600" />
               </div>
-            )}
+              <div className="space-y-2">
+                <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Asset?</h2>
+                <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                  Are you sure you want to delete <span className="font-black text-gray-900 dark:text-white italic">{selectedAsset?.asset_id}</span>? This action cannot be undone.
+                </p>
+              </div>
 
-            <div className="flex gap-4">
-              <button 
-                onClick={() => {
-                  setDeleteModalOpen(false);
-                  setDeleteError(null);
-                  setSelectedAsset(null);
-                }}
-                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
-              >
-                Cancel
-              </button>
-              {!deleteError && (
-                <button 
-                  onClick={handleDeleteConfirm}
-                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
-                >
-                  Delete
-                </button>
+              {deleteError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4">
+                  <p className="text-sm font-bold text-red-900 dark:text-red-200">{deleteError}</p>
+                </div>
               )}
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setDeleteModalOpen(false);
+                    setDeleteError(null);
+                    setSelectedAsset(null);
+                  }}
+                  className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                >
+                  Cancel
+                </button>
+                {!deleteError && (
+                  <button
+                    onClick={handleDeleteConfirm}
+                    className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Documents Modal */}
-      {documentsModalOpen && selectedAsset && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in zoom-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-black dark:text-white">Documents for {selectedAsset.asset_id}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Manage and view documents related to this asset.</p>
+        {/* Documents Modal */}
+        {documentsModalOpen && selectedAsset && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-3xl w-full border border-gray-100 dark:border-zinc-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-black dark:text-white">Documents for {selectedAsset.asset_id}</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage and view documents related to this asset.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setDocumentsModalOpen(false);
+                    setSelectedAsset(null);
+                    setDocuments([]);
+                  }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  setDocumentsModalOpen(false);
-                  setSelectedAsset(null);
-                  setDocuments([]);
-                }}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
 
-            {loadingDocuments ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 text-sm font-bold">Loading documents...</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {documents.length > 0 ? (
-                  documents.map((doc) => {
-                    const displayName = doc.document_name?.replace(/_/g, ' ').toUpperCase() || 'Document';
-                    
-                    return (
-                      <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
-                        <div className="flex items-center gap-3">
-                          <div 
-                            className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                            onClick={() => handleViewDocument(doc.id)}
-                            title="Click to view full size"
-                          >
-                            {doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? (
-                              <img 
-                                src={`/api/assets/${selectedAsset.id}/documents/${doc.id}/download`}
-                                alt={displayName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                            ) : null}
-                            <div className="w-full h-full flex items-center justify-center" style={{ display: doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
-                              <FileText className="w-6 h-6 text-gray-400" />
+              {loadingDocuments ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-gray-500 text-sm font-bold">Loading documents...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {documents.length > 0 ? (
+                    documents.map((doc) => {
+                      const displayName = doc.document_name?.replace(/_/g, ' ').toUpperCase() || 'Document';
+
+                      return (
+                        <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-zinc-700">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-zinc-700 shrink-0 cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
+                              onClick={() => handleViewDocument(doc.id)}
+                              title="Click to view full size"
+                            >
+                              {doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? (
+                                <img
+                                  src={`/api/assets/${selectedAsset.id}/documents/${doc.id}/download`}
+                                  alt={displayName}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div className="w-full h-full flex items-center justify-center" style={{ display: doc.document_path && (doc.document_path.endsWith('.jpg') || doc.document_path.endsWith('.jpeg') || doc.document_path.endsWith('.png') || doc.document_path.endsWith('.webp')) ? 'none' : 'flex' }}>
+                                <FileText className="w-6 h-6 text-gray-400" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900 dark:text-white">{displayName}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Uploaded {new Date(doc.created_at).toLocaleDateString()} • {doc.document_path?.split('.').pop().toUpperCase()}
+                              </p>
                             </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{displayName}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Uploaded {new Date(doc.created_at).toLocaleDateString()} • {doc.document_path?.split('.').pop().toUpperCase()}
-                            </p>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewDocument(doc.id)}
+                              className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              View
+                            </button>
+                            <button
+                              onClick={() => handleDownloadDocument(doc.id)}
+                              className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              Download
+                            </button>
+                            {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                              <button
+                                onClick={() => {
+                                  setDocToDelete(doc);
+                                  setDeleteDocModalOpen(true);
+                                }}
+                                className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
+                              >
+                                <Trash className="w-3.5 h-3.5" />
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleViewDocument(doc.id)}
-                            className="px-3 py-2 text-xs font-bold text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors flex items-center gap-1"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            View
-                          </button>
-                          <button
-                            onClick={() => handleDownloadDocument(doc.id)}
-                            className="px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            Download
-                          </button>
-                           {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                            <button
-                              onClick={() => {
-                                setDocToDelete(doc);
-                                setDeleteDocModalOpen(true);
-                              }}
-                              className="px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex items-center gap-1"
-                            >
-                              <Trash className="w-3.5 h-3.5" />
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-12">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
-                  </div>
-                )}
+                      );
+                    })
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">No documents uploaded yet.</p>
+                    </div>
+                  )}
 
-                {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                  <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
-                    <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
-                      <Upload className="w-4 h-4" />
-                      Upload New Document
-                      <input
-                        type="file"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const docName = file.name.split('.').slice(0, -1).join('.');
-                            handleFileUpload(e, docName);
-                          }
-                        }}
-                        disabled={uploadingDocument}
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
-                      />
-                    </label>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-                      Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
-                    </p>
-                  </div>
-                )}
+                  {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                    <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
+                      <label className="flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl cursor-pointer transition-colors">
+                        <Upload className="w-4 h-4" />
+                        Upload New Document
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const docName = file.name.split('.').slice(0, -1).join('.');
+                              handleFileUpload(e, docName);
+                            }
+                          }}
+                          disabled={uploadingDocument}
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.webp"
+                        />
+                      </label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
+                        Supported: PDF, JPG, PNG, WEBP, DOC, DOCX
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
+                <button
+                  onClick={() => {
+                    setDocumentsModalOpen(false);
+                    setSelectedAsset(null);
+                    setDocuments([]);
+                  }}
+                  className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+                >
+                  Close
+                </button>
               </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-200 dark:border-zinc-800">
-              <button
-                onClick={() => {
-                  setDocumentsModalOpen(false);
-                  setSelectedAsset(null);
-                  setDocuments([]);
-                }}
-                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all"
-              >
-                Close
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Delete Document Confirmation Modal */}
-      {deleteDocModalOpen && docToDelete && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in zoom-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
-              <AlertCircle className="w-10 h-10 text-red-600" />
-            </div>
-            <div className="space-y-2">
-              <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Document?</h2>
-              <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
-                Are you sure you want to delete this document? This action cannot be undone.
-              </p>
-            </div>
+        {/* Delete Document Confirmation Modal */}
+        {deleteDocModalOpen && docToDelete && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4 animate-in zoom-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 rounded-[32px] p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl space-y-6 text-center">
+              <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-zinc-800 shadow-lg">
+                <AlertCircle className="w-10 h-10 text-red-600" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-black dark:text-white uppercase tracking-tight">Delete Document?</h2>
+                <p className="text-gray-500 dark:text-zinc-500 font-medium leading-relaxed">
+                  Are you sure you want to delete this document? This action cannot be undone.
+                </p>
+              </div>
 
-            <div className="flex gap-4">
-              <button 
-                onClick={() => {
-                  setDeleteDocModalOpen(false);
-                  setDocToDelete(null);
-                }}
-                className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handleDeleteDocument(docToDelete.id)}
-                className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
-              >
-                Delete Document
-              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setDeleteDocModalOpen(false);
+                    setDocToDelete(null);
+                  }}
+                  className="flex-1 py-4 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-gray-400 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteDocument(docToDelete.id)}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black text-sm shadow-xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all"
+                >
+                  Delete Document
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Sell Asset Modal */}
-      <SellAssetModal
-        isOpen={sellModalOpen}
-        onClose={() => {
-          setSellModalOpen(false);
-          setSelectedAsset(null);
-        }}
-        asset={selectedAsset}
-        onSell={handleSell}
-        isLoading={selling}
-      />
+        {/* Sell Asset Modal */}
+        <SellAssetModal
+          isOpen={sellModalOpen}
+          onClose={() => {
+            setSellModalOpen(false);
+            setSelectedAsset(null);
+          }}
+          asset={selectedAsset}
+          onSell={handleSell}
+          isLoading={selling}
+        />
 
-      {/* Sale Details Modal */}
-      <SaleDetailsModal
-        isOpen={saleDetailsModalOpen}
-        onClose={() => {
-          setSaleDetailsModalOpen(false);
-          setSelectedAsset(null);
-          setSaleDetails(null);
-        }}
-        asset={selectedAsset}
-        saleDetails={saleDetails}
-      />
+        {/* Sale Details Modal */}
+        <SaleDetailsModal
+          isOpen={saleDetailsModalOpen}
+          onClose={() => {
+            setSaleDetailsModalOpen(false);
+            setSelectedAsset(null);
+            setSaleDetails(null);
+          }}
+          asset={selectedAsset}
+          saleDetails={saleDetails}
+        />
 
-      {/* Transfer History Modal */}
-      <TransferHistoryModal
-        isOpen={transferHistoryModalOpen}
-        onClose={() => {
-          setTransferHistoryModalOpen(false);
-          setSelectedAsset(null);
-          setTransferHistory([]);
-        }}
-        asset={selectedAsset}
-        transferHistory={transferHistory}
-        branches={branches}
-        loading={loadingTransferHistory}
-      />
+        {/* Transfer History Modal */}
+        <TransferHistoryModal
+          isOpen={transferHistoryModalOpen}
+          onClose={() => {
+            setTransferHistoryModalOpen(false);
+            setSelectedAsset(null);
+            setTransferHistory([]);
+          }}
+          asset={selectedAsset}
+          transferHistory={transferHistory}
+          branches={branches}
+          loading={loadingTransferHistory}
+        />
       </div>
     </ProtectedRoute>
   );

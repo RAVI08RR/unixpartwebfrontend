@@ -1,40 +1,44 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { customerService } from '../services/customerService';
 
-export function useCustomers(skip = 0, limit = 100, status = null, isDropdown = false) {
-  const [customers, setCustomers] = useState([]);
+export function useCustomers(page = 1, page_size = 10, status = null, isDropdown = false) {
+  const [result, setResult] = useState({ data: [], total: 0, total_pages: 1, page: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = isDropdown 
+      const data = isDropdown
         ? await customerService.getDropdown()
-        : await customerService.getAll(skip, limit, status);
-      setCustomers(data);
+        : await customerService.getAll(page, page_size, status);
+
+      if (isDropdown) {
+        setResult({ data: Array.isArray(data) ? data : (data?.data || []), total: 0, total_pages: 1, page: 1 });
+      } else {
+        setResult(data || { data: [], total: 0, total_pages: 1, page });
+      }
     } catch (err) {
       console.error('Failed to fetch customers:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, page_size, status, isDropdown]);
 
   useEffect(() => {
     fetchCustomers();
-  }, [skip, limit, status, isDropdown]);
-
-  const refetch = () => {
-    fetchCustomers();
-  };
+  }, [fetchCustomers]);
 
   return {
-    customers,
+    customers: result.data || [],
+    total: result.total || 0,
+    totalPages: result.total_pages || 1,
+    currentPage: result.page || page,
     loading,
     error,
-    refetch
+    refetch: fetchCustomers,
   };
 }
 
@@ -45,7 +49,6 @@ export function useCustomer(id) {
 
   useEffect(() => {
     if (!id) return;
-
     const fetchCustomer = async () => {
       try {
         setLoading(true);
@@ -59,13 +62,8 @@ export function useCustomer(id) {
         setLoading(false);
       }
     };
-
     fetchCustomer();
   }, [id]);
 
-  return {
-    customer,
-    loading,
-    error
-  };
+  return { customer, loading, error };
 }

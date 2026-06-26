@@ -2,32 +2,27 @@ import { fetchApi } from '../api';
 
 export const containerService = {
   // Get all containers with filters
-  getAll: async (skip = 0, limit = 100, supplier_id = null, branch_id = null, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
-    
+  getAll: async (page = 1, page_size = 10, supplier_id = null, branch_id = null, status = null) => {
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (supplier_id) queryParams += `&supplier_id=${supplier_id}`;
     if (branch_id) queryParams += `&branch_id=${branch_id}`;
     if (status !== null) queryParams += `&status=${status}`;
-    
+
     try {
-      console.log('📦 Fetching containers from API...');
       const data = await fetchApi(`/api/containers?${queryParams}`);
-      console.log('📦 Containers API response:', data);
-      
-      const containersData = Array.isArray(data) 
-        ? data 
-        : (data?.containers || data?.items || data?.data || []);
-      
-      if (containersData.length > 0) {
-        console.log('✅ Containers fetched successfully:', containersData.length);
-        return containersData;
-      } else {
-        console.log('⚠️ No containers in API response');
-        return [];
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
       }
+      return {
+        data: data?.data || data?.containers || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("📦 Containers API failed:", error.message);
-      return [];
+      console.error('📦 Containers API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -37,8 +32,9 @@ export const containerService = {
       const data = await fetchApi('/api/dropdown/containers');
       return Array.isArray(data) ? data : (data?.containers || data?.items || data?.data || []);
     } catch (error) {
-      console.error("📦 Containers Dropdown API failed:", error.message);
-      return containerService.getAll(0, 100); // Fallback to getAll with max limit of 100
+      console.error('📦 Containers Dropdown API failed:', error.message);
+      const result = await containerService.getAll(1, 100);
+      return result?.data || [];
     }
   },
 
@@ -117,11 +113,11 @@ export const containerService = {
       });
     } catch (error) {
       console.warn('📦 Container update failed:', error.message);
-      
+
       // Check if it's a 500 error (backend issue) - use fallback
       if (error.message.includes('500') || error.message.includes('Backend server error')) {
         console.log('⚠️ Backend container update endpoint is broken, using fallback mode');
-        
+
         // Return a simulated success response with the updated data
         return {
           ...containerData,
@@ -132,7 +128,7 @@ export const containerService = {
           _message: 'Container data updated locally. Backend sync will occur when the server is fixed.'
         };
       }
-      
+
       throw new Error('Cannot update container: ' + error.message);
     }
   },
@@ -203,7 +199,7 @@ export const containerService = {
     try {
       const token = localStorage.getItem('access_token');
       console.log('📥 Downloading document:', { containerId, documentId });
-      
+
       const response = await fetch(`/api/containers/${containerId}/documents/${documentId}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -219,7 +215,7 @@ export const containerService = {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Download failed' }));
         console.error('📥 Download error:', errorData);
-        
+
         // Handle specific error cases
         if (response.status === 403) {
           throw new Error('You do not have permission to download container documents. Please contact your administrator.');
@@ -234,10 +230,10 @@ export const containerService = {
 
       const blob = await response.blob();
       console.log('📥 Blob received:', { size: blob.size, type: blob.type });
-      
+
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = `document-${documentId}`;
-      
+
       if (contentDisposition) {
         const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
         if (matches != null && matches[1]) {
@@ -255,7 +251,7 @@ export const containerService = {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       console.log('📥 Download triggered successfully');
     } catch (error) {
       console.error('📦 Container document download failed:', error);

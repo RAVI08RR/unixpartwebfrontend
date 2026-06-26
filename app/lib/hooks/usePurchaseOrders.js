@@ -1,18 +1,10 @@
 import useSWR from 'swr';
 import { purchaseOrderService } from '../services/purchaseOrderService';
 
-const fetcher = async (url) => {
-  const [, skip, limit] = url.split('|');
-  return purchaseOrderService.getAll(
-    parseInt(skip) || 0,
-    parseInt(limit) || 100
-  );
-};
-
-export function usePurchaseOrders(skip = 0, limit = 100) {
+export function usePurchaseOrders(page = 1, page_size = 10) {
   const { data, error, isLoading, mutate } = useSWR(
-    `purchase-orders|${skip}|${limit}`,
-    fetcher,
+    `purchase-orders|${page}|${page_size}`,
+    () => purchaseOrderService.getAll(page, page_size),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -20,9 +12,12 @@ export function usePurchaseOrders(skip = 0, limit = 100) {
   );
 
   return {
-    purchaseOrders: Array.isArray(data) ? data : [],
+    purchaseOrders: data?.data || [],
+    total: data?.total || 0,
+    totalPages: data?.total_pages || 1,
+    currentPage: data?.page || page,
     loading: isLoading,
-    error: error,
+    error,
     refetch: mutate,
   };
 }
@@ -40,7 +35,7 @@ export function usePurchaseOrder(id) {
   return {
     purchaseOrder: data,
     loading: isLoading,
-    error: error,
+    error,
     refetch: mutate,
   };
 }

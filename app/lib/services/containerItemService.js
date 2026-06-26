@@ -2,16 +2,24 @@ import { fetchApi } from '../api';
 
 export const containerItemService = {
   // Get all container items
-  getAll: async (skip = 0, limit = 100, container_id = null) => {
+  getAll: async (page = 1, page_size = 10, container_id = null) => {
     try {
-      let endpoint = `/api/container-items/?skip=${skip}&limit=${limit}`;
+      let endpoint = `/api/container-items/?page=${page}&page_size=${page_size}`;
       if (container_id) endpoint += `&container_id=${container_id}`;
-      
       const data = await fetchApi(endpoint);
-      return Array.isArray(data) ? data : (data?.container_items || data?.items || []);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.container_items || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("📦 Container Items API failed:", error.message);
-      return [];
+      console.error('📦 Container Items API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 

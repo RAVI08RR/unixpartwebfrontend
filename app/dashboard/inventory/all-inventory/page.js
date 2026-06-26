@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  BarChart3, Search, Filter, Download, 
-  Eye, FileText, Calendar, User, 
-  ChevronLeft, ChevronRight, X, 
+import {
+  BarChart3, Search, Filter, Download,
+  Eye, FileText, Calendar, User,
+  ChevronLeft, ChevronRight, X,
   Building2, ShoppingCart, RefreshCcw, MoreVertical,
   Package, Hash, DollarSign, Truck, MapPin, Layers, Box, Check, ClipboardList,
   RotateCcw, Scissors
@@ -19,14 +19,17 @@ import Link from "next/link";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 import DismantleModal from "@/app/components/DismantleModal";
+import Pagination from "@/app/components/Pagination";
 
 export default function AllInventoryPage() {
   const router = useRouter();
   const [inventoryItems, setInventoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  
+  const PAGE_SIZE = 10;
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
   // Custom filter states matching screenshot specs
   const [supplierFilter, setSupplierFilter] = useState("All");
   const [stockNumberFilter, setStockNumberFilter] = useState("");
@@ -45,10 +48,10 @@ export default function AllInventoryPage() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [dismantleModalOpen, setDismantleModalOpen] = useState(false);
-  
-  const { branches: apiBranches } = useBranches(0, 100, true);
-  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
-  const { suppliers } = useSuppliers(0, 100, null, true);
+
+  const { branches: apiBranches } = useBranches(1, 100, true);
+  const { stockItems: apiStockItems } = useStockItems(1, 100, null, true);
+  const { suppliers } = useSuppliers(1, 100, null, true);
   const { success, error: showError } = useToast();
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
@@ -75,9 +78,10 @@ export default function AllInventoryPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetching first 100 items to enable client-side filtering (backend max limit is 100)
-      const data = await poItemService.getAll(0, 100);
-      setInventoryItems(Array.isArray(data) ? data : []);
+      const response = await poItemService.getAll(currentPage, PAGE_SIZE);
+      setInventoryItems(response?.data || []);
+      setTotal(response?.total || 0);
+      setTotalPages(response?.total_pages || 1);
     } catch (error) {
       console.error("Error fetching inventory data:", error);
     } finally {
@@ -87,7 +91,7 @@ export default function AllInventoryPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage]);
 
   // Handle direct stock number search/scan for navigation
   useEffect(() => {
@@ -103,16 +107,16 @@ export default function AllInventoryPage() {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [inventoryItems.length, supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleDateRange, operatorFilter, saleAmountFilter]);
+  }, [supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleDateRange, operatorFilter, saleAmountFilter]);
 
   useEffect(() => {
     const hasActive = supplierFilter !== "All" ||
-                      stockNumberFilter !== "" ||
-                      itemNameFilter !== "" ||
-                      branchFilter !== "All" ||
-                      statusFilter !== "All" ||
-                      saleAmountFilter !== "" ||
-                      (saleDateRange && (saleDateRange.start !== "" || saleDateRange.end !== ""));
+      stockNumberFilter !== "" ||
+      itemNameFilter !== "" ||
+      branchFilter !== "All" ||
+      statusFilter !== "All" ||
+      saleAmountFilter !== "" ||
+      (saleDateRange && (saleDateRange.start !== "" || saleDateRange.end !== ""));
     if (hasActive) {
       setIsFilterOpen(true);
     }
@@ -120,37 +124,37 @@ export default function AllInventoryPage() {
 
   const hasActiveFilters = useMemo(() => {
     return supplierFilter !== "All" ||
-           stockNumberFilter !== "" ||
-           itemNameFilter !== "" ||
-           branchFilter !== "All" ||
-           statusFilter !== "All" ||
-           saleAmountFilter !== "" ||
-           (saleDateRange && (saleDateRange.start !== "" || saleDateRange.end !== ""));
+      stockNumberFilter !== "" ||
+      itemNameFilter !== "" ||
+      branchFilter !== "All" ||
+      statusFilter !== "All" ||
+      saleAmountFilter !== "" ||
+      (saleDateRange && (saleDateRange.start !== "" || saleDateRange.end !== ""));
   }, [supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleAmountFilter, saleDateRange]);
 
   // Filter logic
   const filteredData = useMemo(() => {
     return inventoryItems.filter(item => {
       // 1. Supplier Filter
-      const matchesSupplier = supplierFilter === "All" || 
-                              String(item.purchase_order?.container?.supplier_id) === String(supplierFilter) || 
-                              String(item.purchase_order?.container?.supplier?.id) === String(supplierFilter);
-      
+      const matchesSupplier = supplierFilter === "All" ||
+        String(item.purchase_order?.container?.supplier_id) === String(supplierFilter) ||
+        String(item.purchase_order?.container?.supplier?.id) === String(supplierFilter);
+
       // 2. Stock Number Filter
       const matchesStock = !stockNumberFilter || (item.stock_number || "").toLowerCase().includes(stockNumberFilter.toLowerCase());
-      
+
       // 3. Item Name Filter
       const matchesItemName = !itemNameFilter || (item.stock_item?.name || "").toLowerCase().includes(itemNameFilter.toLowerCase());
-      
+
       // 4. Branch Filter
-      const matchesBranch = branchFilter === "All" || 
-                            String(item.current_branch_id) === String(branchFilter) || 
-                            String(item.current_branch?.id) === String(branchFilter) ||
-                            item.current_branch?.branch_code === branchFilter;
-      
+      const matchesBranch = branchFilter === "All" ||
+        String(item.current_branch_id) === String(branchFilter) ||
+        String(item.current_branch?.id) === String(branchFilter) ||
+        item.current_branch?.branch_code === branchFilter;
+
       // 5. Status Filter
       const matchesStatus = statusFilter === "All" || item.status === statusFilter;
-      
+
       // 6. Sale Date Range Filter
       let matchesSaleDate = true;
       if (saleDateRange.start || saleDateRange.end) {
@@ -193,9 +197,7 @@ export default function AllInventoryPage() {
   }, [inventoryItems, supplierFilter, stockNumberFilter, itemNameFilter, branchFilter, statusFilter, saleDateRange, operatorFilter, saleAmountFilter]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = filteredData;
 
   const formatCurrency = (amount) => {
     if (!amount) return "-";
@@ -222,46 +224,46 @@ export default function AllInventoryPage() {
   // Export columns configuration
   const exportColumns = [
     { key: 'stock_number', label: 'Stock Number' },
-    { 
-      key: 'purchase_order.container.supplier.supplier_code', 
+    {
+      key: 'purchase_order.container.supplier.supplier_code',
       label: 'Supplier Code',
       formatter: (value, row) => row.purchase_order?.container?.supplier?.supplier_code || row.stock_number?.split('-')[1] || '-'
     },
-    { 
-      key: 'purchase_order.container.container_number', 
+    {
+      key: 'purchase_order.container.container_number',
       label: 'Container Code',
       formatter: (value, row) => row.purchase_order?.container?.container_number || '-'
     },
-    { 
-      key: 'stock_item.name', 
+    {
+      key: 'stock_item.name',
       label: 'Item Name',
       formatter: (value, row) => row.stock_item?.name || '-'
     },
     { key: 'po_description', label: 'PO Description' },
-    { 
-      key: 'current_branch.branch_code', 
+    {
+      key: 'current_branch.branch_code',
       label: 'Branch',
       formatter: (value, row) => row.current_branch?.branch_code || '-'
     },
     { key: 'status', label: 'Status' },
     { key: 'quantity', label: 'Quantity' },
-    { 
-      key: 'invoice_items[0].sale_amount', 
+    {
+      key: 'invoice_items[0].sale_amount',
       label: 'Sale Amount',
       formatter: (value, row) => row.invoice_items?.[0]?.sale_amount ? formatCurrencyForExport(row.invoice_items[0].sale_amount) : '-'
     },
-    { 
-      key: 'invoice_items[0].invoice.invoice_number', 
+    {
+      key: 'invoice_items[0].invoice.invoice_number',
       label: 'Invoice Number',
       formatter: (value, row) => row.invoice_items?.[0]?.invoice?.invoice_number || '-'
     },
-    { 
-      key: 'invoice_items[0].sale_date', 
+    {
+      key: 'invoice_items[0].sale_date',
       label: 'Sale Date',
       formatter: (value, row) => row.invoice_items?.[0]?.sale_date ? formatDateForExport(row.invoice_items[0].sale_date) : '-'
     },
-    { 
-      key: 'created_at', 
+    {
+      key: 'created_at',
       label: 'Created Date',
       formatter: formatDateForExport
     }
@@ -308,7 +310,7 @@ export default function AllInventoryPage() {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const payload = {
         po_description: editFormData.po_description || null,
@@ -332,10 +334,10 @@ export default function AllInventoryPage() {
       if (!isNaN(branchId)) {
         payload.current_branch_id = branchId;
       }
-      
+
       console.log('📦 Updating item ID:', selectedItem.id);
       console.log('📦 Payload:', JSON.stringify(payload, null, 2));
-      
+
       await poItemService.update(selectedItem.id, payload);
       success("Item updated successfully");
       setEditModalOpen(false);
@@ -356,21 +358,20 @@ export default function AllInventoryPage() {
           <h1 className="text-2xl font-black dark:text-white tracking-tight">Inventory</h1>
           <p className="text-gray-400 dark:text-zinc-500 text-sm font-normal">A complete list of all stock items in your inventory.</p>
         </div>
-        
+
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 lg:mt-0 justify-end btn-mobile-arrange">
-          <button 
+          <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
-              isFilterOpen 
-                ? 'bg-red-600 text-white shadow-red-600/10' 
+            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                ? 'bg-red-600 text-white shadow-red-600/10'
                 : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
-            }`}
+              }`}
           >
             <Filter className="w-4 h-4" />
             <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
 
-          <button 
+          <button
             onClick={() => success("Stock taking process initiated.")}
             className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all active:scale-95"
           >
@@ -397,7 +398,7 @@ export default function AllInventoryPage() {
               <p className="text-xs text-gray-400 dark:text-zinc-500 font-medium">Refine the inventory list below.</p>
             </div>
             {hasActiveFilters && (
-              <button 
+              <button
                 onClick={clearFilters}
                 className="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 flex items-center gap-1.5 active:scale-95 transition-all"
               >
@@ -428,8 +429,8 @@ export default function AllInventoryPage() {
 
               {/* Search by Stock Number */}
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Search by Stock Number..."
                   className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={stockNumberFilter}
@@ -439,8 +440,8 @@ export default function AllInventoryPage() {
 
               {/* Filter by Item name */}
               <div>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Filter by Item name..."
                   className="w-full px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={itemNameFilter}
@@ -480,15 +481,15 @@ export default function AllInventoryPage() {
 
               {/* Filter by Sale Date (Range) */}
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
                   className="w-full flex items-center gap-2 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 dark:text-zinc-400 transition-all text-left shadow-sm justify-between"
                 >
                   <div className="flex items-center gap-2 truncate">
                     <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
                     <span className="truncate">
-                      {saleDateRange.start || saleDateRange.end 
-                        ? `${saleDateRange.start ? new Date(saleDateRange.start).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''} - ${saleDateRange.end ? new Date(saleDateRange.end).toLocaleDateString('en-GB', {day:'numeric', month:'short'}) : ''}`
+                      {saleDateRange.start || saleDateRange.end
+                        ? `${saleDateRange.start ? new Date(saleDateRange.start).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''} - ${saleDateRange.end ? new Date(saleDateRange.end).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}`
                         : "Filter by Sale Date (Range)"
                       }
                     </span>
@@ -502,7 +503,7 @@ export default function AllInventoryPage() {
                     <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-4 animate-in fade-in slide-in-from-top-1 duration-200 space-y-3">
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">Start Date</label>
-                        <input 
+                        <input
                           type="date"
                           className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
                           value={saleDateRange.start}
@@ -511,7 +512,7 @@ export default function AllInventoryPage() {
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5">End Date</label>
-                        <input 
+                        <input
                           type="date"
                           className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none"
                           value={saleDateRange.end}
@@ -519,13 +520,13 @@ export default function AllInventoryPage() {
                         />
                       </div>
                       <div className="flex gap-2 justify-end pt-1">
-                        <button 
+                        <button
                           onClick={() => { setSaleDateRange({ start: '', end: '' }); setIsDatePickerOpen(false); }}
                           className="px-3 py-1.5 text-[10px] font-black uppercase text-gray-400 hover:text-gray-600"
                         >
                           Clear
                         </button>
-                        <button 
+                        <button
                           onClick={() => setIsDatePickerOpen(false)}
                           className="px-3 py-1.5 text-[10px] font-black uppercase bg-black text-white dark:bg-white dark:text-black rounded-lg"
                         >
@@ -550,8 +551,8 @@ export default function AllInventoryPage() {
                   <option value=">=">&gt;=</option>
                   <option value="<=">&lt;=</option>
                 </select>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   placeholder="Sale Amount"
                   className="flex-1 px-3.5 py-3 bg-gray-50 dark:bg-zinc-800/40 border border-gray-200/50 dark:border-zinc-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-500/30 transition-all placeholder-gray-400 dark:placeholder-zinc-500 text-gray-900 dark:text-white"
                   value={saleAmountFilter}
@@ -589,11 +590,10 @@ export default function AllInventoryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${
-                      item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                      item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                      'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
-                    }`}>{item.status?.replace('_', ' ') || "-"}</span>
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                          'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                      }`}>{item.status?.replace('_', ' ') || "-"}</span>
                     <div className="relative">
                       <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-all">
                         <MoreVertical className="w-4 h-4 text-gray-400" />
@@ -607,12 +607,12 @@ export default function AllInventoryPage() {
                             <FileText className="w-4 h-4" />Edit Item
                           </button>
                           {!item.is_dismantled && (
-                            <button 
+                            <button
                               onClick={() => {
                                 setSelectedItem(item);
                                 setDismantleModalOpen(true);
                                 setMenuOpenId(null);
-                              }} 
+                              }}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10"
                             >
                               <Scissors className="w-4 h-4" />Dismantle Item
@@ -683,12 +683,11 @@ export default function AllInventoryPage() {
                       </span>
                     </td>
                     <td className="px-8 py-6">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${
-                        item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                        item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
-                        'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
-                      }`}>
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                          item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                            item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
+                              'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                        }`}>
                         {item.status?.replace('_', ' ') || "-"}
                       </span>
                     </td>
@@ -706,12 +705,12 @@ export default function AllInventoryPage() {
                               <FileText className="w-4 h-4" />Edit Item
                             </button>
                             {!item.is_dismantled && (
-                              <button 
+                              <button
                                 onClick={() => {
                                   setSelectedItem(item);
                                   setDismantleModalOpen(true);
                                   setMenuOpenId(null);
-                                }} 
+                                }}
                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
                               >
                                 <Scissors className="w-4 h-4" />Dismantle Item
@@ -740,46 +739,14 @@ export default function AllInventoryPage() {
           </table>
         </div>
 
-        {/* Pagination */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">
-            Showing <span className="text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white">{Math.min(startIndex + itemsPerPage, filteredData.length)}</span> of <span className="text-gray-900 dark:text-white">{filteredData.length}</span> entries
-          </p>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        {/* Pagination Footer */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
 
@@ -802,7 +769,7 @@ export default function AllInventoryPage() {
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setEditModalOpen(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all text-gray-400 hover:text-gray-900 dark:hover:text-white"
               >
@@ -838,12 +805,12 @@ export default function AllInventoryPage() {
                   </label>
                   <div className="relative">
                     <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       placeholder="DXB-001-000001"
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white uppercase"
                       value={editFormData.stock_number}
-                      onChange={(e) => setEditFormData({...editFormData, stock_number: e.target.value})}
+                      onChange={(e) => setEditFormData({ ...editFormData, stock_number: e.target.value })}
                       required
                     />
                   </div>
@@ -856,10 +823,10 @@ export default function AllInventoryPage() {
                   </label>
                   <div className="relative">
                     <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <select 
+                    <select
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white appearance-none cursor-pointer"
                       value={editFormData.item_id}
-                      onChange={(e) => setEditFormData({...editFormData, item_id: e.target.value})}
+                      onChange={(e) => setEditFormData({ ...editFormData, item_id: e.target.value })}
                       required
                     >
                       <option value="">Select Item Category</option>
@@ -877,10 +844,10 @@ export default function AllInventoryPage() {
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <select 
+                    <select
                       className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white appearance-none cursor-pointer"
                       value={editFormData.current_branch_id}
-                      onChange={(e) => setEditFormData({...editFormData, current_branch_id: e.target.value})}
+                      onChange={(e) => setEditFormData({ ...editFormData, current_branch_id: e.target.value })}
                       required
                     >
                       <option value="">Select Branch</option>
@@ -896,10 +863,10 @@ export default function AllInventoryPage() {
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status <span className="text-red-500">*</span>
                   </label>
-                  <select 
+                  <select
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white appearance-none cursor-pointer"
                     value={editFormData.status}
-                    onChange={(e) => setEditFormData({...editFormData, status: e.target.value})}
+                    onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
                     required
                   >
                     <option value="in_stock">In Stock</option>
@@ -914,13 +881,13 @@ export default function AllInventoryPage() {
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Quantity <span className="text-red-500">*</span>
                   </label>
-                  <input 
+                  <input
                     type="number"
                     min="1"
                     placeholder="1"
                     className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white"
                     value={editFormData.quantity}
-                    onChange={(e) => setEditFormData({...editFormData, quantity: e.target.value})}
+                    onChange={(e) => setEditFormData({ ...editFormData, quantity: e.target.value })}
                     required
                   />
                 </div>
@@ -933,12 +900,12 @@ export default function AllInventoryPage() {
                 </label>
                 <div className="relative">
                   <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                  <input 
+                  <input
                     type="text"
                     placeholder="Ceramic Brake Pads"
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white"
                     value={editFormData.po_description}
-                    onChange={(e) => setEditFormData({...editFormData, po_description: e.target.value})}
+                    onChange={(e) => setEditFormData({ ...editFormData, po_description: e.target.value })}
                     required
                   />
                 </div>
@@ -949,25 +916,25 @@ export default function AllInventoryPage() {
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Stock Notes
                 </label>
-                <textarea 
+                <textarea
                   placeholder="Additional notes about this item..."
                   rows="3"
                   className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500 transition-all dark:text-white resize-none"
                   value={editFormData.stock_notes}
-                  onChange={(e) => setEditFormData({...editFormData, stock_notes: e.target.value})}
+                  onChange={(e) => setEditFormData({ ...editFormData, stock_notes: e.target.value })}
                 />
               </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-zinc-800">
-                <button 
+                <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
                   className="flex-1 px-6 py-3 text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-all"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={submitting}
                   className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

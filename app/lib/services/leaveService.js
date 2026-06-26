@@ -2,21 +2,16 @@ import { fetchApi } from '../api';
 
 export const leaveService = {
   // Get all leaves
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/leaves?skip=${skip}&limit=${limit}`);
-      
-      if (response?.data && Array.isArray(response.data)) {
-        return response.data;
+      const data = await fetchApi(`/api/leaves?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) return { data, total: data.length, page, page_size, total_pages: 1 };
+      if (data?.data && Array.isArray(data.data)) {
+        return { data: data.data, total: data.total ?? data.data.length, page: data.page ?? page, page_size: data.page_size ?? page_size, total_pages: data.total_pages ?? 1 };
       }
-      
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      return [];
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     } catch (error) {
-      console.error("Leaves API failed:", error.message);
+      console.error('Leaves API failed:', error.message);
       throw error;
     }
   },
@@ -25,15 +20,15 @@ export const leaveService = {
   getByEmployee: async (employeeId) => {
     try {
       const response = await fetchApi(`/api/leaves/employee/${employeeId}`);
-      
+
       if (response?.data && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       if (Array.isArray(response)) {
         return response;
       }
-      
+
       return [];
     } catch (error) {
       console.error("Employee leaves failed:", error.message);
@@ -50,11 +45,11 @@ export const leaveService = {
       }
 
       const isFormData = leaveData instanceof FormData;
-      
+
       const headers = {
         'Authorization': `Bearer ${token}`
       };
-      
+
       if (!isFormData) {
         headers['Content-Type'] = 'application/json';
       }
@@ -116,15 +111,15 @@ export const leaveService = {
   getPending: async () => {
     try {
       const response = await fetchApi('/api/leaves/pending');
-      
+
       if (response?.data && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       if (Array.isArray(response)) {
         return response;
       }
-      
+
       return [];
     } catch (error) {
       console.error("Pending leaves failed:", error.message);
@@ -136,11 +131,11 @@ export const leaveService = {
   getBalance: async (employeeId) => {
     try {
       const response = await fetchApi(`/api/leaves/employee/${employeeId}/balance`);
-      
+
       if (response?.data) {
         return response.data;
       }
-      
+
       return response;
     } catch (error) {
       console.error("Leave balance failed:", error.message);
@@ -190,7 +185,7 @@ export const leaveService = {
   uploadDocument: async (leaveId, file, documentName, documentType) => {
     try {
       const allowedEnums = [
-        'passport', 'eid_front', 'eid_back', 'visa', 'labour_contract', 
+        'passport', 'eid_front', 'eid_back', 'visa', 'labour_contract',
         'insurance', 'education', 'experience', 'other', 'medical', 'travel'
       ];
       const type = documentType && allowedEnums.includes(documentType.toLowerCase())
@@ -219,7 +214,7 @@ export const leaveService = {
         const errorText = await response.text();
         throw new Error(errorText || 'Upload failed');
       }
-      
+
       const responseText = await response.text();
       try {
         return JSON.parse(responseText);

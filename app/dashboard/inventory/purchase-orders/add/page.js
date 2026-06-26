@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
+import {
   ArrowLeft, Plus, Package, Hash, DollarSign, FileText, Layout, Check, X, Building2, Box, Calendar
 } from "lucide-react";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
@@ -23,10 +23,10 @@ export default function AddPurchaseOrderPage() {
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [submittingItem, setSubmittingItem] = useState(false);
   const { success: showSuccess, error: showError } = useToast();
-  const { containers } = useContainers(0, 100, null, null, null, true);
-  const { branches: apiBranches } = useBranches(0, 100, true);
-  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
-  // const { suppliers: apiSuppliers } = useSuppliers(0, 100, null, true);
+  const { containers } = useContainers(1, 10, null, null, null, true);
+  const { branches: apiBranches } = useBranches(1, 10, true);
+  const { stockItems: apiStockItems } = useStockItems(1, 10, null, true);
+  // const { suppliers: apiSuppliers } = useSuppliers(1, 10, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   // const suppliers = useMemo(() => Array.isArray(apiSuppliers) ? apiSuppliers : [], [apiSuppliers]);
@@ -34,7 +34,7 @@ export default function AddPurchaseOrderPage() {
     if (!apiStockItems) return [];
     return Array.isArray(apiStockItems) ? apiStockItems : (apiStockItems?.stock_items || []);
   }, [apiStockItems]);
-  
+
   const [formData, setFormData] = useState({
     po_id: "",
     container_id: "",
@@ -76,7 +76,7 @@ export default function AddPurchaseOrderPage() {
     if (selectedContainer) {
       // const supplierId = selectedContainer.supplier_id || selectedContainer.supplier?.id || "";
       const branchId = selectedContainer.destination_branch_id || selectedContainer.destination_branch?.id || selectedContainer.branch?.id || "";
-      
+
       setFormData(prev => ({
         ...prev,
         container_id: containerId,
@@ -91,36 +91,36 @@ export default function AddPurchaseOrderPage() {
 
   const handleCreateOrder = async (e, shouldAddItems = false) => {
     if (e) e.preventDefault();
-    
-    if(!formData.po_id || !formData.container_id || !formData.arrival_date || !formData.arrival_branch_id) {
-        showError("Please fill in all required fields");
-        return;
+
+    if (!formData.po_id || !formData.container_id || !formData.arrival_date || !formData.arrival_branch_id) {
+      showError("Please fill in all required fields");
+      return;
     }
 
     setLoading(true);
     try {
-        const payload = {
-            ...formData,
-            container_id: parseInt(formData.container_id),
-            // supplier_id: parseInt(formData.supplier_id),
-            arrival_branch_id: parseInt(formData.arrival_branch_id),
-            items_in_stock: parseInt(formData.items_in_stock),
-            total_container_revenue: formData.total_container_revenue.toString()
-        };
+      const payload = {
+        ...formData,
+        container_id: parseInt(formData.container_id),
+        // supplier_id: parseInt(formData.supplier_id),
+        arrival_branch_id: parseInt(formData.arrival_branch_id),
+        items_in_stock: parseInt(formData.items_in_stock),
+        total_container_revenue: formData.total_container_revenue.toString()
+      };
 
-        const result = await purchaseOrderService.create(payload);
-        setCreatedPo(result);
-        showSuccess("Purchase order created successfully!");
-        
-        if (shouldAddItems) {
-            setItemModalOpen(true);
-        } else {
-            router.push("/dashboard/inventory/purchase-orders");
-        }
+      const result = await purchaseOrderService.create(payload);
+      setCreatedPo(result);
+      showSuccess("Purchase order created successfully!");
+
+      if (shouldAddItems) {
+        setItemModalOpen(true);
+      } else {
+        router.push("/dashboard/inventory/purchase-orders");
+      }
     } catch (err) {
-        showError(`Failed to create PO: ${err.message}`);
+      showError(`Failed to create PO: ${err.message}`);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -130,103 +130,103 @@ export default function AddPurchaseOrderPage() {
 
     setSubmittingItem(true);
     try {
-        const payload = {
-            po_id: createdPo.id,
-            item_id: parseInt(itemFormData.item_id),
-            current_branch_id: parseInt(itemFormData.current_branch_id),
-            quantity: parseInt(itemFormData.quantity),
-            po_description: itemFormData.po_description,
-            stock_notes: itemFormData.stock_notes,
-            status: "in_stock",
-            is_dismantled: false
-        };
+      const payload = {
+        po_id: createdPo.id,
+        item_id: parseInt(itemFormData.item_id),
+        current_branch_id: parseInt(itemFormData.current_branch_id),
+        quantity: parseInt(itemFormData.quantity),
+        po_description: itemFormData.po_description,
+        stock_notes: itemFormData.stock_notes,
+        status: "in_stock",
+        is_dismantled: false
+      };
 
-        await poItemService.create(payload);
-        showSuccess("Item added successfully!");
-        
-        // Auto-update purchase order status to Saved & Published
-        try {
-            await purchaseOrderService.update(createdPo.id, {
-                po_id: createdPo.po_id,
-                container_id: createdPo.container_id,
-                // supplier_id: createdPo.supplier_id || parseInt(formData.supplier_id),
-                arrival_date: createdPo.arrival_date || formData.arrival_date,
-                arrival_branch_id: createdPo.arrival_branch_id || parseInt(formData.arrival_branch_id),
-                total_container_revenue: createdPo.total_container_revenue || parseFloat(formData.total_container_revenue) || 0,
-                items_in_stock: createdPo.items_in_stock || parseInt(formData.items_in_stock) || 0,
-                status: "saved_published",
-                notes: createdPo.notes || formData.notes || null
-            });
-        } catch (statusErr) {
-            console.error("Auto-status transition failed:", statusErr);
-        }
-        
-        router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
+      await poItemService.create(payload);
+      showSuccess("Item added successfully!");
+
+      // Auto-update purchase order status to Saved & Published
+      try {
+        await purchaseOrderService.update(createdPo.id, {
+          po_id: createdPo.po_id,
+          container_id: createdPo.container_id,
+          // supplier_id: createdPo.supplier_id || parseInt(formData.supplier_id),
+          arrival_date: createdPo.arrival_date || formData.arrival_date,
+          arrival_branch_id: createdPo.arrival_branch_id || parseInt(formData.arrival_branch_id),
+          total_container_revenue: createdPo.total_container_revenue || parseFloat(formData.total_container_revenue) || 0,
+          items_in_stock: createdPo.items_in_stock || parseInt(formData.items_in_stock) || 0,
+          status: "saved_published",
+          notes: createdPo.notes || formData.notes || null
+        });
+      } catch (statusErr) {
+        console.error("Auto-status transition failed:", statusErr);
+      }
+
+      router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
     } catch (err) {
-        showError(`Failed to add item: ${err.message}`);
+      showError(`Failed to add item: ${err.message}`);
     } finally {
-        setSubmittingItem(false);
+      setSubmittingItem(false);
     }
   };
 
   return (
     <ProtectedRoute permission={PERMISSIONS.PURCHASE_ORDERS.CREATE}>
       <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link 
-          href="/dashboard/inventory/purchase-orders" 
-          className="flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-black dark:text-white tracking-tight">Add Purchase Order</h1>
-          <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Create a new container shipment</p>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link
+            href="/dashboard/inventory/purchase-orders"
+            className="flex items-center justify-center w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-black dark:text-white tracking-tight">Add Purchase Order</h1>
+            <p className="text-gray-500 dark:text-zinc-500 text-sm font-medium">Create a new container shipment</p>
+          </div>
         </div>
-      </div>
 
-      {/* Form Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
-        <form onSubmit={(e) => handleCreateOrder(e, true)} className="p-8 space-y-8">
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="PO ID (Auto-Generated)">
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Generating PO ID..."
-                  className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none dark:text-white cursor-not-allowed"
-                  value={formData.po_id}
-                  readOnly={true}
-                  required
-                />
-              </div>
-            </FormField>
+        {/* Form Card */}
+        <div className="bg-white dark:bg-zinc-900 rounded-lg border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <form onSubmit={(e) => handleCreateOrder(e, true)} className="p-8 space-y-8">
+            {/* Form Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="PO ID (Auto-Generated)">
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Generating PO ID..."
+                    className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none dark:text-white cursor-not-allowed"
+                    value={formData.po_id}
+                    readOnly={true}
+                    required
+                  />
+                </div>
+              </FormField>
 
-            <FormField label="Container Code" required>
-              <div className="relative">
-                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
-                  value={formData.container_id}
-                  onChange={(e) => handleContainerChange(e.target.value)}
-                  required
-                >
-                  <option value="">Select Container Code</option>
-                  {containers?.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.container_code && c.container_number 
-                        ? `${c.container_code} - ${c.container_number}` 
-                        : (c.container_code || c.container_number || c.label || `Container #${c.id}`)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </FormField>
+              <FormField label="Container Code" required>
+                <div className="relative">
+                  <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={formData.container_id}
+                    onChange={(e) => handleContainerChange(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Container Code</option>
+                    {containers?.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.container_code && c.container_number
+                          ? `${c.container_code} - ${c.container_number}`
+                          : (c.container_code || c.container_number || c.label || `Container #${c.id}`)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormField>
 
-            {/* <FormField label="Supplier" required>
+              {/* <FormField label="Supplier" required>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <select 
@@ -245,176 +245,176 @@ export default function AddPurchaseOrderPage() {
               </div>
             </FormField> */}
 
-            <FormField label="Unload Date" required>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="date"
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                  value={formData.arrival_date}
-                  onChange={(e) => setFormData({...formData, arrival_date: e.target.value})}
+              <FormField label="Unload Date" required>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="date"
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                    value={formData.arrival_date}
+                    onChange={(e) => setFormData({ ...formData, arrival_date: e.target.value })}
+                    required
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="Unload Branch" required>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                    value={formData.arrival_branch_id}
+                    onChange={(e) => setFormData({ ...formData, arrival_branch_id: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Branch</option>
+                    {branches.map(branch => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.label || branch.branch_name || branch.name || `Branch #${branch.id}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </FormField>
+
+              <FormField label="Status" required>
+                <select
+                  className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   required
+                >
+                  <option value="draft">Draft</option>
+                  <option value="saved_published">Saved & Published</option>
+                </select>
+              </FormField>
+            </div>
+
+            <FormField label="Notes (Optional)">
+              <div className="relative">
+                <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
+                <textarea
+                  rows="4"
+                  placeholder="Notes"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
             </FormField>
 
-            <FormField label="Unload Branch" required>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
-                  value={formData.arrival_branch_id}
-                  onChange={(e) => setFormData({...formData, arrival_branch_id: e.target.value})}
-                  required
-                >
-                  <option value="">Select Branch</option>
-                  {branches.map(branch => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.label || branch.branch_name || branch.name || `Branch #${branch.id}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </FormField>
-
-            <FormField label="Status" required>
-              <select 
-                className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
-                value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
-                required
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
               >
-                <option value="draft">Draft</option>
-                <option value="saved_published">Saved & Published</option>
-              </select>
-            </FormField>
-          </div>
+                <Plus className="w-4 h-4" />
+                <span>{loading ? 'Saving...' : 'Save and Add Items'}</span>
+              </button>
 
-          <FormField label="Notes (Optional)">
-            <div className="relative">
-              <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
-              <textarea 
-                rows="4"
-                placeholder="Notes"
-                className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              />
+              <Link
+                href="/dashboard/inventory/purchase-orders"
+                className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+              >
+                Cancel
+              </Link>
             </div>
-          </FormField>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 pt-4">
-            <button 
-              type="submit"
-              disabled={loading}
-              className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              <span>{loading ? 'Saving...' : 'Save and Add Items'}</span>
-            </button>
-
-            <Link 
-              href="/dashboard/inventory/purchase-orders"
-              className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-lg font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
-            >
-              Cancel
-            </Link>
-          </div>
-        </form>
-      </div>
-
-      {/* Add Item Modal - Simplified */}
-      {itemModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
-            <form onSubmit={handleCreateItem} className="p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-black dark:text-white">Add Item to Order</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">PO: {createdPo?.po_id}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <FormField label="Item Category" required>
-                  <select 
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemFormData.item_id}
-                    onChange={e => setItemFormData({...itemFormData, item_id: e.target.value})}
-                  >
-                    <option value="">Select Item Category</option>
-                    {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
-                  </select>
-                </FormField>
-
-                <FormField label="Current Branch" required>
-                  <select 
-                    required
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemFormData.current_branch_id}
-                    onChange={e => setItemFormData({...itemFormData, current_branch_id: e.target.value})}
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map(b => <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>)}
-                  </select>
-                </FormField>
-
-                <FormField label="Quantity" required>
-                  <input 
-                    type="number"
-                    required
-                    min="1"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemFormData.quantity}
-                    onChange={e => setItemFormData({...itemFormData, quantity: e.target.value})}
-                  />
-                </FormField>
-
-                <FormField label="PO Description">
-                  <input 
-                    placeholder="e.g. Engine Block - High quality part"
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
-                    value={itemFormData.po_description}
-                    onChange={e => setItemFormData({...itemFormData, po_description: e.target.value})}
-                  />
-                </FormField>
-
-                <FormField label="Stock Notes">
-                  <textarea 
-                    rows="3"
-                    placeholder="Optional notes..."
-                    className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
-                    value={itemFormData.stock_notes}
-                    onChange={e => setItemFormData({...itemFormData, stock_notes: e.target.value})}
-                  />
-                </FormField>
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <button 
-                  type="submit"
-                  disabled={submittingItem}
-                  className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
-                >
-                  {submittingItem ? 'Adding...' : 'Add Item'}
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setItemModalOpen(false);
-                    router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
-                  }}
-                  className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
+          </form>
         </div>
-      )}
+
+        {/* Add Item Modal - Simplified */}
+        {itemModalOpen && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-zinc-900 rounded-[24px] w-full max-w-lg border border-gray-100 dark:border-zinc-800 shadow-2xl">
+              <form onSubmit={handleCreateItem} className="p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black dark:text-white">Add Item to Order</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">PO: {createdPo?.po_id}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <FormField label="Item Category" required>
+                    <select
+                      required
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemFormData.item_id}
+                      onChange={e => setItemFormData({ ...itemFormData, item_id: e.target.value })}
+                    >
+                      <option value="">Select Item Category</option>
+                      {stockItems.map(si => <option key={si.id} value={si.id}>{si.label || si.name}</option>)}
+                    </select>
+                  </FormField>
+
+                  <FormField label="Current Branch" required>
+                    <select
+                      required
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemFormData.current_branch_id}
+                      onChange={e => setItemFormData({ ...itemFormData, current_branch_id: e.target.value })}
+                    >
+                      <option value="">Select Branch</option>
+                      {branches.map(b => <option key={b.id} value={b.id}>{b.label || b.branch_name}</option>)}
+                    </select>
+                  </FormField>
+
+                  <FormField label="Quantity" required>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemFormData.quantity}
+                      onChange={e => setItemFormData({ ...itemFormData, quantity: e.target.value })}
+                    />
+                  </FormField>
+
+                  <FormField label="PO Description">
+                    <input
+                      placeholder="e.g. Engine Block - High quality part"
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
+                      value={itemFormData.po_description}
+                      onChange={e => setItemFormData({ ...itemFormData, po_description: e.target.value })}
+                    />
+                  </FormField>
+
+                  <FormField label="Stock Notes">
+                    <textarea
+                      rows="3"
+                      placeholder="Optional notes..."
+                      className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
+                      value={itemFormData.stock_notes}
+                      onChange={e => setItemFormData({ ...itemFormData, stock_notes: e.target.value })}
+                    />
+                  </FormField>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4">
+                  <button
+                    type="submit"
+                    disabled={submittingItem}
+                    className="flex-1 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-bold text-sm hover:opacity-90 transition-all"
+                  >
+                    {submittingItem ? 'Adding...' : 'Add Item'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setItemModalOpen(false);
+                      router.push(`/dashboard/inventory/purchase-orders/items/${createdPo.id}`);
+                    }}
+                    className="flex-1 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

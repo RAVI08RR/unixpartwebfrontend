@@ -2,16 +2,24 @@ import { fetchApi } from '../api';
 
 export const poItemService = {
   // Get all PO items
-  getAll: async (skip = 0, limit = 100, po_id = null) => {
+  getAll: async (page = 1, page_size = 10, po_id = null) => {
     try {
-      let endpoint = `/api/po-items/?skip=${skip}&limit=${limit}`;
+      let endpoint = `/api/po-items/?page=${page}&page_size=${page_size}`;
       if (po_id) endpoint += `&po_id=${po_id}`;
-      
       const data = await fetchApi(endpoint);
-      return Array.isArray(data) ? data : (data?.po_items || data?.items || []);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.po_items || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("📦 PO Items API failed:", error.message);
-      return [];
+      console.error('📦 PO Items API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -23,7 +31,7 @@ export const poItemService = {
     } catch (error) {
       // Silently fallback to getAll if dropdown endpoint fails (e.g., permission issues)
       console.log("📦 Using fallback: fetching PO items via getAll");
-      return poItemService.getAll(0, 100);
+      return poItemService.getAll(1, 10);
     }
   },
 

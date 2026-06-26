@@ -2,21 +2,16 @@ import { fetchApi } from '../api';
 
 export const payrollService = {
   // Get all payrolls
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/payroll?skip=${skip}&limit=${limit}`);
-      
-      if (response?.data && Array.isArray(response.data)) {
-        return response.data;
+      const data = await fetchApi(`/api/payroll?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) return { data, total: data.length, page, page_size, total_pages: 1 };
+      if (data?.data && Array.isArray(data.data)) {
+        return { data: data.data, total: data.total ?? data.data.length, page: data.page ?? page, page_size: data.page_size ?? page_size, total_pages: data.total_pages ?? 1 };
       }
-      
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      return [];
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     } catch (error) {
-      console.error("Payroll API failed:", error.message);
+      console.error('Payroll API failed:', error.message);
       throw error;
     }
   },
@@ -25,11 +20,11 @@ export const payrollService = {
   getById: async (id) => {
     try {
       const response = await fetchApi(`/api/payroll/${id}`);
-      
+
       if (response?.data && typeof response.data === 'object') {
         return response.data;
       }
-      
+
       return response;
     } catch (error) {
       throw new Error(`Payroll with ID ${id} not found: ${error.message}`);
@@ -86,11 +81,11 @@ export const payrollService = {
   getSummary: async () => {
     try {
       const response = await fetchApi('/api/payroll/summary');
-      
+
       if (response?.data) {
         return response.data;
       }
-      
+
       return response;
     } catch (error) {
       console.error("Payroll summary failed:", error.message);

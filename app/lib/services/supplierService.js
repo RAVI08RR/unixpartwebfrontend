@@ -2,31 +2,28 @@ import { fetchApi } from '../api';
 
 export const supplierService = {
   // Get all suppliers with pagination and filters
-  getAll: async (skip = 0, limit = 100, status = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
+  getAll: async (page = 1, page_size = 10, status = null) => {
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status !== null) queryParams += `&status=${status}`;
-    
+
     try {
-      console.log('🏭 Fetching suppliers from API...');
       const data = await fetchApi(`/api/suppliers?${queryParams}`);
-      console.log('🏭 Suppliers API response:', data);
-      
-      const suppliersData = Array.isArray(data) 
-        ? data 
-        : (data?.suppliers || data?.items || data?.data || []);
-      
-      if (suppliersData.length > 0) {
-        console.log('✅ Suppliers fetched successfully:', suppliersData.length);
-        return suppliersData;
-      } else {
-        console.log('⚠️ No suppliers in API response');
-        return [];
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
       }
+      return {
+        data: data?.data || data?.suppliers || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-       console.error("🏭 Suppliers API failed:", error.message);
-       return [];
+      console.error('🏭 Suppliers API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
+
 
   // Get dropdown suppliers
   getDropdown: async () => {

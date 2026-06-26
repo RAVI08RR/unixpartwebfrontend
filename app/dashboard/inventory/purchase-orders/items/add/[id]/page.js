@@ -13,22 +13,22 @@ import { useToast } from "@/app/components/Toast";
 export default function AddPOItemPage({ params }) {
   const [poId, setPoId] = useState(null);
   const router = useRouter();
-  
+
   useEffect(() => {
     Promise.resolve(params).then((resolvedParams) => {
       setPoId(resolvedParams.id);
     });
   }, [params]);
-  
+
   const [submitting, setSubmitting] = useState(false);
   const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [allPoItems, setAllPoItems] = useState([]);
   const [poItemsLoaded, setPoItemsLoaded] = useState(false);
   const [stockNumberTouched, setStockNumberTouched] = useState(false);
   const { success, error: showError } = useToast();
-  
-  const { branches: apiBranches } = useBranches(0, 100, true);
-  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
+
+  const { branches: apiBranches } = useBranches(1, 10, true);
+  const { stockItems: apiStockItems } = useStockItems(1, 10, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   const stockItems = useMemo(() => {
@@ -179,7 +179,7 @@ export default function AddPOItemPage({ params }) {
         current_branch_id: parseInt(formData.current_branch_id),
         quantity: parseInt(formData.quantity)
       };
-      
+
       await poItemService.create(payload);
       success("Item added successfully");
 
@@ -215,7 +215,7 @@ export default function AddPOItemPage({ params }) {
     <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-in fade-in duration-500 px-4 sm:px-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
+        <Link
           href={`/dashboard/inventory/purchase-orders/items/${poId}`}
           className="flex items-center justify-center w-10 h-10 rounded-[15px] bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 hover:shadow-lg transition-all"
         >
@@ -232,15 +232,15 @@ export default function AddPOItemPage({ params }) {
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <FormField label="Stock Number" required>
+            <FormField label="Stock Number" required>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Enter Stock Number..."
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-black tracking-wider focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
                   value={formData.stock_number}
-                  onChange={(e) => setFormData({...formData, stock_number: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, stock_number: e.target.value })}
                   required
                 />
               </div>
@@ -249,10 +249,10 @@ export default function AddPOItemPage({ params }) {
             <FormField label="Category" required>
               <div className="relative">
                 <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
+                <select
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.item_id}
-                  onChange={(e) => setFormData({...formData, item_id: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, item_id: e.target.value })}
                   required
                 >
                   <option value="">Select Item Category</option>
@@ -264,7 +264,7 @@ export default function AddPOItemPage({ params }) {
             <FormField label="Current Branch / Warehouse" required>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
+                <select
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.current_branch_id}
                   onChange={(e) => {
@@ -285,23 +285,23 @@ export default function AddPOItemPage({ params }) {
             <FormField label="Quantity" required>
               <div className="relative">
                 <Box className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
+                <input
                   type="number"
                   min="1"
                   placeholder="1"
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                   value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   required
                 />
               </div>
             </FormField>
 
             <FormField label="Status" required>
-              <select 
+              <select
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
                 <option value="in_stock">In Stock</option>
                 <option value="sold">Sold</option>
@@ -314,12 +314,12 @@ export default function AddPOItemPage({ params }) {
           <FormField label="Order Description">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="e.g. Engine Block - High quality part"
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.po_description}
-                onChange={(e) => setFormData({...formData, po_description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, po_description: e.target.value })}
               />
             </div>
           </FormField>
@@ -327,19 +327,19 @@ export default function AddPOItemPage({ params }) {
           <FormField label="Internal Item Notes">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
-              <textarea 
+              <textarea
                 rows="4"
                 placeholder="Enter any internal notes about this specific part..."
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
                 value={formData.stock_notes}
-                onChange={(e) => setFormData({...formData, stock_notes: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, stock_notes: e.target.value })}
               />
             </div>
           </FormField>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 pt-4">
-            <button 
+            <button
               type="submit"
               disabled={submitting}
               className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
@@ -348,7 +348,7 @@ export default function AddPOItemPage({ params }) {
               <span>{submitting ? 'Adding...' : 'Add Item'}</span>
             </button>
 
-            <Link 
+            <Link
               href={`/dashboard/inventory/purchase-orders/items/${poId}`}
               className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"
             >

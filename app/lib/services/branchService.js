@@ -2,13 +2,22 @@ import { fetchApi } from '../api';
 
 export const branchService = {
   // Get all branches
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/branches?skip=${skip}&limit=${limit}`);
-      return response;
+      const data = await fetchApi(`/api/branches?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.branches || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
       console.error('Failed to fetch branches:', error);
-      throw error;
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -17,7 +26,7 @@ export const branchService = {
     try {
       const data = await fetchApi('/api/dropdown/branches');
       console.log("🏢 Branch dropdown raw response:", data);
-      
+
       // Handle different response formats
       if (Array.isArray(data)) {
         return data;
@@ -26,7 +35,7 @@ export const branchService = {
       } else if (data?.data && Array.isArray(data.data)) {
         return data.data;
       }
-      
+
       return [];
     } catch (error) {
       // Silently handle permission errors (403) - these are expected when user lacks permissions
@@ -37,9 +46,9 @@ export const branchService = {
       console.error("🏢 Branches Dropdown API failed, using fallback:", error.message);
       // Fallback to getAll if dropdown endpoint fails
       try {
-        const allBranches = await branchService.getAll(0, 100);
+        const allBranches = await branchService.getAll(1, 10);
         console.log("🏢 Fallback branches from getAll:", allBranches);
-        
+
         // Handle different response formats from getAll
         if (Array.isArray(allBranches)) {
           return allBranches;
@@ -50,7 +59,7 @@ export const branchService = {
         } else if (allBranches?.data && Array.isArray(allBranches.data)) {
           return allBranches.data;
         }
-        
+
         return [];
       } catch (fallbackError) {
         console.log("ℹ️ Branches fallback: Using empty array (permission restricted)");

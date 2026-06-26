@@ -13,12 +13,15 @@ import { apiClient } from "@/app/lib/api";
 import Link from "next/link";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import Pagination from "@/app/components/Pagination";
 
 export default function SalesDataPage() {
   const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const PAGE_SIZE = 10;
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Dropdown data
   const [customers, setCustomers] = useState([]);
@@ -55,18 +58,21 @@ export default function SalesDataPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data = await invoiceService.getSalesData(0, 100);
-      setSalesData(Array.isArray(data) ? data : []);
+      const response = await invoiceService.getSalesData(currentPage, PAGE_SIZE);
+      const items = response?.data || [];
+      setSalesData(items);
+      setTotal(response?.total || 0);
+      setTotalPages(response?.total_pages || 1);
       
       // Debug: Log unique customer IDs in sales data
-      if (Array.isArray(data) && data.length > 0) {
-        const customerIds = [...new Set(data.map(item => item.invoice?.customer?.id).filter(Boolean))];
-        const customerNames = [...new Set(data.map(item => item.invoice?.customer?.full_name).filter(Boolean))];
+      if (Array.isArray(items) && items.length > 0) {
+        const customerIds = [...new Set(items.map(item => item.invoice?.customer?.id).filter(Boolean))];
+        const customerNames = [...new Set(items.map(item => item.invoice?.customer?.full_name).filter(Boolean))];
         console.log("📊 Sales Data Loaded:");
-        console.log("  - Total items:", data.length);
+        console.log("  - Total items:", items.length);
         console.log("  - Unique customer IDs:", customerIds);
         console.log("  - Unique customer names:", customerNames);
-        console.log("  - Sample item:", data[0]);
+        console.log("  - Sample item:", items[0]);
       }
     } catch (error) {
       console.error("Error fetching sales data:", error);
@@ -101,9 +107,12 @@ export default function SalesDataPage() {
   };
 
   useEffect(() => {
-    fetchData();
     fetchDropdownData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [currentPage]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -220,10 +229,12 @@ export default function SalesDataPage() {
     }, { unitPrice: 0, paid: 0, balance: 0 });
   }, [filteredData]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  // Pagination logic (hybrid server/client)
+  const displayTotalPages = filteredData.length > PAGE_SIZE ? Math.ceil(filteredData.length / PAGE_SIZE) : totalPages;
+  const displayTotal = filteredData.length > PAGE_SIZE ? filteredData.length : total;
+  const paginatedData = filteredData.length > PAGE_SIZE
+    ? filteredData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredData;
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-AE', {
@@ -650,46 +661,14 @@ export default function SalesDataPage() {
         </div>
       </div>
 
-        {/* Pagination */}
-        <div className="px-4 sm:px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-center sm:text-left text-[11px] font-black text-gray-400 uppercase tracking-[0.16em] sm:tracking-[0.2em]">
-            Showing <span className="text-gray-900 dark:text-white">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white">{Math.min(startIndex + itemsPerPage, filteredData.length)}</span> of <span className="text-gray-900 dark:text-white">{filteredData.length}</span> entries
-          </p>
-          
-          <div className="flex items-center justify-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="flex-1 sm:flex-none px-4 sm:px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(Math.min(totalPages, 5))].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="flex-1 sm:flex-none px-4 sm:px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center justify-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        {/* Pagination Footer */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={displayTotalPages}
+          total={displayTotal}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
 
 
       {/* View Details Modal */}

@@ -12,6 +12,8 @@ import { exportToExcel } from "@/app/lib/utils/exportUtils";
 import useSWR from "swr";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import Pagination from "@/app/components/Pagination";
+import { invoiceService } from "@/app/lib/services/invoiceService";
 
 export default function PaymentsReceivedPage() {
   const { success, error } = useToast();
@@ -33,13 +35,14 @@ export default function PaymentsReceivedPage() {
   }, []);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const PAGE_SIZE = 10;
   const [isMounted, setIsMounted] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
   
-  const itemsPerPage = 10;
-
   // Load dropdown lists using dropdown spec
   const { data: dropdownBranches } = useSWR('/api/dropdown/branches', () => apiClient.get('/api/dropdown/branches'));
   const { data: dropdownSuppliers } = useSWR('/api/dropdown/suppliers', () => apiClient.get('/api/dropdown/suppliers'));
@@ -101,17 +104,21 @@ export default function PaymentsReceivedPage() {
   useEffect(() => {
     setIsMounted(true);
     fetchPayments();
-  }, []);
+  }, [currentPage]);
 
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/invoices/payments/all');
+      const response = await invoiceService.getAllPayments(currentPage, PAGE_SIZE);
       console.log('Payments response:', response);
-      setPayments(response || []);
+      setPayments(response?.data || []);
+      setTotal(response?.total || 0);
+      setTotalPages(response?.total_pages || 1);
     } catch (error) {
       console.error('Failed to fetch payments:', error);
       setPayments([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -138,7 +145,7 @@ export default function PaymentsReceivedPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [payments.length, searchQuery, typeFilter, branchFilter, supplierFilter, userFilter, dateRange]);
+  }, [searchQuery, typeFilter, branchFilter, supplierFilter, userFilter, dateRange]);
 
   useEffect(() => {
     const hasActive = searchQuery !== "" ||
@@ -243,18 +250,12 @@ export default function PaymentsReceivedPage() {
     }
   };
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPayments = filteredPayments.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(prev => prev + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  // Pagination logic (hybrid server/client)
+  const displayTotalPages = filteredPayments.length > PAGE_SIZE ? Math.ceil(filteredPayments.length / PAGE_SIZE) : totalPages;
+  const displayTotal = filteredPayments.length > PAGE_SIZE ? filteredPayments.length : total;
+  const paginatedPayments = filteredPayments.length > PAGE_SIZE
+    ? filteredPayments.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : filteredPayments;
 
   const getPaymentTypeBadge = (type) => {
     const t = type?.toLowerCase().replace('_', ' ') || 'cash';
@@ -686,47 +687,13 @@ export default function PaymentsReceivedPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredPayments.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredPayments.length}</span> entries
-          </p>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            
-            <button 
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={displayTotalPages}
+          total={displayTotal}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Invoice Details Modal */}

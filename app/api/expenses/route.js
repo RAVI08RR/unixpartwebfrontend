@@ -5,13 +5,10 @@
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = searchParams.get('page') || '1';
-    const page_size = searchParams.get('page_size') || '10';
-
     const apiBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://srv1029267.hstgr.cloud:8000').replace(/\/+$/, '');
     const authHeader = request.headers.get('authorization');
 
-    const backendUrl = `${apiBaseUrl}/api/expenses/?page=${page}&page_size=${page_size}`;
+    const backendUrl = `${apiBaseUrl}/api/expenses/?${searchParams.toString()}`;
 
     const headers = {
       'Content-Type': 'application/json',

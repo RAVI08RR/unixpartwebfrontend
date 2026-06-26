@@ -15,6 +15,7 @@ import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { PermissionAlert } from "@/app/components/PermissionAlert";
 import ExportButton from "@/app/components/ExportButton";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
+import Pagination from "@/app/components/Pagination";
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -39,29 +40,40 @@ export default function EmployeesPage() {
   const [docToDelete, setDocToDelete] = useState(null);
   const [uploadDocType, setUploadDocType] = useState("other");
   
-  const { success, error } = useToast();
   const { hasPermission } = usePermission();
-  const itemsPerPage = 6;
+  const PAGE_SIZE = 10;
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Fetch employees
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
+  const { success, error } = useToast();
 
   const fetchEmployees = async () => {
     try {
       setLoading(true);
-      const data = await employeeService.getAll(0, 100);
-      // API returns array directly
-      setEmployees(Array.isArray(data) ? data : []);
+      const response = await employeeService.getAll(currentPage, PAGE_SIZE);
+      setEmployees(response?.data || []);
+      setTotal(response?.total || 0);
+      setTotalPages(response?.total_pages || 1);
     } catch (err) {
       console.error('Failed to fetch employees:', err);
       error('Failed to load employees');
       setEmployees([]);
+      setTotal(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
+
+  // Fetch employees when currentPage changes
+  useEffect(() => {
+    fetchEmployees();
+  }, [currentPage]);
+
+  // Reset to first page when search or status filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
 
   // Filter employees
   const filteredEmployees = useMemo(() => {
@@ -75,11 +87,7 @@ export default function EmployeesPage() {
   }, [employees, searchQuery, statusFilter]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
-  const paginatedEmployees = filteredEmployees.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedEmployees = filteredEmployees;
 
   const handleDelete = async () => {
     if (!selectedEmployee) return;
@@ -515,47 +523,13 @@ export default function EmployeesPage() {
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-            Showing <span className="text-gray-900 dark:text-white font-black">{filteredEmployees.length === 0 ? 0 : ((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(currentPage * itemsPerPage, filteredEmployees.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredEmployees.length}</span> entries
-          </p>
-          
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </button>
-            
-            <div className="hidden sm:flex items-center gap-1.5">
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                    currentPage === i + 1 
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg shadow-black/10' 
-                    : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-            </div>
-            
-            <button 
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages || totalPages === 0}
-              className="px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-sm font-bold text-gray-600 dark:text-gray-400 rounded-xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Delete Modal */}

@@ -14,35 +14,30 @@ export const invoiceService = {
   },
 
   // Get all invoices with pagination and filters
-  getAll: async (skip = 0, limit = 100, customer_id = null, status = null) => {
+  getAll: async (page = 1, page_size = 10, customer_id = null, status = null) => {
     try {
-      let queryParams = `skip=${skip}&limit=${limit}`;
+      let queryParams = `page=${page}&page_size=${page_size}`;
       if (customer_id) queryParams += `&customer_id=${customer_id}`;
       if (status) queryParams += `&status=${status}`;
-      
-      // Use Next.js proxy route to bypass CORS issues
-      return await fetchApi(`/api/invoices?${queryParams}`);
+
+      const data = await fetchApi(`/api/invoices?${queryParams}`);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.invoices || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
       console.warn('📋 Invoice service falling back to mock data:', error.message);
-      
-      // Return fallback data when backend is unavailable
-      const fallbackData = await getFallbackData('invoices', { skip, limit });
-      
-      // Apply filters to fallback data
+      const fallbackData = await getFallbackData('invoices', { page, page_size });
       let filteredData = fallbackData.data;
-      if (customer_id) {
-        filteredData = filteredData.filter(invoice => invoice.customer_id === parseInt(customer_id));
-      }
-      if (status) {
-        filteredData = filteredData.filter(invoice => invoice.invoice_status === status);
-      }
-      
-      return {
-        ...fallbackData,
-        data: filteredData,
-        total: filteredData.length,
-        _fallback: true
-      };
+      if (customer_id) filteredData = filteredData.filter(i => i.customer_id === parseInt(customer_id));
+      if (status) filteredData = filteredData.filter(i => i.invoice_status === status);
+      return { data: filteredData, total: filteredData.length, page, page_size, total_pages: Math.ceil(filteredData.length / page_size), _fallback: true };
     }
   },
 
@@ -52,13 +47,13 @@ export const invoiceService = {
       return await fetchApi(`/api/invoices/${id}`);
     } catch (error) {
       console.warn('📋 Invoice service falling back to mock data for ID:', id, error.message);
-      
+
       // Find invoice in fallback data
       const invoice = fallbackInvoices.find(inv => inv.id === parseInt(id));
       if (invoice) {
         return { ...invoice, _fallback: true };
       }
-      
+
       throw new Error(`Invoice with ID ${id} not found in fallback data`);
     }
   },
@@ -69,13 +64,13 @@ export const invoiceService = {
       return await fetchApi(`/api/invoices/number/${invoiceNumber}`);
     } catch (error) {
       console.warn('📋 Invoice service falling back to mock data for number:', invoiceNumber, error.message);
-      
+
       // Find invoice in fallback data
       const invoice = fallbackInvoices.find(inv => inv.invoice_number === invoiceNumber);
       if (invoice) {
         return { ...invoice, _fallback: true };
       }
-      
+
       throw new Error(`Invoice with number ${invoiceNumber} not found in fallback data`);
     }
   },
@@ -96,7 +91,7 @@ export const invoiceService = {
   // Update existing invoice
   update: async (id, invoiceData) => {
     console.log('📝 Starting invoice update:', { id, data: invoiceData });
-    
+
     try {
       const result = await retryWithBackoff(
         async () => {
@@ -118,12 +113,12 @@ export const invoiceService = {
           return shouldRetryError(error);
         }
       );
-      
+
       console.log('✅ Invoice update successful:', result);
       return result;
     } catch (error) {
       console.error('📋 Invoice update failed after retries:', error.message);
-      
+
       // Provide more specific error messages
       if (error.message.includes('timeout') || error.message.includes('signal timed out')) {
         throw new Error('Update timeout: The server is taking too long to respond. Your internet connection might be slow, or the server is overloaded. Please try again.');
@@ -136,7 +131,7 @@ export const invoiceService = {
       } else if (error.message.includes('500')) {
         throw new Error('Server error: The backend server encountered an error. Please try again later.');
       }
-      
+
       throw new Error(`Cannot update invoice: ${error.message}`);
     }
   },
@@ -213,19 +208,32 @@ export const invoiceService = {
   },
 
   // Get sales data (consolidated  // Sales Data endpoints
-  getSalesData: async (skip = 0, limit = 100) => {
+  getSalesData: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/invoices/sales-data?skip=${skip}&limit=${limit}`);
-      
+      const response = await fetchApi(`/api/invoices/sales-data?page=${page}&page_size=${page_size}`);
+
+      let items = [];
+      let total = 0;
+      let total_pages = 1;
+
+      if (Array.isArray(response)) {
+        items = response;
+        total = response.length;
+      } else {
+        items = response?.data || response?.items || [];
+        total = response?.total ?? items.length;
+        total_pages = response?.total_pages ?? 1;
+      }
+
       // WORKAROUND: The backend /api/invoices/sales-data endpoint does not return the actual invoice ID.
       // We need to fetch the invoices and match them by invoice_number to attach the ID.
       try {
-        const allInvoicesResp = await fetchApi('/api/invoices/?skip=0&limit=100');
-        const invoicesList = Array.isArray(allInvoicesResp) ? allInvoicesResp : 
-                            (allInvoicesResp.items || allInvoicesResp.invoices || []);
-        
-        if (Array.isArray(response) && invoicesList.length > 0) {
-          response.forEach(item => {
+        const allInvoicesResp = await fetchApi('/api/invoices/?page=1&page_size=100');
+        const invoicesList = Array.isArray(allInvoicesResp) ? allInvoicesResp :
+          (allInvoicesResp.items || allInvoicesResp.invoices || []);
+
+        if (items.length > 0 && invoicesList.length > 0) {
+          items.forEach(item => {
             if (item.invoice && !item.invoice.id && item.invoice.invoice_number) {
               const matched = invoicesList.find(inv => inv.invoice_number === item.invoice.invoice_number);
               if (matched) {
@@ -237,21 +245,37 @@ export const invoiceService = {
       } catch (e) {
         console.warn("Could not patch sales data with invoice IDs:", e);
       }
-      
-      return response;
+
+      return {
+        data: items,
+        total,
+        page,
+        page_size,
+        total_pages
+      };
     } catch (error) {
       console.error('Failed to fetch sales data:', error);
-      throw error;
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
   // Get all payments across all invoices
-  getAllPayments: async () => {
+  getAllPayments: async (page = 1, page_size = 10) => {
     try {
-      return await fetchApi('/api/invoices/payments/all');
+      const data = await fetchApi(`/api/invoices/payments/all?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.payments || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.warn('📋 Get all payments service falling back to empty array:', error.message);
-      return []; // Return empty array as fallback
+      console.warn('📋 Get all payments service falling back to empty envelope:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 

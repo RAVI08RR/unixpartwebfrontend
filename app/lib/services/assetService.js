@@ -2,17 +2,25 @@ import { fetchApi } from '../api';
 
 export const assetService = {
   // Get all assets
-  getAll: async (skip = 0, limit = 100, status = null, branch_id = null) => {
-    let queryParams = `skip=${skip}&limit=${limit}`;
+  getAll: async (page = 1, page_size = 10, status = null, branch_id = null) => {
+    let queryParams = `page=${page}&page_size=${page_size}`;
     if (status) queryParams += `&status=${status}`;
     if (branch_id) queryParams += `&branch_id=${branch_id}`;
-    
     try {
       const data = await fetchApi(`/api/assets?${queryParams}`);
-      return Array.isArray(data) ? data : (data?.assets || []);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.assets || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("Assets API failed:", error.message);
-      return [];
+      console.error('Assets API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -195,7 +203,7 @@ export const assetService = {
       formData.append('document_type', documentName); // Some backends might expect this
 
       const token = localStorage.getItem('access_token');
-      
+
       // Try the /upload endpoint first (as per API docs)
       let response = await fetch(`/api/assets/${assetId}/documents/upload`, {
         method: 'POST',
@@ -223,7 +231,7 @@ export const assetService = {
         console.error('Response status:', response.status);
         throw new Error(errorText || 'Upload failed');
       }
-      
+
       const responseText = await response.text();
       try {
         return JSON.parse(responseText);
@@ -252,7 +260,7 @@ export const assetService = {
     try {
       const token = localStorage.getItem('access_token');
       console.log('Downloading document:', { assetId, documentId });
-      
+
       const response = await fetch(`/api/assets/${assetId}/documents/${documentId}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -269,10 +277,10 @@ export const assetService = {
 
       const blob = await response.blob();
       console.log('Blob received:', blob.size, 'bytes, type:', blob.type);
-      
+
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = 'document';
-      
+
       if (contentDisposition) {
         const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
         if (matches != null && matches[1]) {
@@ -288,13 +296,13 @@ export const assetService = {
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up after a short delay
       setTimeout(() => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
       }, 100);
-      
+
       return true;
     } catch (error) {
       console.error('Download document error:', error);

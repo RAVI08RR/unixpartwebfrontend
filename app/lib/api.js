@@ -5,15 +5,15 @@
 
 // Get API base URL from environment with build-time fallback
 const getApiBaseUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
+  const apiUrl = 'http://srv1029267.hstgr.cloud:8000/';
+
   // Debug logging
   console.log('🔍 API URL Debug:', {
     NEXT_PUBLIC_API_URL: apiUrl,
     NODE_ENV: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
   });
-  
+
   // For build time, allow missing env var but warn
   if (!apiUrl) {
     if (process.env.NODE_ENV === 'production') {
@@ -22,7 +22,7 @@ const getApiBaseUrl = () => {
     }
     return 'http://srv1029267.hstgr.cloud:8000/'; // Development fallback
   }
-  
+
   return apiUrl;
 };
 
@@ -33,10 +33,10 @@ const TOKEN_KEY = 'access_token';
 
 export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
-  
+
   const token = localStorage.getItem(TOKEN_KEY);
   if (!token) return null;
-  
+
   // Check if token is expired (only if expiry time exists)
   const expiryTime = localStorage.getItem('token_expiry');
   if (expiryTime && Date.now() > parseInt(expiryTime)) {
@@ -44,7 +44,7 @@ export const getAuthToken = () => {
     clearAuthToken();
     return null;
   }
-  
+
   return token;
 };
 
@@ -68,14 +68,14 @@ export const clearAuthToken = () => {
 
 export const isTokenExpired = () => {
   if (typeof window === 'undefined') return true;
-  
+
   const expiryTime = localStorage.getItem('token_expiry');
   if (!expiryTime) {
     // If no expiry time set, check if token exists
     const token = localStorage.getItem(TOKEN_KEY);
     return !token; // Not expired if token exists
   }
-  
+
   const isExpired = Date.now() > parseInt(expiryTime);
   if (isExpired) {
     console.log('🔒 Token expired at:', new Date(parseInt(expiryTime)).toLocaleString());
@@ -88,10 +88,10 @@ export const isTokenExpired = () => {
  */
 export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
   const maxRetries = 2;
-  
+
   // Check if this is a Next.js API route (starts with /)
   const isNextApiRoute = endpoint.startsWith('/');
-  
+
   let url;
   if (isNextApiRoute) {
     // Next.js API route - use relative path
@@ -102,7 +102,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     url = `${baseUrl}/${cleanEndpoint}`;
   }
-  
+
   const headers = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -128,9 +128,9 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     headers,
     // Add timeout for all requests - longer for login and updates
     signal: AbortSignal.timeout(
-      isAuthEndpoint ? 30000 : 
-      (options.method === 'PUT' || options.method === 'POST') ? 45000 : 
-      15000
+      isAuthEndpoint ? 30000 :
+        (options.method === 'PUT' || options.method === 'POST') ? 45000 :
+          15000
     ),
   };
 
@@ -138,7 +138,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
 
   try {
     const response = await fetch(url, config);
-    
+
     // Handle 401 - clear token and throw error (unless it's login/register)
     if (response.status === 401 && !isAuthEndpoint) {
       clearAuthToken();
@@ -153,7 +153,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     // Handle 500 errors with better messaging
     if (response.status === 500) {
       console.error('🚨 Server Error (500):', url);
-      
+
       let errorDetails = '';
       try {
         const rawText = await response.text();
@@ -161,8 +161,8 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
         try {
           const errorData = JSON.parse(rawText);
           if (errorData.detail) {
-            errorDetails = typeof errorData.detail === 'string' 
-              ? errorData.detail 
+            errorDetails = typeof errorData.detail === 'string'
+              ? errorData.detail
               : JSON.stringify(errorData.detail);
           } else if (errorData.message) {
             errorDetails = errorData.message;
@@ -178,7 +178,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
       } catch (e) {
         errorDetails = 'Backend server error.';
       }
-      
+
       console.error('🚨 Server Error Details:', errorDetails);
       throw new Error(`Backend server error: ${errorDetails}`);
     }
@@ -186,20 +186,20 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     // Handle 502/503/504 errors (backend connectivity issues) - retry these
     if (response.status >= 502 && response.status <= 504) {
       console.error('🚨 Backend Connectivity Error:', response.status, url);
-      
+
       // Retry on gateway errors
       if (retryCount < maxRetries) {
         console.log(`🔄 Retrying request in ${(retryCount + 1) * 1000}ms...`);
         await new Promise(resolve => setTimeout(resolve, (retryCount + 1) * 1000));
         return fetchApi(endpoint, options, retryCount + 1);
       }
-      
+
       throw new Error('Backend server is not accessible. The application will use fallback data.');
     }
 
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status} ${response.statusText}`;
-      
+
       try {
         const errorData = await response.json();
         if (errorData.detail) {
@@ -222,7 +222,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
       } catch (e) {
         // Use default error message if JSON parsing fails
       }
-      
+
       throw new Error(errorMessage);
     }
 
@@ -231,11 +231,11 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     }
-    
+
     return await response.text();
   } catch (error) {
     console.error(`❌ API Error: ${url}`, error);
-    
+
     // Handle network errors with retry
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
       if (retryCount < maxRetries) {
@@ -245,7 +245,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
       }
       throw new Error('Network error: Backend server is not accessible. The application will use fallback data.');
     }
-    
+
     // Handle timeout errors with retry
     if (error.name === 'AbortError' || error.message.includes('timeout')) {
       if (retryCount < maxRetries) {
@@ -255,7 +255,7 @@ export const fetchApi = async (endpoint, options = {}, retryCount = 0) => {
       }
       throw new Error('Request timeout: Backend server is taking too long to respond. The application will use fallback data.');
     }
-    
+
     throw error;
   }
 };
@@ -267,21 +267,21 @@ export const apiClient = {
     const url = queryString ? `${endpoint}?${queryString}` : endpoint;
     return fetchApi(url);
   },
-  
+
   post: (endpoint, data) => {
     return fetchApi(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   },
-  
+
   put: (endpoint, data) => {
     return fetchApi(endpoint, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   },
-  
+
   delete: (endpoint) => {
     return fetchApi(endpoint, {
       method: 'DELETE',

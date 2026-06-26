@@ -13,13 +13,13 @@ export default function EditPOItemPage() {
   const router = useRouter();
   const params = useParams();
   const itemId = params?.id;
-  
+
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { success, error: showError } = useToast();
-  
-  const { branches: apiBranches } = useBranches(0, 100, true);
-  const { stockItems: apiStockItems } = useStockItems(0, 100, null, true);
+
+  const { branches: apiBranches } = useBranches(1, 10, true);
+  const { stockItems: apiStockItems } = useStockItems(1, 10, null, true);
 
   const branches = useMemo(() => Array.isArray(apiBranches) ? apiBranches : [], [apiBranches]);
   const stockItems = useMemo(() => {
@@ -72,7 +72,7 @@ export default function EditPOItemPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const payload = {
         po_description: formData.po_description || null,
@@ -96,7 +96,7 @@ export default function EditPOItemPage() {
       if (!isNaN(branchId)) {
         payload.current_branch_id = branchId;
       }
-      
+
       await poItemService.update(itemId, payload);
       success("Item updated successfully");
       router.push(`/dashboard/inventory/purchase-orders/items/${formData.po_id}`);
@@ -139,12 +139,12 @@ export default function EditPOItemPage() {
             <FormField label="Stock Number" required>
               <div className="relative">
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="e.g. DXB-001-000001"
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white uppercase"
                   value={formData.stock_number}
-                  onChange={(e) => setFormData({...formData, stock_number: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, stock_number: e.target.value })}
                   required
                 />
               </div>
@@ -153,10 +153,10 @@ export default function EditPOItemPage() {
             <FormField label="Target Stock Item" required>
               <div className="relative">
                 <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
+                <select
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.item_id}
-                  onChange={(e) => setFormData({...formData, item_id: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, item_id: e.target.value })}
                   required
                 >
                   <option value="">Select Item Category</option>
@@ -168,10 +168,10 @@ export default function EditPOItemPage() {
             <FormField label="Current Branch / Warehouse" required>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select 
+                <select
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                   value={formData.current_branch_id}
-                  onChange={(e) => setFormData({...formData, current_branch_id: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, current_branch_id: e.target.value })}
                   required
                 >
                   <option value="">Select Branch</option>
@@ -183,23 +183,23 @@ export default function EditPOItemPage() {
             <FormField label="Quantity" required>
               <div className="relative">
                 <Box className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
+                <input
                   type="number"
                   min="1"
                   placeholder="1"
                   className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                   value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   required
                 />
               </div>
             </FormField>
 
             <FormField label="Status" required>
-              <select 
+              <select
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white appearance-none cursor-pointer"
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
                 <option value="in_stock">In Stock</option>
                 <option value="sold">Sold</option>
@@ -212,12 +212,12 @@ export default function EditPOItemPage() {
           <FormField label="Order Description">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
-              <input 
+              <input
                 type="text"
                 placeholder="e.g. Engine Block - High quality part"
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white"
                 value={formData.po_description}
-                onChange={(e) => setFormData({...formData, po_description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, po_description: e.target.value })}
               />
             </div>
           </FormField>
@@ -225,19 +225,19 @@ export default function EditPOItemPage() {
           <FormField label="Internal Item Notes">
             <div className="relative">
               <FileText className="absolute left-3 top-4 w-4 h-4 text-gray-400" />
-              <textarea 
+              <textarea
                 rows="4"
                 placeholder="Enter any internal notes about this specific part..."
                 className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-[15px] text-sm font-medium focus:outline-none focus:ring-1 focus:ring-red-600/50 transition-all dark:text-white resize-none"
                 value={formData.stock_notes}
-                onChange={(e) => setFormData({...formData, stock_notes: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, stock_notes: e.target.value })}
               />
             </div>
           </FormField>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 pt-4">
-            <button 
+            <button
               type="submit"
               disabled={submitting}
               className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-[15px] font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-100 transition-all flex items-center gap-2"
@@ -246,7 +246,7 @@ export default function EditPOItemPage() {
               <span>{submitting ? 'Updating...' : 'Update Item'}</span>
             </button>
 
-            <button 
+            <button
               type="button"
               onClick={() => router.back()}
               className="px-6 py-3 text-gray-500 dark:text-gray-400 rounded-[15px] font-medium text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all"

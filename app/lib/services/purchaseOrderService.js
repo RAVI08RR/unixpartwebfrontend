@@ -2,16 +2,25 @@ import { fetchApi } from '../api';
 
 export const purchaseOrderService = {
   // Get all purchase orders
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const data = await fetchApi(`/api/purchase-orders/?skip=${skip}&limit=${limit}`);
-      // Return direct array or check for common wrapper keys
-      return Array.isArray(data) ? data : (data?.purchase_orders || data?.items || []);
+      const data = await fetchApi(`/api/purchase-orders/?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
+      }
+      return {
+        data: data?.data || data?.purchase_orders || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("📦 PO API failed:", error.message);
-      return [];
+      console.error('📦 PO API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
+
 
   // Get single PO by ID
   getById: async (id) => {
@@ -87,73 +96,73 @@ export const purchaseOrderService = {
 
   // Upload document
   uploadDocument: async (id, file, documentName) => {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('document_name', documentName);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('document_name', documentName);
 
-        // Get token using the correct key
+      // Get token using the correct key
       const token = localStorage.getItem('access_token');
 
-        // Use Next.js API proxy route
-        const response = await fetch(`/api/purchase-orders/${id}/documents`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-          body: formData,
-        });
+      // Use Next.js API proxy route
+      const response = await fetch(`/api/purchase-orders/${id}/documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.detail || errorData.error || 'Failed to upload document');
-        }
-
-        return await response.json();
-      } catch (error) {
-        throw new Error('Cannot upload document: ' + error.message);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.error || 'Failed to upload document');
       }
-    },
+
+      return await response.json();
+    } catch (error) {
+      throw new Error('Cannot upload document: ' + error.message);
+    }
+  },
 
   // Download document
   downloadDocument: async (poId, documentId) => {
-      try {
-        // Get token using the correct key
+    try {
+      // Get token using the correct key
       const token = localStorage.getItem('access_token');
 
-        // Use Next.js API proxy route
-        const response = await fetch(`/api/purchase-orders/${poId}/documents/${documentId}/download`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+      // Use Next.js API proxy route
+      const response = await fetch(`/api/purchase-orders/${poId}/documents/${documentId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to download document');
-        }
-
-        // Get filename from Content-Disposition header or use default
-        const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'document';
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-          if (filenameMatch) filename = filenameMatch[1];
-        }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      } catch (error) {
-        throw new Error('Cannot download document: ' + error.message);
+      if (!response.ok) {
+        throw new Error('Failed to download document');
       }
-    },
+
+      // Get filename from Content-Disposition header or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'document';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) filename = filenameMatch[1];
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      throw new Error('Cannot download document: ' + error.message);
+    }
+  },
 
   // Delete document
   deleteDocument: async (poId, documentId) => {

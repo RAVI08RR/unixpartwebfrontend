@@ -2,17 +2,24 @@ import { fetchApi } from '../api';
 
 export const stockItemService = {
   // Get all stock items
-  getAll: async (skip = 0, limit = 100, parent_id = null) => {
+  getAll: async (page = 1, page_size = 10, parent_id = null) => {
     try {
-      let url = `/api/stock-items?skip=${skip}&limit=${limit}`;
-      if (parent_id) {
-        url += `&parent_id=${parent_id}`;
+      let url = `/api/stock-items?page=${page}&page_size=${page_size}`;
+      if (parent_id) url += `&parent_id=${parent_id}`;
+      const data = await fetchApi(url);
+      if (Array.isArray(data)) {
+        return { data, total: data.length, page, page_size, total_pages: 1 };
       }
-      const response = await fetchApi(url);
-      return response;
+      return {
+        data: data?.data || data?.stock_items || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
       console.error('Failed to fetch stock items:', error);
-      throw error;
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -22,7 +29,7 @@ export const stockItemService = {
       return await fetchApi('/api/dropdown/stock-items');
     } catch (error) {
       console.error("📦 Stock Items Dropdown API failed:", error.message);
-      return stockItemService.getAll(0, 100); // Fallback to getAll with max limit of 100
+      return stockItemService.getAll(1, 10); // Fallback to getAll
     }
   },
 

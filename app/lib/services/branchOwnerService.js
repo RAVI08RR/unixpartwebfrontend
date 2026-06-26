@@ -2,28 +2,20 @@ import { fetchApi } from '../api';
 
 export const branchOwnerService = {
   // Get all branch owners
-  getAll: async (skip = 0, limit = 100) => {
+  getAll: async (page = 1, page_size = 10) => {
     try {
-      const response = await fetchApi(`/api/branch-owners?skip=${skip}&limit=${limit}`);
-      
-      // Handle nested data structure: { success: true, message: "...", data: [...] }
-      if (response?.data && Array.isArray(response.data)) {
-        return response.data;
-      }
-      
-      // Fallback for other response formats
-      if (Array.isArray(response)) {
-        return response;
-      }
-      
-      if (response?.branch_owners && Array.isArray(response.branch_owners)) {
-        return response.branch_owners;
-      }
-      
-      return [];
+      const data = await fetchApi(`/api/branch-owners?page=${page}&page_size=${page_size}`);
+      if (Array.isArray(data)) return { data, total: data.length, page, page_size, total_pages: 1 };
+      return {
+        data: data?.data || data?.branch_owners || data?.items || [],
+        total: data?.total ?? 0,
+        page: data?.page ?? page,
+        page_size: data?.page_size ?? page_size,
+        total_pages: data?.total_pages ?? 1,
+      };
     } catch (error) {
-      console.error("Branch owners API failed:", error.message);
-      return [];
+      console.error('Branch owners API failed:', error.message);
+      return { data: [], total: 0, page, page_size, total_pages: 1 };
     }
   },
 
@@ -31,12 +23,12 @@ export const branchOwnerService = {
   getById: async (id) => {
     try {
       const response = await fetchApi(`/api/branch-owners/${id}`);
-      
+
       // Handle nested data structure: { success: true, message: "...", data: {...} }
       if (response?.data && typeof response.data === 'object') {
         return response.data;
       }
-      
+
       // Direct response
       return response;
     } catch (error) {
@@ -48,12 +40,12 @@ export const branchOwnerService = {
   getBranchSummary: async (branchId) => {
     try {
       const response = await fetchApi(`/api/branch-owners/branch/${branchId}/summary`);
-      
+
       // Handle nested data structure
       if (response?.data) {
         return response.data;
       }
-      
+
       return response;
     } catch (error) {
       console.error("Branch ownership summary failed:", error.message);
@@ -71,7 +63,7 @@ export const branchOwnerService = {
         share_percent: branchOwnerData.share_percent || branchOwnerData.ownership_percentage || 0,
         share_amount: branchOwnerData.share_amount || 0,
       };
-      
+
       return await fetchApi('/api/branch-owners', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -91,7 +83,7 @@ export const branchOwnerService = {
         share_percent: branchOwnerData.share_percent || branchOwnerData.ownership_percentage || 0,
         share_amount: branchOwnerData.share_amount || 0,
       };
-      
+
       return await fetchApi(`/api/branch-owners/${id}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
@@ -122,9 +114,9 @@ export const branchOwnerService = {
         share_percent: owner.share_percent || 0,
         share_amount: owner.share_amount || 0,
       }));
-      
+
       console.log('Bulk creating branch owners:', payload);
-      
+
       return await fetchApi('/api/branch-owners/bulk', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -143,7 +135,7 @@ export const branchOwnerService = {
         share_percent: branchOwnerData.share_percent || 0,
         share_amount: branchOwnerData.share_amount || 0,
       };
-      
+
       return await fetchApi('/api/branch-owners/save', {
         method: 'POST',
         body: JSON.stringify(payload),

@@ -110,8 +110,8 @@ export const employeeSelfService = {
   },
 
   // Get employee leaves history
-  getLeaves: async (skip = 0, limit = 100) => {
-    return fetchApi(`/api/employee/me/leaves?skip=${skip}&limit=${limit}`);
+  getLeaves: async (page = 1, page_size = 10) => {
+    return fetchApi(`/api/employee/me/leaves?page=${page}&page_size=${page_size}`);
   },
 
   /**
@@ -309,9 +309,9 @@ export const employeeSelfService = {
   changePassword: async (old_password, new_password) => {
     return fetchApi('/api/employee/me/password', {
       method: 'PUT',
-      body: JSON.stringify({ 
-        current_password: old_password, 
-        new_password: new_password 
+      body: JSON.stringify({
+        current_password: old_password,
+        new_password: new_password
       }),
     });
   },
