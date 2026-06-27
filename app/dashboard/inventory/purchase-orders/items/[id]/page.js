@@ -142,13 +142,14 @@ function PurchaseOrderItemsContent({ params }) {
 
       setPurchaseOrder(poData);
 
-      const itemsData = await poItemService.getAll(0, 100, poId);
-      console.log('📦 Fetched PO Items:', itemsData);
-      console.log('📦 Items count:', itemsData?.length || 0);
-      console.log('📦 First item structure:', itemsData?.[0]);
-      console.log('📦 First item container:', itemsData?.[0]?.container);
-      console.log('📦 First item destination_branch:', itemsData?.[0]?.container?.destination_branch);
-      setItems(itemsData || []);
+      const response = await poItemService.getAll(1, 100, poId);
+      const itemsList = response?.data || response || [];
+      console.log('📦 Fetched PO Items:', itemsList);
+      console.log('📦 Items count:', itemsList.length);
+      console.log('📦 First item structure:', itemsList[0]);
+      console.log('📦 First item container:', itemsList[0]?.container);
+      console.log('📦 First item destination_branch:', itemsList[0]?.container?.destination_branch);
+      setItems(itemsList);
     } catch (err) {
       console.error("Failed to fetch PO data:", err);
       setPurchaseOrder(null);

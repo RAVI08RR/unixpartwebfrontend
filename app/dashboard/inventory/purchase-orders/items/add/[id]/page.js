@@ -102,7 +102,8 @@ export default function AddPOItemPage({ params }) {
   };
 
   const getUniqueStockNumber = async (branchId = formData.current_branch_id) => {
-    let latestItems = await poItemService.getAll(0, 5000);
+    const response = await poItemService.getAll(1, 5000);
+    let latestItems = response?.data || response || [];
     let stockNumber = generateStockNumber(branchId, latestItems);
     let attempts = 0;
 
@@ -142,7 +143,8 @@ export default function AddPOItemPage({ params }) {
 
   useEffect(() => {
     const loadPoItems = async () => {
-      const items = await poItemService.getAll(0, 1000);
+      const response = await poItemService.getAll(1, 1000);
+      const items = response?.data || response || [];
       setAllPoItems(items);
       setPoItemsLoaded(true);
     };
