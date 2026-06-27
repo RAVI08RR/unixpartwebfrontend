@@ -10,7 +10,7 @@ export function useContainerItems(container_id = null) {
     const fetchItems = async () => {
       try {
         setLoading(true);
-        const data = await containerItemService.getAll(0, 100, container_id);
+        const data = await containerItemService.getAll(1, 100, container_id);
         const list = Array.isArray(data) ? data : (data?.data || data?.items || data?.container_items || []);
         setItems(list);
         setError(null);

@@ -43,13 +43,14 @@ export default function ContainerItemsPage() {
 
       try {
         setLoading(true);
-        const [containerData, itemsData] = await Promise.all([
+        const [containerData, response] = await Promise.all([
           containerService.getById(containerId),
-          containerItemService.getAll(0, 100, containerId)
+          containerItemService.getAll(1, 100, containerId)
         ]);
 
         setContainer(containerData);
-        setItems(Array.isArray(itemsData) ? itemsData : []);
+        const itemsList = response?.data || response || [];
+        setItems(Array.isArray(itemsList) ? itemsList : []);
       } catch (err) {
         showError("Failed to load data: " + err.message);
       } finally {
@@ -76,8 +77,9 @@ export default function ContainerItemsPage() {
       success("Item removed successfully");
       setDeleteModalOpen(false);
       // Refresh items
-      const itemsData = await containerItemService.getAll(0, 100, containerId);
-      setItems(Array.isArray(itemsData) ? itemsData : []);
+      const response = await containerItemService.getAll(1, 100, containerId);
+      const itemsList = response?.data || response || [];
+      setItems(Array.isArray(itemsList) ? itemsList : []);
     } catch (err) {
       showError("Failed to delete item: " + err.message);
     }
