@@ -14,6 +14,7 @@ import Link from "next/link";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function SalesDataPage() {
   const [salesData, setSalesData] = useState([]);
@@ -332,18 +333,18 @@ export default function SalesDataPage() {
 
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+              className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                 }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
 
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all">
+            <button className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all">
               <Download className="w-4 h-4" />
-              <span>Export to Excel</span>
+              <span className="hidden sm:inline">Export to Excel</span>
             </button>
           </div>
         </div>
@@ -514,7 +515,7 @@ export default function SalesDataPage() {
         )}
 
         {/* Main Table Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800 shadow-xl">
+        <TableContainer>
           <div className="p-4 sm:p-6 lg:p-8 border-b border-gray-50 dark:border-zinc-800/50 flex justify-between items-center">
             <div>
               <h3 className="text-lg font-black text-gray-900 dark:text-white">Sales Table</h3>
@@ -528,137 +529,85 @@ export default function SalesDataPage() {
             </div>
           </div>
 
-          {/* Desktop Table View */}
-          <div className="hidden xl:block overflow-x-auto">
-            <table className="w-full min-w-[1800px] text-left">
-              <thead>
-                <tr className="bg-gray-50/50 dark:bg-zinc-800/20 border-b border-gray-100 dark:border-zinc-800">
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Invoice By (User)</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Supplier Code</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Invoice Date & Time</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Customer Name</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Customer Number</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Item Sold</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Stock #</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Container No</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Sale Description</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Invoice Number</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Qty</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Unit Price</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Paid Amount</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Balance Amount</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Load Status</th>
-                  <th className="px-6 py-5 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">Load Date and Time</th>
-                  <th className="px-6 py-5"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr>
-                    <td colSpan="17" className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-3">
-                        <RefreshCcw className="w-8 h-8 text-gray-300 animate-spin" />
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Loading Sales Data...</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : paginatedData.length > 0 ? (
-                  paginatedData.map((item, idx) => (
-                    <tr key={idx} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-gray-600">
-                            {item.invoice?.created_by?.name?.substring(0, 2).toUpperCase() || "AU"}
-                          </div>
-                          <span className="text-sm font-bold text-gray-900 dark:text-white">{item.invoice?.created_by?.name || "Admin User"}</span>
+          <Table minWidth="1800px">
+            <TableHeader>
+              <TableHeaderCell>Invoice By (User)</TableHeaderCell>
+              <TableHeaderCell>Supplier Code</TableHeaderCell>
+              <TableHeaderCell>Invoice Date & Time</TableHeaderCell>
+              <TableHeaderCell>Customer Name</TableHeaderCell>
+              <TableHeaderCell>Customer Number</TableHeaderCell>
+              <TableHeaderCell>Item Sold</TableHeaderCell>
+              <TableHeaderCell>Stock #</TableHeaderCell>
+              <TableHeaderCell>Container No</TableHeaderCell>
+              <TableHeaderCell>Sale Description</TableHeaderCell>
+              <TableHeaderCell>Invoice Number</TableHeaderCell>
+              <TableHeaderCell>Qty</TableHeaderCell>
+              <TableHeaderCell className="text-right">Unit Price</TableHeaderCell>
+              <TableHeaderCell className="text-right">Paid Amount</TableHeaderCell>
+              <TableHeaderCell className="text-right">Balance Amount</TableHeaderCell>
+              <TableHeaderCell>Load Status</TableHeaderCell>
+              <TableHeaderCell>Load Date and Time</TableHeaderCell>
+              <TableHeaderCell></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="17" className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCcw className="w-8 h-8 text-gray-300 animate-spin mx-auto" />
+                      <p className="text-sm font-bold text-gray-400 uppercase tracking-widest text-center w-full">Loading Sales Data...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedData.length > 0 ? (
+                paginatedData.map((item, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-zinc-800 flex items-center justify-center font-bold text-[10px] text-gray-600">
+                          {item.invoice?.created_by?.name?.substring(0, 2).toUpperCase() || "AU"}
                         </div>
-                      </td>
-                      <td className="px-6 py-5 text-xs font-black text-gray-500">{item.po_item?.purchase_order?.container?.supplier?.supplier_code || "N/A"}</td>
-                      <td className="px-6 py-5 text-sm font-medium text-gray-600 dark:text-gray-400">{formatDate(item.invoice?.created_at)}</td>
-                      <td className="px-6 py-5 font-black text-gray-900 dark:text-white leading-tight">{item.invoice?.customer?.full_name || "-"}</td>
-                      <td className="px-6 py-5 text-sm font-bold text-gray-500 tracking-wider">{item.invoice?.customer?.phone || "-"}</td>
-                      <td className="px-6 py-5 text-sm font-black text-gray-900 dark:text-white truncate max-w-[200px]">{item.po_item?.stock_item?.name || "-"}</td>
-                      <td className="px-6 py-5"><span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-md">{item.po_item?.stock_number || "-"}</span></td>
-                      <td className="px-6 py-5 text-xs font-bold text-gray-500">{item.po_item?.purchase_order?.container?.container_number || "-"}</td>
-                      <td className="px-6 py-5 text-sm text-gray-500 max-w-xs truncate" title={item.sale_description || "-"}>{item.sale_description || "-"}</td>
-                      <td className="px-6 py-5 font-bold text-blue-600 text-sm">{item.invoice?.invoice_number || "-"}</td>
-                      <td className="px-6 py-5 font-black text-xs">{item.po_item?.quantity || "1"}</td>
-                      <td className="px-6 py-5 text-gray-900 dark:text-white font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0) + parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</td>
-                      <td className="px-6 py-5 text-emerald-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0)).toLocaleString()}</td>
-                      <td className="px-6 py-5 text-red-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</td>
-                      <td className="px-6 py-5">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.load_status === 'loaded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                          {item.load_status || 'Pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 text-sm font-medium text-gray-500">{item.load_date ? formatDate(item.load_date) : "-"}</td>
-                      <td className="px-6 py-5 text-right relative">
-                        <button onClick={() => toggleMenu(idx)} className="p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all"><MoreVertical className="w-5 h-5" /></button>
-                        {menuOpenId === idx && (
-                          <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-[200] p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
-                            <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
-                            <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4 text-blue-600" />View Invoice</Link>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan="17" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest italic animate-pulse">No sales data found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards View */}
-          <div className="xl:hidden divide-y divide-gray-50 dark:divide-zinc-800/50">
-            {loading ? (
-              <div className="p-10 text-center">
-                <RefreshCcw className="w-8 h-8 text-gray-300 animate-spin mx-auto mb-3" />
-                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Loading Sales Data...</p>
-              </div>
-            ) : paginatedData.length > 0 ? paginatedData.map((item, idx) => (
-              <div key={idx} className="p-5 active:bg-gray-50 dark:active:bg-zinc-900 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/10 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">
-                      {item.invoice?.invoice_number?.slice(-3)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{item.invoice?.customer?.full_name || 'Individual'}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{item.invoice?.invoice_number}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => toggleMenu(idx)} className="p-2 -mr-2 text-gray-400 active:scale-90 transition-transform"><MoreVertical className="w-5 h-5" /></button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Item / Stock #</p><p className="text-sm font-black text-gray-900 dark:text-white truncate">{item.po_item?.stock_item?.name || 'N/A'}</p><p className="text-[10px] text-red-600 font-black tracking-widest">{item.po_item?.stock_number}</p></div>
-                  <div className="space-y-1 text-right"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Paid / Balance</p><p className="text-sm font-black text-emerald-600">AED {(parseFloat(item.invoice?.paid_amount || 0)).toLocaleString()}</p><p className="text-[10px] font-black text-red-600">Bal: AED {(parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</p></div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest ${item.load_status === 'loaded' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-600'}`}>
-                      {item.load_status || 'Pending'}
-                    </div>
-                  </div>
-                  <button onClick={() => handleViewDetails(item)} className="text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 px-3 py-1 rounded-lg">Details</button>
-                </div>
-
-                {menuOpenId === idx && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-1 animate-in slide-in-from-top-2 duration-200">
-                    <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl w-full"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">View Invoice</span></Link>
-                  </div>
-                )}
-              </div>
-            )) : (
-              <div className="p-10 text-center text-gray-400 font-black uppercase tracking-widest italic">
-                No sales data found
-              </div>
-            )}
-          </div>
-        </div>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{item.invoice?.created_by?.name || "Admin User"}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs font-black text-gray-500">{item.po_item?.purchase_order?.container?.supplier?.supplier_code || "N/A"}</TableCell>
+                    <TableCell className="text-sm font-medium text-gray-600 dark:text-gray-400">{formatDate(item.invoice?.created_at)}</TableCell>
+                    <TableCell className="font-black text-gray-900 dark:text-white leading-tight">{item.invoice?.customer?.full_name || "-"}</TableCell>
+                    <TableCell className="text-sm font-bold text-gray-500 tracking-wider">{item.invoice?.customer?.phone || "-"}</TableCell>
+                    <TableCell className="text-sm font-black text-gray-900 dark:text-white truncate max-w-[200px]">{item.po_item?.stock_item?.name || "-"}</TableCell>
+                    <TableCell><span className="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded-md">{item.po_item?.stock_number || "-"}</span></TableCell>
+                    <TableCell className="text-xs font-bold text-gray-500">{item.po_item?.purchase_order?.container?.container_number || "-"}</TableCell>
+                    <TableCell className="text-sm text-gray-500 max-w-xs truncate" title={item.sale_description || "-"}>{item.sale_description || "-"}</TableCell>
+                    <TableCell className="font-bold text-blue-600 text-sm">{item.invoice?.invoice_number || "-"}</TableCell>
+                    <TableCell className="font-black text-xs">{item.po_item?.quantity || "1"}</TableCell>
+                    <TableCell className="text-gray-900 dark:text-white font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0) + parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</TableCell>
+                    <TableCell className="text-emerald-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.paid_amount || 0)).toLocaleString()}</TableCell>
+                    <TableCell className="text-red-600 font-black text-sm text-right">AED {(parseFloat(item.invoice?.outstanding_amount || 0)).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.load_status === 'loaded' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {item.load_status || 'Pending'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm font-medium text-gray-500">{item.load_date ? formatDate(item.load_date) : "-"}</TableCell>
+                    <TableCell className="text-right relative">
+                      <button onClick={() => toggleMenu(idx)} className="p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all"><MoreVertical className="w-5 h-5" /></button>
+                      {menuOpenId === idx && (
+                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-[200] p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
+                          <Link href={`/dashboard/sales/invoices/view/${item.invoice?.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4 text-blue-600" />View Invoice</Link>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="17" className="py-24 text-center text-gray-400 font-black uppercase tracking-widest italic animate-pulse text-center w-full">No sales data found</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {/* Pagination Footer */}
         <Pagination

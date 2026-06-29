@@ -418,24 +418,24 @@ function PurchaseOrderItemsContent({ params }) {
         <div className="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 justify-start sm:justify-end btn-mobile-arrange">
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+            className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
               ? 'bg-red-600 text-white shadow-red-600/10'
               : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
               }`}
           >
             <Filter className="w-4 h-4" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
           <button
             onClick={handlePrintLabels}
             disabled={selectedItems.length === 0}
-            className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${selectedItems.length > 0
+            className={`flex-none p-3.5 sm:px-6 sm:py-3.5 rounded-xl font-semibold text-sm transition-all flex items-center gap-2 ${selectedItems.length > 0
               ? "bg-blue-600 text-white hover:bg-blue-700"
               : "bg-gray-100 dark:bg-zinc-800 text-gray-400 cursor-not-allowed"
               }`}
           >
             <Printer className="w-4 h-4" />
-            PRINT LABELS {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}
+            <span className="hidden sm:inline">PRINT LABELS {selectedItems.length > 0 ? `(${selectedItems.length})` : ''}</span>
           </button>
           <ExportButton
             data={filteredItems}

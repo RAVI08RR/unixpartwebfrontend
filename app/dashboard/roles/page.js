@@ -15,6 +15,7 @@ import { formatDateForExport } from "@/app/lib/utils/exportUtils";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { usePermission } from "@/app/lib/hooks/usePermission";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function RolesPage() {
   const { hasPermission } = usePermission();
@@ -185,10 +186,10 @@ export default function RolesPage() {
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
             <button 
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+              className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
             >
               <Filter className="w-4 h-4" />
-              <span>Filters</span>
+              <span className="hidden sm:inline">Filters</span>
             </button>
 
             <ExportButton
@@ -200,9 +201,9 @@ export default function RolesPage() {
             />
             
             {hasPermission(PERMISSIONS.ROLES.CREATE) && (
-              <Link href="/dashboard/roles/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+              <Link href="/dashboard/roles/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Role</span>
+                <span className="hidden sm:inline whitespace-nowrap font-black">Add Role</span>
               </Link>
             )}
           </div>
@@ -210,129 +211,118 @@ export default function RolesPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Role Name</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Assigned Users</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Access Level</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"
-                style={{
-                  width: '22rem'
-                }}
-                >Last Updated</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedRoles.length > 0 ? (
-                paginatedRoles.map((role, index) => {
-                  const roleDisplay = getRoleDisplay(role.name);
-                  const IconComponent = roleDisplay.icon;
-                  return (
-                    <tr key={role.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all"
-                    style={{
-                      borderBottom:'1px solid  #E2E8F0'
-                    }}
-                    >
-                      <td className="px-6 py-6" data-label="Role Name">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
-                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {role.id}</p>
-                          </div>
+      <TableContainer>
+        <Table minWidth="800px">
+          <TableHeader>
+            <TableHeaderCell>Role Name</TableHeaderCell>
+            <TableHeaderCell>Assigned Users</TableHeaderCell>
+            <TableHeaderCell>Access Level</TableHeaderCell>
+            <TableHeaderCell style={{ width: '22rem' }}>Last Updated</TableHeaderCell>
+            <TableHeaderCell></TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {paginatedRoles.length > 0 ? (
+              paginatedRoles.map((role, index) => {
+                const roleDisplay = getRoleDisplay(role.name);
+                const IconComponent = roleDisplay.icon;
+                return (
+                  <TableRow key={role.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                          <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
-                      </td>
-
-                      <td className="px-6 py-6" data-label="Assigned Users">
-                        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${roleDisplay.badgeColor}`}>
-                          <IconComponent className="w-3.5 h-3.5" />
-                          {role.name}
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{role.name}</p>
+                          <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {role.id}</p>
                         </div>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Access Level">
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {role.permissions ? `${role.permissions.length} permissions` : 'View Access Level'}
-                        </span>
-                      </td>
+                    <TableCell>
+                      <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border text-[11px] font-black tracking-tight ${roleDisplay.badgeColor}`}>
+                        <IconComponent className="w-3.5 h-3.5" />
+                        {role.name}
+                      </div>
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Last Updated">
-                        <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                          {role.updated_at ? new Date(role.updated_at).toLocaleDateString() : 'Recently'}
-                        </span>
-                      </td>
+                    <TableCell>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        {role.permissions ? `${role.permissions.length} permissions` : 'View Access Level'}
+                      </span>
+                    </TableCell>
 
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(role.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-                                menuOpenId === role.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                              }`}
-                            >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === role.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
-                                <button 
-                                  onClick={() => handleViewRole(role)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                    <TableCell>
+                      <span className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                        {role.updated_at ? new Date(role.updated_at).toLocaleDateString() : 'Recently'}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="text-right relative">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="relative">
+                          <button 
+                            onClick={() => toggleMenu(role.id)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
+                              menuOpenId === role.id 
+                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                            }`}
+                          >
+                            <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                          
+                          {menuOpenId === role.id && (
+                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              index > paginatedRoles.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                            }`}>
+                              <button 
+                                onClick={() => handleViewRole(role)}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </button>
+                              {hasPermission(PERMISSIONS.ROLES.UPDATE) && (
+                                <Link 
+                                  href={`/dashboard/roles/edit/${role.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
-                                </button>
-                                  {hasPermission(PERMISSIONS.ROLES.UPDATE) && (
-                                    <Link 
-                                      href={`/dashboard/roles/edit/${role.id}`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Role
-                                    </Link>
-                                  )}
-                                  {hasPermission(PERMISSIONS.ROLES.DELETE) && (
-                                    <>
-                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                      <button 
-                                        onClick={() => handleDeleteClick(role)}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete Role
-                                      </button>
-                                    </>
-                                  )}
-                              </div>
-                            )}
-                          </div>
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Role
+                                </Link>
+                              )}
+                              {hasPermission(PERMISSIONS.ROLES.DELETE) && (
+                                <>
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                  <button 
+                                    onClick={() => handleDeleteClick(role)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Role
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="5" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No roles found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan="5" className="py-24 text-center">
+                  <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No roles found</p>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
         {/* Pagination Footer */}
         <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
@@ -374,7 +364,6 @@ export default function RolesPage() {
             </button>
           </div>
         </div>
-      </div>
 
       {/* View Role Modal */}
       {viewModalOpen && selectedRole && (

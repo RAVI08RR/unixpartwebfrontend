@@ -18,6 +18,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function UserManagementPage() {
   const { hasPermission } = usePermission();
@@ -224,13 +225,13 @@ export default function UserManagementPage() {
             <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                     ? 'bg-red-600 text-white shadow-red-600/10'
                     : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
-                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
 
               <ExportButton
@@ -241,9 +242,9 @@ export default function UserManagementPage() {
                 onError={(error) => error(`Export failed: ${error.message}`)}
               />
               {hasPermission(PERMISSIONS.USERS.CREATE) && (
-                <Link href="/dashboard/users/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
+                <Link href="/dashboard/users/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Add User</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Add User</span>
                 </Link>
               )}
             </div>
@@ -298,171 +299,164 @@ export default function UserManagementPage() {
         )}
 
         {/* Main Table Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-          <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-            <table className="w-full lg:min-w-[800px]">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">User</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Role</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"
-                    style={{ width: '10rem' }}
-                  >Last Active</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {paginatedUsers.length > 0 ? (
-                  paginatedUsers.map((user, index) => {
-                    return (
-                      <tr key={user.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-
-                      >
-                        {/* Name / User */}
-                        <td className="px-6 py-6" data-label="User">
-                          <div className="flex items-center gap-4">
-                            <img
-                              src={user.profile_image ? userService.getProfileImageUrl(user.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
-                              alt={user.name}
-                              className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
-                              onError={(e) => {
-                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
-                              }}
-                            />
-                            <div>
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
-                              <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">{user.user_code}</p>
-                            </div>
+        <TableContainer>
+          <Table minWidth="800px">
+            <TableHeader>
+              <TableHeaderCell>User</TableHeaderCell>
+              <TableHeaderCell>Contact</TableHeaderCell>
+              <TableHeaderCell>Role</TableHeaderCell>
+              <TableHeaderCell>Branch</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell style={{ width: '10rem' }}>Last Active</TableHeaderCell>
+              <TableHeaderCell></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedUsers.length > 0 ? (
+                paginatedUsers.map((user, index) => {
+                  return (
+                    <TableRow key={user.id}>
+                      {/* Name / User */}
+                      <TableCell>
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={user.profile_image ? userService.getProfileImageUrl(user.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                            alt={user.name}
+                            className="w-11 h-11 rounded-full object-cover border-2 border-white dark:border-zinc-800 shadow-sm"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
+                            }}
+                          />
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{user.name}</p>
+                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">{user.user_code}</p>
                           </div>
-                        </td>
+                        </div>
+                      </TableCell>
 
-                        {/* Contact */}
-                        <td className="px-6 py-6" data-label="Contact">
-                          <div className="space-y-1.5 sm:min-w-[180px] w-full">
+                      {/* Contact */}
+                      <TableCell>
+                        <div className="space-y-1.5 sm:min-w-[180px] w-full">
+                          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
+                            <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                            <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                          </div>
+                          {user.phone && (
                             <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                              <Mail className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.email}</span>
+                              <Phone className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
+                              <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.phone}</span>
                             </div>
-                            {user.phone && (
-                              <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 group/item">
-                                <Phone className="w-3.5 h-3.5 transition-colors group-hover/item:text-red-500" />
-                                <span className="text-[14px] font-normal group-hover/item:text-gray-900 dark:group-hover/item:text-white transition-colors">{user.phone}</span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Role */}
+                      <TableCell>
+                        <div className={`role-badge ${user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
+                            user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
+                              user.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
+                                user.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
+                                  user.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
+                                    'role-badge-default'
+                          }`}>
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          {user.role?.name || "No Role"}
+                        </div>
+                      </TableCell>
+
+                      {/* Branch */}
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                            {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
+                          </span>
+                          {user.suppliers?.length > 0 && (
+                            <span className="text-xs font-medium text-blue-500">
+                              {user.suppliers.map(s => s.name || s.supplier_code).join(", ")}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                          <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                          {user.status ? "Active" : "Inactive"}
+                        </div>
+                      </TableCell>
+
+                      {/* Last Active */}
+                      <TableCell>
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
+                          {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
+                        </span>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="text-right relative">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="relative">
+                            <button
+                              onClick={() => toggleMenu(user.id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${menuOpenId === user.id
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                                }`}
+                            >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            {menuOpenId === user.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}>
+                                <button
+                                  onClick={() => handleViewUser(user)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </button>
+                                {hasPermission(PERMISSIONS.USERS.UPDATE) && (
+                                  <Link
+                                    href={`/dashboard/users/edit/${user.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit User
+                                  </Link>
+                                )}
+                                {hasPermission(PERMISSIONS.USERS.DELETE) && (
+                                  <>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <button
+                                      onClick={() => handleDeleteClick(user)}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete User
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             )}
                           </div>
-                        </td>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
 
-                        {/* Role */}
-                        <td className="px-6 py-6" data-label="Role">
-                          <div className={`role-badge ${user.role?.name?.toLowerCase() === 'administrator' ? 'role-badge-admin' :
-                              user.role?.name?.toLowerCase() === 'manager' ? 'role-badge-manager' :
-                                user.role?.name?.toLowerCase() === 'warehouse staff' ? 'role-badge-staff' :
-                                  user.role?.name?.toLowerCase() === 'sales representative' ? 'role-badge-sales' :
-                                    user.role?.name?.toLowerCase() === 'accountant' ? 'role-badge-accountant' :
-                                      'role-badge-default'
-                            }`}>
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                            {user.role?.name || "No Role"}
-                          </div>
-                        </td>
-
-                        {/* Branch */}
-                        <td className="px-6 py-6" data-label="Branch">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                              {user.branches?.length > 0 ? user.branches.map(b => b.branch_name).join(", ") : "Not Assigned"}
-                            </span>
-                            {user.suppliers?.length > 0 && (
-                              <span className="text-xs font-medium text-blue-500">
-                                {user.suppliers.map(s => s.name || s.supplier_code).join(", ")}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-6" data-label="Status">
-                          <div className={user.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                            <div className={user.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                            {user.status ? "Active" : "Inactive"}
-                          </div>
-                        </td>
-
-                        {/* Last Active */}
-                        <td className="px-6 py-6" data-label="Last Active">
-                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold">
-                            {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "-"}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-6 text-right relative" data-label="Actions">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="relative">
-                              <button
-                                onClick={() => toggleMenu(user.id)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${menuOpenId === user.id
-                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                                  }`}
-                              >
-                                <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
-
-                              {menuOpenId === user.id && (
-                                <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedUsers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                  <button
-                                    onClick={() => handleViewUser(user)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    View Details
-                                  </button>
-                                  {hasPermission(PERMISSIONS.USERS.UPDATE) && (
-                                    <Link
-                                      href={`/dashboard/users/edit/${user.id}`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit User
-                                    </Link>
-                                  )}
-                                  {hasPermission(PERMISSIONS.USERS.DELETE) && (
-                                    <>
-                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                      <button
-                                        onClick={() => handleDeleteClick(user)}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete User
-                                      </button>
-                                    </>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No users found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="7" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No users found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
           {/* Pagination Footer */}
           <Pagination
@@ -472,7 +466,6 @@ export default function UserManagementPage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        </div>
 
         {/* View User Modal */}
         {viewModalOpen && selectedUser && (

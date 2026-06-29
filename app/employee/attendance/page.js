@@ -8,6 +8,7 @@ import {
 import { employeeSelfService } from "../../lib/services/employeeSelfService";
 import { useToast } from "../../components/Toast";
 import { useCurrentUser } from "../../lib/hooks/useCurrentUser";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function EmployeeAttendance() {
   const { user } = useCurrentUser();
@@ -293,26 +294,24 @@ export default function EmployeeAttendance() {
           </div>
         ) : records.length > 0 ? (
           <div className="space-y-4">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-100 dark:border-zinc-850 text-gray-500 font-semibold text-xs uppercase">
-                    <th className="pb-3 pl-2">Date</th>
-                    <th className="pb-3">Check In</th>
-                    <th className="pb-3">Check Out</th>
-                    <th className="pb-3">Hours</th>
-                    <th className="pb-3">Location Pin</th>
-                    <th className="pb-3 pr-2">Punch Notes</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-zinc-850">
+            <TableContainer>
+              <Table minWidth="800px">
+                <TableHeader>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Check In</TableHeaderCell>
+                  <TableHeaderCell>Check Out</TableHeaderCell>
+                  <TableHeaderCell>Hours</TableHeaderCell>
+                  <TableHeaderCell>Location Pin</TableHeaderCell>
+                  <TableHeaderCell>Punch Notes</TableHeaderCell>
+                </TableHeader>
+                <TableBody>
                   {records.map((log) => (
-                    <tr key={log.id} className="text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors">
-                      <td className="py-3 pl-2 font-bold">{formatDate(log.date || log.check_in)}</td>
-                      <td className="py-3">{formatTime(log.check_in)}</td>
-                      <td className="py-3">{formatTime(log.check_out)}</td>
-                      <td className="py-3 font-semibold">{calculateHours(log.check_in, log.check_out)}</td>
-                      <td className="py-3 text-xs text-gray-400">
+                    <TableRow key={log.id}>
+                      <TableCell className="font-bold">{formatDate(log.date || log.check_in)}</TableCell>
+                      <TableCell>{formatTime(log.check_in)}</TableCell>
+                      <TableCell>{formatTime(log.check_out)}</TableCell>
+                      <TableCell className="font-semibold">{calculateHours(log.check_in, log.check_out)}</TableCell>
+                      <TableCell>
                         {log.latitude && log.longitude ? (
                           <span className="flex items-center gap-1">
                             <MapPin className="w-3.5 h-3.5 text-zinc-400" />
@@ -321,13 +320,15 @@ export default function EmployeeAttendance() {
                         ) : (
                           "No GPS Pin"
                         )}
-                      </td>
-                      <td className="py-3 text-xs text-gray-400 truncate max-w-xs pr-2">{log.notes || "--"}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-gray-400 truncate max-w-xs block">{log.notes || "--"}</span>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
+            </TableContainer>
 
             {/* Pagination Controls */}
             <div className="flex items-center justify-between border-t border-gray-100 dark:border-zinc-800 pt-4">

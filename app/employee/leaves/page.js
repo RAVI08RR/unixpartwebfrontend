@@ -9,6 +9,7 @@ import {
 import { employeeSelfService } from "../../lib/services/employeeSelfService";
 import { useToast } from "../../components/Toast";
 import { useCurrentUser } from "../../lib/hooks/useCurrentUser";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function EmployeeLeaves() {
   const { user } = useCurrentUser();
@@ -342,24 +343,22 @@ export default function EmployeeLeaves() {
           ) : leaves.length > 0 ? (
             <div>
               {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950/40">
-                      <th className="text-left text-xs font-black text-gray-500 uppercase tracking-wide px-6 py-3">Type</th>
-                      <th className="text-left text-xs font-black text-gray-500 uppercase tracking-wide px-3 py-3">Period</th>
-                      <th className="text-left text-xs font-black text-gray-500 uppercase tracking-wide px-3 py-3">Days</th>
-                      <th className="text-left text-xs font-black text-gray-500 uppercase tracking-wide px-3 py-3">Status</th>
-                      <th className="text-left text-xs font-black text-gray-500 uppercase tracking-wide px-3 py-3">Applied</th>
-                      <th className="text-right text-xs font-black text-gray-500 uppercase tracking-wide px-6 py-3">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
+              <TableContainer>
+                <Table minWidth="800px">
+                  <TableHeader>
+                    <TableHeaderCell>Type</TableHeaderCell>
+                    <TableHeaderCell>Period</TableHeaderCell>
+                    <TableHeaderCell>Days</TableHeaderCell>
+                    <TableHeaderCell>Status</TableHeaderCell>
+                    <TableHeaderCell>Applied</TableHeaderCell>
+                    <TableHeaderCell className="text-right">Action</TableHeaderCell>
+                  </TableHeader>
+                  <TableBody>
                     {leaves.map((leave) => {
                       const isPending = leave.status?.toLowerCase() === "pending";
                       return (
-                        <tr key={leave.id} className="hover:bg-gray-50/70 dark:hover:bg-zinc-950/30 transition-colors">
-                          <td className="px-6 py-4">
+                        <TableRow key={leave.id}>
+                          <TableCell>
                             <p className="font-bold text-gray-900 dark:text-white capitalize text-sm">
                               {leave.leave_type} Leave
                             </p>
@@ -368,22 +367,24 @@ export default function EmployeeLeaves() {
                                 {leave.reason}
                               </p>
                             )}
-                          </td>
-                          <td className="px-3 py-4 text-xs text-gray-600 dark:text-zinc-300 whitespace-nowrap">
-                            {formatDate(leave.start_date)} → {formatDate(leave.end_date)}
-                          </td>
-                          <td className="px-3 py-4">
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs text-gray-600 dark:text-zinc-300 whitespace-nowrap">
+                              {formatDate(leave.start_date)} → {formatDate(leave.end_date)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
                             <span className="font-black text-gray-900 dark:text-white">{leave.total_days}</span>
                             <span className="text-xs text-gray-400 ml-1">days</span>
-                          </td>
-                          <td className="px-3 py-4">{getStatusBadge(leave.status)}</td>
-                          <td className="px-3 py-4 text-xs text-gray-400">
+                          </TableCell>
+                          <TableCell>{getStatusBadge(leave.status)}</TableCell>
+                          <TableCell className="text-xs text-gray-400">
                             {formatDate(leave.created_at)}
                             {leave.approval_date && (
                               <p className="text-[10px] mt-0.5">Approved: {formatDate(leave.approval_date)}</p>
                             )}
-                          </td>
-                          <td className="px-6 py-4 text-right">
+                          </TableCell>
+                          <TableCell className="text-right">
                             {isPending ? (
                               <button
                                 disabled={cancellingId === leave.id}
@@ -400,47 +401,13 @@ export default function EmployeeLeaves() {
                             ) : (
                               <span className="text-xs text-gray-300 dark:text-zinc-700">—</span>
                             )}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile cards */}
-              <div className="md:hidden divide-y divide-gray-100 dark:divide-zinc-800">
-                {leaves.map((leave) => {
-                  const isPending = leave.status?.toLowerCase() === "pending";
-                  return (
-                    <div key={leave.id} className="p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-gray-900 dark:text-white capitalize text-sm">
-                          {leave.leave_type} Leave
-                        </p>
-                        {getStatusBadge(leave.status)}
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(leave.start_date)} → {formatDate(leave.end_date)} &bull; <strong>{leave.total_days} days</strong>
-                      </p>
-                      {leave.reason && <p className="text-xs text-gray-400 italic">{leave.reason}</p>}
-                      <div className="flex items-center justify-between pt-1">
-                        <p className="text-[10px] text-gray-400">Applied {formatDate(leave.created_at)}</p>
-                        {isPending && (
-                          <button
-                            disabled={cancellingId === leave.id}
-                            onClick={() => handleCancelLeave(leave.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-bold"
-                          >
-                            {cancellingId === leave.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
               {/* Pagination */}
               <div className="flex items-center justify-between border-t border-gray-100 dark:border-zinc-800 px-6 py-4">

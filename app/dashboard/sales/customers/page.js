@@ -17,6 +17,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function CustomersPage() {
   const { hasPermission } = usePermission();
@@ -287,23 +288,23 @@ export default function CustomersPage() {
             <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                     ? 'bg-red-600 text-white shadow-red-600/10'
                     : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
-                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
 
-              <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
+              <button className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm">
                 <Download className="w-4 h-4" />
-                <span>Export</span>
+                <span className="hidden sm:inline">Export</span>
               </button>
               {hasPermission(PERMISSIONS.CUSTOMERS.CREATE) && (
-                <Link href="/dashboard/sales/customers/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+                <Link href="/dashboard/sales/customers/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Add Customer</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Add Customer</span>
                 </Link>
               )}
             </div>
@@ -407,157 +408,154 @@ export default function CustomersPage() {
         )}
 
         {/* Main Table */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-          <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Customer</th>
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Business</th>
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Financial</th>
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-6 text-right text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {paginatedCustomers && paginatedCustomers.length > 0 ? (
-                  paginatedCustomers.map((customer, index) => (
-                    <tr key={customer.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
-                      {/* Customer Info */}
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={customer.profile_image ? customerService.getProfileImageUrl(customer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
-                            alt={customer.full_name}
-                            className="w-10 h-10 rounded-full object-cover"
-                            onError={(e) => {
-                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`;
-                            }}
-                          />
-                          <div>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{customer.full_name}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{customer.customer_code}</p>
-                          </div>
+        <TableContainer>
+          <Table minWidth="800px">
+            <TableHeader>
+              <TableHeaderCell>Customer</TableHeaderCell>
+              <TableHeaderCell>Contact</TableHeaderCell>
+              <TableHeaderCell>Business</TableHeaderCell>
+              <TableHeaderCell>Financial</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedCustomers && paginatedCustomers.length > 0 ? (
+                paginatedCustomers.map((customer, index) => (
+                  <TableRow key={customer.id}>
+                    {/* Customer Info */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={customer.profile_image ? customerService.getProfileImageUrl(customer.profile_image) : `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`}
+                          alt={customer.full_name}
+                          className="w-10 h-10 rounded-full object-cover"
+                          onError={(e) => {
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.full_name)}&background=random`;
+                          }}
+                        />
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">{customer.full_name}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{customer.customer_code}</p>
                         </div>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      {/* Contact */}
-                      <td className="px-6 py-5" data-label="Contact">
-                        <div className="space-y-1">
-                          {customer.phone && (
-                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                              <Phone className="w-3.5 h-3.5" />
-                              {customer.phone}
-                            </div>
-                          )}
-                          {customer.address && (
-                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                              <MapPin className="w-3.5 h-3.5" />
-                              <span className="truncate max-w-[150px]">{customer.address}</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Business */}
-                      <td className="px-6 py-5" data-label="Business">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 font-mono">
-                            <Building className="w-3.5 h-3.5" />
-                            {customer.business_name || "-"}
-                          </div>
-                          {customer.business_number && (
-                            <div className="text-[10px] text-gray-400 dark:text-gray-500 font-mono ml-5 uppercase tracking-widest">{customer.business_number}</div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Financial */}
-                      <td className="px-6 py-5" data-label="Financial">
-                        <div className="space-y-1.5">
+                    {/* Contact */}
+                    <TableCell>
+                      <div className="space-y-1">
+                        {customer.phone && (
                           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <DollarSign className="w-3.5 h-3.5 text-blue-500" />
-                            <span className="flex gap-1">Total: <strong className="text-gray-900 dark:text-white font-black">AED {parseFloat(customer.total_purchase || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <AlertTriangle className={`w-3.5 h-3.5 ${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-500' : 'text-green-500'}`} />
-                            <span className="flex gap-1">Due: <strong className={`${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'} font-black`}>AED {parseFloat(customer.outstanding_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-6 py-5" data-label="Status">
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${customer.status
-                            ? 'bg-green-100/50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
-                            : 'bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
-                          }`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${customer.status ? 'bg-green-600 dark:bg-green-400' : 'bg-red-600 dark:bg-red-400'}`} />
-                          {customer.status ? "Active" : "Inactive"}
-                        </div>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-5 text-right relative customer-actions-menu">
-                        <button onClick={() => toggleMenu(customer.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-
-                        {menuOpenId === customer.id && (
-                          <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                            }`}>
-                            <button onClick={() => handleViewCustomer(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
-                              <Eye className="w-3.5 h-3.5" /> View Details
-                            </button>
-
-                            <Link href={`/dashboard/sales/customers/purchase-history/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
-                              <History className="w-3.5 h-3.5" /> Purchase History
-                            </Link>
-
-                            {hasPermission(PERMISSIONS.CUSTOMERS.UPDATE) && (
-                              <>
-                                <Link href={`/dashboard/sales/customers/edit/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
-                                  <Pencil className="w-3.5 h-3.5" /> Edit Customer
-                                </Link>
-
-                                <button onClick={() => handleCreditLimitClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors">
-                                  <DollarSign className="w-3.5 h-3.5" /> Set Credit Limit
-                                </button>
-
-                                <button onClick={() => handleDeactivateClick(customer)} className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${customer.status
-                                    ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                                    : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
-                                  }`}>
-                                  {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
-                                  {customer.status ? "Deactivate" : "Activate"}
-                                </button>
-                              </>
-                            )}
-
-                            {hasPermission(PERMISSIONS.CUSTOMERS.DELETE) && (
-                              <>
-                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
-                                  <Trash2 className="w-3.5 h-3.5" /> Delete
-                                </button>
-                              </>
-                            )}
+                            <Phone className="w-3.5 h-3.5" />
+                            {customer.phone}
                           </div>
                         )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No customers found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        {customer.address && (
+                          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                            <MapPin className="w-3.5 h-3.5" />
+                            <span className="truncate max-w-[150px]">{customer.address}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Business */}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 font-mono">
+                          <Building className="w-3.5 h-3.5" />
+                          {customer.business_name || "-"}
+                        </div>
+                        {customer.business_number && (
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-mono ml-5 uppercase tracking-widest">{customer.business_number}</div>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Financial */}
+                    <TableCell>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <DollarSign className="w-3.5 h-3.5 text-blue-500" />
+                          <span className="flex gap-1">Total: <strong className="text-gray-900 dark:text-white font-black">AED {parseFloat(customer.total_purchase || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                          <AlertTriangle className={`w-3.5 h-3.5 ${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-500' : 'text-green-500'}`} />
+                          <span className="flex gap-1">Due: <strong className={`${parseFloat(customer.outstanding_balance || 0) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'} font-black`}>AED {parseFloat(customer.outstanding_balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong></span>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Status */}
+                    <TableCell>
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${customer.status
+                          ? 'bg-green-100/50 text-green-600 dark:bg-green-500/10 dark:text-green-400'
+                          : 'bg-red-100/50 text-red-600 dark:bg-red-500/10 dark:text-red-400'
+                        }`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${customer.status ? 'bg-green-600 dark:bg-green-400' : 'bg-red-600 dark:bg-red-400'}`} />
+                        {customer.status ? "Active" : "Inactive"}
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right relative customer-actions-menu">
+                      <button onClick={() => toggleMenu(customer.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+
+                      {menuOpenId === customer.id && (
+                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedCustomers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                          }`}>
+                          <button onClick={() => handleViewCustomer(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors">
+                            <Eye className="w-3.5 h-3.5" /> View Details
+                          </button>
+
+                          <Link href={`/dashboard/sales/customers/purchase-history/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors">
+                            <History className="w-3.5 h-3.5" /> Purchase History
+                          </Link>
+
+                          {hasPermission(PERMISSIONS.CUSTOMERS.UPDATE) && (
+                            <>
+                              <Link href={`/dashboard/sales/customers/edit/${customer.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-colors">
+                                <Pencil className="w-3.5 h-3.5" /> Edit Customer
+                              </Link>
+
+                              <button onClick={() => handleCreditLimitClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-xl transition-colors">
+                                <DollarSign className="w-3.5 h-3.5" /> Set Credit Limit
+                              </button>
+
+                              <button onClick={() => handleDeactivateClick(customer)} className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold rounded-xl transition-colors ${customer.status
+                                  ? 'text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                                  : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                                }`}>
+                                {customer.status ? <X className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
+                                {customer.status ? "Deactivate" : "Activate"}
+                              </button>
+                            </>
+                          )}
+
+                          {hasPermission(PERMISSIONS.CUSTOMERS.DELETE) && (
+                            <>
+                              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                              <button onClick={() => handleDeleteClick(customer)} className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors">
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No customers found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
           {/* Pagination Footer */}
           <Pagination
@@ -567,7 +565,6 @@ export default function CustomersPage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        </div>
 
 
 

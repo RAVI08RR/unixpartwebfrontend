@@ -8,6 +8,7 @@ import {
 import { leaveService } from "@/app/lib/services/leaveService";
 import { useToast } from "@/app/components/Toast";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
@@ -193,123 +194,107 @@ export default function LeavesPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
+      <TableContainer>
         {filteredLeaves.length > 0 ? (
-          <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Employee
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Leave Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    From - To
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Days
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                {filteredLeaves.map((leave) => (
-                  <tr key={leave.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4" data-label="Employee">
-                      <p className="text-sm font-bold text-gray-900 dark:text-white">
-                        {leave.employee ? `${leave.employee.first_name} ${leave.employee.last_name}` : 'N/A'}
-                      </p>
-                      <p className="text-xs text-gray-500">ID: {leave.employee_id}</p>
-                    </td>
-                    <td className="px-6 py-4" data-label="Leave Type">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {leave.leave_type || 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4" data-label="From - To">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {leave.start_date} - {leave.end_date}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4" data-label="Days">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        {leave.days || 0}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4" data-label="Status">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        leave.status === 'approved'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                          : leave.status === 'rejected'
-                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                      }`}>
-                        {leave.status || 'pending'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4" data-label="Actions">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setViewModal({ isOpen: true, leave })}
-                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
-                          title="View Details"
+          <Table minWidth="800px">
+            <TableHeader>
+              <TableHeaderCell>Employee</TableHeaderCell>
+              <TableHeaderCell>Leave Type</TableHeaderCell>
+              <TableHeaderCell>From - To</TableHeaderCell>
+              <TableHeaderCell>Days</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {filteredLeaves.map((leave) => (
+                <TableRow key={leave.id}>
+                  <TableCell>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">
+                      {leave.employee ? `${leave.employee.first_name} ${leave.employee.last_name}` : 'N/A'}
+                    </p>
+                    <p className="text-xs text-gray-500">ID: {leave.employee_id}</p>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {leave.leave_type || 'N/A'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {leave.start_date} - {leave.end_date}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {leave.days || 0}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      leave.status === 'approved'
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                        : leave.status === 'rejected'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                    }`}>
+                      {leave.status || 'pending'}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => setViewModal({ isOpen: true, leave })}
+                        className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                      </button>
+                      {hasPermission(PERMISSIONS.LEAVES.UPDATE) && (
+                        <Link
+                          href={`/dashboard/management/leaves/edit/${leave.id}`}
+                          className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                          title="Edit"
                         >
-                          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                          <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
+                        </Link>
+                      )}
+                      {leave.status === 'pending' && (
+                        <>
+                          {hasPermission(PERMISSIONS.LEAVES.APPROVE) && (
+                            <button
+                              onClick={() => setApproveModal({ isOpen: true, leave, notes: '' })}
+                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                              title="Approve"
+                            >
+                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          {hasPermission(PERMISSIONS.LEAVES.REJECT) && (
+                            <button
+                              onClick={() => setRejectModal({ isOpen: true, leave, notes: '' })}
+                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                              title="Reject"
+                            >
+                              <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {hasPermission(PERMISSIONS.LEAVES.DELETE) && (
+                        <button
+                          onClick={() => setDeleteModal({ isOpen: true, leave })}
+                          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
                         </button>
-                        {hasPermission(PERMISSIONS.LEAVES.UPDATE) && (
-                          <Link
-                            href={`/dashboard/management/leaves/edit/${leave.id}`}
-                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                          </Link>
-                        )}
-                        {leave.status === 'pending' && (
-                          <>
-                            {hasPermission(PERMISSIONS.LEAVES.APPROVE) && (
-                              <button
-                                onClick={() => setApproveModal({ isOpen: true, leave, notes: '' })}
-                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                                title="Approve"
-                              >
-                                <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                              </button>
-                            )}
-                            {hasPermission(PERMISSIONS.LEAVES.REJECT) && (
-                              <button
-                                onClick={() => setRejectModal({ isOpen: true, leave, notes: '' })}
-                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                                title="Reject"
-                              >
-                                <XCircle className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                        {hasPermission(PERMISSIONS.LEAVES.DELETE) && (
-                          <button
-                            onClick={() => setDeleteModal({ isOpen: true, leave })}
-                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <div className="p-12 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
@@ -320,7 +305,7 @@ export default function LeavesPage() {
             </p>
           </div>
         )}
-      </div>
+      </TableContainer>
 
       {/* View Modal */}
       {viewModal.isOpen && viewModal.leave && (

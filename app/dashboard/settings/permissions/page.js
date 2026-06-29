@@ -18,6 +18,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function PermissionsManagementPage() {
   const { hasPermission } = usePermission();
@@ -283,14 +284,14 @@ export default function PermissionsManagementPage() {
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              className={`flex-none p-3.5 sm:px-5 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
                 isFilterOpen 
                   ? 'bg-red-600 text-white shadow-red-600/10' 
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
 
             <ExportButton
@@ -303,10 +304,10 @@ export default function PermissionsManagementPage() {
             {hasPermission(PERMISSIONS.PERMISSIONS.CREATE) && (
               <button 
                 onClick={handleAddPermission}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                className="flex-none p-3.5 sm:px-5 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
               >
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Permission</span>
+                <span className="hidden sm:inline whitespace-nowrap font-black">Add Permission</span>
               </button>
             )}
           </div>
@@ -358,148 +359,145 @@ export default function PermissionsManagementPage() {
       )}
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Permission</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Module</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Slug</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Created</th>
-                <th className="px-6 py-6 text-right text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedPermissions.length > 0 ? (
-                paginatedPermissions.map((permission, index) => {
-                  return (
-                    <tr key={permission.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      {/* Permission Name */}
-                      <td className="px-6 py-6" data-label="Permission">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm flex-shrink-0">
-                            <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{permission.name || 'N/A'}</p>
-                            <p className="text-xs text-gray-400 mt-1 font-medium tracking-wide">ID: {permission.id}</p>
-                          </div>
+      <TableContainer>
+        <Table minWidth="800px">
+          <TableHeader>
+            <TableHeaderCell>Permission</TableHeaderCell>
+            <TableHeaderCell>Description</TableHeaderCell>
+            <TableHeaderCell>Module</TableHeaderCell>
+            <TableHeaderCell>Slug</TableHeaderCell>
+            <TableHeaderCell>Created</TableHeaderCell>
+            <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {paginatedPermissions.length > 0 ? (
+              paginatedPermissions.map((permission, index) => {
+                return (
+                  <TableRow key={permission.id}>
+                    {/* Permission Name */}
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm flex-shrink-0">
+                          <Shield className="w-5 h-5 text-red-600 dark:text-red-400" />
                         </div>
-                      </td>
-
-                      {/* Description */}
-                      <td className="px-6 py-6" data-label="Description">
-                        <div className="max-w-xs">
-                          <div className="flex items-start gap-2">
-                            <FileText className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                              {permission.description || 'No description'}
-                            </span>
-                          </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{permission.name || 'N/A'}</p>
+                          <p className="text-xs text-gray-400 mt-1 font-medium tracking-wide">ID: {permission.id}</p>
                         </div>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      {/* Module */}
-                      <td className="px-6 py-6" data-label="Module">
-                        <div className="flex items-center gap-2">
-                          <Tag className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
-                            {permission.module || 'General'}
+                    {/* Description */}
+                    <TableCell>
+                      <div className="max-w-xs">
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                            {permission.description || 'No description'}
                           </span>
                         </div>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      {/* Slug */}
-                      <td className="px-6 py-6" data-label="Slug">
-                        <div className="flex items-center gap-2">
-                          <Hash className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <code className="text-sm font-mono bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400 break-all">
-                            {permission.slug || 'N/A'}
-                          </code>
-                        </div>
-                      </td>
+                    {/* Module */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm font-bold text-gray-600 dark:text-gray-400">
+                          {permission.module || 'General'}
+                        </span>
+                      </div>
+                    </TableCell>
 
-                      {/* Created Date */}
-                      <td className="px-6 py-6" data-label="Created">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span className="text-sm text-gray-500 dark:text-gray-400 font-bold whitespace-nowrap">
-                            {formatDate(permission.created_at)}
-                          </span>
-                        </div>
-                      </td>
+                    {/* Slug */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Hash className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <code className="text-sm font-mono bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded text-gray-600 dark:text-gray-400 break-all">
+                          {permission.slug || 'N/A'}
+                        </code>
+                      </div>
+                    </TableCell>
 
-                      {/* Actions */}
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button 
-                              onClick={() => toggleMenu(permission.id)}
-                              className={`p-2 rounded-xl transition-all ${
-                                menuOpenId === permission.id 
-                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-                            
-                            {menuOpenId === permission.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                index > paginatedPermissions.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                              }`}>
+                    {/* Created Date */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-500 dark:text-gray-400 font-bold whitespace-nowrap">
+                          {formatDate(permission.created_at)}
+                        </span>
+                      </div>
+                    </TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right relative">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="relative">
+                          <button 
+                            onClick={() => toggleMenu(permission.id)}
+                            className={`p-2 rounded-xl transition-all ${
+                              menuOpenId === permission.id 
+                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                          
+                          {menuOpenId === permission.id && (
+                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                              index > paginatedPermissions.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                            }`}>
+                              <button 
+                                onClick={() => handleViewPermission(permission)}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </button>
+                              {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && (
                                 <button 
-                                  onClick={() => handleViewPermission(permission)}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                  onClick={() => handleEditPermission(permission)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
                                 >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Permission
                                 </button>
-                                {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && (
-                                  <button 
-                                    onClick={() => handleEditPermission(permission)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                    Edit Permission
-                                  </button>
-                                )}
-                                {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
-                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                )}
-                                {hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
-                                  <button 
-                                    onClick={() => handleDeleteClick(permission)} 
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Permission
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                              )}
+                              {hasPermission(PERMISSIONS.PERMISSIONS.UPDATE) && hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                              )}
+                              {hasPermission(PERMISSIONS.PERMISSIONS.DELETE) && (
+                                <button 
+                                  onClick={() => handleDeleteClick(permission)} 
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Permission
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="6" className="py-24 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center">
-                      <Shield className="w-8 h-8 text-red-300 dark:text-red-800" />
-                    </div>
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No permissions found</p>
-                    <p className="text-gray-300 dark:text-zinc-600 text-xs mt-1">Try adjusting your search or filters</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan="6" className="py-24 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center">
+                    <Shield className="w-8 h-8 text-red-300 dark:text-red-800" />
+                  </div>
+                  <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No permissions found</p>
+                  <p className="text-gray-300 dark:text-zinc-600 text-xs mt-1 text-center w-full">Try adjusting your search or filters</p>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
         {/* Pagination Footer */}
         <Pagination
@@ -509,7 +507,6 @@ export default function PermissionsManagementPage() {
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />
-      </div>
 
       {/* Add/Edit Permission Modal */}
       {(isAddModalOpen || isEditModalOpen) && (

@@ -8,6 +8,7 @@ import {
 import { employeeSelfService } from "../../lib/services/employeeSelfService";
 import { useToast } from "../../components/Toast";
 import { useCurrentUser } from "../../lib/hooks/useCurrentUser";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function EmployeeHistory() {
   const { user } = useCurrentUser();
@@ -163,26 +164,24 @@ export default function EmployeeHistory() {
               <h2 className="text-base font-bold text-gray-900 dark:text-white mb-4">Salary Adjustments Logs</h2>
               
               {salaries.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead>
-                      <tr className="border-b border-gray-100 dark:border-zinc-850 text-gray-500 font-semibold text-xs uppercase">
-                        <th className="pb-3 pl-2">Effective Date</th>
-                        <th className="pb-3">Salary (AED)</th>
-                        <th className="pb-3 pr-2">Increment Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-zinc-850">
+                <TableContainer>
+                  <Table minWidth="600px">
+                    <TableHeader>
+                      <TableHeaderCell>Effective Date</TableHeaderCell>
+                      <TableHeaderCell>Salary (AED)</TableHeaderCell>
+                      <TableHeaderCell>Increment Notes</TableHeaderCell>
+                    </TableHeader>
+                    <TableBody>
                       {[...salaries].sort((a,b) => new Date(b.effective_from) - new Date(a.effective_from)).map((sal, idx) => (
-                        <tr key={sal.id || idx} className="text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-900/40 transition-colors">
-                          <td className="py-3 pl-2 font-bold">{formatDate(sal.effective_from)}</td>
-                          <td className="py-3 font-semibold">{sal.salary_amount?.toLocaleString()} AED</td>
-                          <td className="py-3 text-xs text-gray-450 pr-2">{sal.reason || "Salary adjustment"}</td>
-                        </tr>
+                        <TableRow key={sal.id || idx}>
+                          <TableCell className="font-bold">{formatDate(sal.effective_from)}</TableCell>
+                          <TableCell className="font-semibold">{sal.salary_amount?.toLocaleString()} AED</TableCell>
+                          <TableCell className="text-xs text-gray-450">{sal.reason || "Salary adjustment"}</TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               ) : (
                 <div className="text-center py-8 bg-gray-50 dark:bg-zinc-950/20 border border-dashed border-gray-200 dark:border-zinc-850 rounded-xl">
                   <DollarSign className="w-8 h-8 text-gray-400 mx-auto mb-2" />

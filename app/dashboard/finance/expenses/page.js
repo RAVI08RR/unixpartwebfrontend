@@ -18,6 +18,7 @@ import { usePermission } from "@/app/lib/hooks/usePermission";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function ExpensesPage() {
   const { hasPermission } = usePermission();
@@ -268,24 +269,24 @@ export default function ExpensesPage() {
           </div>
 
           <div className="flex items-center gap-3 justify-end shrink-0 w-full sm:w-auto">
-            <button
+             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+              className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                 }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
             {hasPermission(PERMISSIONS.EXPENSES.CREATE) && (
               <div className="shrink-0">
                 <Link
                   href="/dashboard/finance/expenses/add"
-                  className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-full sm:w-auto"
+                  className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all w-auto"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Add Expense</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Add Expense</span>
                 </Link>
               </div>
             )}
@@ -440,172 +441,169 @@ export default function ExpensesPage() {
         )}
 
         {/* Main Table Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-          <div className="overflow-x-auto w-full scrollbar-hide">
-            <table className="w-full min-w-[1200px]">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky left-0 bg-white dark:bg-zinc-900 z-10">Expense ID</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Description</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Type</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Document</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                  <th className="px-4 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10 sticky right-0 bg-white dark:bg-zinc-900 z-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr>
-                    <td colSpan="9" className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Expenses...</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : paginatedExpenses.length > 0 ? (
-                  paginatedExpenses.map((expense, index) => {
-                    return (
-                      <tr key={expense.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                        <td className="px-4 py-4 sticky left-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Expense ID">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                              <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                                {expense.expense_id || `EXP-${expense.id}`}
-                              </p>
-                            </div>
+        <TableContainer>
+          <Table minWidth="1200px">
+            <TableHeader>
+              <TableHeaderCell>Expense ID</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell>Description</TableHeaderCell>
+              <TableHeaderCell>Type</TableHeaderCell>
+              <TableHeaderCell>Category</TableHeaderCell>
+              <TableHeaderCell>Supplier</TableHeaderCell>
+              <TableHeaderCell>Document</TableHeaderCell>
+              <TableHeaderCell>Amount</TableHeaderCell>
+              <TableHeaderCell className="text-right"></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="9" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em] text-center w-full">Loading Expenses...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedExpenses.length > 0 ? (
+                paginatedExpenses.map((expense, index) => {
+                  return (
+                    <TableRow key={expense.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
                           </div>
-                        </td>
-
-                        <td className="px-4 py-4" data-label="Date">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 whitespace-nowrap">
-                              {expense.date ? new Date(expense.date).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                              }) : '-'}
-                            </span>
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
+                              {expense.expense_id || `EXP-${expense.id}`}
+                            </p>
                           </div>
-                        </td>
+                        </div>
+                      </TableCell>
 
-                        <td className="px-4 py-4" data-label="Description">
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
-                            {expense.description || '-'}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 whitespace-nowrap">
+                            {expense.date ? new Date(expense.date).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : '-'}
                           </span>
-                        </td>
+                        </div>
+                      </TableCell>
 
-                        <td className="px-4 py-4" data-label="Type">
-                          {getTypeBadge(expense.type)}
-                        </td>
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300 line-clamp-2 max-w-xs">
+                          {expense.description || '-'}
+                        </span>
+                      </TableCell>
 
-                        <td className="px-4 py-4" data-label="Category">
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {expense.category || '-'}
-                          </span>
-                        </td>
+                      <TableCell>
+                        {getTypeBadge(expense.type)}
+                      </TableCell>
 
-                        <td className="px-4 py-4" data-label="Supplier">
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {expense.supplier ? (
-                              <>
-                                {expense.supplier.name || 'Unnamed'}
-                                {expense.supplier.supplier_code && (
-                                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
-                                    ({expense.supplier.supplier_code})
-                                  </span>
-                                )}
-                              </>
-                            ) : 'N/A'}
-                          </span>
-                        </td>
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {expense.category || '-'}
+                        </span>
+                      </TableCell>
 
-                        <td className="px-4 py-4" data-label="Document">
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {expense.document_path || 'N/A'}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-4" data-label="Amount">
-                          <div className="flex items-center gap-2">
-                            <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-sm font-black dark:text-white whitespace-nowrap">
-                              {formatCurrency(expense.amount)}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 text-right relative sticky right-0 bg-white dark:bg-zinc-900 group-hover:bg-gray-50/50 dark:group-hover:bg-zinc-800/30 z-10" data-label="Actions">
-                          <div className="flex items-center justify-end gap-2">
-                            <div className="relative">
-                              <button
-                                onClick={() => toggleMenu(expense.id)}
-                                className={`p-2 rounded-xl transition-all ${menuOpenId === expense.id
-                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                  }`}
-                              >
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
-
-                              {menuOpenId === expense.id && (
-                                <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedExpenses.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                  }`}>
-                                  <button
-                                    onClick={() => handleViewExpense(expense)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    View Details
-                                  </button>
-                                  {hasPermission(PERMISSIONS.EXPENSES.UPDATE) && (
-                                    <Link
-                                      href={`/dashboard/finance/expenses/edit/${expense.id}`}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
-                                    >
-                                      <Pencil className="w-4 h-4" />
-                                      Edit Expense
-                                    </Link>
-                                  )}
-                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                  {hasPermission(PERMISSIONS.EXPENSES.DELETE) && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedExpense(expense);
-                                        setDeleteModalOpen(true);
-                                        setMenuOpenId(null);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Expense
-                                    </button>
-                                  )}
-                                </div>
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {expense.supplier ? (
+                            <>
+                              {expense.supplier.name || 'Unnamed'}
+                              {expense.supplier.supplier_code && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
+                                  ({expense.supplier.supplier_code})
+                                </span>
                               )}
-                            </div>
+                            </>
+                          ) : 'N/A'}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {expense.document_path || 'N/A'}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm font-black dark:text-white whitespace-nowrap">
+                            {formatCurrency(expense.amount)}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-right relative">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="relative">
+                            <button
+                              onClick={() => toggleMenu(expense.id)}
+                              className={`p-2 rounded-xl transition-all ${menuOpenId === expense.id
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                                }`}
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+
+                            {menuOpenId === expense.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-50 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedExpenses.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                                }`}>
+                                <button
+                                  onClick={() => handleViewExpense(expense)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  View Details
+                                </button>
+                                {hasPermission(PERMISSIONS.EXPENSES.UPDATE) && (
+                                  <Link
+                                    href={`/dashboard/finance/expenses/edit/${expense.id}`}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Expense
+                                  </Link>
+                                )}
+                                <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                {hasPermission(PERMISSIONS.EXPENSES.DELETE) && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedExpense(expense);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Expense
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="9" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No expenses found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="9" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse text-center w-full">No expenses found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
           {/* Pagination Footer */}
           <Pagination
@@ -615,7 +613,6 @@ export default function ExpensesPage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        </div>
 
         {/* Delete Confirmation Modal */}
         {deleteModalOpen && (

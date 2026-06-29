@@ -16,6 +16,7 @@ import { PermissionAlert } from "@/app/components/PermissionAlert";
 import ExportButton from "@/app/components/ExportButton";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
@@ -288,10 +289,10 @@ export default function EmployeesPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleAddClick}
-                className="flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all w-full sm:w-auto"
+                className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 hover:opacity-90 active:scale-95 transition-all w-auto"
               >
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Employee</span>
+                <span className="hidden sm:inline whitespace-nowrap font-black">Add Employee</span>
               </button>
             </div>
           )}
@@ -333,194 +334,191 @@ export default function EmployeesPage() {
         </div>
 
         {/* Table Section */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[24px] border border-gray-100 dark:border-zinc-800/80 shadow-sm w-full max-w-full responsive-table-container">
-          <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Employee</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Contact</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Position</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Visa Status</th>
-                  <th className="px-6 py-4 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-4 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {paginatedEmployees.length > 0 ? (
-                  paginatedEmployees.map((employee) => {
-                    const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
-                    return (
-                      <tr key={employee.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                        <td className="px-6 py-4" data-label="Employee">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                              <UserCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+        <TableContainer>
+          <Table minWidth="1000px">
+            <TableHeader>
+              <TableHeaderCell>Employee</TableHeaderCell>
+              <TableHeaderCell>Contact</TableHeaderCell>
+              <TableHeaderCell>Position</TableHeaderCell>
+              <TableHeaderCell>Branch</TableHeaderCell>
+              <TableHeaderCell>Visa Status</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right"></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginatedEmployees.length > 0 ? (
+                paginatedEmployees.map((employee) => {
+                  const fullName = `${employee.first_name || ''} ${employee.last_name || ''}`.trim();
+                  return (
+                    <TableRow key={employee.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <UserCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <div className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
+                              {fullName || 'N/A'}
                             </div>
-                            <div>
-                              <div className="font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors leading-tight">
-                                {fullName || 'N/A'}
-                              </div>
-                              <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
-                                {employee.employee_id || 'No ID'}
-                              </div>
+                            <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                              {employee.employee_id || 'No ID'}
                             </div>
                           </div>
-                        </td>
-                        <td className="px-6 py-4" data-label="Contact">
-                          <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {employee.work_email || employee.personal_email || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
-                            {employee.mobile_number || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4" data-label="Position">
-                          <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {employee.actual_position || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
-                            Visa: {employee.visa_position || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4" data-label="Branch">
-                          <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {employee.current_branch?.branch_name || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
-                            {employee.current_branch?.branch_code || ''}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4" data-label="Visa Status">
-                          <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {employee.visa_status || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
-                            {employee.visa_type || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4" data-label="Status">
-                          <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${employee.status === 'active'
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
-                            }`}>
-                            {employee.status || 'N/A'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-right" data-label="Actions">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => handleViewEmployee(employee)}
-                              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all animate-in fade-in"
-                              title="View Details"
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.work_email || employee.personal_email || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.mobile_number || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.actual_position || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          Visa: {employee.visa_position || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.current_branch?.branch_name || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.current_branch?.branch_code || ''}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {employee.visa_status || 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400 dark:text-zinc-500 font-medium">
+                          {employee.visa_type || 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-lg ${employee.status === 'active'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                          }`}>
+                          {employee.status || 'N/A'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleViewEmployee(employee)}
+                            className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all animate-in fade-in"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                          </button>
+                          {hasPermission(PERMISSIONS.EMPLOYEES.UPDATE) && (
+                            <Link
+                              href={`/dashboard/management/employees/edit/${employee.id}`}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                              title="Edit"
                             >
-                              <Eye className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                              <Edit className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
+                            </Link>
+                          )}
+
+                          {/* More Actions Dropdown */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
+                              className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
+                              title="More Actions"
+                            >
+                              <MoreVertical className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
                             </button>
-                            {hasPermission(PERMISSIONS.EMPLOYEES.UPDATE) && (
-                              <Link
-                                href={`/dashboard/management/employees/edit/${employee.id}`}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
-                                title="Edit"
-                              >
-                                <Edit className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
-                              </Link>
+
+                            {menuOpenId === employee.id && (
+                              <>
+                                <div
+                                  className="fixed inset-0 z-10"
+                                  onClick={() => setMenuOpenId(null)}
+                                />
+                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                                  {hasPermission(PERMISSIONS.EMPLOYEES.UPDATE) && (
+                                    <>
+                                      <Link
+                                        href={`/dashboard/management/employees/${employee.id}/position-history`}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                      >
+                                        <Briefcase className="w-4 h-4 text-gray-400" />
+                                        Position History
+                                      </Link>
+                                      <Link
+                                        href={`/dashboard/management/employees/${employee.id}/salary-history`}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                      >
+                                        <DollarSign className="w-4 h-4 text-gray-400" />
+                                        Salary History
+                                      </Link>
+                                      <Link
+                                        href={`/dashboard/management/employees/${employee.id}/visa-history`}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                      >
+                                        <FileText className="w-4 h-4 text-gray-400" />
+                                        Visa History
+                                      </Link>
+                                      <button
+                                        onClick={() => {
+                                          handleOpenDocuments(employee);
+                                          setMenuOpenId(null);
+                                        }}
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
+                                      >
+                                        <FileText className="w-4 h-4 text-gray-400" />
+                                        Documents
+                                      </button>
+                                      <Link
+                                        href={`/dashboard/management/employees/${employee.id}/bank-details`}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
+                                      >
+                                        <CreditCard className="w-4 h-4 text-gray-400" />
+                                        Bank Details
+                                      </Link>
+                                    </>
+                                  )}
+                                  {hasPermission(PERMISSIONS.EMPLOYEES.DELETE) && (
+                                    <>
+                                      <div className="border-t border-gray-100 dark:border-zinc-800 my-1"></div>
+                                      <button
+                                        onClick={() => {
+                                          setSelectedEmployee(employee);
+                                          setDeleteModalOpen(true);
+                                          setMenuOpenId(null);
+                                        }}
+                                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 w-full transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                        Delete Employee
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              </>
                             )}
-
-                            {/* More Actions Dropdown */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
-                                title="More Actions"
-                              >
-                                <MoreVertical className="w-4 h-4 text-gray-500 dark:text-zinc-400" />
-                              </button>
-
-                              {menuOpenId === employee.id && (
-                                <>
-                                  <div
-                                    className="fixed inset-0 z-10"
-                                    onClick={() => setMenuOpenId(null)}
-                                  />
-                                  <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                                    {hasPermission(PERMISSIONS.EMPLOYEES.UPDATE) && (
-                                      <>
-                                        <Link
-                                          href={`/dashboard/management/employees/${employee.id}/position-history`}
-                                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                        >
-                                          <Briefcase className="w-4 h-4 text-gray-400" />
-                                          Position History
-                                        </Link>
-                                        <Link
-                                          href={`/dashboard/management/employees/${employee.id}/salary-history`}
-                                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                        >
-                                          <DollarSign className="w-4 h-4 text-gray-400" />
-                                          Salary History
-                                        </Link>
-                                        <Link
-                                          href={`/dashboard/management/employees/${employee.id}/visa-history`}
-                                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                        >
-                                          <FileText className="w-4 h-4 text-gray-400" />
-                                          Visa History
-                                        </Link>
-                                        <button
-                                          onClick={() => {
-                                            handleOpenDocuments(employee);
-                                            setMenuOpenId(null);
-                                          }}
-                                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
-                                        >
-                                          <FileText className="w-4 h-4 text-gray-400" />
-                                          Documents
-                                        </button>
-                                        <Link
-                                          href={`/dashboard/management/employees/${employee.id}/bank-details`}
-                                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors"
-                                        >
-                                          <CreditCard className="w-4 h-4 text-gray-400" />
-                                          Bank Details
-                                        </Link>
-                                      </>
-                                    )}
-                                    {hasPermission(PERMISSIONS.EMPLOYEES.DELETE) && (
-                                      <>
-                                        <div className="border-t border-gray-100 dark:border-zinc-800 my-1"></div>
-                                        <button
-                                          onClick={() => {
-                                            setSelectedEmployee(employee);
-                                            setDeleteModalOpen(true);
-                                            setMenuOpenId(null);
-                                          }}
-                                          className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 w-full transition-colors"
-                                        >
-                                          <Trash2 className="w-4 h-4" />
-                                          Delete Employee
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                            </div>
                           </div>
-                        </td>
-                      </tr>
-                    )
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="py-24 text-center">
-                      <p className="text-gray-500 font-bold text-sm">No employees found.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="7" className="py-24 text-center">
+                    <p className="text-gray-500 font-bold text-sm text-center w-full">No employees found.</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
           {/* Pagination Footer */}
           <Pagination
@@ -530,7 +528,6 @@ export default function EmployeesPage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        </div>
 
         {/* Delete Modal */}
         {deleteModalOpen && (

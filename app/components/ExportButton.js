@@ -62,10 +62,10 @@ export default function ExportButton({
       <button 
         onClick={() => setIsOpen(!isOpen)}
         disabled={isExporting || !data || data.length === 0}
-        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+        className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-500 dark:text-gray-400 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       >
         <Download className="w-4 h-4" />
-        <span>{isExporting ? 'Exporting...' : 'Export'}</span>
+        <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export'}</span>
       </button>
       
       {isOpen && !isExporting && (

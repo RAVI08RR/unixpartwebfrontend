@@ -20,6 +20,7 @@ import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 import DismantleModal from "@/app/components/DismantleModal";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function AllInventoryPage() {
   const router = useRouter();
@@ -362,21 +363,21 @@ export default function AllInventoryPage() {
         <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 lg:mt-0 justify-end btn-mobile-arrange">
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+            className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
               ? 'bg-red-600 text-white shadow-red-600/10'
               : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
               }`}
           >
             <Filter className="w-4 h-4" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
 
           <button
             onClick={() => success("Stock taking process initiated.")}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all active:scale-95"
+            className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-all active:scale-95"
           >
             <ClipboardList className="w-4 h-4 text-gray-500" />
-            <span>Stock Taking</span>
+            <span className="hidden sm:inline">Stock Taking</span>
           </button>
 
           <ExportButton
@@ -567,43 +568,72 @@ export default function AllInventoryPage() {
         </div>
       )}
 
-      {/* Main Table / Mobile Cards */}
-      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">
-        {/* Mobile Cards */}
-        <div className="block md:hidden divide-y divide-gray-100 dark:divide-zinc-800">
-          {loading ? (
-            <div className="py-16 flex flex-col items-center gap-3">
-              <div className="w-8 h-8 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
-              <p className="text-red-600 font-bold text-sm tracking-widest uppercase">Loading...</p>
-            </div>
-          ) : paginatedData.length > 0 ? (
-            paginatedData.map((item) => (
-              <div key={item.id} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 bg-gray-50 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0">
-                      <Package className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-gray-900 dark:text-white truncate">{item.stock_item?.name || item.po_description || "-"}</p>
-                      <p className="text-xs text-gray-400 font-mono uppercase tracking-wider">{item.stock_number || "-"}</p>
-                    </div>
+      <TableContainer>
+        <Table minWidth="1000px">
+          <TableHeader>
+            <TableHeaderCell>Item / Details</TableHeaderCell>
+            <TableHeaderCell>Stock Number</TableHeaderCell>
+            <TableHeaderCell>Quantity</TableHeaderCell>
+            <TableHeaderCell>Branch</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell className="text-right"></TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan="6" className="py-24 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading...</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
+                </TableCell>
+              </TableRow>
+            ) : paginatedData.length > 0 ? (
+              paginatedData.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500 shadow-inner">
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900 dark:text-white leading-tight">{item.stock_item?.name || item.po_description || "-"}</p>
+                        <p className="text-xs text-gray-400 font-medium mt-0.5">{item.po_description || "-"}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{item.stock_number || "-"}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.quantity || 1}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold">
+                      <Building2 className="w-3 h-3" />
+                      {item.current_branch?.branch_code || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
                       item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                        'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
-                      }`}>{item.status?.replace('_', ' ') || "-"}</span>
-                    <div className="relative">
-                      <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-all">
+                        item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
+                          'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
+                      }`}>
+                      {item.status?.replace('_', ' ') || "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right relative">
+                    <div className="relative inline-block">
+                      <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
                         <MoreVertical className="w-4 h-4 text-gray-400" />
                       </button>
                       {menuOpenId === item.id && (
-                        <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5">
-                          <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
+                        <div className={`absolute right-0 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150 ${index > paginatedData.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                             <Eye className="w-4 h-4" />View Details
                           </button>
-                          <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800">
+                          <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
                             <FileText className="w-4 h-4" />Edit Item
                           </button>
                           {!item.is_dismantled && (
@@ -613,7 +643,7 @@ export default function AllInventoryPage() {
                                 setDismantleModalOpen(true);
                                 setMenuOpenId(null);
                               }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10"
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors text-left"
                             >
                               <Scissors className="w-4 h-4" />Dismantle Item
                             </button>
@@ -621,123 +651,25 @@ export default function AllInventoryPage() {
                         </div>
                       )}
                     </div>
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center gap-4 pl-13">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-[10px] font-bold">
-                    <Building2 className="w-3 h-3" />{item.current_branch?.branch_code || "-"}
-                  </span>
-                  <span className="text-xs text-gray-400">Qty: <strong className="text-gray-700 dark:text-gray-300">{item.quantity || 1}</strong></span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-16 flex flex-col items-center gap-3">
-              <div className="w-14 h-14 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
-                <Package className="w-7 h-7 text-gray-300 dark:text-zinc-600" />
-              </div>
-              <p className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
-              <p className="text-xs text-gray-400">Try adjusting your filters.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800">
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Item / Details</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Stock Number</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Quantity</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Branch</th>
-                <th className="px-8 py-6 text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Status</th>
-                <th className="px-8 py-6 text-right text-[10px] font-black text-gray-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedData.length > 0 ? (
-                paginatedData.map((item) => (
-                  <tr key={item.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-all duration-300">
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all duration-500 shadow-inner">
-                          <Package className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-gray-900 dark:text-white">{item.stock_item?.name || item.po_description || "-"}</p>
-                          <p className="text-xs text-gray-400 font-medium mt-0.5">{item.po_description || "-"}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{item.stock_number || "-"}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="text-sm font-bold text-gray-700 dark:text-gray-300">{item.quantity || 1}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-xs font-bold">
-                        <Building2 className="w-3 h-3" />
-                        {item.current_branch?.branch_code || "-"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold ${item.status === 'in_stock' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' :
-                        item.status === 'sold' ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                          item.status === 'reserved' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400' :
-                            'bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400'
-                        }`}>
-                        {item.status?.replace('_', ' ') || "-"}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="relative inline-block">
-                        <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
-                          <MoreVertical className="w-4 h-4 text-gray-400" />
-                        </button>
-                        {menuOpenId === item.id && (
-                          <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                            <button onClick={() => handleViewDetails(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
-                              <Eye className="w-4 h-4" />View Details
-                            </button>
-                            <button onClick={() => handleEditItem(item)} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
-                              <FileText className="w-4 h-4" />Edit Item
-                            </button>
-                            {!item.is_dismantled && (
-                              <button
-                                onClick={() => {
-                                  setSelectedItem(item);
-                                  setDismantleModalOpen(true);
-                                  setMenuOpenId(null);
-                                }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors"
-                              >
-                                <Scissors className="w-4 h-4" />Dismantle Item
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-8 py-16 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
-                        <Package className="w-7 h-7 text-gray-300 dark:text-zinc-600" />
-                      </div>
-                      <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest">No Items Found</p>
-                      <p className="text-sm text-gray-400 font-medium">Try adjusting your filters to find what you&apos;re looking for.</p>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan="6" className="py-24 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 bg-gray-50 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto">
+                      <Package className="w-7 h-7 text-gray-300 dark:text-zinc-600" />
                     </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <p className="text-lg font-black text-gray-900 dark:text-white uppercase tracking-widest text-center w-full">No Items Found</p>
+                    <p className="text-sm text-gray-400 font-medium text-center w-full">Try adjusting your filters to find what you&apos;re looking for.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
         {/* Pagination Footer */}
         <Pagination
@@ -747,7 +679,6 @@ export default function AllInventoryPage() {
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />
-      </div>
 
 
       {/* Removed View Details Modal as it's now a dedicated page */}

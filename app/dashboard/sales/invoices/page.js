@@ -15,6 +15,7 @@ import { customerService } from "@/app/lib/services/customerService";
 import { getAuthToken, apiClient } from "@/app/lib/api";
 import useSWR from "swr";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport, formatStatusForExport } from "@/app/lib/utils/exportUtils";
 import CancelReturnItemsModal from "@/app/components/CancelReturnItemsModal";
@@ -453,19 +454,19 @@ function InvoiceManagementContent() {
             />
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+              className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                 ? 'bg-red-600 text-white shadow-red-600/10'
                 : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                 }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
 
             {hasPermission(PERMISSIONS.INVOICES.CREATE) && (
-              <Link href="/dashboard/sales/invoices/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+              <Link href="/dashboard/sales/invoices/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Create Invoice</span>
+                <span className="hidden sm:inline whitespace-nowrap font-black">Create Invoice</span>
               </Link>
             )}
           </div>
@@ -668,199 +669,196 @@ function InvoiceManagementContent() {
       )}
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-100 dark:border-zinc-800">
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice #</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Customer</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Date & Time</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice By</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Amount</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice Balance</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Invoice Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Load Status</th>
-                <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-50/50 dark:bg-zinc-800/20">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedInvoices && paginatedInvoices.length > 0 ? (
-                paginatedInvoices.map((invoice, index) => {
-                  return (
-                    <tr key={invoice.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
-                      {/* Invoice Number */}
-                      <td className="px-6 py-5" data-label="Invoice #">
-                        <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
-                          {invoice.invoice_number || "-"}
-                        </span>
-                      </td>
+      <TableContainer>
+        <Table minWidth="800px">
+          <TableHeader>
+            <TableHeaderCell>Invoice #</TableHeaderCell>
+            <TableHeaderCell>Customer</TableHeaderCell>
+            <TableHeaderCell>Date & Time</TableHeaderCell>
+            <TableHeaderCell>Invoice By</TableHeaderCell>
+            <TableHeaderCell>Amount</TableHeaderCell>
+            <TableHeaderCell>Invoice Balance</TableHeaderCell>
+            <TableHeaderCell>Invoice Status</TableHeaderCell>
+            <TableHeaderCell>Load Status</TableHeaderCell>
+            <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {paginatedInvoices && paginatedInvoices.length > 0 ? (
+              paginatedInvoices.map((invoice, index) => {
+                return (
+                  <TableRow key={invoice.id}>
+                    {/* Invoice Number */}
+                    <TableCell>
+                      <span className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-tight">
+                        {invoice.invoice_number || "-"}
+                      </span>
+                    </TableCell>
 
-                      {/* Customer */}
-                      <td className="px-6 py-5" data-label="Customer">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                          {getCustomerName(invoice.customer_id, invoice.customer)}
-                        </span>
-                      </td>
+                    {/* Customer */}
+                    <TableCell>
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                        {getCustomerName(invoice.customer_id, invoice.customer)}
+                      </span>
+                    </TableCell>
 
-                      {/* Date & Time */}
-                      <td className="px-6 py-5" data-label="Date & Time">
-                        <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                          {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                          }) : "-"}
-                        </span>
-                      </td>
+                    {/* Date & Time */}
+                    <TableCell>
+                      <span className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+                        {invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        }) : "-"}
+                      </span>
+                    </TableCell>
 
-                      {/* Invoice By */}
-                      <td className="px-6 py-5" data-label="Invoice By">
-                        <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                          {invoice.created_by?.name || invoice.created_by_name || "Admin User"}
-                        </span>
-                      </td>
+                    {/* Invoice By */}
+                    <TableCell>
+                      <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                        {invoice.created_by?.name || invoice.created_by_name || "Admin User"}
+                      </span>
+                    </TableCell>
 
-                      {/* Amount */}
-                      <td className="px-6 py-5" data-label="Amount">
-                        <span className="text-sm font-black text-blue-600 dark:text-blue-400">
-                          {formatCurrency(invoice.invoice_total)}
-                        </span>
-                      </td>
+                    {/* Amount */}
+                    <TableCell>
+                      <span className="text-sm font-black text-blue-600 dark:text-blue-400">
+                        {formatCurrency(invoice.invoice_total)}
+                      </span>
+                    </TableCell>
 
-                      {/* Invoice Balance */}
-                      <td className="px-6 py-5" data-label="Invoice Balance">
-                        {(() => {
-                          const balance = parseFloat(invoice.invoice_total || 0) - parseFloat(invoice.paid_amount || invoice.total_paid || 0);
-                          return (
-                            <span className={`text-sm font-black ${balance > 0 ? "text-red-600 dark:text-red-400 font-bold" : "text-gray-500 dark:text-zinc-500"}`}>
-                              {formatCurrency(balance > 0 ? balance : 0)}
-                            </span>
-                          );
-                        })()}
-                      </td>
+                    {/* Invoice Balance */}
+                    <TableCell>
+                      {(() => {
+                        const balance = parseFloat(invoice.invoice_total || 0) - parseFloat(invoice.paid_amount || invoice.total_paid || 0);
+                        return (
+                          <span className={`text-sm font-black ${balance > 0 ? "text-red-600 dark:text-red-400 font-bold" : "text-gray-500 dark:text-zinc-500"}`}>
+                            {formatCurrency(balance > 0 ? balance : 0)}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
 
-                      {/* Invoice Status */}
-                      <td className="px-6 py-5" data-label="Invoice Status">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                          : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                            : invoice.invoice_status === 'cancelled'
-                              ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                          }`}>
-                          {invoice.invoice_status || "Pending"}
-                        </div>
-                      </td>
+                    {/* Invoice Status */}
+                    <TableCell>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.invoice_status === 'paid' || invoice.invoice_status === 'Saved and Paid'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                        : invoice.invoice_status === 'overdue' || invoice.invoice_status === 'Overdue'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                          : invoice.invoice_status === 'cancelled'
+                            ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                            : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        }`}>
+                        {invoice.invoice_status || "Pending"}
+                      </div>
+                    </TableCell>
 
-                      {/* Load Status */}
-                      <td className="px-6 py-5" data-label="Load Status">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                          : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
-                            : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
-                              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                              : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
-                                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
-                                : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
-                          }`}>
-                          {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
-                            invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
-                              invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
-                                invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
-                                  invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft' ? 'Draft' :
-                                    'Not Loaded'}
-                        </div>
-                      </td>
+                    {/* Load Status */}
+                    <TableCell>
+                      <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' || invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                        : invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400'
+                          : invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending'
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
+                            : invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft'
+                              ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+                              : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
+                        }`}>
+                        {invoice.overall_load_status === 'loaded' || invoice.overall_load_status === 'Loaded' ? 'Loaded' :
+                          invoice.overall_load_status === 'full' || invoice.overall_load_status === 'Full' ? 'Full' :
+                            invoice.overall_load_status === 'partial' || invoice.overall_load_status === 'Partial' || invoice.overall_load_status === 'partially_loaded' ? 'Partial' :
+                              invoice.overall_load_status === 'pending' || invoice.overall_load_status === 'Pending' ? 'Pending' :
+                                invoice.overall_load_status === 'draft' || invoice.overall_load_status === 'Draft' ? 'Draft' :
+                                  'Not Loaded'}
+                      </div>
+                    </TableCell>
 
-                      {/* Actions */}
-                      <td className="px-6 py-5 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
-                            <button
-                              onClick={() => toggleMenu(invoice.id)}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${menuOpenId === invoice.id
-                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
-                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                                }`}
-                            >
-                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
+                    {/* Actions */}
+                    <TableCell className="text-right relative">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="relative">
+                          <button
+                            onClick={() => toggleMenu(invoice.id)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${menuOpenId === invoice.id
+                              ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg'
+                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                              }`}
+                          >
+                            <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
 
-                            {menuOpenId === invoice.id && (
-                              <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                }`}>
+                          {menuOpenId === invoice.id && (
+                            <div className={`absolute right-0 w-56 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedInvoices.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
+                              <Link
+                                href={`/dashboard/sales/invoices/view/${invoice.id}`}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View/Modify Invoice
+                              </Link>
+                              {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
                                 <Link
-                                  href={`/dashboard/sales/invoices/view/${invoice.id}`}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                  href={`/dashboard/sales/invoices/edit/${invoice.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
                                 >
-                                  <Eye className="w-4 h-4" />
-                                  View/Modify Invoice
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Invoice
                                 </Link>
-                                {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
-                                  <Link
-                                    href={`/dashboard/sales/invoices/edit/${invoice.id}`}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                  >
-                                    <Pencil className="w-4 h-4" />
-                                    Edit Invoice
-                                  </Link>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Print Preview
-                                </button>
-                                {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
-                                  <>
-                                    <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
-                                    <button
-                                      onClick={() => handleCancelReturnClick(invoice)}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
-                                    >
-                                      <RefreshCcw className="w-4 h-4" />
-                                      Cancel / Return Items
-                                    </button>
-                                  </>
-                                )}
-                                {hasPermission(PERMISSIONS.INVOICES.DELETE) && (
+                              )}
+                              <button
+                                onClick={() => {
+                                  window.open(`/dashboard/sales/invoices/view/${invoice.id}?print=preview`, '_blank');
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400 rounded-xl transition-colors"
+                              >
+                                <FileText className="w-4 h-4" />
+                                Print Preview
+                              </button>
+                              {hasPermission(PERMISSIONS.INVOICES.UPDATE) && (
+                                <>
+                                  <div className="h-px bg-gray-100 dark:border-zinc-800 my-1" />
                                   <button
-                                    onClick={() => handleDeleteClick(invoice)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                    onClick={() => handleCancelReturnClick(invoice)}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-xl transition-colors"
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                    Delete Invoice
+                                    <RefreshCcw className="w-4 h-4" />
+                                    Cancel / Return Items
                                   </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                                </>
+                              )}
+                              {hasPermission(PERMISSIONS.INVOICES.DELETE) && (
+                                <button
+                                  onClick={() => handleDeleteClick(invoice)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  Delete Invoice
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="9" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No invoices found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan="9" className="py-24 text-center">
+                  <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No invoices found</p>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
         {/* Pagination Footer */}
         <Pagination
@@ -870,7 +868,6 @@ function InvoiceManagementContent() {
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />
-      </div >
 
 
 

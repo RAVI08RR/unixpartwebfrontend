@@ -9,6 +9,7 @@ import { payrollService } from "@/app/lib/services/payrollService";
 import { useToast } from "@/app/components/Toast";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 
 export default function PayrollPage() {
@@ -224,104 +225,92 @@ export default function PayrollPage() {
           </div>
         )}
 
-        <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
+        <TableContainer>
           {filteredPayrolls.length > 0 ? (
             <>
-              <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Period
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Total Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                    {paginatedPayrolls.map((payroll) => (
-                      <tr key={payroll.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                        <td className="px-6 py-4" data-label="Period">
-                          <p className="text-sm font-bold text-gray-900 dark:text-white">
-                            {payroll.month} {payroll.year}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4" data-label="Total Amount">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            AED {payroll.total_amount || '0.00'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4" data-label="Status">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                            payroll.status === 'paid'
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                              : payroll.status === 'calculated'
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                              : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                          }`}>
-                            {payroll.status || 'pending'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4" data-label="Actions">
-                          <div className="flex items-center justify-end gap-2">
+              <Table minWidth="800px">
+                <TableHeader>
+                  <TableHeaderCell>Period</TableHeaderCell>
+                  <TableHeaderCell>Total Amount</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                </TableHeader>
+                <TableBody>
+                  {paginatedPayrolls.map((payroll) => (
+                    <TableRow key={payroll.id}>
+                      <TableCell>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">
+                          {payroll.month} {payroll.year}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                          AED {payroll.total_amount || '0.00'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
+                          payroll.status === 'paid'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : payroll.status === 'calculated'
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                        }`}>
+                          {payroll.status || 'pending'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/management/payroll/${payroll.id}`}
+                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                          </Link>
+                          {hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
                             <Link
-                              href={`/dashboard/management/payroll/${payroll.id}`}
-                              className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
-                              title="View Details"
+                              href={`/dashboard/management/payroll/edit/${payroll.id}`}
+                              className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                              title="Edit"
                             >
-                              <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                              <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
                             </Link>
-                            {hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
-                              <Link
-                                href={`/dashboard/management/payroll/edit/${payroll.id}`}
-                                className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                                title="Edit"
-                              >
-                                <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                              </Link>
-                            )}
-                            {payroll.status === 'pending' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
-                              <button
-                                onClick={() => handleCalculate(payroll.id)}
-                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                                title="Calculate"
-                              >
-                                <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                              </button>
-                            )}
-                            {payroll.status === 'calculated' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
-                              <button
-                                onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
-                                className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                                title="Mark as Paid"
-                              >
-                                <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                              </button>
-                            )}
-                            {hasPermission(PERMISSIONS.PAYROLL.DELETE) && (
-                              <button
-                                onClick={() => setDeleteModal({ isOpen: true, payroll })}
-                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
+                          )}
+                          {payroll.status === 'pending' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
+                            <button
+                              onClick={() => handleCalculate(payroll.id)}
+                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                              title="Calculate"
+                            >
+                              <Calculator className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          {payroll.status === 'calculated' && hasPermission(PERMISSIONS.PAYROLL.UPDATE) && (
+                            <button
+                              onClick={() => setApproveModal({ isOpen: true, payroll, notes: '' })}
+                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                              title="Mark as Paid"
+                            >
+                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                            </button>
+                          )}
+                          {hasPermission(PERMISSIONS.PAYROLL.DELETE) && (
+                            <button
+                              onClick={() => setDeleteModal({ isOpen: true, payroll })}
+                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
               {/* Pagination Footer */}
               <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/20 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -388,7 +377,7 @@ export default function PayrollPage() {
               )}
             </div>
           )}
-        </div>
+        </TableContainer>
 
         {/* Approve Modal */}
         {approveModal.isOpen && (

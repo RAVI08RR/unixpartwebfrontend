@@ -10,6 +10,7 @@ import { apiClient } from "@/app/lib/api";
 import { useToast } from "@/app/components/Toast";
 import { exportToExcel } from "@/app/lib/utils/exportUtils";
 import useSWR from "swr";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 // Premium Multi-Select Dropdown Component
 function MultiSelectFilter({ label, options, selectedValues, onChange, placeholder }) {
@@ -342,22 +343,22 @@ export default function RetainedProfitReportPage() {
         <div className="flex items-center gap-3 justify-end">
           <button 
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+            className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
               isFilterOpen 
                 ? 'bg-red-600 text-white shadow-red-600/10' 
                 : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
             }`}
           >
             <Filter className="w-4 h-4" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
           <button 
             onClick={handleExport}
             disabled={filteredRefunds.length === 0}
-            className="flex items-center justify-center gap-2 px-5 py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shrink-0 active:scale-95"
+            className="flex-none p-3.5 sm:px-5 sm:py-3.5 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm shrink-0 active:scale-95"
           >
             <FileText className="w-4 h-4 text-emerald-600" />
-            <span>Export to Excel</span>
+            <span className="hidden sm:inline">Export to Excel</span>
           </button>
         </div>
       </div>
@@ -544,127 +545,73 @@ export default function RetainedProfitReportPage() {
       )}
 
       {/* Main Table / Mobile Cards */}
-      <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20 overflow-hidden">
-        
-        {/* Mobile Cards View */}
-        <div className="block lg:hidden divide-y divide-gray-100 dark:divide-zinc-800">
-          {!rawRefunds ? (
-            <div className="py-16 flex flex-col items-center gap-3">
-              <div className="w-8 h-8 rounded-full border-4 border-red-600 border-t-transparent animate-spin" />
-              <p className="text-red-600 font-bold text-sm tracking-widest uppercase">Loading records...</p>
-            </div>
-          ) : paginatedRefunds.length > 0 ? (
-            paginatedRefunds.map((ref, index) => (
-              <div key={index} className="p-4 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-black text-gray-900 dark:text-white">REF-{ref.id}</span>
-                      <span className="px-2 py-0.5 bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-400 text-[10px] font-black uppercase tracking-wider rounded">
-                        {ref.resolvedBranchCode}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-zinc-200 truncate">{ref.resolvedItemName}</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">Stock #: {ref.resolvedStockNum}</p>
-                    <p className="text-xs text-gray-400">Invoice: <span className="font-semibold text-gray-600 dark:text-zinc-300">{ref.resolvedInvoiceNum}</span></p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Retained Profit</p>
-                    <p className="text-base font-black text-emerald-600 dark:text-emerald-400">AED {ref.supplierProfit.toFixed(2)}</p>
-                    <p className="text-xs text-orange-500 font-bold mt-1">Ref: AED {ref.refundAmount.toFixed(2)}</p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-zinc-800/40 rounded-xl text-[11px] text-gray-500 dark:text-zinc-400 font-medium">
-                  <div>
-                    <span className="block text-[9px] font-black text-gray-400 uppercase">Supplier</span>
-                    <span className="font-semibold">{ref.resolvedSupplierName}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="block text-[9px] font-black text-gray-400 uppercase">Return Date</span>
-                    <span className="font-semibold">
-                      {ref.refund_date ? new Date(ref.refund_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"}
+      <TableContainer>
+        <Table minWidth="1200px">
+          <TableHeader>
+            <TableHeaderCell>Refund ID</TableHeaderCell>
+            <TableHeaderCell>Date</TableHeaderCell>
+            <TableHeaderCell>Invoice #</TableHeaderCell>
+            <TableHeaderCell>Part / Item</TableHeaderCell>
+            <TableHeaderCell>Stock #</TableHeaderCell>
+            <TableHeaderCell>Branch</TableHeaderCell>
+            <TableHeaderCell>Supplier</TableHeaderCell>
+            <TableHeaderCell className="text-right">Original Paid</TableHeaderCell>
+            <TableHeaderCell className="text-right">Refund Amount</TableHeaderCell>
+            <TableHeaderCell className="text-right">Retained Profit</TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {!rawRefunds ? (
+              <TableRow>
+                <TableCell colSpan="10" className="py-24 text-center">
+                  <div className="w-8 h-8 rounded-full border-4 border-red-600 border-t-transparent animate-spin mx-auto mb-4" />
+                  <p className="text-red-600 font-bold text-sm tracking-widest uppercase">Loading records...</p>
+                </TableCell>
+              </TableRow>
+            ) : paginatedRefunds.length > 0 ? (
+              paginatedRefunds.map((ref, index) => (
+                <TableRow key={index}>
+                  <TableCell className="text-sm font-black text-gray-900 dark:text-white uppercase">REF-{ref.id}</TableCell>
+                  <TableCell className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    {ref.refund_date ? new Date(ref.refund_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"}
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-gray-700 dark:text-zinc-300">{ref.resolvedInvoiceNum}</TableCell>
+                  <TableCell className="text-sm font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[200px]" title={ref.resolvedItemName}>
+                    {ref.resolvedItemName}
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-gray-500 dark:text-zinc-400">{ref.resolvedStockNum}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {ref.resolvedBranchCode}
                     </span>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="py-16 text-center text-gray-400 font-bold uppercase tracking-widest text-sm">
-              No refunds found matching search filters
-            </div>
-          )}
-        </div>
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-gray-700 dark:text-zinc-300 leading-tight">
+                    {ref.resolvedSupplierName}
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-gray-500 dark:text-zinc-400 text-right">
+                    AED {ref.originalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-sm font-bold text-orange-500 dark:text-orange-400 text-right">
+                    AED {ref.refundAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell className="text-sm font-black text-emerald-600 dark:text-emerald-400 text-right">
+                    AED {ref.supplierProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan="10" className="py-24 text-center text-gray-400 font-bold uppercase tracking-widest text-sm">
+                  No records found matching search filters
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800">
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Refund ID</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Date</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Invoice #</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Part / Item</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Stock #</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Branch</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Supplier</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10 text-right">Original Paid</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10 text-right">Refund Amount</th>
-                <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10 text-right">Retained Profit</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {!rawRefunds ? (
-                <tr>
-                  <td colSpan="10" className="py-24 text-center">
-                    <div className="w-8 h-8 rounded-full border-4 border-red-600 border-t-transparent animate-spin mx-auto mb-4" />
-                    <p className="text-red-600 font-bold text-sm tracking-widest uppercase">Loading records...</p>
-                  </td>
-                </tr>
-              ) : paginatedRefunds.length > 0 ? (
-                paginatedRefunds.map((ref, index) => (
-                  <tr key={index} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/40 transition-colors">
-                    <td className="px-4 py-5 text-sm font-black text-gray-900 dark:text-white uppercase">REF-{ref.id}</td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-700 dark:text-zinc-300">
-                      {ref.refund_date ? new Date(ref.refund_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : "-"}
-                    </td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-700 dark:text-zinc-300">{ref.resolvedInvoiceNum}</td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[200px]" title={ref.resolvedItemName}>
-                      {ref.resolvedItemName}
-                    </td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-500 dark:text-zinc-400">{ref.resolvedStockNum}</td>
-                    <td className="px-4 py-5">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest">
-                        {ref.resolvedBranchCode}
-                      </span>
-                    </td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-700 dark:text-zinc-300 leading-tight">
-                      {ref.resolvedSupplierName}
-                    </td>
-                    <td className="px-4 py-5 text-sm font-bold text-gray-500 dark:text-zinc-400 text-right">
-                      AED {ref.originalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-5 text-sm font-bold text-orange-500 dark:text-orange-400 text-right">
-                      AED {ref.refundAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-4 py-5 text-sm font-black text-emerald-600 dark:text-emerald-400 text-right">
-                      AED {ref.supplierProfit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="10" className="py-24 text-center text-gray-400 font-bold uppercase tracking-widest text-sm">
-                    No records found matching search filters
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
+      <div className="mt-4">
         {/* Pagination Footer */}
-        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="px-8 py-6 bg-gray-50/50 dark:bg-zinc-800/20 border border-gray-100 dark:border-zinc-800 rounded-[28px] flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
             Showing <span className="text-gray-900 dark:text-white font-black">{startIndex + 1}</span> to <span className="text-gray-900 dark:text-white font-black">{Math.min(startIndex + itemsPerPage, filteredRefunds.length)}</span> of <span className="text-gray-900 dark:text-white font-black">{filteredRefunds.length}</span> entries
           </p>
@@ -705,7 +652,6 @@ export default function RetainedProfitReportPage() {
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );

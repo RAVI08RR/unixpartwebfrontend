@@ -13,6 +13,7 @@ import { customerService } from "@/app/lib/services/customerService";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function CustomerPurchaseHistoryPage() {
   const router = useRouter();
@@ -272,14 +273,14 @@ export default function CustomerPurchaseHistoryPage() {
           </div>
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
-            className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+            className={`flex-none p-3.5 sm:px-5 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
               isFilterOpen 
                 ? 'bg-red-600 text-white shadow-red-600/10' 
                 : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
             }`}
           >
             <Filter className="w-4 h-4" />
-            <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+            <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
           </button>
         </div>
 
@@ -355,140 +356,78 @@ export default function CustomerPurchaseHistoryPage() {
         )}
 
         {/* ── Invoices Table / Cards ── */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full">
-
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Invoice #</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Date</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Amount</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Balance</th>
-                  <th className="px-6 py-5 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-5 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {paginated.length > 0 ? paginated.map((invoice) => {
-                  const { cls, dot, label } = getStatusStyle(invoice.invoice_status);
-                  return (
-                    <tr key={invoice.id} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                            <Receipt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white">{invoice.invoice_number || "—"}</p>
-                            {invoice.invoice_notes && <p className="text-xs text-gray-400 truncate max-w-[150px]">{invoice.invoice_notes}</p>}
-                          </div>
+        <TableContainer>
+          <Table minWidth="800px">
+            <TableHeader>
+              <TableHeaderCell>Invoice #</TableHeaderCell>
+              <TableHeaderCell>Date</TableHeaderCell>
+              <TableHeaderCell>Amount</TableHeaderCell>
+              <TableHeaderCell>Balance</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right">Action</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {paginated.length > 0 ? paginated.map((invoice) => {
+                const { cls, dot, label } = getStatusStyle(invoice.invoice_status);
+                return (
+                  <TableRow key={invoice.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
+                          <Receipt className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                         </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                          {formatDate(invoice.invoice_date)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className="text-sm font-black text-gray-900 dark:text-white">
-                          {formatCurrency(invoice.invoice_total || invoice.invoice_amount || 0)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <span className={`text-sm font-black ${parseFloat(invoice.balance_due || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
-                          {formatCurrency(invoice.balance_due || 0)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cls}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-                          {label}
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <Link
-                          href={`/dashboard/sales/invoices/view/${invoice.id}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-xl transition-all"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                }) : (
-                  <tr>
-                    <td colSpan="6" className="py-20 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
-                        <Receipt className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
-                      </div>
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No invoices found</p>
-                      <p className="text-gray-300 dark:text-zinc-600 text-xs mt-1">Try adjusting your filters</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-gray-50 dark:divide-zinc-800/50">
-            {paginated.length > 0 ? paginated.map((invoice) => {
-              const { cls, dot, label } = getStatusStyle(invoice.invoice_status);
-              return (
-                <div key={invoice.id} className="p-4 hover:bg-gray-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0">
-                        <Receipt className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-black text-gray-900 dark:text-white truncate">{invoice.invoice_number || "—"}</p>
-                        <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-0.5">
-                          <Calendar className="w-3 h-3" />
-                          {formatDate(invoice.invoice_date)}
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white">{invoice.invoice_number || "—"}</p>
+                          {invoice.invoice_notes && <p className="text-xs text-gray-400 truncate max-w-[150px]">{invoice.invoice_notes}</p>}
                         </div>
                       </div>
-                    </div>
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex-shrink-0 ${cls}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-                      {label}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-3">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Amount</p>
-                      <p className="text-sm font-black text-gray-900 dark:text-white">{formatCurrency(invoice.invoice_total || invoice.invoice_amount || 0)}</p>
-                    </div>
-                    <div className="bg-gray-50 dark:bg-zinc-800/50 rounded-xl p-3">
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Balance Due</p>
-                      <p className={`text-sm font-black ${parseFloat(invoice.balance_due || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        {formatDate(invoice.invoice_date)}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-black text-gray-900 dark:text-white">
+                        {formatCurrency(invoice.invoice_total || invoice.invoice_amount || 0)}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`text-sm font-black ${parseFloat(invoice.balance_due || 0) > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"}`}>
                         {formatCurrency(invoice.balance_due || 0)}
-                      </p>
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${cls}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                        {label}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link
+                        href={`/dashboard/sales/invoices/view/${invoice.id}`}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-xl transition-all"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> View
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                );
+              }) : (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-20 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
+                      <Receipt className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
                     </div>
-                  </div>
-
-                  <Link
-                    href={`/dashboard/sales/invoices/view/${invoice.id}`}
-                    className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-black text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-zinc-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-xl transition-all"
-                  >
-                    <Eye className="w-3.5 h-3.5" /> View Invoice
-                  </Link>
-                </div>
-              );
-            }) : (
-              <div className="py-20 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center">
-                  <Receipt className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
-                </div>
-                <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No invoices found</p>
-                <p className="text-gray-300 dark:text-zinc-600 text-xs mt-1">Try adjusting your filters</p>
-              </div>
-            )}
-          </div>
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No invoices found</p>
+                    <p className="text-gray-300 dark:text-zinc-600 text-xs mt-1 text-center w-full">Try adjusting your filters</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
           {/* Pagination */}
           {filtered.length > 0 && (
@@ -525,7 +464,6 @@ export default function CustomerPurchaseHistoryPage() {
               </div>
             </div>
           )}
-        </div>
       </div>
     </ProtectedRoute>
   );

@@ -20,6 +20,7 @@ import ExportButton from "@/app/components/ExportButton";
 import { formatDateForExport, formatCurrencyForExport } from "@/app/lib/utils/exportUtils";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import Pagination from "@/app/components/Pagination";
 
@@ -327,13 +328,13 @@ export default function AssetsPage() {
             <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
-                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
 
               <ExportButton
@@ -347,10 +348,10 @@ export default function AssetsPage() {
               {hasPermission(PERMISSIONS.ASSETS.CREATE) && (
                 <Link
                   href="/dashboard/inventory/assets/add"
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
+                  className="flex-none p-3.5 sm:px-5 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Add Asset</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Add Asset</span>
                 </Link>
               )}
             </div>
@@ -401,205 +402,198 @@ export default function AssetsPage() {
           </div>
         )}
 
-        {/* Main Table Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-          <div className="overflow-x-auto w-full scrollbar-hide">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Asset Info</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Category</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Value</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Assets...</p>
+        <TableContainer>
+          <Table minWidth="1000px">
+            <TableHeader>
+              <TableHeaderCell>Asset Info</TableHeaderCell>
+              <TableHeaderCell>Category</TableHeaderCell>
+              <TableHeaderCell>Branch</TableHeaderCell>
+              <TableHeaderCell>Value</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right"></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-gray-500 font-black text-xs uppercase tracking-[0.2em]">Loading Assets...</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedAssets.length > 0 ? (
+                paginatedAssets.map((asset, index) => (
+                  <TableRow key={asset.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                          <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
+                            {asset.asset_id}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[200px]">
+                            {asset.description || 'No description'}
+                          </p>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ) : paginatedAssets.length > 0 ? (
-                  paginatedAssets.map((asset, index) => (
-                    <tr key={asset.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-6" data-label="Asset Info">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                            <Package className="w-5 h-5 text-red-600 dark:text-red-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">
-                              {asset.asset_id}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[200px]">
-                              {asset.description || 'No description'}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Category">
+                    <TableCell>
+                      <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                        {asset.category || '-'}
+                      </span>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-400" />
                         <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                          {asset.category || '-'}
+                          {asset.current_operating_branch?.branch_name ||
+                            branches?.find(b => b.id === asset.current_operating_branch_id)?.branch_name ||
+                            branches?.find(b => b.id === (asset.current_operating_branch_id || asset.branch_id))?.branch_name ||
+                            'N/A'}
                         </span>
-                      </td>
+                      </div>
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Branch">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {asset.current_operating_branch?.branch_name ||
-                              branches?.find(b => b.id === asset.current_operating_branch_id)?.branch_name ||
-                              branches?.find(b => b.id === (asset.current_operating_branch_id || asset.branch_id))?.branch_name ||
-                              'N/A'}
-                          </span>
-                        </div>
-                      </td>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="text-sm font-black dark:text-white">
+                          AED {parseFloat(asset.purchase_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Value">
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-sm font-black dark:text-white">
-                            AED {parseFloat(asset.purchase_value || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                      </td>
+                    <TableCell>
+                      {getStatusBadge(asset.status)}
+                    </TableCell>
 
-                      <td className="px-6 py-6" data-label="Status">
-                        {getStatusBadge(asset.status)}
-                      </td>
+                    <TableCell className="text-right relative">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="relative action-menu-container">
+                          <button
+                            onClick={() => toggleMenu(asset.id)}
+                            className={`p-2 rounded-xl transition-all ${menuOpenId === asset.id
+                              ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                              : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                              }`}
+                          >
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
 
-                      <td className="px-6 py-6 text-right relative" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
-                          <div className="relative action-menu-container">
-                            <button
-                              onClick={() => toggleMenu(asset.id)}
-                              className={`p-2 rounded-xl transition-all ${menuOpenId === asset.id
-                                ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                                }`}
-                            >
-                              <MoreVertical className="w-5 h-5" />
-                            </button>
-
-                            {menuOpenId === asset.id && (
-                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedAssets.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                }`}>
+                          {menuOpenId === asset.id && (
+                            <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 animate-in fade-in zoom-in-95 duration-200 ${index > paginatedAssets.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                              <button
+                                onClick={() => {
+                                  setSelectedAsset(asset);
+                                  setViewModalOpen(true);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                                View Details
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleOpenDocuments(asset);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                              >
+                                <FileText className="w-4 h-4" />
+                                Documents
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleViewTransferHistory(asset);
+                                  setMenuOpenId(null);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
+                              >
+                                <History className="w-4 h-4" />
+                                Transfer History
+                              </button>
+                              {asset.status?.toLowerCase() === 'sold' ? (
                                 <button
                                   onClick={() => {
-                                    setSelectedAsset(asset);
-                                    setViewModalOpen(true);
+                                    handleViewSaleDetails(asset);
                                     setMenuOpenId(null);
                                   }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
                                 >
-                                  <Eye className="w-4 h-4" />
-                                  View Details
+                                  <TrendingUp className="w-4 h-4" />
+                                  View Sale Details
                                 </button>
-                                <button
-                                  onClick={() => {
-                                    handleOpenDocuments(asset);
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
-                                >
-                                  <FileText className="w-4 h-4" />
-                                  Documents
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    handleViewTransferHistory(asset);
-                                    setMenuOpenId(null);
-                                  }}
-                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 dark:hover:text-purple-400 rounded-xl transition-colors"
-                                >
-                                  <History className="w-4 h-4" />
-                                  Transfer History
-                                </button>
-                                {asset.status?.toLowerCase() === 'sold' ? (
+                              ) : (
+                                hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
                                   <button
                                     onClick={() => {
-                                      handleViewSaleDetails(asset);
+                                      setSelectedAsset(asset);
+                                      setSellModalOpen(true);
                                       setMenuOpenId(null);
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
                                   >
-                                    <TrendingUp className="w-4 h-4" />
-                                    View Sale Details
+                                    <ShoppingCart className="w-4 h-4" />
+                                    Sell Asset
                                   </button>
-                                ) : (
-                                  hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedAsset(asset);
-                                        setSellModalOpen(true);
-                                        setMenuOpenId(null);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400 rounded-xl transition-colors"
-                                    >
-                                      <ShoppingCart className="w-4 h-4" />
-                                      Sell Asset
-                                    </button>
-                                  )
-                                )}
-                                {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
-                                  <Link
-                                    href={`/dashboard/inventory/assets/edit/${asset.id}`}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                )
+                              )}
+                              {hasPermission(PERMISSIONS.ASSETS.UPDATE) && (
+                                <Link
+                                  href={`/dashboard/inventory/assets/edit/${asset.id}`}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 rounded-xl transition-colors"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Edit Asset
+                                </Link>
+                              )}
+                              {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
+                                <>
+                                  <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAsset(asset);
+                                      setDeleteModalOpen(true);
+                                      setMenuOpenId(null);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
                                   >
-                                    <Pencil className="w-4 h-4" />
-                                    Edit Asset
-                                  </Link>
-                                )}
-                                {hasPermission(PERMISSIONS.ASSETS.DELETE) && (
-                                  <>
-                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                    <button
-                                      onClick={() => {
-                                        setSelectedAsset(asset);
-                                        setDeleteModalOpen(true);
-                                        setMenuOpenId(null);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                      Delete Asset
-                                    </button>
-                                  </>
-                                )}
-                              </div>
-                            )}
-                          </div>
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Asset
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No assets found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse text-center w-full">No assets found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          {/* Pagination Footer */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            total={total}
-            pageSize={PAGE_SIZE}
-            onPageChange={setCurrentPage}
-          />
-        </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
 
         {/* View Details Modal */}
         {viewModalOpen && selectedAsset && (

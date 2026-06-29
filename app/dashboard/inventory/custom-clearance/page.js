@@ -21,6 +21,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function CustomClearancePage() {
   const { hasPermission } = usePermission();
@@ -390,13 +391,13 @@ export default function CustomClearancePage() {
             <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
-                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
 
               <ExportButton
@@ -410,10 +411,10 @@ export default function CustomClearancePage() {
               {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.CREATE) || hasPermission(PERMISSIONS.CONTAINERS.CREATE)) && (
                 <Link
                   href="/dashboard/inventory/custom-clearance/add"
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+                  className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Add Clearance</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Add Clearance</span>
                 </Link>
               )}
             </div>
@@ -561,115 +562,100 @@ export default function CustomClearancePage() {
         )}
 
         {/* Main Table Card */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[15px] border border-gray-100 dark:border-zinc-800 shadow-sm overflow-hidden w-full max-w-full responsive-table-container">
-          {/* Desktop Table View */}
-          <div className="hidden xl:block overflow-x-auto w-full scrollbar-hide">
-            <table className="w-full min-w-[1200px]">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Clearance Info</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Vessel Details</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Destination</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Agent</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr><td colSpan="6" className="py-24 text-center"><div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div></td></tr>
-                ) : paginatedContainers.length > 0 ? (
-                  paginatedContainers.map((container, index) => (
-                    <tr key={container.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm"><Shield className="w-5 h-5 text-red-600" /></div>
-                          <div><p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors uppercase leading-tight">{container.container_code}</p><p className="text-xs text-gray-400 mt-1 font-bold">{container.container_number}</p></div>
+        <TableContainer>
+          <Table minWidth="1200px">
+            <TableHeader>
+              <TableHeaderCell>Clearance Info</TableHeaderCell>
+              <TableHeaderCell>Vessel Details</TableHeaderCell>
+              <TableHeaderCell>Destination</TableHeaderCell>
+              <TableHeaderCell>Agent</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right"></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-24 text-center">
+                    <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedContainers.length > 0 ? (
+                paginatedContainers.map((container, index) => (
+                  <TableRow key={container.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                          <Shield className="w-5 h-5 text-red-600" />
                         </div>
-                      </td>
-                      <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Ship className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</span></div><div className="flex items-center gap-2"><Navigation className="w-3.5 h-3.5 text-gray-400" /><span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Voy: {container.voyage_number}</span></div></div></td>
-                      <td className="px-6 py-6"><div className="space-y-1"><div className="flex items-center gap-2"><Building2 className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-black uppercase">{getBranchName(container)}</span></div><div className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5 text-gray-400" /><span className="text-[11px] font-bold text-gray-400">{container.port_of_discharging}</span></div></div></td>
-                      <td className="px-6 py-6"><div className="flex items-center gap-2"><Anchor className="w-3.5 h-3.5 text-gray-400" /><span className="text-sm font-bold text-gray-600">{container.shipping_agent}</span></div></td>
-                      <td className="px-6 py-6">{getStatusBadge(container.invoice_status)}</td>
-                      <td className="px-6 py-6 text-right relative">
-                        <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 transition-all"><MoreVertical className="w-5 h-5" /></button>
-                        {menuOpenId === container.id && (
-                          <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
-                            <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><Package className="w-4 h-4" />View Items</Link>
-                            <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-blue-50 rounded-xl"><FileText className="w-4 h-4" />Documents</button>
-                            <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50 rounded-xl"><Eye className="w-4 h-4" />View Details</button>
-                            <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-amber-50 rounded-xl"><Printer className="w-4 h-4" />Print Clearance</Link>
-                            {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
-                              <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 hover:bg-red-50 rounded-xl"><Pencil className="w-4 h-4" />Edit Record</Link>
-                            )}
-                            {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
-                              <>
-                                <div className="h-px bg-gray-100 my-1" />
-                                <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl"><Trash2 className="w-4 h-4" />Delete</button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr><td colSpan="6" className="py-24 text-center text-gray-400 font-black uppercase italic animate-pulse tracking-widest">No clearance records found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards View */}
-          <div className="xl:hidden divide-y divide-gray-50 dark:divide-zinc-800/50">
-            {paginatedContainers.map((container, index) => (
-              <div key={container.id} className="p-5 active:bg-gray-50 dark:active:bg-zinc-900 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center text-red-600">
-                      <Ship className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-[15px] font-black text-gray-900 dark:text-white leading-tight uppercase italic">{container.container_code}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">{container.container_number}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(container.invoice_status)}
-                    <button onClick={() => toggleMenu(container.id)} className="p-2 -mr-2 text-gray-400 active:scale-90 transition-transform"><MoreVertical className="w-5 h-5" /></button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-5">
-                  <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Vessel / Voyage</p><p className="text-[13px] font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</p><p className="text-[10px] font-black text-gray-400 italic">Voy: {container.voyage_number}</p></div>
-                  <div className="space-y-1 text-right"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Destination</p><p className="text-[13px] font-black text-gray-900 dark:text-white uppercase leading-tight">{getBranchName(container)}</p><p className="text-[10px] font-bold text-gray-400 italic">{container.port_of_discharging}</p></div>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-zinc-800/50">
-                  <div className="flex gap-2">
-                    <button onClick={() => handleOpenDocuments(container)} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-600"><FileText className="w-3.5 h-3.5" />Docs</button>
-                    <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-blue-600"><Package className="w-3.5 h-3.5" />Items</Link>
-                    <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-amber-600"><Printer className="w-3.5 h-3.5" />Print</Link>
-                  </div>
-                  <button onClick={() => { handleViewDetails(container); }} className="text-[10px] font-black text-red-600 uppercase tracking-widest border border-red-100 dark:border-red-900/30 px-4 py-2 rounded-xl">View Details</button>
-                </div>
-
-                {menuOpenId === container.id && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE) || hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
-                  <div className={`mt-4 pt-4 border-t border-gray-100 grid ${((hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)))
-                    ? 'grid-cols-2' : 'grid-cols-1'
-                    } gap-2 animate-in slide-in-from-top-2 duration-200`}>
-                    {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
-                      <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="flex items-center justify-center gap-2 py-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-600"><Pencil className="w-3.5 h-3.5" />Edit</Link>
-                    )}
-                    {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
-                      <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex items-center justify-center gap-2 py-3 bg-red-50 dark:bg-red-900/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-600"><Trash2 className="w-3.5 h-3.5" />Delete</button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+                        <div>
+                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors uppercase leading-tight">{container.container_code}</p>
+                          <p className="text-xs text-gray-400 mt-1 font-bold">{container.container_number}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Ship className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{container.vessel_name}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Navigation className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Voy: {container.voyage_number}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-[11px] font-black uppercase">{getBranchName(container)}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-[11px] font-bold text-gray-400">{container.port_of_discharging}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Anchor className="w-3.5 h-3.5 text-gray-400" />
+                        <span className="text-sm font-bold text-gray-600">{container.shipping_agent}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(container.invoice_status)}</TableCell>
+                    <TableCell className="text-right relative">
+                      <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"><MoreVertical className="w-5 h-5" /></button>
+                      {menuOpenId === container.id && (
+                        <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <Link href={`/dashboard/inventory/custom-clearance/items/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"><Package className="w-4 h-4" />View Items</Link>
+                          <button onClick={() => { handleOpenDocuments(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"><FileText className="w-4 h-4" />Documents</button>
+                          <button onClick={() => { handleViewDetails(container); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"><Eye className="w-4 h-4" />View Details</button>
+                          <Link href={`/dashboard/inventory/custom-clearance/print/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"><Printer className="w-4 h-4" />Print Clearance</Link>
+                          {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.UPDATE) || hasPermission(PERMISSIONS.CONTAINERS.UPDATE)) && (
+                            <Link href={`/dashboard/inventory/custom-clearance/edit/${container.id}`} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-red-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"><Pencil className="w-4 h-4" />Edit Record</Link>
+                          )}
+                          {(hasPermission(PERMISSIONS.CUSTOM_CLEARANCE.DELETE) || hasPermission(PERMISSIONS.CONTAINERS.DELETE)) && (
+                            <>
+                              <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                              <button onClick={() => { setSelectedContainer(container); setDeleteModalOpen(true); setMenuOpenId(null); }} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"><Trash2 className="w-4 h-4" />Delete</button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="6" className="py-24 text-center">
+                    <p className="text-gray-400 font-black uppercase italic animate-pulse tracking-widest text-center w-full">No clearance records found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
         {/* Pagination Footer */}
         <Pagination

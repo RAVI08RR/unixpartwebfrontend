@@ -13,6 +13,7 @@ import useSWR from "swr";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 import { invoiceService } from "@/app/lib/services/invoiceService";
 
 export default function PaymentsReceivedPage() {
@@ -302,21 +303,21 @@ export default function PaymentsReceivedPage() {
             </div>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+              className={`flex-none p-3.5 sm:px-5 sm:py-3 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                 }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
 
             <button
               onClick={handleExport}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 active:scale-95"
+              className="flex-none p-3.5 sm:px-5 sm:py-3 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl font-bold text-sm hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all shadow-sm shrink-0 active:scale-95"
             >
               <FileText className="w-4 h-4 text-emerald-600" />
-              <span>Export to Excel</span>
+              <span className="hidden sm:inline">Export to Excel</span>
             </button>
           </div>
         </div>
@@ -489,207 +490,136 @@ export default function PaymentsReceivedPage() {
         )}
 
         {/* Main Table / Mobile Cards */}
-        <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">
-          {/* Mobile Cards */}
-          <div className="block lg:hidden divide-y divide-gray-100 dark:divide-zinc-800">
-            {loading ? (
-              <div className="py-16 flex flex-col items-center gap-3">
-                <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin" />
-                <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
-              </div>
-            ) : paginatedPayments.length > 0 ? (
-              paginatedPayments.map((payment, index) => {
-                const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
-                const branchCode = payment.branch?.branch_code || resolvedInfo?.branchCode || '-';
-                const supplierCode = payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-';
+        <TableContainer>
+          <Table minWidth="1200px">
+            <TableHeader>
+              <TableHeaderCell>Pymt ID</TableHeaderCell>
+              <TableHeaderCell>Payment Date</TableHeaderCell>
+              <TableHeaderCell>Invoice #</TableHeaderCell>
+              <TableHeaderCell>Payment Amount</TableHeaderCell>
+              <TableHeaderCell>Collected By</TableHeaderCell>
+              <TableHeaderCell>Type</TableHeaderCell>
+              <TableHeaderCell>Type Notes</TableHeaderCell>
+              <TableHeaderCell>Branch Code</TableHeaderCell>
+              <TableHeaderCell>Supplier Code</TableHeaderCell>
+              <TableHeaderCell className="text-right">View Invoice</TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="10" className="py-24 text-center">
+                    <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
+                    <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase text-center w-full">Loading payments...</p>
+                  </TableCell>
+                </TableRow>
+              ) : paginatedPayments && paginatedPayments.length > 0 ? (
+                paginatedPayments.map((payment, index) => {
+                  const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
+                  const branchCode = payment.branch?.branch_code || resolvedInfo?.branchCode || '-';
+                  const supplierCode = payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-';
 
-                return (
-                  <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-sm font-black text-gray-900 dark:text-white uppercase">PAY-{payment.id}</span>
-                          {getPaymentTypeBadge(payment.payment_method)}
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Hash className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="text-sm font-black text-gray-900 dark:text-white uppercase">
+                            PAY-{payment.id}
+                          </span>
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium">
-                          Invoice: <span className="font-bold text-gray-700 dark:text-zinc-300">{payment.invoice?.invoice_number || '-'}</span>
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-zinc-500 font-medium mt-0.5">
-                          Date: {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-base font-black text-gray-900 dark:text-white">AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                        <p className="text-xs text-gray-400 font-medium">{payment.received_by_user?.name || '-'}</p>
-                      </div>
-                    </div>
+                      </TableCell>
 
-                    <div className="grid grid-cols-3 gap-2 py-2 px-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl text-[11px] font-medium text-gray-500 dark:text-zinc-400">
-                      <div>
-                        <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Branch Code</span>
-                        <span className="font-bold text-gray-700 dark:text-zinc-300">{branchCode}</span>
-                      </div>
-                      <div>
-                        <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Supplier Code</span>
-                        <span className="font-bold text-gray-700 dark:text-zinc-300">{supplierCode}</span>
-                      </div>
-                      <div>
-                        <span className="block text-[9px] font-bold uppercase tracking-wider text-gray-400">Type Notes</span>
-                        <span className="truncate block font-bold text-gray-700 dark:text-zinc-300">{payment.payment_notes || '-'}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleViewInvoice(payment.invoice_id)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all active:scale-95"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View Invoice</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="py-16 flex flex-col items-center gap-3">
-                <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No payments found</p>
-              </div>
-            )}
-          </div>
-
-          {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Pymt ID</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Payment Date</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Invoice #</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Payment Amount</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Collected By</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Type</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Type Notes</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Branch Code</th>
-                  <th className="px-4 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">Supplier Code</th>
-                  <th className="px-4 py-6 text-right text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.15em] bg-gray-50/10">View Invoice</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr>
-                    <td colSpan="10" className="py-24 text-center">
-                      <div className="w-8 h-8 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin mx-auto mb-4"></div>
-                      <p className="text-emerald-600 font-bold text-sm tracking-widest uppercase">Loading payments...</p>
-                    </td>
-                  </tr>
-                ) : paginatedPayments && paginatedPayments.length > 0 ? (
-                  paginatedPayments.map((payment, index) => {
-                    const resolvedInfo = invoiceBranchSupplierMap[payment.invoice?.invoice_number];
-                    const branchCode = payment.branch?.branch_code || resolvedInfo?.branchCode || '-';
-                    const supplierCode = payment.invoice?.supplier?.supplier_code || resolvedInfo?.supplierCode || '-';
-
-                    return (
-                      <tr key={index} className="group hover:bg-gray-50/50 dark:hover:bg-zinc-800/50 transition-colors">
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <Hash className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-sm font-black text-gray-900 dark:text-white uppercase">
-                              PAY-{payment.id}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                              {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', {
-                                day: '2-digit',
-                                month: 'short',
-                                year: 'numeric'
-                              }) : '-'}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <FileText className="w-3.5 h-3.5 text-gray-400" />
-                            <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                              {payment.invoice?.invoice_number || '-'}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <DollarSign className="w-3 h-3 text-gray-400" />
-                            <span className="text-sm font-black dark:text-white">
-                              AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-5">
-                          <div className="flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-bold text-gray-700 dark:text-zinc-300 leading-tight">
-                                {payment.received_by_user?.name || '-'}
-                              </p>
-                              <p className="text-[10px] text-gray-400 dark:text-zinc-500 leading-none">
-                                {payment.received_by_user?.user_code || ''}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-5">
-                          {getPaymentTypeBadge(payment.payment_method)}
-                        </td>
-
-                        <td className="px-4 py-5">
-                          <span className="text-sm font-medium text-gray-600 dark:text-zinc-400 truncate max-w-[150px] block">
-                            {payment.payment_notes || '-'}
-                          </span>
-                        </td>
-
-                        <td className="px-4 py-5">
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {branchCode}
+                            {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            }) : '-'}
                           </span>
-                        </td>
+                        </div>
+                      </TableCell>
 
-                        <td className="px-4 py-5">
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-gray-400" />
                           <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
-                            {supplierCode}
+                            {payment.invoice?.invoice_number || '-'}
                           </span>
-                        </td>
+                        </div>
+                      </TableCell>
 
-                        <td className="px-4 py-5 text-right">
-                          <button
-                            onClick={() => handleViewInvoice(payment.invoice_id)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all active:scale-95"
-                          >
-                            <Eye className="w-4 h-4" />
-                            <span>View Invoice</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="10" className="py-24 text-center">
-                      <p className="text-gray-400 font-black text-sm uppercase tracking-widest italic animate-pulse">No payments found</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="w-3 h-3 text-gray-400" />
+                          <span className="text-sm font-black dark:text-white">
+                            AED {parseFloat(payment.payment_amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </TableCell>
 
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-gray-400" />
+                          <div>
+                            <p className="text-sm font-bold text-gray-700 dark:text-zinc-300 leading-tight">
+                              {payment.received_by_user?.name || '-'}
+                            </p>
+                            <p className="text-[10px] text-gray-400 dark:text-zinc-500 leading-none">
+                              {payment.received_by_user?.user_code || ''}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>
+                        {getPaymentTypeBadge(payment.payment_method)}
+                      </TableCell>
+
+                      <TableCell>
+                        <span className="text-sm font-medium text-gray-600 dark:text-zinc-400 truncate max-w-[150px] block">
+                          {payment.payment_notes || '-'}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {branchCode}
+                        </span>
+                      </TableCell>
+
+                      <TableCell>
+                        <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">
+                          {supplierCode}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <button
+                          onClick={() => handleViewInvoice(payment.invoice_id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 text-gray-600 dark:text-gray-400 rounded-xl text-sm font-bold hover:bg-gray-100 dark:hover:bg-zinc-700 transition-all active:scale-95"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View Invoice</span>
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan="10" className="py-24 text-center">
+                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No payments found</p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <div className="mt-4">
           {/* Pagination Footer */}
           <Pagination
             currentPage={currentPage}

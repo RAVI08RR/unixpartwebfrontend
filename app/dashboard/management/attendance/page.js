@@ -11,6 +11,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function AttendancePage() {
   const { success, error } = useToast();
@@ -177,107 +178,91 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
+        <TableContainer>
           {paginatedAttendance.length > 0 ? (
-            <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Employee
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Check In
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Check Out
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-                  {paginatedAttendance.map((record) => (
-                    <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4" data-label="Employee">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white">
-                          {record.employee ? `${record.employee.first_name} ${record.employee.last_name}` : 'N/A'}
-                        </p>
-                        <p className="text-xs text-gray-500">ID: {record.employee_id}</p>
-                      </td>
-                      <td className="px-6 py-4" data-label="Date">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {record.date || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Check In">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {record.check_in || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Check Out">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {record.check_out || 'N/A'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Status">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${record.status === 'approved'
-                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                          }`}>
-                          {record.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4" data-label="Actions">
-                        <div className="flex items-center justify-end gap-2">
+            <Table minWidth="800px">
+              <TableHeader>
+                <TableHeaderCell>Employee</TableHeaderCell>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Check In</TableHeaderCell>
+                <TableHeaderCell>Check Out</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableHeader>
+              <TableBody>
+                {paginatedAttendance.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell>
+                      <p className="text-sm font-bold text-gray-900 dark:text-white">
+                        {record.employee ? `${record.employee.first_name} ${record.employee.last_name}` : 'N/A'}
+                      </p>
+                      <p className="text-xs text-gray-500">ID: {record.employee_id}</p>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {record.date || 'N/A'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {record.check_in || 'N/A'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {record.check_out || 'N/A'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${record.status === 'approved'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                        }`}>
+                        {record.status || 'pending'}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/dashboard/management/attendance/${record.id}`}
+                          className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                        </Link>
+                        {hasPermission(PERMISSIONS.ATTENDANCE.UPDATE) && (
                           <Link
-                            href={`/dashboard/management/attendance/${record.id}`}
-                            className="p-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors group"
-                            title="View Details"
+                            href={`/dashboard/management/attendance/edit/${record.id}`}
+                            className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
+                            title="Edit"
                           >
-                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+                            <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
                           </Link>
-                          {hasPermission(PERMISSIONS.ATTENDANCE.UPDATE) && (
-                            <Link
-                              href={`/dashboard/management/attendance/edit/${record.id}`}
-                              className="p-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors group"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4 text-gray-400 group-hover:text-yellow-600" />
-                            </Link>
-                          )}
-                          {record.status === 'pending' && hasPermission(PERMISSIONS.ATTENDANCE.APPROVE) && (
-                            <button
-                              onClick={() => handleApprove(record.id)}
-                              className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-                            </button>
-                          )}
-                          {hasPermission(PERMISSIONS.ATTENDANCE.DELETE) && (
-                            <button
-                              onClick={() => handleDelete(record.id)}
-                              className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        )}
+                        {record.status === 'pending' && hasPermission(PERMISSIONS.ATTENDANCE.APPROVE) && (
+                          <button
+                            onClick={() => handleApprove(record.id)}
+                            className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors group"
+                            title="Approve"
+                          >
+                            <CheckCircle className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
+                          </button>
+                        )}
+                        {hasPermission(PERMISSIONS.ATTENDANCE.DELETE) && (
+                          <button
+                            onClick={() => handleDelete(record.id)}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
+                          </button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <div className="p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
@@ -288,6 +273,7 @@ export default function AttendancePage() {
               </p>
             </div>
           )}
+        </TableContainer>
 
           {/* Pagination Footer */}
           <Pagination
@@ -297,7 +283,6 @@ export default function AttendancePage() {
             pageSize={PAGE_SIZE}
             onPageChange={setCurrentPage}
           />
-        </div>
       </div>
     </ProtectedRoute>
   );

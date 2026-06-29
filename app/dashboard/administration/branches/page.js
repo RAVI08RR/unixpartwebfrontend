@@ -20,6 +20,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import Pagination from "@/app/components/Pagination";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function BranchManagementPage() {
   const { hasPermission } = usePermission();
@@ -305,14 +306,14 @@ export default function BranchManagementPage() {
           <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
+              className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${
                 isFilterOpen 
                   ? 'bg-red-600 text-white shadow-red-600/10' 
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
               }`}
             >
               <Filter className="w-4 h-4" />
-              <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+              <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
 
             <ExportButton
@@ -323,9 +324,9 @@ export default function BranchManagementPage() {
               onError={(err) => error(`Export failed: ${err.message}`)}
             />
             {hasPermission(PERMISSIONS.BRANCHES.CREATE) && (
-              <Link href="/dashboard/administration/branches/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
+              <Link href="/dashboard/administration/branches/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all">
                 <Plus className="w-4 h-4" />
-                <span className="whitespace-nowrap font-black">Add Branch</span>
+                <span className="hidden sm:inline whitespace-nowrap font-black">Add Branch</span>
               </Link>
             )}
           </div>
@@ -381,276 +382,270 @@ export default function BranchManagementPage() {
       )}
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-zinc-900 rounded-[28px] border border-gray-100 dark:border-zinc-800 shadow-sm w-full max-w-full responsive-table-container">
-        <div className="overflow-x-auto lg:overflow-x-visible w-full scrollbar-hide">
-          <table className="w-full lg:min-w-[800px]">
-            <thead>
-              <tr className="border-b border-gray-50 dark:border-zinc-800/50">
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Branch</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Code</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Owners</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Revenue</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Outstanding</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10">Status</th>
-                <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-white uppercase tracking-[0.2em] bg-gray-50/10"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-              {paginatedBranches.length > 0 ? (
-                paginatedBranches.map((branch, index) => {
-                  const owners = getBranchOwners(branch.id);
-                  const isExpanded = expandedBranches[branch.id];
-                  const totalPercent = getTotalSharePercent(branch.id);
-                  
-                  return (
-                    <React.Fragment key={branch.id}>
-                      <tr className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30"
-                      style= {{borderBottom :"0.9px solid #E2E8F0"}}
-                      >
-                        {/* Branch Name */}
-                        <td className="px-6 py-6" data-label="Branch">
-                          <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                              <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
-                              <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {branch.id}</p>
+      <TableContainer>
+        <Table minWidth="1000px">
+          <TableHeader>
+            <TableHeaderCell>Branch</TableHeaderCell>
+            <TableHeaderCell>Code</TableHeaderCell>
+            <TableHeaderCell>Owners</TableHeaderCell>
+            <TableHeaderCell>Revenue</TableHeaderCell>
+            <TableHeaderCell>Outstanding</TableHeaderCell>
+            <TableHeaderCell>Status</TableHeaderCell>
+            <TableHeaderCell className="text-right"></TableHeaderCell>
+          </TableHeader>
+          <TableBody>
+            {paginatedBranches.length > 0 ? (
+              paginatedBranches.map((branch, index) => {
+                const owners = getBranchOwners(branch.id);
+                const isExpanded = expandedBranches[branch.id];
+                const totalPercent = getTotalSharePercent(branch.id);
+                
+                return (
+                  <React.Fragment key={branch.id}>
+                    <TableRow>
+                      {/* Branch Name */}
+                      <TableCell>
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                            <Building2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{branch.branch_name || 'N/A'}</p>
+                            <p className="text-sm text-gray-400 mt-1 font-medium tracking-wide">ID: {branch.id}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Branch Code */}
+                      <TableCell>
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
+                          <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
+                        </div>
+                      </TableCell>
+
+                      {/* Owners */}
+                      <TableCell>
+                        {owners.length > 0 ? (
+                          <div className="space-y-1">
+                            {owners.slice(0, 2).map((owner, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <Truck className="w-3 h-3 text-gray-400" />
+                                <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[150px]">
+                                  {getSupplierName(owner.supplier_id)}
+                                </span>
+                                <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                                  {owner.share_percent}%
+                                </span>
+                              </div>
+                            ))}
+                            {owners.length > 2 && (
+                              <button
+                                onClick={() => toggleBranchOwners(branch.id)}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+                              >
+                                +{owners.length - 2} more
+                                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                              </button>
+                            )}
+                            <div className="flex items-center gap-1 mt-1">
+                              <Percent className="w-3 h-3 text-gray-400" />
+                              <span className={`text-xs font-black ${
+                                totalPercent === 100 
+                                  ? 'text-green-600 dark:text-green-400' 
+                                  : totalPercent > 100
+                                  ? 'text-red-600 dark:text-red-400'
+                                  : 'text-orange-600 dark:text-orange-400'
+                              }`}>
+                                Total: {totalPercent.toFixed(1)}%
+                              </span>
                             </div>
                           </div>
-                        </td>
+                        ) : (
+                          <span className="text-xs text-gray-400 italic">No owners</span>
+                        )}
+                      </TableCell>
 
-                        {/* Branch Code */}
-                        <td className="px-6 py-6" data-label="Code">
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 rounded-full">
-                            <span className="text-sm font-black text-gray-700 dark:text-gray-300">{branch.branch_code || 'N/A'}</span>
-                          </div>
-                        </td>
+                      {/* Revenue */}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                          <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                            {formatCurrency(branch.total_revenue)}
+                          </span>
+                        </div>
+                      </TableCell>
 
-                        {/* Owners */}
-                        <td className="px-6 py-6" data-label="Owners">
-                          {owners.length > 0 ? (
-                            <div className="space-y-1">
-                              {owners.slice(0, 2).map((owner, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <Truck className="w-3 h-3 text-gray-400" />
-                                  <span className="text-xs font-bold text-gray-700 dark:text-zinc-300 truncate max-w-[150px]">
-                                    {getSupplierName(owner.supplier_id)}
-                                  </span>
-                                  <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                                    {owner.share_percent}%
-                                  </span>
-                                </div>
-                              ))}
-                              {owners.length > 2 && (
-                                <button
-                                  onClick={() => toggleBranchOwners(branch.id)}
-                                  className="text-xs text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1"
+                      {/* Outstanding */}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                            {formatCurrency(branch.total_outstanding)}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      {/* Status */}
+                      <TableCell>
+                        <div className={branch.status ? 'status-badge-active' : 'status-badge-inactive'}>
+                          <div className={branch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
+                          {branch.status ? "Active" : "Inactive"}
+                        </div>
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="text-right relative">
+                        <div className="flex items-center justify-end gap-2">
+                          {/* Show owners button */}
+                          {owners.length > 0 && (
+                            <button
+                              onClick={() => toggleBranchOwners(branch.id)}
+                              className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                              title={`${owners.length} owner(s)`}
+                            >
+                              <Truck className="w-4 h-4" />
+                              <span>{owners.length}</span>
+                              {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            </button>
+                          )}
+                          
+                          <div className="relative">
+                            <button 
+                              onClick={() => toggleMenu(branch.id)}
+                              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
+                                menuOpenId === branch.id 
+                                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
+                                  : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
+                              }`}
+                            >
+                              <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            
+                            {menuOpenId === branch.id && (
+                              <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
+                                index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
+                              }`}>
+                                <button 
+                                  onClick={() => handleViewBranch(branch)}
+                                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
                                 >
-                                  +{owners.length - 2} more
-                                  {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                  <Eye className="w-4 h-4" />
+                                  View Details
                                 </button>
-                              )}
-                              <div className="flex items-center gap-1 mt-1">
-                                <Percent className="w-3 h-3 text-gray-400" />
-                                <span className={`text-xs font-black ${
+                                {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                                  <>
+                                    <Link 
+                                      href={`/dashboard/administration/branches/edit/${branch.id}`}
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                                    >
+                                      <Pencil className="w-4 h-4" />
+                                      Edit Branch
+                                    </Link>
+                                    <button 
+                                      onClick={() => handleActivateDeactivateClick(branch)}
+                                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-xl transition-colors ${
+                                        branch.status 
+                                          ? 'text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
+                                          : 'text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
+                                      }`}
+                                    >
+                                      <Power className="w-4 h-4" />
+                                      {branch.status ? 'Deactivate' : 'Activate'}
+                                    </button>
+                                  </>
+                                )}
+                                {hasPermission(PERMISSIONS.BRANCHES.DELETE) && (
+                                  <>
+                                    <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
+                                    <button 
+                                      onClick={() => handleDeleteClick(branch)} 
+                                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                      Delete Branch
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Branch Owners Row */}
+                    {isExpanded && owners.length > 0 && (
+                      <TableRow className="bg-blue-50/50 dark:bg-blue-900/10">
+                        <TableCell colSpan="7">
+                          <div className="space-y-3 p-2">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                <Truck className="w-4 h-4 text-blue-600" />
+                                Branch Owners ({owners.length})
+                              </h4>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-500">Total Share:</span>
+                                <span className={`text-sm font-black ${
                                   totalPercent === 100 
                                     ? 'text-green-600 dark:text-green-400' 
                                     : totalPercent > 100
                                     ? 'text-red-600 dark:text-red-400'
                                     : 'text-orange-600 dark:text-orange-400'
                                 }`}>
-                                  Total: {totalPercent.toFixed(1)}%
+                                  {totalPercent.toFixed(2)}%
                                 </span>
                               </div>
                             </div>
-                          ) : (
-                            <span className="text-xs text-gray-400 italic">No owners</span>
-                          )}
-                        </td>
-
-                        {/* Revenue */}
-                        <td className="px-6 py-6" data-label="Revenue">
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="w-4 h-4 text-green-500" />
-                            <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                              {formatCurrency(branch.total_revenue)}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Outstanding */}
-                        <td className="px-6 py-6" data-label="Outstanding">
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 text-orange-500" />
-                            <span className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                              {formatCurrency(branch.total_outstanding)}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-6 py-6" data-label="Status">
-                          <div className={branch.status ? 'status-badge-active' : 'status-badge-inactive'}>
-                            <div className={branch.status ? 'status-dot-active' : 'status-dot-inactive'}></div>
-                            {branch.status ? "Active" : "Inactive"}
-                          </div>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-6 py-6 text-right relative" data-label="Actions">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Show owners button */}
-                            {owners.length > 0 && (
-                              <button
-                                onClick={() => toggleBranchOwners(branch.id)}
-                                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                                title={`${owners.length} owner(s)`}
-                              >
-                                <Truck className="w-4 h-4" />
-                                <span>{owners.length}</span>
-                                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                              </button>
-                            )}
                             
-                            <div className="relative">
-                              <button 
-                                onClick={() => toggleMenu(branch.id)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${
-                                  menuOpenId === branch.id 
-                                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg menu-button-active'
-                                    : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-zinc-800 bg-gray-50 dark:bg-zinc-800/50 lg:bg-transparent lg:dark:bg-transparent'
-                                }`}
-                              >
-                                <span className="text-[11px] font-black uppercase tracking-widest lg:hidden">Actions</span>
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
-                              
-                              {menuOpenId === branch.id && (
-                                <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-100 p-1.5 animate-in fade-in zoom-in-95 duration-200 ${
-                                  index > paginatedBranches.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'
-                                }`}>
-                                  <button 
-                                    onClick={() => handleViewBranch(branch)}
-                                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-xl transition-colors"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    View Details
-                                  </button>
-                                  {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
-                                    <>
-                                      <Link 
-                                        href={`/dashboard/administration/branches/edit/${branch.id}`}
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-400 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400 rounded-xl transition-colors"
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {owners.map((owner) => (
+                                <div key={owner.id} className="bg-white dark:bg-zinc-900 rounded-lg p-3 border border-gray-200 dark:border-zinc-800">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+                                        {getSupplierName(owner.supplier_id)}
+                                      </p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <Percent className="w-3 h-3 text-blue-600" />
+                                        <span className="text-xs font-black text-blue-600 dark:text-blue-400">
+                                          {owner.share_percent}%
+                                        </span>
+                                        <span className="text-xs text-gray-400">
+                                          AED {parseFloat(owner.share_amount || 0).toFixed(2)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
+                                      <Link
+                                        href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
+                                        className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
+                                        title="Edit"
                                       >
-                                        <Pencil className="w-4 h-4" />
-                                        Edit Branch
+                                        <Pencil className="w-3 h-3 text-gray-400 hover:text-blue-600" />
                                       </Link>
-                                      <button 
-                                        onClick={() => handleActivateDeactivateClick(branch)}
-                                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold rounded-xl transition-colors ${
-                                          branch.status 
-                                            ? 'text-gray-600 dark:text-gray-400 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400'
-                                        }`}
-                                      >
-                                        <Power className="w-4 h-4" />
-                                        {branch.status ? 'Deactivate' : 'Activate'}
-                                      </button>
-                                    </>
-                                  )}
-                                  {hasPermission(PERMISSIONS.BRANCHES.DELETE) && (
-                                    <>
-                                      <div className="h-px bg-gray-100 dark:bg-zinc-800 my-1" />
-                                      <button 
-                                        onClick={() => handleDeleteClick(branch)} 
-                                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                                      >
-                                        <Trash2 className="w-4 h-4" />
-                                        Delete Branch
-                                      </button>
-                                    </>
-                                  )}
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+                              ))}
                             </div>
                           </div>
-                        </td>
-                      </tr>
-                      
-                      {/* Branch Owners Row */}
-                      {isExpanded && owners.length > 0 && (
-                        <tr className="bg-blue-50/50 dark:bg-blue-900/10">
-                          <td colSpan="7" className="px-6 py-4">
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between mb-3">
-                                <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
-                                  <Truck className="w-4 h-4 text-blue-600" />
-                                  Branch Owners ({owners.length})
-                                </h4>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-gray-500">Total Share:</span>
-                                  <span className={`text-sm font-black ${
-                                    totalPercent === 100 
-                                      ? 'text-green-600 dark:text-green-400' 
-                                      : totalPercent > 100
-                                      ? 'text-red-600 dark:text-red-400'
-                                      : 'text-orange-600 dark:text-orange-400'
-                                  }`}>
-                                    {totalPercent.toFixed(2)}%
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {owners.map((owner) => (
-                                  <div key={owner.id} className="bg-white dark:bg-zinc-900 rounded-lg p-3 border border-gray-200 dark:border-zinc-800">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                                          {getSupplierName(owner.supplier_id)}
-                                        </p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <Percent className="w-3 h-3 text-blue-600" />
-                                          <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                                            {owner.share_percent}%
-                                          </span>
-                                          <span className="text-xs text-gray-400">
-                                            AED {parseFloat(owner.share_amount || 0).toFixed(2)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      {hasPermission(PERMISSIONS.BRANCHES.UPDATE) && (
-                                        <Link
-                                          href={`/dashboard/administration/branch-owners/edit/${owner.id}`}
-                                          className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded transition-colors"
-                                          title="Edit"
-                                        >
-                                          <Pencil className="w-3 h-3 text-gray-400 hover:text-blue-600" />
-                                        </Link>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan="7" className="py-24 text-center">
-                    <p className="text-gray-400 font-black text-sm uppercase tracking-widest">No branches found</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan="7" className="py-24 text-center">
+                  <p className="text-gray-400 font-black text-sm uppercase tracking-widest text-center w-full">No branches found</p>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
         {/* Pagination Footer */}
         <Pagination
           currentPage={currentPage}
@@ -659,7 +654,6 @@ export default function BranchManagementPage() {
           pageSize={PAGE_SIZE}
           onPageChange={setCurrentPage}
         />
-      </div>
 
       {/* View Branch Modal */}
       {viewModalOpen && selectedBranch && (

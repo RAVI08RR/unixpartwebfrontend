@@ -366,16 +366,16 @@ export default function StockItemsManagementPage() {
 
             {/* Action Buttons */}
             <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
-              <div className="relative flex-1 sm:flex-none">
+              <div className="relative flex-none">
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                  className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                       ? 'bg-red-600 text-white shadow-red-600/10'
                       : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                     }`}
                 >
                   <Filter className="w-4 h-4" />
-                  <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                  <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
                 </button>
               </div>
 
@@ -390,14 +390,14 @@ export default function StockItemsManagementPage() {
                 <>
                   <button
                     onClick={handleAddCategoryClick}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-white dark:bg-zinc-900 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-95 transition-all"
+                    className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border-2 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/10 active:scale-95 transition-all"
                   >
                     <Tag className="w-4 h-4" />
-                    <span className="whitespace-nowrap font-black">Add Category</span>
+                    <span className="hidden sm:inline whitespace-nowrap font-black">Add Category</span>
                   </button>
-                  <Link href="/dashboard/inventory/stock-items/add" className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
+                  <Link href="/dashboard/inventory/stock-items/add" className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button">
                     <Plus className="w-4 h-4" />
-                    <span className="whitespace-nowrap font-black">Add Stock Item</span>
+                    <span className="hidden sm:inline whitespace-nowrap font-black">Add Stock Item</span>
                   </Link>
                 </>
               )}

@@ -6,7 +6,7 @@ import {
   MoreVertical, Search, Filter, Plus,
   Pencil, Trash2, Check, X,
   Eye, Package, Calendar, Building2, DollarSign, Hash,
-  AlertCircle, FileText, Upload, Trash, ExternalLink, RefreshCcw, Download, RotateCcw
+  AlertCircle, FileText, Upload, Trash, ExternalLink, RefreshCcw, Download, RotateCcw, ChevronRight
 } from "lucide-react";
 import { usePurchaseOrders } from "@/app/lib/hooks/usePurchaseOrders";
 import { purchaseOrderService } from "@/app/lib/services/purchaseOrderService";
@@ -19,6 +19,7 @@ import ProtectedRoute from "@/app/components/ProtectedRoute";
 import { PERMISSIONS } from "@/app/lib/constants/permissions";
 import { usePermission } from "@/app/lib/hooks/usePermission";
 import Pagination from "@/app/components/Pagination";
+import { TableContainer, Table, TableHeader, TableHeaderCell, TableBody, TableRow, TableCell } from "@/app/components/Table";
 
 export default function PurchaseOrdersPage() {
   const { hasPermission } = usePermission();
@@ -341,13 +342,13 @@ export default function PurchaseOrdersPage() {
             <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto mt-2 sm:mt-0 btn-mobile-arrange">
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
+                className={`flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-sm shadow-xl active:scale-95 transition-all filter-button ${isFilterOpen
                   ? 'bg-red-600 text-white shadow-red-600/10'
                   : 'bg-black dark:bg-white text-white dark:text-black shadow-black/10'
                   }`}
               >
                 <Filter className="w-4 h-4" />
-                <span>{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
+                <span className="hidden sm:inline">{isFilterOpen ? 'Hide Filters' : 'Show Filters'}</span>
               </button>
 
               <ExportButton
@@ -361,10 +362,10 @@ export default function PurchaseOrdersPage() {
               {hasPermission(PERMISSIONS.PURCHASE_ORDERS.CREATE) && (
                 <Link
                   href="/dashboard/inventory/purchase-orders/add"
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
+                  className="flex-none p-3.5 sm:px-6 sm:py-3.5 flex items-center justify-center gap-2 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-sm shadow-xl shadow-black/10 active:scale-95 transition-all add-button"
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="whitespace-nowrap font-black">Create Purchase Order</span>
+                  <span className="hidden sm:inline whitespace-nowrap font-black">Create Purchase Order</span>
                 </Link>
               )}
             </div>
@@ -511,139 +512,108 @@ export default function PurchaseOrdersPage() {
           </div>
         )}
 
-        {/* Main Table / Mobile Cards */}
-        <div className="bg-white dark:bg-zinc-900 md:rounded-[32px] border-y md:border border-gray-100 dark:border-zinc-800 shadow-xl shadow-gray-200/20">
-          {/* Desktop Table View */}
-          <div className="hidden lg:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-gray-50 dark:border-zinc-800">
-                  <th className="px-6 py-6 text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">PO ID</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Container Code</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Container No.</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Supplier Code</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Arrival Date</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Arrival Branch</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Revenue</th>
-                  <th className="px-6 py-6 text-left text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] bg-gray-50/10">Items In Stock</th>
-                  <th className="px-6 py-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 dark:divide-zinc-800/50">
-                {loading ? (
-                  <tr><td colSpan="9" className="py-24 text-center"><RefreshCcw className="w-8 h-8 mx-auto animate-spin text-gray-300" /></td></tr>
-                ) : paginatedPOs.map((po, index) => (
-                  <tr key={po.id} className="group transition-all hover:bg-gray-50/50 dark:hover:bg-zinc-800/30">
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
-                          <Hash className="w-5 h-5 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{po.po_id}</p>
-                          <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[150px]">{po.notes || 'No notes'}</p>
-                        </div>
+        <TableContainer>
+          <Table minWidth="1200px">
+            <TableHeader>
+              <TableHeaderCell>PO ID</TableHeaderCell>
+              <TableHeaderCell>Container Code</TableHeaderCell>
+              <TableHeaderCell>Container No.</TableHeaderCell>
+              <TableHeaderCell>Supplier Code</TableHeaderCell>
+              <TableHeaderCell>Arrival Date</TableHeaderCell>
+              <TableHeaderCell>Arrival Branch</TableHeaderCell>
+              <TableHeaderCell>Revenue</TableHeaderCell>
+              <TableHeaderCell>Items In Stock</TableHeaderCell>
+              <TableHeaderCell className="text-right"></TableHeaderCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan="9" className="py-24 text-center">
+                    <RefreshCcw className="w-8 h-8 mx-auto animate-spin text-gray-300" />
+                  </TableCell>
+                </TableRow>
+              ) : paginatedPOs.map((po, index) => (
+                <TableRow key={po.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-4">
+                      <div className="w-11 h-11 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center border-2 border-white dark:border-zinc-800 shadow-sm">
+                        <Hash className="w-5 h-5 text-red-600 dark:text-red-400" />
                       </div>
-                    </td>
-                    <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_code || '-'}</span></td>
-                    <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_number || '-'}</span></td>
-                    <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.supplier?.supplier_code || '-'}</span></td>
-                    <td className="px-6 py-6"><span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</span></td>
-                    <td className="px-6 py-6 font-bold text-sm">{po.container?.destination_branch?.branch_name || '-'}</td>
-                    <td className="px-6 py-6 font-black text-sm text-gray-900 dark:text-white">AED {parseFloat(po.total_container_revenue).toLocaleString()}</td>
-                    <td className="px-6 py-6"><span className="text-sm font-bold text-gray-600 dark:text-zinc-400">{po.items_in_stock} units</span></td>
-                    <td className="px-6 py-6 text-right">
-                      <div className="relative inline-block">
-                        <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400">
-                          <MoreVertical className="w-5 h-5" />
-                        </button>
-                        {menuOpenId === po.id && (
-                          <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div>
+                        <p className="text-sm font-black text-gray-900 dark:text-white group-hover:text-red-600 transition-colors leading-tight">{po.po_id}</p>
+                        <p className="text-xs text-gray-400 mt-1 font-bold truncate max-w-[150px]">{po.notes || 'No notes'}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_code || '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.container_number || '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.container?.supplier?.supplier_code || '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-700 dark:text-zinc-300">{po.created_at ? new Date(po.created_at).toLocaleDateString() : '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-bold text-sm text-gray-700 dark:text-zinc-300">{po.container?.destination_branch?.branch_name || '-'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-black text-sm text-gray-900 dark:text-white">AED {po.total_container_revenue ? parseFloat(po.total_container_revenue).toLocaleString() : '0'}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-gray-600 dark:text-zinc-400">{po.items_in_stock} units</span>
+                  </TableCell>
+                  <TableCell className="text-right relative">
+                    <div className="relative inline-block">
+                      <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400">
+                        <MoreVertical className="w-5 h-5" />
+                      </button>
+                      {menuOpenId === po.id && (
+                        <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] py-2 animate-in fade-in slide-in-from-top-2 duration-200 ${index > paginatedPOs.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
+                          <Link
+                            href={`/dashboard/inventory/purchase-orders/items/${po.id}`}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-blue-500" /> View Items
+                          </Link>
+                          <button
+                            onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-left"
+                          >
+                            <FileText className="w-4 h-4 text-purple-500" /> Documents
+                          </button>
+                          {hasPermission(PERMISSIONS.PURCHASE_ORDERS.UPDATE) && (
                             <Link
-                              href={`/dashboard/inventory/purchase-orders/items/${po.id}`}
+                              href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
                               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
                             >
-                              <Eye className="w-4 h-4 text-blue-500" /> View Items
+                              <Pencil className="w-4 h-4 text-amber-500" /> Edit Order
                             </Link>
-                            <button
-                              onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors text-left"
-                            >
-                              <FileText className="w-4 h-4 text-purple-500" /> Documents
-                            </button>
-                            {hasPermission(PERMISSIONS.PURCHASE_ORDERS.UPDATE) && (
-                              <Link
-                                href={`/dashboard/inventory/purchase-orders/edit/${po.id}`}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+                          )}
+                          {hasPermission(PERMISSIONS.PURCHASE_ORDERS.DELETE) && (
+                            <>
+                              <div className="my-1 border-t border-gray-100 dark:border-zinc-800"></div>
+                              <button
+                                onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
                               >
-                                <Pencil className="w-4 h-4 text-amber-500" /> Edit Order
-                              </Link>
-                            )}
-                            {hasPermission(PERMISSIONS.PURCHASE_ORDERS.DELETE) && (
-                              <>
-                                <div className="my-1 border-t border-gray-100 dark:border-zinc-800"></div>
-                                <button
-                                  onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }}
-                                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-left"
-                                >
-                                  <Trash2 className="w-4 h-4" /> Delete Order
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile Cards View */}
-          <div className="lg:hidden divide-y divide-gray-50 dark:divide-zinc-800/50">
-            {paginatedPOs.map((po) => (
-              <div key={po.id} className="p-5 active:bg-gray-50 dark:active:bg-zinc-900 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-50 dark:bg-red-900/10 rounded-xl flex items-center justify-center text-red-600">
-                      <Hash className="w-5 h-5" />
+                                <Trash2 className="w-4 h-4" /> Delete Order
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <h4 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">{po.po_id}</h4>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">{po.container?.container_code || 'No Container'}</p>
-                    </div>
-                  </div>
-                  <button onClick={() => toggleMenu(po.id)} className="p-2 -mr-2 text-gray-400 active:scale-90 transition-transform"><MoreVertical className="w-5 h-5" /></button>
-                </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Revenue</p><p className="text-sm font-black text-gray-900 dark:text-white">AED {parseFloat(po.total_container_revenue).toLocaleString()}</p></div>
-                  <div className="space-y-1"><p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Stock Items</p><p className="text-sm font-black text-gray-900 dark:text-white truncate">{po.items_in_stock} units</p></div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <div className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">Active</div>
-                  </div>
-                  <Link href={`/dashboard/inventory/purchase-orders/items/${po.id}`} className="text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100 dark:border-blue-900/30 px-3 py-1 rounded-lg">View Items</Link>
-                </div>
-
-                {menuOpenId === po.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap gap-2 animate-in slide-in-from-top-2 duration-200">
-                    <button onClick={() => { handleOpenDocuments(po); setMenuOpenId(null); }} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><FileText className="w-3.5 h-3.5 text-blue-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Docs</span></button>
-                    {hasPermission(PERMISSIONS.PURCHASE_ORDERS.UPDATE) && (
-                      <Link href={`/dashboard/inventory/purchase-orders/edit/${po.id}`} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl"><Pencil className="w-3.5 h-3.5 text-amber-600" /><span className="text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-400">Edit</span></Link>
-                    )}
-                    {hasPermission(PERMISSIONS.PURCHASE_ORDERS.DELETE) && (
-                      <button onClick={() => { setSelectedPO(po); setDeleteModalOpen(true); setMenuOpenId(null); }} className="flex-1 min-w-[70px] flex items-center justify-center gap-2 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl"><Trash2 className="w-3.5 h-3.5 text-red-600" /><span className="text-[10px] font-black uppercase tracking-widest text-red-600">Delete</span></button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
         {/* Pagination Footer */}
         <Pagination
           currentPage={currentPage}
