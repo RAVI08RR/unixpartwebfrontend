@@ -17,7 +17,7 @@ export default function PrintClearancePage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const handlePrint = useReactToPrint({ 
+  const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: container?.invoice_number || container?.container_code || 'custom-clearance'
   });
@@ -140,7 +140,7 @@ export default function PrintClearancePage() {
               <div
                 style={{ fontSize: 28, fontWeight: 900, letterSpacing: "-0.5px" }}
               >
-                CUSTOM CLEARANCE
+                INVOICE
               </div>
               <div style={{ marginTop: 8 }}>
                 <div style={{ fontSize: 12 }}>
@@ -150,15 +150,15 @@ export default function PrintClearancePage() {
                   <strong>DATE:</strong>{" "}
                   {container.invoice_date
                     ? new Date(container.invoice_date).toLocaleDateString(
-                        "en-GB",
-                        { day: "2-digit", month: "long", year: "numeric" }
-                      )
+                      "en-GB",
+                      { day: "2-digit", month: "long", year: "numeric" }
+                    )
                     : container.created_at
-                    ? new Date(container.created_at).toLocaleDateString(
+                      ? new Date(container.created_at).toLocaleDateString(
                         "en-GB",
                         { day: "2-digit", month: "long", year: "numeric" }
                       )
-                    : "—"}
+                      : "—"}
                 </div>
               </div>
             </div>
@@ -270,8 +270,8 @@ export default function PrintClearancePage() {
               borderLeft: "4px solid #111",
             }}
           >
-            SHIPPED FROM ({container.port_of_loading || "SUPPLIER PORT CITY, COUNTRY"}) →
-            TO ({container.port_of_discharging || "UAE BRANCH PORT NAME COUNTRY"})
+            SHIPPED FROM ({container.port_of_loading || "SUPPLIER PORT CITY"}{container.port_of_loading_country ? `, ${container.port_of_loading_country}` : ""}) →
+            TO ({container.port_of_discharging || "UAE BRANCH PORT NAME"}{container.port_of_discharge_country ? `, ${container.port_of_discharge_country}` : ""})
           </div>
 
           {/* ── Items Table ── */}

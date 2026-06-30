@@ -45,6 +45,16 @@ export default function SalesDataPage() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
 
@@ -589,7 +599,7 @@ export default function SalesDataPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-sm font-medium text-gray-500">{item.load_date ? formatDate(item.load_date) : "-"}</TableCell>
-                    <TableCell className="text-right relative">
+                    <TableCell className="text-right relative actions-menu-container">
                       <button onClick={() => toggleMenu(idx)} className="p-2 rounded-xl text-gray-400 hover:text-gray-900 transition-all"><MoreVertical className="w-5 h-5" /></button>
                       {menuOpenId === idx && (
                         <div className={`absolute right-0 w-48 bg-white dark:bg-zinc-900 border border-gray-100 rounded-2xl shadow-xl z-[200] p-1.5 ${idx % itemsPerPage > 4 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>

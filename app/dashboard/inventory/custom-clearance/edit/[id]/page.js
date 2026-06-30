@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Ship, Hash, Navigation, Anchor, MapPin, 
-  Package, Calendar, Building2, User as UserIcon, FileText, StickyNote
+  Package, Calendar, Building2, User as UserIcon, FileText, StickyNote, Globe
 } from "lucide-react";
+import { COUNTRIES } from "@/app/lib/constants/countries";
 import { containerService } from "@/app/lib/services/containerService";
 import { useSuppliers } from "@/app/lib/hooks/useSuppliers";
 import { useBranches } from "@/app/lib/hooks/useBranches";
@@ -40,6 +41,8 @@ export default function EditClearancePage({ params }) {
     shipping_agent: "",
     port_of_loading: "",
     port_of_discharging: "",
+    port_of_loading_country: "",
+    port_of_discharge_country: "",
     container_size: "40ft",
     total_packages: 1,
     notify_user_id: 1,
@@ -85,6 +88,8 @@ export default function EditClearancePage({ params }) {
             shipping_agent: data.shipping_agent || "",
             port_of_loading: data.port_of_loading || "",
             port_of_discharging: data.port_of_discharging || "",
+            port_of_loading_country: data.port_of_loading_country || "",
+            port_of_discharge_country: data.port_of_discharge_country || "",
             container_size: data.container_size || "40ft",
             total_packages: data.total_packages || 1,
             notify_user_id: data.notify_user_id || 1,
@@ -270,6 +275,23 @@ export default function EditClearancePage({ params }) {
               </div>
             </FormField>
 
+            <FormField label="Port of Loading Country">
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <select
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
+                  value={formData.port_of_loading_country}
+                  onChange={(e) => setFormData({...formData, port_of_loading_country: e.target.value})}
+                >
+                  <option value="">Select Country</option>
+                  {COUNTRIES.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+              </div>
+            </FormField>
+
             <FormField label="Port of Discharging">
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -281,6 +303,23 @@ export default function EditClearancePage({ params }) {
                   value={formData.port_of_discharging}
                   onChange={(e) => setFormData({...formData, port_of_discharging: e.target.value})}
                 />
+              </div>
+            </FormField>
+
+            <FormField label="Port of Discharge Country">
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                <select
+                  className="w-full pl-9 pr-3 bg-gray-50 dark:bg-zinc-800/50 border border-transparent focus:border-red-600/30 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-red-600/10 transition-all dark:text-white appearance-none cursor-pointer"
+                  style={{ height: '45px' }}
+                  value={formData.port_of_discharge_country}
+                  onChange={(e) => setFormData({...formData, port_of_discharge_country: e.target.value})}
+                >
+                  <option value="">Select Country</option>
+                  {COUNTRIES.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
               </div>
             </FormField>
 

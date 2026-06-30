@@ -77,6 +77,16 @@ export default function ExpensesPage() {
 
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
@@ -542,7 +552,7 @@ export default function ExpensesPage() {
 
                       <TableCell className="text-right relative">
                         <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
+                          <div className="relative actions-menu-container">
                             <button
                               onClick={() => toggleMenu(expense.id)}
                               className={`p-2 rounded-xl transition-all ${menuOpenId === expense.id

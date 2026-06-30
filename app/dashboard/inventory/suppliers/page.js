@@ -100,6 +100,16 @@ export default function SupplierManagementPage() {
   const [editForm, setEditForm] = useState({});
   const [menuOpenId, setMenuOpenId] = useState(null);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
+
   // Pagination: all items from current page (no client-side slicing)
   const paginatedSuppliers = useMemo(() => {
     if (!suppliers) return [];
@@ -518,7 +528,7 @@ export default function SupplierManagementPage() {
                       </TableCell>
 
                       {/* Actions */}
-                      <TableCell className="text-right relative">
+                      <TableCell className="text-right relative actions-menu-container">
                         {isEditing ? (
                           <div className="flex items-center justify-end gap-2">
                             <button onClick={handleSave} className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors">

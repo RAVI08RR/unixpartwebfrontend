@@ -100,8 +100,8 @@ const PrintableClearance = React.forwardRef(function PrintableClearance(
           { label: "Vessel Name", value: container.vessel_name },
           { label: "Voyage Number", value: container.voyage_number },
           { label: "Shipping Agent", value: container.shipping_agent },
-          { label: "Port of Loading", value: container.port_of_loading },
-          { label: "Port of Discharging", value: container.port_of_discharging },
+          { label: "Port of Loading", value: container.port_of_loading ? `${container.port_of_loading}${container.port_of_loading_country ? `, ${container.port_of_loading_country}` : ""}` : "—" },
+          { label: "Port of Discharging", value: container.port_of_discharging ? `${container.port_of_discharging}${container.port_of_discharge_country ? `, ${container.port_of_discharge_country}` : ""}` : "—" },
           { label: "Destination Branch", value: branchName },
           { label: "Supplier", value: supplierName },
         ].map((field, i) => (

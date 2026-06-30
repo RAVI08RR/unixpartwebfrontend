@@ -56,6 +56,16 @@ export default function PermissionsManagementPage() {
 
   // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedPermission, setSelectedPermission] = useState(null);
@@ -432,7 +442,7 @@ export default function PermissionsManagementPage() {
                     {/* Actions */}
                     <TableCell className="text-right relative">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="relative">
+                        <div className="relative actions-menu-container">
                           <button 
                             onClick={() => toggleMenu(permission.id)}
                             className={`p-2 rounded-xl transition-all ${

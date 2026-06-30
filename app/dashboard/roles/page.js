@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Shield, Filter, Download, Plus, ChevronLeft, ChevronRight,
@@ -21,6 +21,16 @@ export default function RolesPage() {
   const { hasPermission } = usePermission();
   const { roles, loading, error, updateRole, deleteRole } = useRoles();
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState(null);
@@ -260,7 +270,7 @@ export default function RolesPage() {
 
                     <TableCell className="text-right relative">
                       <div className="flex items-center justify-end gap-2">
-                        <div className="relative">
+                        <div className="relative actions-menu-container">
                           <button 
                             onClick={() => toggleMenu(role.id)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${

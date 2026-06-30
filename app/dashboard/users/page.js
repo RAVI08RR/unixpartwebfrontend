@@ -96,6 +96,16 @@ export default function UserManagementPage() {
 
   // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -395,7 +405,7 @@ export default function UserManagementPage() {
                       {/* Actions */}
                       <TableCell className="text-right relative">
                         <div className="flex items-center justify-end gap-2">
-                          <div className="relative">
+                          <div className="relative actions-menu-container">
                             <button
                               onClick={() => toggleMenu(user.id)}
                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${menuOpenId === user.id

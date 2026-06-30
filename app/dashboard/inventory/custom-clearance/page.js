@@ -110,6 +110,16 @@ export default function CustomClearancePage() {
   }, []);
 
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
@@ -333,7 +343,9 @@ export default function CustomClearancePage() {
     { key: 'voyage_number', label: 'Voyage Number' },
     { key: 'shipping_agent', label: 'Shipping Agent' },
     { key: 'port_of_loading', label: 'Port of Loading' },
+    { key: 'port_of_loading_country', label: 'Port of Loading Country' },
     { key: 'port_of_discharging', label: 'Port of Discharging' },
+    { key: 'port_of_discharge_country', label: 'Port of Discharge Country' },
     {
       key: 'destination_branch_id',
       label: 'Destination Branch',
@@ -624,7 +636,7 @@ export default function CustomClearancePage() {
                       </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(container.invoice_status)}</TableCell>
-                    <TableCell className="text-right relative">
+                    <TableCell className="text-right relative actions-menu-container">
                       <button onClick={() => toggleMenu(container.id)} className="p-2 rounded-xl text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all"><MoreVertical className="w-5 h-5" /></button>
                       {menuOpenId === container.id && (
                         <div className={`absolute right-0 w-52 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl shadow-xl z-[200] p-1.5 ${index > paginatedContainers.length - 3 ? 'bottom-full mb-2' : 'top-full mt-2'}`}>
@@ -693,7 +705,9 @@ export default function CustomClearancePage() {
                   <ViewField label="Voyage Number" value={selectedContainer.voyage_number} />
                   <ViewField label="Shipping Agent" value={selectedContainer.shipping_agent} />
                   <ViewField label="Port of Loading" value={selectedContainer.port_of_loading} />
+                  <ViewField label="Port of Loading Country" value={selectedContainer.port_of_loading_country} />
                   <ViewField label="Port of Discharging" value={selectedContainer.port_of_discharging} />
+                  <ViewField label="Port of Discharge Country" value={selectedContainer.port_of_discharge_country} />
                   <ViewField label="Destination Branch" value={getBranchName(selectedContainer)} />
                   <ViewField label="Supplier" value={suppliers?.find(s => s.id === selectedContainer.supplier_id)?.company || selectedContainer.supplier_id} />
                   <ViewField label="Container Size" value={selectedContainer.container_size} />

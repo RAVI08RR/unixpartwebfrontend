@@ -128,7 +128,7 @@ export default function CustomersPage() {
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuOpenId && !event.target.closest('.customer-actions-menu')) {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
         setMenuOpenId(null);
       }
     };
@@ -497,7 +497,7 @@ export default function CustomersPage() {
                     </TableCell>
 
                     {/* Actions */}
-                    <TableCell className="text-right relative customer-actions-menu">
+                    <TableCell className="text-right relative actions-menu-container">
                       <button onClick={() => toggleMenu(customer.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400 transition-colors">
                         <MoreVertical className="w-5 h-5" />
                       </button>

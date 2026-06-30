@@ -91,6 +91,16 @@ export default function PurchaseOrdersPage() {
 
   // Menu state and delete modal
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [documentsModalOpen, setDocumentsModalOpen] = useState(false);
   const [selectedPO, setSelectedPO] = useState(null);
@@ -567,7 +577,7 @@ export default function PurchaseOrdersPage() {
                     <span className="text-sm font-bold text-gray-600 dark:text-zinc-400">{po.items_in_stock} units</span>
                   </TableCell>
                   <TableCell className="text-right relative">
-                    <div className="relative inline-block">
+                    <div className="relative inline-block actions-menu-container">
                       <button onClick={() => toggleMenu(po.id)} className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-400">
                         <MoreVertical className="w-5 h-5" />
                       </button>

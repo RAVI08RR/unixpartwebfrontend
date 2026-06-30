@@ -25,6 +25,16 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [permissionAlert, setPermissionAlert] = useState({ isOpen: false, action: '', resource: '' });
@@ -426,7 +436,7 @@ export default function EmployeesPage() {
                           )}
 
                           {/* More Actions Dropdown */}
-                          <div className="relative">
+                          <div className="relative actions-menu-container">
                             <button
                               onClick={() => setMenuOpenId(menuOpenId === employee.id ? null : employee.id)}
                               className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all"
@@ -436,12 +446,7 @@ export default function EmployeesPage() {
                             </button>
 
                             {menuOpenId === employee.id && (
-                              <>
-                                <div
-                                  className="fixed inset-0 z-10"
-                                  onClick={() => setMenuOpenId(null)}
-                                />
-                                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                              <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-gray-100 dark:border-zinc-800 z-[200] py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
                                   {hasPermission(PERMISSIONS.EMPLOYEES.UPDATE) && (
                                     <>
                                       <Link
@@ -501,7 +506,6 @@ export default function EmployeesPage() {
                                     </>
                                   )}
                                 </div>
-                              </>
                             )}
                           </div>
                         </div>

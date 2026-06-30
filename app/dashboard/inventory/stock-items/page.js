@@ -99,6 +99,16 @@ export default function StockItemsManagementPage() {
 
   // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedStockItem, setSelectedStockItem] = useState(null);
@@ -532,7 +542,7 @@ export default function StockItemsManagementPage() {
                                 {item.status ? "Active" : "Inactive"}
                               </div>
 
-                              <div className="relative shrink-0">
+                              <div className="relative shrink-0 actions-menu-container">
                                 <button
                                   onClick={() => toggleMenu(item.id)}
                                   className={`p-2 rounded-xl transition-all ${menuOpenId === item.id

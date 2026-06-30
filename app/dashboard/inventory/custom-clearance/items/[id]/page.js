@@ -22,6 +22,16 @@ export default function ContainerItemsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -333,7 +343,7 @@ export default function ContainerItemsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right relative" data-label="Actions">
-                        <div className="relative">
+                        <div className="relative actions-menu-container">
                           <button
                             onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
                             className={`p-2 rounded-lg transition-all ${menuOpenId === item.id

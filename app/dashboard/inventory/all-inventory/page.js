@@ -44,6 +44,16 @@ export default function AllInventoryPage() {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -624,7 +634,7 @@ export default function AllInventoryPage() {
                     </span>
                   </TableCell>
                   <TableCell className="text-right relative">
-                    <div className="relative inline-block">
+                    <div className="relative inline-block actions-menu-container">
                       <button onClick={() => toggleMenu(item.id)} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-all">
                         <MoreVertical className="w-4 h-4 text-gray-400" />
                       </button>

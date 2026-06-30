@@ -35,6 +35,16 @@ export default function BranchManagementPage() {
 
   // Menu state and modals
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -509,7 +519,7 @@ export default function BranchManagementPage() {
                             </button>
                           )}
                           
-                          <div className="relative">
+                          <div className="relative actions-menu-container">
                             <button 
                               onClick={() => toggleMenu(branch.id)}
                               className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all menu-button ${

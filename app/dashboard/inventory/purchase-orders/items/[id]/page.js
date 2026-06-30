@@ -40,6 +40,16 @@ function PurchaseOrderItemsContent({ params }) {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [dismantleModalOpen, setDismantleModalOpen] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuOpenId !== null && !event.target.closest('.actions-menu-container')) {
+        setMenuOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpenId]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -716,7 +726,7 @@ function PurchaseOrderItemsContent({ params }) {
                         >
                           <Printer className="w-4 h-4" />
                         </button>
-                        <div className="relative">
+                        <div className="relative actions-menu-container">
                           <button
                             onClick={() => setMenuOpenId(menuOpenId === item.id ? null : item.id)}
                             className={`p-2 rounded-lg transition-all ${menuOpenId === item.id
