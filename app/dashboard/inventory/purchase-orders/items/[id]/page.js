@@ -77,7 +77,7 @@ function PurchaseOrderItemsContent({ params }) {
     poDescription: { fontSize: 10, bold: false, underline: false },
     qrSize: 50,
   });
-  const printRef = useRef();
+  const printRef = useRef(null);
   const itemsPerPage = 8;
 
   const hasActiveFilters = useMemo(() => {
@@ -1276,10 +1276,13 @@ function PurchaseOrderItemsContent({ params }) {
       )}
 
       {/* Hidden Print Component */}
-      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-        <div ref={printRef}>
-          <PrintableLabel items={getPrintData()} styles={labelStyles} labelSize={labelSize} />
-        </div>
+      <div className="hidden">
+        <PrintableLabel 
+          ref={printRef} 
+          items={getPrintData()} 
+          styles={labelStyles} 
+          labelSize={labelSize} 
+        />
       </div>
 
 
